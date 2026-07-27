@@ -1,0 +1,18 @@
+{
+  "name": "clippity-installer-tauri",
+  "private": true,
+  "version": "1.5.0",
+  "description": "Clippity Setup Tauri shell — owns the Tauri CLI and the wizard app crate.",
+  "scripts": {
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "check": "cargo check --workspace --manifest-path ../Cargo.toml",
+    "lint": "cargo clippy --workspace --manifest-path ../Cargo.toml",
+    "format": "cargo fmt --manifest-path ../Cargo.toml",
+    "test": "cargo test --workspace --manifest-path ../Cargo.toml"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

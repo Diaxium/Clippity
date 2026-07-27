@@ -1,0 +1,33 @@
+[package]
+name = "clippity-installer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Clippity Setup — the install / modify / update / repair / uninstall wizard shell."
+
+[lib]
+name = "clippity_installer_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[dependencies]
+# --- Internal crates ---
+installer-infra = { workspace = true }
+installer-domain = { workspace = true }
+installer-platform = { workspace = true }
+installer-services = { workspace = true }
+
+# --- Tauri runtime ---
+tauri = { workspace = true }
+tauri-plugin-opener = { workspace = true }
+tauri-plugin-dialog = { workspace = true }
+
+# --- Serialization ---
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# --- Diagnostics ---
+tracing = { workspace = true }

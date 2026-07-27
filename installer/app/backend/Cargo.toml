@@ -1,0 +1,66 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/infra",
+  "crates/domain",
+  "crates/platform",
+  "crates/services",
+  "src-tauri",
+]
+
+[workspace.package]
+version = "1.5.0"
+edition = "2021"
+rust-version = "1.78"
+authors = ["Clippity"]
+
+[workspace.dependencies]
+# --- Internal crates ---
+installer-infra = { path = "crates/infra" }
+installer-domain = { path = "crates/domain" }
+installer-platform = { path = "crates/platform" }
+installer-services = { path = "crates/services" }
+
+# --- Tauri runtime ---
+tauri = { version = "2", features = ["image-png"] }
+tauri-build = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+
+# --- Serialization ---
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# --- Integrity ---
+# Verifies the embedded application payload before it is copied out.
+sha2 = "0.10"
+
+# --- Diagnostics ---
+thiserror = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# --- Windows platform APIs (shortcuts, registry, elevation) ---
+windows = { version = "0.62.2", features = [
+  "Win32_Foundation",
+  "Win32_UI_Shell",
+  "Win32_System_Com",
+  "Win32_System_Registry",
+  "Win32_System_Threading",
+  "Win32_Security",
+  # ShellExecuteW + SW_NORMAL, used to relaunch the installer elevated.
+  "Win32_UI_WindowsAndMessaging",
+  # MoveFileExW(MOVEFILE_DELAY_UNTIL_REBOOT) — the locked-file fallback that
+  # schedules deletion of files still in use for the next reboot.
+  "Win32_Storage_FileSystem",
+  # Restart Manager (RmStartSession/RmRegisterResources/RmGetList) — enumerate
+  # exactly which processes hold a file a maintenance operation must change,
+  # so Clippity-owned lockers can be cleared and unrelated apps surfaced.
+  "Win32_System_RestartManager",
+] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

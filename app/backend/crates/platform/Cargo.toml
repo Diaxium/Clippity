@@ -1,0 +1,18 @@
+[package]
+name = "clippity-platform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+
+[dependencies]
+clippity-domain = { workspace = true }
+clippity-infra = { workspace = true }
+tauri = { workspace = true }
+image = { workspace = true }
+xcap = { workspace = true }
+tracing = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true }
+window-vibrancy = { workspace = true }

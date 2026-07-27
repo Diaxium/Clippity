@@ -1,0 +1,9 @@
+packages:
+  - "app/frontend"
+  - "app/shared"
+  - "app/backend/src-tauri"
+
+# Native postinstall builds are opt-in under pnpm; esbuild (pulled in by
+# Vite) is the only dependency in the graph that needs its build script.
+allowBuilds:
+  esbuild: true

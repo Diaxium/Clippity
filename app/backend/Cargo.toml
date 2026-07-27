@@ -1,0 +1,103 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/infra",
+  "crates/domain",
+  "crates/platform",
+  "crates/vision",
+  "crates/services",
+  "crates/bench",
+  "src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+authors = ["Clippity"]
+
+[workspace.dependencies]
+# --- Internal crates ---
+clippity-infra = { path = "crates/infra" }
+clippity-domain = { path = "crates/domain" }
+clippity-platform = { path = "crates/platform" }
+clippity-vision = { path = "crates/vision" }
+clippity-services = { path = "crates/services" }
+
+# --- Tauri runtime ---
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-build = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-dialog = "2"
+
+# --- Serialization ---
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# --- Capture / imaging ---
+xcap = "0.9.4"
+image = "0.25.10"
+base64 = "0.22.1"
+arboard = "3"
+
+# --- Window effects ---
+window-vibrancy = "0.7.1"
+
+# --- Vision (ONNX object detection) ---
+# ORT pulls matching DLLs at build time; copy-dylibs places them next to
+# the bundled Tauri exe so the runtime loader finds them at launch.
+ort = { version = "2.0.0-rc.10", features = ["copy-dylibs", "download-binaries"] }
+ndarray = "0.16"
+
+# --- Library index ---
+# Bundled SQLite: no system dependency, compiled with the same MSVC
+# toolchain Tauri already requires on Windows.
+rusqlite = { version = "0.40", features = ["bundled"] }
+
+# --- Networking (model + vision-runtime installer) ---
+ureq = "3"
+
+# --- Diagnostics ---
+thiserror = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# --- Windows platform APIs ---
+windows = { version = "0.62.2", features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+  # SendInput + mouse-wheel structs back the Panoramic auto-scroll driver.
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_Graphics_Gdi",
+  "Win32_Graphics_Dwm",
+  "Win32_UI_Accessibility",
+  "Win32_System_Com",
+  "Win32_System_Variant",
+  # GetLocalTime backs readable date/time in capture file names;
+  # GetCurrentProcessId lets the namer skip our own foreground window.
+  "Win32_System_SystemInformation",
+  "Win32_System_Threading",
+  # Media Foundation backs the recorder's H.264/AAC MP4 sink writer
+  # (ADR 0031); Win32_Media_Audio is WASAPI, which feeds it the
+  # microphone and system-loopback tracks.
+  "Win32_Media_MediaFoundation",
+  "Win32_Media_Audio",
+  "Win32_Media_KernelStreaming",
+  "Win32_Devices_FunctionDiscovery",
+  "Win32_System_Com_StructuredStorage",
+  # IPropertyStore — reads an audio endpoint's friendly name so the
+  # settings UI can list devices by something other than their GUID.
+  "Win32_UI_Shell_PropertiesSystem",
+  # Windows.Media.Ocr backs the "Grab Text" capture mode.
+  "Media_Ocr",
+  "Graphics_Imaging",
+  "Storage_Streams",
+  "Foundation_Collections",
+] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

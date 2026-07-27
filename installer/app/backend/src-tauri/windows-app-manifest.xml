@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <!-- Common Controls v6 — carried over from Tauri's default manifest so the
+       webview host and native dialogs keep their themed comctl32. -->
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity
+        type="win32"
+        name="Microsoft.Windows.Common-Controls"
+        version="6.0.0.0"
+        processorArchitecture="*"
+        publicKeyToken="6595b64144ccf1df"
+        language="*"
+      />
+    </dependentAssembly>
+  </dependency>
+
+  <!-- Explicit execution level. Without this element Windows applies its
+       "installer detection" heuristic to a large exe named *Setup* that
+       embeds a payload, and auto-elevates it — which would force a UAC
+       prompt even on the per-user (writable-folder) install path. Declaring
+       asInvoker opts out of that heuristic: the wizard starts with the
+       caller's token and only self-elevates on demand (the Review step
+       relaunches under the `runas` verb) when the chosen scope needs it. -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+</assembly>

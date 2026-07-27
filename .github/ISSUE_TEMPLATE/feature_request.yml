@@ -1,0 +1,56 @@
+name: Feature request
+description: Suggest a capability or an improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Planned work lives in
+        [docs/roadmaps/](https://github.com/Diaxium/Clippity/blob/main/docs/roadmaps/README.md),
+        and the reasoning behind existing designs is in
+        [docs/decisions/](https://github.com/Diaxium/Clippity/blob/main/docs/decisions/README.md). Worth a look
+        before writing — your idea may already be scheduled, or already
+        deliberately rejected.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: >
+        Describe the situation, not the solution. What are you doing when you
+        hit this, and what does it cost you today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like Clippity to do?
+      validations:
+        required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Capture / overlay
+        - Recording
+        - Editor
+        - Library / organization
+        - Presets / automation
+        - Sharing / export
+        - Vision / OCR / models
+        - Settings / accessibility
+        - Developer experience
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: >
+        Including "I currently do this with another tool" — knowing what the
+        workaround is helps size the gap.

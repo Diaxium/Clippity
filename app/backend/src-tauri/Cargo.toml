@@ -1,0 +1,38 @@
+[package]
+name = "clippity"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Clippity — modern screen capture, recording, annotation, and workflow automation"
+
+[lib]
+name = "clippity_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[dependencies]
+# --- Internal crates ---
+clippity-infra = { workspace = true }
+clippity-domain = { workspace = true }
+clippity-platform = { workspace = true }
+clippity-vision = { workspace = true }
+clippity-services = { workspace = true }
+
+# --- Tauri runtime ---
+tauri = { workspace = true }
+tauri-plugin-opener = { workspace = true }
+tauri-plugin-global-shortcut = { workspace = true }
+tauri-plugin-dialog = { workspace = true }
+
+# --- Serialization ---
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# --- Diagnostics ---
+tracing = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true }

@@ -1,0 +1,30 @@
+[package]
+name = "clippity-bench"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+publish = false
+
+# The benchmark harness (performance roadmap P2). The library half holds
+# the deterministic, synthetic corpora generators — no real capture
+# content ever touches a benchmark — so they can be unit-tested for
+# reproducibility. The `benches/` half is the Criterion suite.
+
+[dependencies]
+clippity-domain = { workspace = true }
+clippity-services = { workspace = true }
+image = { workspace = true }
+# The overlay handoff bench measures the data-URI wrapper separately from
+# the PNG encode, so it needs the same base64 engine the service uses.
+base64 = { workspace = true }
+
+[dev-dependencies]
+# Default features (plotters/rayon/html reports) are off: the budget
+# checker reads Criterion's `estimates.json`, which is written regardless,
+# and dropping the plotting stack keeps the harness quick to compile in CI.
+criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support"] }
+
+[[bench]]
+name = "native"
+harness = false

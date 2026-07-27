@@ -1,0 +1,34 @@
+# --- Dependencies ---
+node_modules/
+
+# --- Build output ---
+dist/
+dist-ssr/
+*.local
+*.tsbuildinfo
+
+# --- Collected installer build artifacts ---
+build/
+
+# --- Rust / Cargo ---
+target/
+
+# --- Tauri (generated capability schemas) ---
+gen/schemas/
+
+# --- Installer artifacts ---
+payload/
+
+# --- Logs ---
+logs/
+*.log
+pnpm-debug.log*
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Editors ---
+.vscode/*
+!.vscode/extensions.json
+.idea/

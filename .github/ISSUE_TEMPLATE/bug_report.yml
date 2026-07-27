@@ -1,0 +1,92 @@
+name: Bug report
+description: Something in Clippity behaves incorrectly
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Clippity touches a lot of Windows-specific
+        surface — capture, OCR, window enumeration, display scaling — so the
+        environment details below usually decide how fast this gets fixed.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, what did you expect, and what did you get instead?
+      placeholder: |
+        1. Opened the region overlay with Ctrl+Shift+2
+        2. Dragged a selection across two monitors
+        3. Expected one stitched capture; got only the left half
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where does it go wrong?
+      options:
+        - Capture / overlay
+        - Recording
+        - Editor
+        - Library
+        - Presets
+        - Tray / toasts / countdown
+        - Settings
+        - Vision / OCR / models
+        - Build or install
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows version and build
+      description: Run `winver` and paste what it says.
+      placeholder: Windows 11 Pro 24H2, build 26100.2314
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-kind
+    attributes:
+      label: How are you running Clippity?
+      options:
+        - Built from source (pnpm tauri:dev)
+        - Built from source (pnpm dist / tauri:build)
+        - MSI installer
+        - NSIS setup
+        - Portable zip
+    validations:
+      required: true
+
+  - type: textarea
+    id: display-setup
+    attributes:
+      label: Display setup
+      description: >
+        Monitor count and arrangement, per-monitor resolution, and display
+        scaling. Mixed-DPI and multi-monitor setups are behind a good share of
+        capture bugs.
+      placeholder: |
+        2 monitors: 3840x2160 @ 150% (primary), 1920x1080 @ 100% to the left
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >
+        Clippity logs through `tracing` — see docs/development/debugging.md for
+        where to find them and how to raise the level. Paste anything from
+        around the failure.
+      render: text
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots, a clip, or notes on how reliably it reproduces.

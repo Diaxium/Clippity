@@ -1,0 +1,13 @@
+[package]
+name = "installer-domain"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Pure installer types and rules — plans, versions, sizing. No I/O, no Tauri."
+
+[dependencies]
+serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

@@ -1,0 +1,28 @@
+/* ------------------------------------------------------------------ *
+ * App-wide CSS that doesn't fit in `theme.css` (which is reserved for
+ * tokens). Component-level styles live next to their components or
+ * inline as Tailwind classes.
+ * ------------------------------------------------------------------ */
+
+/* Tauri windows are transparent + borderless; drag is opt-in per
+ * element via `data-tauri-drag-region`. The default cursor should be
+ * the system arrow, not the text caret, for non-text regions. */
+html {
+  cursor: default;
+}
+
+/* The WebView2 context menu is suppressed in JS, not here — see
+ * `shared/ui/contextMenu/useNativeContextMenu.ts`, which preventDefaults
+ * every `contextmenu` event in the capture phase and routes the click to
+ * the app's own menu. CSS can't do it, and doing it per-surface means one
+ * forgotten handler leaks a browser popup into a desktop app. */
+
+/* Common drag region — apply via className on the title bar / spacer. */
+.drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}

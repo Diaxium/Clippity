@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  frontend:
+    name: Frontend (types, lint, tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm check:js
+
+      - name: Lint
+        run: pnpm --filter @clippity/shared --filter clippity-frontend lint
+
+      - name: Test
+        run: pnpm test:js
+
+  backend:
+    name: Backend (clippy, tests)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/backend
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `tauri-build` validates that `frontendDist` exists, so the web assets
+      # have to be built before anything touches the app crate.
+      - name: Build frontend assets
+        run: pnpm build
+
+      - name: Clippy
+        run: pnpm cargo:clippy
+
+      # The first build downloads matching ONNX Runtime binaries through `ort`,
+      # so an uncached run is slow.
+      - name: Test
+        run: pnpm cargo:test

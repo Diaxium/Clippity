@@ -1,0 +1,15 @@
+[package]
+name = "installer-platform"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "OS-specific installer operations: shortcuts, registry (Add/Remove Programs), elevation."
+
+[dependencies]
+installer-infra = { workspace = true }
+installer-domain = { workspace = true }
+tracing = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true }

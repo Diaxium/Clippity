@@ -1,0 +1,18 @@
+[package]
+name = "clippity-vision"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+
+[dependencies]
+clippity-domain = { workspace = true }
+clippity-infra = { workspace = true }
+tauri = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+image = { workspace = true }
+ort = { workspace = true }
+ndarray = { workspace = true }
+ureq = { workspace = true }
+tracing = { workspace = true }

@@ -1,0 +1,25 @@
+[package]
+name = "clippity-services"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+
+[dependencies]
+clippity-domain = { workspace = true }
+clippity-infra = { workspace = true }
+clippity-platform = { workspace = true }
+tauri = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+image = { workspace = true }
+base64 = { workspace = true }
+arboard = { workspace = true }
+xcap = { workspace = true }
+rusqlite = { workspace = true }
+tauri-plugin-opener = { workspace = true }
+tauri-plugin-global-shortcut = { workspace = true }
+tracing = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true }

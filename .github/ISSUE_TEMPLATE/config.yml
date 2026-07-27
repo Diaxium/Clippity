@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/Diaxium/Clippity/blob/main/docs/README.md
+    about: Setup, architecture, commands, keybinds, and the decision records.
+  - name: Report a security vulnerability
+    url: https://github.com/Diaxium/Clippity/security/advisories/new
+    about: Please report vulnerabilities privately, not as a public issue.

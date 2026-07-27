@@ -1,0 +1,28 @@
+{
+  "name": "clippity-installer",
+  "version": "1.5.0",
+  "private": true,
+  "description": "Clippity Setup — the install / modify / update / repair / uninstall wizard. Root workspace.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.13.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "pnpm --filter clippity-installer-frontend dev",
+    "tauri:dev": "pnpm --filter clippity-installer-tauri tauri:dev",
+    "build": "pnpm --filter @clippity/installer-shared build && pnpm --filter clippity-installer-frontend build",
+    "tauri:build": "pnpm --filter clippity-installer-tauri tauri:build && node scripts/collect-build.mjs",
+    "collect-build": "node scripts/collect-build.mjs",
+    "preview": "pnpm --filter clippity-installer-frontend preview",
+    "check": "pnpm -r check",
+    "cargo:check": "cargo check --manifest-path app/backend/Cargo.toml --workspace",
+    "cargo:build": "cargo build --manifest-path app/backend/Cargo.toml --workspace --release",
+    "cargo:test": "cargo test --manifest-path app/backend/Cargo.toml --workspace",
+    "cargo:clippy": "cargo clippy --manifest-path app/backend/Cargo.toml --workspace",
+    "cargo:fmt": "cargo fmt --manifest-path app/backend/Cargo.toml"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3"
+  }
+}

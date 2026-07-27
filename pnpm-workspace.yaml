@@ -1,0 +1,10 @@
+packages:
+  - "app/frontend"
+  - "app/shared"
+  - "app/backend/src-tauri"
+
+# Native postinstall builds are opt-in under pnpm; these two are the only
+# dependencies in the graph that need to run their build scripts.
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true

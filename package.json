@@ -1,0 +1,48 @@
+{
+  "name": "clippity",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clippity — modern screen capture, recording, annotation, and workflow automation. Root workspace.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.13.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "pnpm --filter clippity-frontend dev",
+    "tauri:dev": "pnpm --filter clippity-tauri tauri:dev",
+    "build": "pnpm --filter @clippity/shared build && pnpm --filter clippity-frontend build",
+    "tauri:build": "pnpm --filter clippity-tauri tauri:build && node scripts/collect-build.mjs",
+    "collect-build": "node scripts/collect-build.mjs",
+    "installer:build": "cd installer && pnpm tauri:build",
+    "stage:payload": "node scripts/stage-installer-payload.mjs",
+    "portable": "node scripts/build-portable.mjs",
+    "dist": "pnpm tauri:build && pnpm portable && pnpm stage:payload && pnpm installer:build",
+    "preview": "pnpm --filter clippity-frontend preview",
+    "test": "pnpm -r test",
+    "test:js": "pnpm --filter @clippity/shared --filter clippity-frontend test",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "format": "pnpm -r format",
+    "check": "pnpm -r check",
+    "check:js": "pnpm --filter @clippity/shared --filter clippity-frontend check",
+    "cargo:check": "cargo check --manifest-path app/backend/Cargo.toml --workspace",
+    "cargo:build": "cargo build --manifest-path app/backend/Cargo.toml --workspace --release",
+    "cargo:test": "cargo test --manifest-path app/backend/Cargo.toml --workspace",
+    "cargo:clippy": "cargo clippy --manifest-path app/backend/Cargo.toml --workspace",
+    "cargo:fmt": "cargo fmt --manifest-path app/backend/Cargo.toml",
+    "bench": "cargo bench --manifest-path app/backend/Cargo.toml -p clippity-bench",
+    "bench:check": "node scripts/check-bench-budgets.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.13.0",
+    "prettier": "^3.4.2",
+    "typescript": "~5.8.3"
+  }
+}

@@ -1,0 +1,956 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Clippity Design System — tokens
+ * Source of truth: docs/UI_DOCUMENTATION.md
+ *
+ * Every visual surface in the app is expected to resolve through these
+ * tokens. The light defaults live in @theme; dark mode is just a
+ * targeted override block scoped to [data-theme="dark"] further down.
+ * ------------------------------------------------------------------ */
+@theme {
+  /* Core brand colors (mode-invariant) */
+  --color-primary: #2c3e3e;
+  --color-coral: #ffb8a8;
+  --color-teal: #a8d5d8;
+  --color-lavender: #e8d9f2;
+  --color-gold: #d4c5b0;
+
+  /* Brand accent — primary coral (active state / accents).
+     Hover/soft/ring/tile-warm derive from the base via color-mix so the
+     entire accent family follows a user-chosen --color-accent override. */
+  --color-accent: #ff6e4a;
+  --color-accent-hover: color-mix(in srgb, var(--color-accent) 88%, black);
+  --color-accent-soft: color-mix(in srgb, var(--color-accent) 9%, transparent);
+  --color-accent-ring: color-mix(in srgb, var(--color-accent) 95%, white);
+  /* Foreground placed on a *solid* accent fill (primary CTAs, capture
+     button, selection badges). White suits the coral default, but the
+     accent is user-customizable: `Providers.tsx` recomputes this from
+     the chosen accent's luminance so light accents (Lavender / Gold /
+     Teal / Mint, or any light custom hex) get a dark ink instead of
+     unreadable white. Mode-invariant — the accent is the same hex in
+     both themes, so its ink is too. */
+  --color-accent-ink: #ffffff;
+
+  /* Deep slate — the former primary-action color. Primary buttons (the
+     tray Capture tile, `Button` primary, preset Run) now use the accent
+     per appearance preference, so these are unused by default and
+     tree-shaken out of the build. Kept here to make reverting a one-liner
+     (point those components back at `--color-slate-deep`). */
+  --color-slate-deep: #163847;
+  --color-slate-deep-2: #112b36;
+
+  /* Success — mint. Was the toggle "on" fill; toggles now use the accent
+     (appearance preference), so this is currently unused. Kept for a
+     future success state + easy revert. */
+  --color-success: #24d1b5;
+  --color-success-soft: #d8f3ee;
+
+  /* Soft icon-tile tints. Both warm and cool now derive from the user's
+     accent: the "cool" teal counterpart was folded into the accent so the
+     two-tone tile grid reads as one consistent accent hue (appearance
+     preference). Cool is kept as its own token — aliased to warm — so the
+     `tint="cool"` mode tags don't all need editing and the split can be
+     reinstated later by giving cool its own value again. */
+  --color-tile-warm: color-mix(in srgb, var(--color-accent) 8%, white);
+  --color-tile-warm-ink: var(--color-accent);
+  --color-tile-cool: var(--color-tile-warm);
+  --color-tile-cool-ink: var(--color-tile-warm-ink);
+  /* Extended dashboard tile tints — violet + gold round out the warm
+     (accent) and cool (teal) pair so the home view's icon tiles read as
+     a small, on-brand multi-hue set. Mode-aware overrides live below. */
+  --color-tile-violet: #ece4fb;
+  --color-tile-violet-ink: #7c4ddb;
+  --color-tile-gold: #f1e9d8;
+  --color-tile-gold-ink: #9b7b34;
+
+  /* Backgrounds — warm, bright, airy (low gray) */
+  --color-bg: #fcfcfb;
+  --color-bg-beige: #faf7f2;
+  --color-bg-gray: #f7f8f9;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbfbfa;
+
+  /* Window-shell tokens — the chrome of each Tauri window. */
+  --color-canvas: #fdfdfc;
+  --color-canvas-inset: #f6f6f4;
+  --color-sidebar: #fbfbfa;
+
+  /* Hairlines / dividers — gentle, never heavy */
+  --hairline: rgba(17, 24, 39, 0.05);
+  --hairline-strong: rgba(17, 24, 39, 0.08);
+
+  /* Overlays — replace ad-hoc bg-black/[0.0x] usages with these so
+     they auto-flip in dark mode. */
+  --color-overlay-1: rgba(17, 24, 39, 0.04);
+  --color-overlay-2: rgba(17, 24, 39, 0.06);
+  --color-overlay-3: rgba(17, 24, 39, 0.1);
+  --color-overlay-4: rgba(17, 24, 39, 0.18);
+
+  /* Text — softer hierarchy, less aggressive contrast */
+  --color-ink: #2a3340;
+  --color-slate: #8893a3;
+  --color-hint: #aab2bf;
+
+  /* Danger / conflict — used for destructive hints and the Shortcuts
+     panel's binding-clash markers. `-soft` is a low-alpha wash for banners. */
+  --color-danger: #e5484d;
+  --color-danger-soft: rgba(229, 72, 77, 0.08);
+
+  /* Border radius scale */
+  --radius-subtle: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  /* Soft, gentle elevation — depth without dark contrast */
+  --shadow-subtle: 0 1px 2px rgba(17, 24, 39, 0.04);
+  --shadow-medium: 0 4px 14px rgba(17, 24, 39, 0.05);
+  --shadow-elevated: 0 10px 30px rgba(17, 24, 39, 0.06);
+  --shadow-deep: 0 18px 44px rgba(17, 24, 39, 0.08);
+  --shadow-modal: 0 24px 64px rgba(17, 24, 39, 0.14);
+
+  /* Easing + timing */
+  --ease-std: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Typography */
+  --font-sans:
+    "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system,
+    sans-serif;
+}
+
+/* Non-Tailwind tokens (raw custom properties).
+   Defaults are light; dark variants live in the [data-theme="dark"]
+   block below. */
+:root {
+  --t-fast: 150ms var(--ease-std);
+  --t-std: 200ms var(--ease-std);
+  --t-slow: 300ms var(--ease-std);
+
+  --glow-focus: 0 0 8px rgba(168, 213, 216, 0.4);
+  --glow-coral: 0 0 8px color-mix(in srgb, var(--color-accent) 40%, transparent);
+  --inset-hl: inset 0 1px 2px rgba(255, 255, 255, 0.3);
+
+  /* Neomorphic top-bar chrome — a softly extruded bar that lifts above
+     the sidebar. A top inner highlight + a downward drop shadow read as
+     a raised surface; the surface→canvas gradient deepens the extrusion.
+     The bg references mode-aware tokens so it resolves in dark too; only
+     the shadow needs a dark override (below). */
+  --titlebar-neo-bg: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-canvas) 100%
+  );
+  --titlebar-neo-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -1px 0 var(--hairline),
+    0 6px 16px -8px rgba(17, 24, 39, 0.18),
+    0 2px 5px -3px rgba(17, 24, 39, 0.12);
+
+  /* Chrome opacity over the Mica backdrop (0.5..1.0). The
+     window-shell utilities below color-mix this with the canvas tokens
+     so dragging the slider gradually reveals the desktop behind. */
+  --window-opacity: 1;
+
+  /* Glass surfaces — translucent panels stacked over the desktop. */
+  --glass-1: rgba(248, 249, 250, 0.85);
+  --glass-2: rgba(248, 249, 250, 0.8);
+  --glass-3: rgba(255, 255, 255, 0.6);
+  --glass-4: rgba(255, 255, 255, 0.5);
+
+  /* Floating cards that need to read crisply against any background
+     (countdown, toast, overlay banners). */
+  --float-bg: rgba(253, 253, 252, 0.96);
+
+  /* Countdown HUD progress line — a two-hue accent sweep (the accent
+     itself → an accent/purple blend) so it reads as a soft neon line
+     for any user accent: a blue accent yields blue→purple, a warm
+     coral accent yields orange→pink. High-contrast + forced-colors
+     collapse it to a solid fill (see the override block below). The
+     glow is deliberately faint — a soft edge, not a gaming RGB strip. */
+  --countdown-gradient: linear-gradient(
+    90deg,
+    var(--color-accent) 0%,
+    color-mix(in srgb, var(--color-accent) 35%, #b249f5) 100%
+  );
+  --countdown-glow: 0 0 6px
+    color-mix(in srgb, var(--color-accent) 45%, transparent);
+
+  /* Scrollbar thumb (resolved differently per mode for contrast). */
+  --scrollbar-thumb: rgba(17, 24, 39, 0.14);
+  --scrollbar-thumb-hover: rgba(17, 24, 39, 0.24);
+  --scrollbar-thumb-menu: rgba(17, 24, 39, 0.22);
+  --scrollbar-thumb-menu-hover: rgba(17, 24, 39, 0.36);
+  --scrollbar-thumb-idle: rgba(17, 24, 39, 0.12);
+}
+
+/* ------------------------------------------------------------------ *
+ * Dark mode — token overrides only. No selectors should hardcode
+ * colors outside this block (use a token or add one here).
+ * ------------------------------------------------------------------ */
+[data-theme="dark"] {
+  /* Tile tints — accent-tinted instead of pastel pale. Warm + cool both
+     follow the user's accent now (cool mirrors warm — see the light
+     block); only the dark warm strength differs. */
+  --color-tile-warm: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --color-tile-warm-ink: color-mix(in srgb, var(--color-accent) 80%, white);
+  --color-tile-cool: var(--color-tile-warm);
+  --color-tile-cool-ink: var(--color-tile-warm-ink);
+  /* Extended dashboard tile tints (see light block). */
+  --color-tile-violet: color-mix(in srgb, #8b5cf6 22%, transparent);
+  --color-tile-violet-ink: #c4b5fd;
+  --color-tile-gold: color-mix(in srgb, #d4c5b0 20%, transparent);
+  --color-tile-gold-ink: #e2cfa6;
+
+  /* Accent soft fill — needs more presence on a dark surface. */
+  --color-accent-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
+
+  /* Backgrounds — warm dark, just a hair off pure neutral. */
+  --color-bg: #15161a;
+  --color-bg-beige: #1a1a1d;
+  --color-bg-gray: #15171a;
+  --color-surface: #1f2024;
+  --color-surface-2: #1a1b1f;
+
+  /* Window-shell tokens. Sidebar a hair lighter than canvas reads as
+     one surface in this palette too. */
+  --color-canvas: #18191d;
+  --color-canvas-inset: #131418;
+  --color-sidebar: #1c1d21;
+
+  /* Hairlines — white-with-alpha instead of black-with-alpha. */
+  --hairline: rgba(255, 255, 255, 0.06);
+  --hairline-strong: rgba(255, 255, 255, 0.1);
+
+  /* Overlays — same idea, flipped so hover/press chips stay subtle. */
+  --color-overlay-1: rgba(255, 255, 255, 0.05);
+  --color-overlay-2: rgba(255, 255, 255, 0.08);
+  --color-overlay-3: rgba(255, 255, 255, 0.12);
+  --color-overlay-4: rgba(255, 255, 255, 0.18);
+
+  /* Text — calmer contrast against the dark canvas. */
+  --color-ink: #e6e8ed;
+  --color-slate: #9ca5b4;
+  --color-hint: #6b7281;
+
+  /* Danger / conflict — brighter red for the dark canvas; softer wash. */
+  --color-danger: #ff6369;
+  --color-danger-soft: rgba(255, 99, 105, 0.12);
+
+  /* Shadows — much darker so they actually register. */
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 14px rgba(0, 0, 0, 0.38);
+  --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.48);
+  --shadow-deep: 0 18px 44px rgba(0, 0, 0, 0.55);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.62);
+
+  /* Glass surfaces — dark translucent panels. */
+  --glass-1: rgba(26, 27, 31, 0.82);
+  --glass-2: rgba(26, 27, 31, 0.74);
+  --glass-3: rgba(36, 38, 42, 0.55);
+  --glass-4: rgba(36, 38, 42, 0.42);
+
+  --float-bg: rgba(28, 29, 33, 0.95);
+
+  --glow-focus: 0 0 10px rgba(168, 213, 216, 0.35);
+  --inset-hl: inset 0 1px 2px rgba(255, 255, 255, 0.08);
+
+  /* Neomorphic top-bar chrome (dark) — deeper drop, faint highlight.
+     `--titlebar-neo-bg` is inherited from :root (mode-aware tokens). */
+  --titlebar-neo-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 -1px 0 var(--hairline),
+    0 8px 18px -8px rgba(0, 0, 0, 0.55), 0 2px 6px -3px rgba(0, 0, 0, 0.4);
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.14);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.26);
+  --scrollbar-thumb-menu: rgba(255, 255, 255, 0.22);
+  --scrollbar-thumb-menu-hover: rgba(255, 255, 255, 0.36);
+  --scrollbar-thumb-idle: rgba(255, 255, 255, 0.12);
+}
+
+/* ------------------------------------------------------------------ *
+ * Appearance preference — corner roundness + UI density.
+ *
+ * Both are driven by data attributes on <html> (set per-window by
+ * Providers.tsx from `appearance.cornerRadius` / `appearance.density`).
+ * Window opacity (`--window-opacity`) and UI scale (`zoom`) are set as
+ * inline styles by Providers instead — they're continuous sliders, not
+ * discrete enums.
+ * ------------------------------------------------------------------ */
+
+/* Roundness multiplier for the whole `--radius-*` family. Default 1
+   reproduces the shipped radii; the attribute blocks scale it. Kept as
+   its own var so a single knob drives every radius token below. */
+:root {
+  --radius-scale: 1;
+}
+[data-radius="sharp"] {
+  --radius-scale: 0.45;
+}
+[data-radius="round"] {
+  --radius-scale: 1.6;
+}
+
+/* Recompute the radius token family from the scale. These `:root`
+   declarations come after the `@theme` block (same specificity) so they
+   win, and every Tailwind `rounded-*` utility + surface token that reads
+   `var(--radius-*)` follows the preference live. (Components using
+   arbitrary `rounded-[Npx]` values opt out by design — they're fixed
+   px.) `--radius-scale` resolves per-element, so a `[data-radius]`
+   override on <html> flows through here automatically. */
+:root {
+  --radius-subtle: calc(6px * var(--radius-scale));
+  --radius-sm: calc(8px * var(--radius-scale));
+  --radius-md: calc(12px * var(--radius-scale));
+  --radius-lg: calc(16px * var(--radius-scale));
+  --radius-xl: calc(20px * var(--radius-scale));
+  --radius-2xl: calc(24px * var(--radius-scale));
+}
+
+/* UI density — override Tailwind v4's `--spacing` base so every
+   spacing-derived utility (padding, gap, margin, space-*) tightens at
+   once. Applied only on the full-window chrome (main / capture); the
+   overlay + backend-sized utility windows never receive the attribute,
+   so their precise layouts are untouched. Comfortable is the shipped
+   0.25rem default (no override needed). */
+[data-density="compact"] {
+  --spacing: 0.216rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+/* Minimal, desktop-native scrollbars (thin, dim, hover-reveal) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-idle) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+:hover::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+/* Dropdown menus: always-visible thin scrollbar so the scroll affordance
+   is obvious during the menu's short lifetime. */
+.clippity-menu {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-menu) transparent;
+}
+.clippity-menu::-webkit-scrollbar {
+  width: 8px;
+}
+.clippity-menu::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-menu);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+.clippity-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-menu-hover);
+  background-clip: padding-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  /* Borderless + transparent window: the desktop shows through the
+     gutter so the WindowFrame can render a rounded floating shell. */
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Countdown progress line — drop the gradient for a solid fill when
+   the user prefers higher contrast or the OS forces colors. Spec:
+   "High Contrast Mode → replace gradient with solid white / solid
+   accent color." */
+@media (prefers-contrast: more) {
+  :root {
+    --countdown-gradient: var(--color-accent);
+    --countdown-glow: none;
+  }
+}
+@media (forced-colors: active) {
+  :root {
+    --countdown-gradient: Highlight;
+    --countdown-glow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* User-forced reduce motion — same effect as the media query but
+   triggered by the appearance setting regardless of OS preference. */
+[data-motion="reduced"] *,
+[data-motion="reduced"] *::before,
+[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Idle window — pause looping animations. `data-idle` is set on <html> by
+   `useWindowActivity` whenever this window is unfocused, minimized, or
+   hidden in the tray. Every window is kept alive for the whole session
+   (never destroyed), so without this an off-screen window's infinite
+   keyframe animations would keep the compositor — and the GPU — ticking
+   for nothing. Targets only the looping animations (the breathing capture
+   ring, the overlay crosshair pulse, the Tailwind `animate-*` spinners);
+   one-shot entrance animations finish in well under a second and aren't an
+   idle cost, and JS/Web-Animations motion (Framer Motion) already pauses
+   itself when the document is hidden. Paused animations resume seamlessly
+   the moment the window regains focus. */
+[data-idle="true"] .capture-ring,
+[data-idle="true"] .crosshair-dot,
+[data-idle="true"] .animate-spin,
+[data-idle="true"] .animate-pulse,
+[data-idle="true"] .animate-ping,
+[data-idle="true"] .animate-bounce {
+  animation-play-state: paused !important;
+}
+
+/* Reduced transparency (performance.windowEffects = false). The backend
+   clears the Win11 Mica backdrop; here we turn the glassmorphic surfaces
+   opaque and drop every `backdrop-filter` blur so the DWM compositor +
+   GPU stop doing per-frame blur work. Placed after the :root / dark
+   token blocks (same specificity) so the token overrides win on the
+   <html> element; the blur removals are unlayered so they beat the
+   layered `@layer components` glass utilities without needing to match
+   their specificity. */
+[data-effects="flat"] {
+  --glass-1: var(--color-surface);
+  --glass-2: var(--color-surface);
+  --glass-3: var(--color-surface-2);
+  --glass-4: var(--color-surface-2);
+  --float-bg: var(--color-surface);
+}
+[data-effects="flat"] .glass-1,
+[data-effects="flat"] .glass-2,
+[data-effects="flat"] .glass-3,
+[data-effects="flat"] .glass-4,
+[data-effects="flat"] .surface-elevated,
+[data-effects="flat"] .surface-card,
+[data-effects="flat"] .surface-inset {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * Surface component utilities (glassmorphic / neumorphic layers)
+ * ------------------------------------------------------------------ */
+@layer components {
+  /* Glass surface levels — UI_DOCUMENTATION "Glassmorphic Surfaces" */
+  .glass-1 {
+    background: var(--glass-1);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+  }
+  .glass-2 {
+    background: var(--glass-2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .glass-3 {
+    background: var(--glass-3);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+  }
+  .glass-4 {
+    background: var(--glass-4);
+  }
+
+  /* Hairline border used across panels */
+  .hairline {
+    border: 1px solid var(--hairline-strong);
+  }
+
+  /* Elevated container — main app shells */
+  .surface-elevated {
+    background: var(--glass-1);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Surface card — generic content card */
+  .surface-card {
+    background: var(--glass-3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-medium);
+  }
+
+  /* Inset neumorphic panel — sidebars */
+  .surface-inset {
+    background: var(--glass-4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--inset-hl);
+  }
+
+  /* App-window root: warm canvas over the native Mica backdrop. The
+     --window-opacity var (0.5..1) controls how much Mica bleeds through. */
+  .app-canvas-bg {
+    background: color-mix(
+      in srgb,
+      var(--color-canvas) calc(var(--window-opacity) * 100%),
+      transparent
+    );
+  }
+
+  /* Editor window root. */
+  .window-bg {
+    background: color-mix(
+      in srgb,
+      var(--color-canvas) calc(var(--window-opacity) * 100%),
+      transparent
+    );
+  }
+
+  /* Sidebar — same shell, a hair off so it reads as one surface. */
+  .sidebar-grad {
+    background: color-mix(
+      in srgb,
+      var(--color-sidebar) calc(var(--window-opacity) * 100%),
+      transparent
+    );
+  }
+
+  /* Recessed content canvas — the inset area the chrome wraps around. */
+  .content-canvas {
+    background: color-mix(
+      in srgb,
+      var(--color-canvas-inset) calc(var(--window-opacity) * 100%),
+      transparent
+    );
+  }
+
+  /* Neomorphic top bar — a softly extruded chrome strip that lifts
+     above the sidebar. Consumes the mode-aware --titlebar-neo-* tokens
+     (defined in :root / [data-theme="dark"]): the gradient deepens the
+     extrusion and the token's downward drop shadow casts over the
+     sidebar's top edge, so the bar reads as a raised surface sitting on
+     top of the nav rail. Pair with `relative z-30` on the element so
+     the shadow paints above the sidebar (z-20). */
+  .titlebar-neo {
+    position: relative;
+    background: var(--titlebar-neo-bg);
+    box-shadow: var(--titlebar-neo-shadow);
+  }
+
+  /* Floating cards that need a readable solid-ish background regardless
+     of what's behind them (countdown, toast, overlay banners). */
+  .float-card {
+    background: var(--float-bg);
+  }
+
+  .focus-ring {
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    box-shadow: var(--glow-focus);
+  }
+}
+
+/* Capture button breathing ring */
+@keyframes clippity-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+.capture-ring {
+  animation: clippity-breathe 2.6s var(--ease-std) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .capture-ring {
+    animation: none;
+  }
+}
+
+/* Range slider thumb (cross-browser) */
+.clippity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform var(--t-fast);
+}
+.clippity-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+.clippity-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.clippity-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--glow-coral);
+}
+
+/* Crosshair center-dot idle-state pulse */
+@keyframes crosshair-dot-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1.5px rgba(255, 255, 255, 0.85),
+      0 0 6px 2px color-mix(in srgb, var(--color-accent) 55%, transparent);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1.5px rgba(255, 255, 255, 0.95),
+      0 0 12px 3px color-mix(in srgb, var(--color-accent) 65%, transparent);
+    transform: scale(1.25);
+  }
+}
+.crosshair-dot {
+  animation: crosshair-dot-pulse 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .crosshair-dot {
+    animation: none;
+  }
+}
+
+/* Capture button accent glow (applied when a selection is ready) */
+.capture-btn-ready {
+  box-shadow: 0 2px 12px
+    color-mix(in srgb, var(--color-accent) 40%, transparent);
+}
+
+/* ------------------------------------------------------------------ *
+ * Overlay (screenshot capture) — motion tokens + animation primitives.
+ * Scoped under `.clippity-overlay-root` so the rules only apply inside
+ * the overlay window and don't leak into other windows.
+ * ------------------------------------------------------------------ */
+.clippity-overlay-root {
+  --ovl-ease-spring: cubic-bezier(0.32, 0.72, 0.2, 1.12);
+  --ovl-ease-precise: cubic-bezier(0.2, 0, 0.05, 1);
+  --ovl-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ovl-fast: 120ms;
+  --ovl-std: 180ms;
+  --ovl-slow: 260ms;
+}
+
+/* Selection border — soft snap pulse on alignment / edge snap. */
+@keyframes ovl-border-snap-pulse {
+  0% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-accent) 0%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent);
+  }
+  35% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--color-accent) 75%, transparent),
+      0 0 22px 6px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-accent) 0%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent);
+  }
+}
+.ovl-snap-pulse {
+  animation: ovl-border-snap-pulse 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Capture completion flash. */
+@keyframes ovl-capture-flash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.ovl-capture-flash {
+  animation: ovl-capture-flash 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Selection edge settle on commit. */
+@keyframes ovl-edge-settle {
+  0% {
+    transform: scale(1.012);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.ovl-edge-settle {
+  animation: ovl-edge-settle 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Resize handle hover + active. */
+.ovl-handle {
+  transition:
+    transform 140ms cubic-bezier(0.32, 0.72, 0.2, 1.12),
+    box-shadow 140ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.ovl-handle:hover {
+  transform: translate(-50%, -50%) scale(1.35);
+}
+.ovl-handle[data-active="true"] {
+  transform: translate(-50%, -50%) scale(1.5);
+  box-shadow:
+    0 0 0 2px white,
+    0 0 0 4px color-mix(in srgb, var(--color-accent) 45%, transparent),
+    0 4px 14px rgba(0, 0, 0, 0.34);
+}
+
+/* Magnifier — soft transitions on size + position. */
+.ovl-magnifier {
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+/* Crosshair snap pulse — fires when the cursor aligns to an edge. */
+@keyframes ovl-crosshair-snap {
+  0% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.65);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+}
+.ovl-crosshair-snap {
+  animation: ovl-crosshair-snap 280ms cubic-bezier(0.32, 0.72, 0.2, 1.12);
+}
+
+/* Outside-region dim/blur — subtle so the user can read context. */
+.ovl-dim-outside {
+  backdrop-filter: blur(1.5px) saturate(0.72) brightness(0.78);
+  -webkit-backdrop-filter: blur(1.5px) saturate(0.72) brightness(0.78);
+  transition: backdrop-filter 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Accessibility modes — opt-in via data attributes on the overlay root. */
+.clippity-overlay-root[data-motion="reduced"] *,
+.clippity-overlay-root[data-motion="reduced"] *::before,
+.clippity-overlay-root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+.clippity-overlay-root[data-contrast="high"] .ovl-crosshair-arm {
+  background: #fff !important;
+  box-shadow:
+    0 0 0 1px #000,
+    0 0 4px 1.5px rgba(0, 0, 0, 0.8) !important;
+}
+.clippity-overlay-root[data-contrast="high"] .ovl-handle {
+  background: #fff !important;
+  box-shadow:
+    0 0 0 2px #000,
+    0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * Editor (Figma-style scene editor).
+ *
+ * Backgrounds, text, hairlines, and scrollbars are mapped onto the app's
+ * theme tokens so the editor matches the rest of the app and follows
+ * light/dark — the canvas reuses the recessed content tint, panels reuse
+ * the raised surface tint. The editor's accent (selected tool, primary
+ * buttons, selection box, alignment guides, transform-handle stroke,
+ * text caret) follows the user's chosen accent via the app's
+ * `--color-accent` family, so the editor honors appearance customization
+ * like every other surface. Two things stay fixed on purpose: the
+ * transform-handle *fill* is white (a neutral body that reads on any
+ * artwork or accent) and `--ed-danger` is a dedicated destructive red
+ * (a delete action should never inherit a friendly accent). Scoped under
+ * `.clippity-editor`; components read the `--ed-*` tokens so none of this
+ * leaks elsewhere.
+ * ------------------------------------------------------------------ */
+.clippity-editor {
+  --ed-bg: var(--color-canvas);
+  --ed-canvas: var(--color-canvas-inset);
+  --ed-panel: var(--color-surface);
+  --ed-panel-2: var(--color-canvas);
+  --ed-elev: var(--color-overlay-2);
+  --ed-elev-hover: var(--color-overlay-3);
+  --ed-hairline: var(--hairline);
+  --ed-hairline-strong: var(--hairline-strong);
+  --ed-text: var(--color-ink);
+  --ed-text-dim: var(--color-slate);
+  --ed-text-faint: var(--color-hint);
+  /* Accent family — follows the user's chosen accent (set per-window on
+     <html> by Providers.tsx). Falls back to the @theme coral default
+     before settings hydrate. */
+  --ed-accent: var(--color-accent);
+  --ed-accent-hover: var(--color-accent-hover);
+  /* Keep the editor's established 16% selection-highlight weight, now in
+     the user's hue instead of a fixed blue. */
+  --ed-accent-soft: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --ed-on-accent: var(--color-accent-ink);
+  --ed-selection: var(--color-accent);
+  --ed-handle-fill: #ffffff;
+  --ed-handle-stroke: var(--color-accent);
+  /* Fields read as *recessed* into the surface holding them. Raising them
+     (the old overlay tint) stopped working once sections became cards: an
+     overlay on a card is the same tint twice and the field disappeared into
+     it. Aliased to the control pair so there is still one place to tune. */
+  --ed-input-bg: var(--ed-control-bg);
+  --ed-input-bg-hover: var(--color-overlay-2);
+  /* Inspector property cards. Each section is its own raised slab sitting on
+     the panel with a gap between it and its neighbours, rather than a row in a
+     hairline-divided list — so the card tint has to read against `--ed-panel`
+     without a border doing the work. */
+  --ed-card: var(--color-overlay-1);
+  --ed-card-hairline: var(--hairline);
+  /* Controls *inside* a card need to recede from it, which the input tint
+     alone can't do once the card is already raised. Kept as its own pair so
+     tuning card contrast never silently flattens the fields on top of it. */
+  --ed-control-bg: var(--color-canvas);
+  --ed-control-hairline: var(--hairline-strong);
+  /* Chrome selection (active tool, active mode) is deliberately *neutral*:
+     the accent is spent on the primary Export action, the inspector's tab
+     underline, and the on-canvas selection, so a highlighted tool doesn't
+     compete with the thing the user is actually editing. */
+  --ed-active-bg: var(--color-overlay-3);
+  --ed-active-text: var(--color-ink);
+  --ed-ruler-bg: var(--color-canvas);
+  --ed-ruler-text: var(--color-hint);
+  --ed-ruler-line: var(--hairline-strong);
+  --ed-grid: var(--hairline);
+  --ed-danger: #f24822;
+
+  color: var(--ed-text);
+  background: var(--ed-bg);
+}
+
+/* Inspector sliders (opacity …). Deliberately *not* `.clippity-slider`: that
+   one is the settings panel's accent-thumbed control, and inside the editor an
+   accent thumb would read as a selection marker. Neutral ink thumb, thinner
+   rail — the value, not the control, is what should catch the eye here. */
+.clippity-editor .ed-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.clippity-editor .ed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--ed-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform var(--t-fast);
+}
+.clippity-editor .ed-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+.clippity-editor .ed-slider::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: none;
+  border-radius: 50%;
+  background: var(--ed-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+/* Crisp 1px hairlines that survive fractional zoom inside the editor. */
+.clippity-editor .ed-hairline {
+  border-color: var(--ed-hairline);
+}
+
+/* Editor scrollbars follow the app's theme-aware scrollbar tokens. */
+.clippity-editor *::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+.clippity-editor *::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Transform handles (resize squares + rotate knob) grow slightly on hover so
+   they're easy to grab. `transform-box: fill-box` makes the SVG transform
+   pivot on the handle's own center. Motion is neutralized by the global
+   reduced-motion blocks above (transition-duration → ~0), so the enlarge
+   still works, just without the tween. */
+.clippity-editor .ed-handle,
+.clippity-editor .ed-rotate-handle {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--t-fast);
+}
+.clippity-editor .ed-handle:hover {
+  transform: scale(1.3);
+}
+.clippity-editor .ed-rotate-handle:hover {
+  transform: scale(1.25);
+}
+
+/* Alignment guides + the selected-object lift share the accent family and the
+   app shadow tokens — no new palette. The lift is a cheap box-shadow (not a
+   blur), so it's fine under flat-effects. */
+.clippity-editor .ed-selection-lift {
+  box-shadow: var(--shadow-medium);
+}
