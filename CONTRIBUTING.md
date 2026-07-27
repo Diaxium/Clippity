@@ -18,7 +18,7 @@ and what CI checks before a merge.
 ## Setup
 
 See [docs/getting-started/prerequisites.md](docs/getting-started/prerequisites.md)
-for the full list. In short: Node 18+, pnpm 11+, Rust 1.78+ with `rustfmt` and
+for the full list. In short: Node 22.13+ (pnpm 11 requires it), pnpm 11+, Rust 1.78+ with `rustfmt` and
 `clippy`, and the Tauri v2 system dependencies (MSVC C++ Build Tools and
 WebView2 on Windows).
 

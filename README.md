@@ -184,7 +184,7 @@ pnpm dist
 
 ### Prerequisites
 
-- **[Node.js](https://nodejs.org/) 18+**
+- **[Node.js](https://nodejs.org/) 22.13+** — required by pnpm 11
 - **[pnpm](https://pnpm.io/) 11+** — the only supported package manager (`corepack enable`)
 - **[Rust](https://rustup.rs/) 1.78+** with `rustfmt` and `clippy`
 - **Tauri v2 system dependencies** — on Windows: MSVC C++ Build Tools and WebView2
