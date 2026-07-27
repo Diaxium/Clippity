@@ -1703,8 +1703,18 @@ mod tests {
             h.service.add_color(sample_color()).unwrap();
         }
         for include_trashed in [false, true] {
-            let a = indexed.service.list(include_trashed).unwrap();
-            let b = scanned.service.list(include_trashed).unwrap();
+            let mut a = indexed.service.list(include_trashed).unwrap();
+            let mut b = scanned.service.list(include_trashed).unwrap();
+            // Both paths order by `created_at_ms DESC, id ASC`, and in a
+            // real library that is fully determined — one root, one set of
+            // ids. Here the two trees sit under *different* temp roots, so
+            // rows written in the same millisecond (a fast machine writes
+            // the trashed file and the colour entry within one) can break
+            // the `id` tie in opposite directions. Re-key on something the
+            // root can't reach before comparing positionally.
+            let key = |m: &CaptureMeta| (std::cmp::Reverse(m.created_at_ms), m.title.clone());
+            a.sort_by_key(key);
+            b.sort_by_key(key);
             // Ids differ only by temp root; compare the rest positionally.
             assert_eq!(a.len(), b.len(), "trashed={include_trashed}");
             for (x, y) in a.iter().zip(b.iter()) {
