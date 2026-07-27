@@ -169,13 +169,13 @@ Grab the latest build from
 
 | Download | What it does |
 | --- | --- |
-| `Clippity-Setup.exe` | The full wizard — installs, modifies, repairs, updates, and uninstalls. One self-contained file with the app compiled into it. |
-| `Clippity-portable.zip` | Unzip and run. No installer, no registry entries, settings kept beside the executable. |
+| `Clippity-<version>-Setup.exe` | The full wizard — installs, modifies, repairs, updates, and uninstalls. One self-contained file with the app compiled into it. |
+| `Clippity-<version>-portable.zip` | Unzip and run. No installer, no registry entries, settings kept beside the executable. |
 
 Verify what you downloaded against `SHA256SUMS.txt`:
 
 ```bash
-certutil -hashfile Clippity-Setup.exe SHA256
+certutil -hashfile Clippity-0.1.0-Setup.exe SHA256
 ```
 
 Because the binaries are unsigned, SmartScreen will show "Windows protected your
