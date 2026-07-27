@@ -13,7 +13,13 @@ type RafCallback = (t: number) => void;
 let rafCallbacks: RafCallback[] = [];
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  // Fake only the timeout surface. This test supplies its own rAF/cAF
+  // and performance.now below, and letting the fake clock install those
+  // too means its teardown removes `window.cancelAnimationFrame` out
+  // from under React's unmount cleanup, which calls it.
+  vi.useFakeTimers({
+    toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+  });
   nowMock = 0;
   performance.now = () => nowMock;
   rafCallbacks = [];
