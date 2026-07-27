@@ -157,17 +157,37 @@ Planned work is tracked per area in [docs/roadmaps/](docs/roadmaps/README.md) �
 capture, editor tools, library organization, sharing & export, vision & AI,
 performance, accessibility, and security.
 
-> **Not yet audited for release.** There is no signed release channel or auto-update
-> path yet, and the security-hardening items in
+> **Not yet audited for release.** The binaries are unsigned, there is no
+> auto-update path yet, and the security-hardening items in
 > [docs/roadmaps/security-privacy.md](docs/roadmaps/security-privacy.md) are open.
-> Build it yourself and run it as a developer preview.
+> Treat 0.1.0 as a developer preview.
 
 ## Install
 
-There are no published binaries yet — the first tagged release will attach the
-MSI, the NSIS setup, and a portable zip. Until then, [build from source](#build-from-source).
+Grab the latest build from
+[**Releases**](https://github.com/Diaxium/Clippity/releases). Two ways in:
 
-Building produces all three, collected into `build/`:
+| Download | What it does |
+| --- | --- |
+| `Clippity-Setup.exe` | The full wizard — installs, modifies, repairs, updates, and uninstalls. One self-contained file with the app compiled into it. |
+| `Clippity-portable.zip` | Unzip and run. No installer, no registry entries, settings kept beside the executable. |
+
+Verify what you downloaded against `SHA256SUMS.txt`:
+
+```bash
+certutil -hashfile Clippity-Setup.exe SHA256
+```
+
+Because the binaries are unsigned, SmartScreen will show "Windows protected your
+PC" on first run — **More info → Run anyway**, or check the hash first.
+
+### Or build it yourself
+
+```bash
+pnpm dist
+```
+
+That produces every packaging format, collected into `build/`:
 
 ```bash
 pnpm dist
