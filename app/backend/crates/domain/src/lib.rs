@@ -13,6 +13,7 @@
 //!   labels    — per-capture tags + favorite flag
 //!   collections — named, ordered capture sets
 //!   editor    — load/save data-URI envelope for the annotation editor
+//!   hdr       — scRGB → sRGB tone mapping for captures off an HDR display
 //!   naming    — capture file-name template engine
 //!   provisioning — the installer's recorded choices + the feature
 //!                  availability they imply
@@ -29,6 +30,7 @@ pub mod countdown;
 pub mod dashboard;
 pub mod editor;
 pub mod enhance;
+pub mod hdr;
 pub mod labels;
 pub mod library;
 pub mod metadata;

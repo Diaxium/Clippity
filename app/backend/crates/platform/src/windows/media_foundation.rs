@@ -34,7 +34,8 @@ use windows::Win32::Media::MediaFoundation::{
     MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, MF_MT_AAC_PAYLOAD_TYPE, MF_MT_ALL_SAMPLES_INDEPENDENT,
     MF_MT_AUDIO_AVG_BYTES_PER_SECOND, MF_MT_AUDIO_BITS_PER_SAMPLE, MF_MT_AUDIO_BLOCK_ALIGNMENT,
     MF_MT_AUDIO_NUM_CHANNELS, MF_MT_AUDIO_SAMPLES_PER_SECOND, MF_MT_AVG_BITRATE, MF_MT_FRAME_RATE,
-    MF_MT_FRAME_SIZE, MF_MT_INTERLACE_MODE, MF_MT_MAJOR_TYPE, MF_MT_MPEG2_PROFILE,
+    MF_MT_FRAME_SIZE, MF_MT_INTERLACE_MODE, MF_MT_MAJOR_TYPE, MF_MT_MPEG2_LEVEL,
+    MF_MT_MPEG2_PROFILE,
     MF_MT_PIXEL_ASPECT_RATIO, MF_MT_SUBTYPE, MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS,
     MF_SINK_WRITER_DISABLE_THROTTLING, MF_TRANSCODE_CONTAINERTYPE, MF_VERSION, MFSTARTUP_FULL,
 };
@@ -150,6 +151,11 @@ pub struct Mp4Config {
     pub height: u32,
     pub fps: u32,
     pub bitrate_bps: u32,
+    /// H.264 level, as the level-times-ten code `MF_MT_MPEG2_LEVEL`
+    /// takes. Resolved by `domain::recorder::h264_level` — the caller
+    /// supplies it rather than this module deriving it, so the spec
+    /// table stays testable without Media Foundation.
+    pub level: u32,
     /// `Some` adds an AAC stream. A recording with no audio must have
     /// **no** audio stream rather than a silent one — a zero-sample
     /// track makes some players report a broken file.
@@ -382,6 +388,16 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<u32
             // gets B-frames and CABAC. High would compress a little
             // better; Baseline would play on hardware nobody has.
             attrs.SetUINT32(&MF_MT_MPEG2_PROFILE, eAVEncH264VProfile_Main.0 as u32)?;
+            // Stated, not inferred. Left unset, several hardware
+            // encoders pick a level too small for an ultrawide frame
+            // and then reject the media type — see
+            // `domain::recorder::h264_level`. The value is the level
+            // times ten, which is exactly how `eAVEncH264VLevel` is
+            // numbered, so the codes travel as plain integers rather
+            // than dragging that enum into the domain crate (which also
+            // stops at 5.2 in the `windows` bindings, below what a
+            // 5120×2160 panel needs).
+            attrs.SetUINT32(&MF_MT_MPEG2_LEVEL, config.level)?;
             attrs.SetUINT64(&MF_MT_FRAME_SIZE, pack(config.width, config.height))?;
             attrs.SetUINT64(&MF_MT_FRAME_RATE, pack(config.fps, 1))?;
             attrs.SetUINT64(&MF_MT_PIXEL_ASPECT_RATIO, pack(1, 1))?;
@@ -591,6 +607,7 @@ mod tests {
                 height,
                 fps,
                 bitrate_bps: 2_000_000,
+                level: 42,
                 audio: Some(AudioTrack),
             },
         )
@@ -640,6 +657,60 @@ mod tests {
         // type is `ftyp`, at offset 4.
         let head = std::fs::read(&path).expect("read back");
         assert_eq!(&head[4..8], b"ftyp", "not an MP4 container");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The ultrawide guard, against the real encoder.
+    ///
+    /// 5120×2160 is past H.264 level 5.2's `MaxFS` and well past the
+    /// 4096 px width several hardware encoders will infer a level for.
+    /// This is the case that failed as "no H.264 encoder available" at
+    /// the moment the user pressed Record, so it is worth a live check
+    /// rather than only a unit test of the level table.
+    ///
+    /// Ignored for the same reason as the test above, plus one more: it
+    /// allocates an 11-megapixel NV12 scratch buffer.
+    #[test]
+    #[ignore = "needs a Windows session with Media Foundation encoders"]
+    fn accepts_an_ultrawide_frame_size() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let _com = ComThread::init().expect("COM + Media Foundation start");
+
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0);
+        let path = std::env::temp_dir().join(format!("clippity-mf-uw-{stamp}.mp4"));
+
+        let (width, height, fps) = (5_120u32, 2_160u32, 60u32);
+        let mut writer = Mp4Writer::create(
+            &path,
+            Mp4Config {
+                width,
+                height,
+                fps,
+                bitrate_bps: 46_000_000,
+                // What `domain::recorder::h264_level` resolves for this
+                // frame; hard-coded here so the two crates' agreement is
+                // asserted rather than assumed.
+                level: 60,
+                audio: None,
+            },
+        )
+        .expect("encoder accepts a 5120×2160 media type");
+
+        // One frame is enough — negotiation is what breaks, not the
+        // steady state, and a second of 4K-plus video is a slow test.
+        let bgra = vec![0u8; (width as usize) * (height as usize) * 4];
+        writer
+            .write_video(&bgra, nv12::PixelOrder::Bgra, 0, 10_000_000 / fps as i64)
+            .expect("ultrawide frame accepted");
+        writer.finish().expect("finalize");
+
+        let size = std::fs::metadata(&path).expect("file exists").len();
+        assert!(size > 1_024, "expected real encoded output, got {size} bytes");
 
         let _ = std::fs::remove_file(&path);
     }

@@ -23,13 +23,19 @@ pub fn open(
     use clippity_platform::windows::media_foundation::{AudioTrack, Mp4Config, Mp4Writer};
 
     let (width, height) = (request.region.width, request.region.height);
+    let bitrate_bps = recorder::video_bitrate_bps(width, height, request.fps);
     let writer = Mp4Writer::create(
         path,
         Mp4Config {
             width,
             height,
             fps: request.fps,
-            bitrate_bps: recorder::video_bitrate_bps(width, height, request.fps),
+            bitrate_bps,
+            // Derived from the frame the encoder is actually being
+            // handed, so an ultrawide session states a level big enough
+            // to carry it instead of letting the encoder guess low and
+            // refuse the media type.
+            level: recorder::h264_level(width, height, request.fps, bitrate_bps),
             // Only declare an audio stream when audio was asked for. A
             // stream that never receives a sample makes some players
             // report the file as broken.

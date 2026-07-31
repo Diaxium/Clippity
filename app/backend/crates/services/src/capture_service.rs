@@ -1,7 +1,7 @@
 //! Capture orchestration. Owns the fullscreen capture pipeline:
 //! hide the capture window briefly so it isn't in the shot, grab the
-//! primary monitor via xcap, encode PNG, persist to disk, cache the
-//! result, optionally push to the clipboard, restore the window, and
+//! monitor under the cursor via xcap, encode PNG, persist to disk, cache
+//! the result, optionally push to the clipboard, restore the window, and
 //! emit `clippity://capture/finished`.
 //!
 //! Non-fullscreen `CaptureKind` variants reject with `Unsupported` —
@@ -87,7 +87,7 @@ impl CaptureService {
         // capture-flavoured unpaint inside the helper.
         window_service::hide_capture_briefly(app);
 
-        let grab = grab_primary_monitor_image()?;
+        let grab = grab_active_monitor_image()?;
         let (mut image, monitor_x, monitor_y) = (grab.image, grab.x, grab.y);
         // Title *and* owning app come from the same attribution result,
         // so the name and the metadata record describe one window.
@@ -323,6 +323,38 @@ struct EncodedPng {
     height: u32,
 }
 
+/// The system cursor's position in screen coordinates, or `None` where
+/// there is no way to ask. Mirrors the recorder's helper of the same
+/// name — both resolve "which screen does Fullscreen mean?" and must
+/// answer it identically.
+#[cfg(target_os = "windows")]
+fn cursor_position() -> Option<(i32, i32)> {
+    clippity_platform::windows::cursor::screen_position()
+}
+
+#[cfg(not(target_os = "windows"))]
+fn cursor_position() -> Option<(i32, i32)> {
+    None
+}
+
+/// Tone-mapped RGBA for the monitor at a screen point, when that
+/// monitor is running in HDR. `None` means "use the ordinary grab" —
+/// see `platform::windows::hdr_capture`.
+///
+/// The point is nudged one pixel inside the monitor's origin: the
+/// top-left corner is shared with the monitor above/left of it on a
+/// multi-monitor desktop, and `MonitorFromPoint` would be free to
+/// resolve it to the neighbour.
+#[cfg(target_os = "windows")]
+fn hdr_grab_at(x: i32, y: i32) -> Option<RgbaImage> {
+    clippity_platform::windows::hdr_capture::rgba_monitor_at(x + 1, y + 1)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn hdr_grab_at(_x: i32, _y: i32) -> Option<RgbaImage> {
+    None
+}
+
 /// One monitor's pixels plus what we know about the monitor itself.
 struct MonitorGrab {
     image: RgbaImage,
@@ -336,22 +368,48 @@ struct MonitorGrab {
     monitor: Option<String>,
 }
 
-/// Grab the primary monitor.
-fn grab_primary_monitor_image() -> AppResult<MonitorGrab> {
-    let monitors = Monitor::all().map_err(|e| AppError::Capture(e.to_string()))?;
-    let monitor = monitors
-        .into_iter()
-        .min_by_key(|m| usize::from(!m.is_primary().unwrap_or(false)))
-        .ok_or_else(|| AppError::Capture("no monitor found".into()))?;
+/// Grab the monitor the user is currently looking at — the one under
+/// the cursor — falling back to the primary when there is no cursor to
+/// read or no monitor under it.
+///
+/// The cursor, not the primary, because Fullscreen means "this screen"
+/// and on a multi-monitor desk the screen the user means is the one
+/// they are pointing at. Shooting the primary instead is invisible on a
+/// single display and wrong on every other setup; it is also what
+/// `RecorderService::start` already assumed the still path did — its
+/// comment says fullscreen recording resolves to the cursor's monitor
+/// "matching where the still Fullscreen mode shoots", which was true of
+/// the intent and not of the code. Now both modes frame the same
+/// rectangle, so a screenshot and a recording of "fullscreen" can't
+/// disagree about which screen that is.
+fn grab_active_monitor_image() -> AppResult<MonitorGrab> {
+    let monitor = match cursor_position().and_then(|(x, y)| Monitor::from_point(x, y).ok()) {
+        Some(m) => m,
+        None => {
+            let monitors = Monitor::all().map_err(|e| AppError::Capture(e.to_string()))?;
+            monitors
+                .into_iter()
+                .min_by_key(|m| usize::from(!m.is_primary().unwrap_or(false)))
+                .ok_or_else(|| AppError::Capture("no monitor found".into()))?
+        }
+    };
     let mx = monitor.x().map_err(|e| AppError::Capture(e.to_string()))?;
     let my = monitor.y().map_err(|e| AppError::Capture(e.to_string()))?;
     let label = monitor
         .name()
         .ok()
         .and_then(|name| metadata::monitor_label(&name));
-    let image: RgbaImage = monitor
-        .capture_image()
-        .map_err(|e| AppError::Capture(e.to_string()))?;
+    // An HDR display's desktop is composed in scRGB, and asking xcap
+    // for 8-bit pixels gets it flattened by a conversion that never
+    // saw the display's white level — the washed-out HDR screenshot.
+    // `None` covers both "this display is SDR" and "the float path
+    // wasn't available", and both mean the same thing here.
+    let image: RgbaImage = match hdr_grab_at(mx, my) {
+        Some(image) => image,
+        None => monitor
+            .capture_image()
+            .map_err(|e| AppError::Capture(e.to_string()))?,
+    };
     Ok(MonitorGrab {
         image,
         x: mx,

@@ -69,6 +69,7 @@ const initial: Settings = {
     gifFps: 15,
     cursor: false,
     outline: true,
+    clipboard: false,
   },
   models: {
     autoDownload: true,

@@ -14,6 +14,7 @@ function settings(patch: Partial<RecordingSettings> = {}): RecordingSettings {
     gifFps: 12,
     cursor: true,
     outline: true,
+    clipboard: false,
     ...patch,
   };
 }
@@ -77,6 +78,19 @@ describe("buildRecorderRequest", () => {
     // the still-capture default is set.
     expect(
       buildRecorderRequest("fullscreen", "mp4", settings()).toggles?.preview
+    ).toBe(false);
+  });
+
+  it("carries the clipboard preference through to the request", () => {
+    // Every entry point builds through here, so this is what makes the
+    // setting apply to a launcher recording and an overlay one alike.
+    expect(
+      buildRecorderRequest("fullscreen", "mp4", settings({ clipboard: true }))
+        .toggles?.clipboard
+    ).toBe(true);
+    expect(
+      buildRecorderRequest("region", "gif", settings({ clipboard: false }))
+        .toggles?.clipboard
     ).toBe(false);
   });
 

@@ -1,4 +1,5 @@
 import {
+  ClipboardCopy,
   Gauge,
   Mic,
   MousePointer2,
@@ -25,7 +26,13 @@ const FPS_RANGE = {
 } as const;
 
 interface OptionDef {
-  key: "microphone" | "systemAudio" | "cursor" | "outline" | "fps";
+  key:
+    | "microphone"
+    | "systemAudio"
+    | "cursor"
+    | "outline"
+    | "clipboard"
+    | "fps";
   label: string;
   desc: string;
   icon: ModeIcon;
@@ -60,6 +67,13 @@ const OPTIONS: readonly OptionDef[] = [
     desc: "Show a border around what's being recorded",
     icon: SquareDashed,
     tint: "cool",
+  },
+  {
+    key: "clipboard",
+    label: "Copy to Clipboard",
+    desc: "Paste the finished clip straight into a chat",
+    icon: ClipboardCopy,
+    tint: "warm",
   },
   {
     key: "fps",
@@ -115,6 +129,7 @@ export function RecordOptionsPanel({
     systemAudio: recording?.systemAudio ?? false,
     cursor: recording?.cursor ?? false,
     outline: recording?.outline ?? true,
+    clipboard: recording?.clipboard ?? false,
   };
 
   const update = (next: Partial<NonNullable<typeof recording>>) => {

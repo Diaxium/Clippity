@@ -74,6 +74,13 @@ windows = { version = "0.62.2", features = [
   "Win32_UI_Accessibility",
   "Win32_System_Com",
   "Win32_System_Variant",
+  # CF_HDROP file-drop clipboard copy for finished recordings — a clip
+  # goes on the clipboard by path, not by value (see
+  # `platform::windows::clipboard_files`).
+  "Win32_System_DataExchange",
+  "Win32_System_Memory",
+  "Win32_System_Ole",
+  "Win32_UI_Shell",
   # GetLocalTime backs readable date/time in capture file names;
   # GetCurrentProcessId lets the namer skip our own foreground window.
   "Win32_System_SystemInformation",
@@ -90,6 +97,14 @@ windows = { version = "0.62.2", features = [
   # settings UI can list devices by something other than their GUID.
   "Win32_UI_Shell_PropertiesSystem",
   # Windows.Media.Ocr backs the "Grab Text" capture mode.
+  # HDR capture: DXGI reports whether an output is presenting in a
+  # PQ colour space, Devices_Display reports its SDR white level, and
+  # Direct3D11 + Desktop Duplication grab the scRGB FP16 frame.
+  "Win32_Graphics_Dxgi",
+  "Win32_Graphics_Dxgi_Common",
+  "Win32_Graphics_Direct3D",
+  "Win32_Graphics_Direct3D11",
+  "Win32_Devices_Display",
   "Media_Ocr",
   "Graphics_Imaging",
   "Storage_Streams",

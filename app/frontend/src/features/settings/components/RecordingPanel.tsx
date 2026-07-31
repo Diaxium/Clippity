@@ -153,6 +153,17 @@ export function RecordingPanel({ value, onChange }: RecordingPanelProps) {
             />
           }
         />
+        <Row
+          label="Copy finished clips to the clipboard"
+          description="Paste a recording straight into a chat or a folder. The clipboard holds a link to the file, so moving or deleting the clip breaks the paste."
+          control={
+            <ToggleSwitch
+              checked={value.clipboard}
+              onChange={(clipboard) => onChange({ ...value, clipboard })}
+              label="Copy finished clips to the clipboard"
+            />
+          }
+        />
       </SectionCard>
     </>
   );

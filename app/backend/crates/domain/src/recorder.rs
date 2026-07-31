@@ -66,11 +66,27 @@ pub const MP4_MAX_DURATION_MS: u64 = 3 * 60 * 60 * 1_000;
 /// users would be better served by MP4.
 pub const GIF_MAX_DURATION_MS: u64 = 60 * 1_000;
 
-/// Longest edge a GIF is downscaled to before quantization. GIF is a
+/// Pixel budget a GIF is downscaled into before quantization. GIF is a
 /// 256-colour format; at full 4K it produces enormous files that no
 /// chat client will accept and that dithering can't rescue anyway.
-/// Recordings already smaller than this are left alone.
-pub const GIF_MAX_EDGE: u32 = 800;
+/// Recordings already inside the budget are left alone.
+///
+/// **An area budget, not an edge cap**, because an edge cap punishes
+/// wide aspect ratios in proportion to how wide they are. A 32:9
+/// ultrawide clip under an 800 px longest-edge rule lands at 800×225 —
+/// the same pixel count as a postage stamp, spread so thin that text is
+/// gone. Budgeting area instead gives that clip 1132×318 for the same
+/// bytes. 360 000 is exactly what the old 800 px edge cap produced for
+/// a 16:9 recording, so the common case is unchanged by construction.
+pub const GIF_MAX_PIXELS: u32 = 800 * 450;
+
+/// Secondary bound on a GIF's longest edge, applied after
+/// [`GIF_MAX_PIXELS`]. The area budget alone would let a pathologically
+/// thin strip (a 4000×50 toolbar recording) through at full width; this
+/// keeps any single dimension inside what a chat client will inline.
+/// Chosen to be non-binding for every ordinary aspect ratio, so it is a
+/// backstop rather than a second cap.
+pub const GIF_MAX_EDGE: u32 = 1280;
 
 /// Smallest recordable edge, in physical pixels. H.264 macroblocks are
 /// 16×16 and Media Foundation rejects degenerate frame sizes outright;
@@ -92,8 +108,15 @@ const BITS_PER_PIXEL: f64 = 0.07;
 /// Bitrate floor / ceiling. The floor keeps a small region legible
 /// (text on a 400×300 crop still needs real bits); the ceiling stops a
 /// 4K60 session from asking for a bitrate no disk wants.
+///
+/// The ceiling is 60 rather than 40 Mbps because 40 was low enough to
+/// bind on displays people actually own: a 5120×2160 ultrawide at 60 fps
+/// computes to ~46 Mbps, so the clamp — meant as a runaway guard —
+/// was silently degrading the format it was sized for. 60 clears every
+/// current desktop panel at 60 fps while still refusing the genuinely
+/// absurd.
 const BITRATE_MIN_BPS: u32 = 1_500_000;
-const BITRATE_MAX_BPS: u32 = 40_000_000;
+const BITRATE_MAX_BPS: u32 = 60_000_000;
 
 /// What surface the session records. The rectangle itself is resolved
 /// by the service (a window moves; a monitor is enumerated), so this
@@ -205,10 +228,9 @@ impl AudioSelection {
 }
 
 /// Recording-specific toggles. Deliberately *not* [`crate::capture::CaptureToggles`]:
-/// two of those four have no meaning for a video (there is no
-/// smart-enhance pass on a frame stream, and putting a multi-megabyte
-/// MP4 on the clipboard is not a thing users want), and this adds one
-/// they don't have.
+/// smart-enhance has no meaning for a frame stream, `clipboard` means
+/// something different here (see below), and this adds one stills don't
+/// have.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RecorderToggles {
@@ -227,6 +249,22 @@ pub struct RecorderToggles {
     /// video, so this hands off to the library inspector).
     #[serde(default)]
     pub preview: bool,
+    /// Put the finished clip on the system clipboard, so it can be
+    /// pasted straight into a chat, an email, or a folder.
+    ///
+    /// Copies the file **by reference** (`CF_HDROP`), not by value —
+    /// which is what makes this viable for a video at all, and what
+    /// separates it from the stills toggle of the same name, where the
+    /// pixels themselves go on the clipboard. The cost is constant in
+    /// the recording's length, and the paste lands as an attachment in
+    /// every app that accepts a dragged file.
+    ///
+    /// The trade-off is the one Explorer's own Copy has: the clipboard
+    /// names a path, so moving or deleting the clip before pasting
+    /// breaks it. Worth it — the alternative is no clipboard support
+    /// for recordings at all, since no app reads a raw MP4 blob.
+    #[serde(default)]
+    pub clipboard: bool,
 }
 
 /// What the frontend sends to start a session.
@@ -553,22 +591,81 @@ pub fn video_bitrate_bps(width: u32, height: u32, fps: u32) -> u32 {
     (raw as u64).clamp(BITRATE_MIN_BPS as u64, BITRATE_MAX_BPS as u64) as u32
 }
 
-/// Scale factor to fit `(width, height)` inside [`GIF_MAX_EDGE`], as the
-/// target dimensions. Returns the input unchanged when it already fits —
+/// Downscale `(width, height)` into GIF's pixel budget, preserving the
+/// aspect ratio. Returns the input unchanged when it already fits —
 /// upscaling a small recording would only add weight.
+///
+/// Two bounds apply and the tighter one wins: [`GIF_MAX_PIXELS`] caps
+/// the area (which is what the file size actually tracks), and
+/// [`GIF_MAX_EDGE`] caps the longest side so a very thin strip can't
+/// slip through at full width. Ordering them this way is the ultrawide
+/// fix: an area budget shrinks a 32:9 clip by the same factor in both
+/// axes rather than flattening it to a letterbox.
 ///
 /// The result is forced even for the same reason [`even_dimensions`]
 /// exists: a session's frames are cropped once, and both encoders read
 /// the same buffers.
 pub fn gif_target_size(width: u32, height: u32) -> (u32, u32) {
-    let longest = width.max(height);
-    if longest <= GIF_MAX_EDGE || longest == 0 {
+    if width == 0 || height == 0 {
         return (width, height);
     }
-    let scale = GIF_MAX_EDGE as f64 / longest as f64;
+    let pixels = width as f64 * height as f64;
+    // Linear scale, so the *area* scales by the square of it.
+    let by_area = (GIF_MAX_PIXELS as f64 / pixels).sqrt();
+    let by_edge = GIF_MAX_EDGE as f64 / width.max(height) as f64;
+    let scale = by_area.min(by_edge);
+    if scale >= 1.0 {
+        return (width, height);
+    }
     let w = ((width as f64 * scale).round() as u32).max(2);
     let h = ((height as f64 * scale).round() as u32).max(2);
     even_dimensions(w, h)
+}
+
+/// Lowest H.264 level that can carry `(width, height)` at `fps` and
+/// `bitrate_bps`, as the level-times-ten code Media Foundation's
+/// `MF_MT_MPEG2_LEVEL` expects (51 = level 5.1).
+///
+/// **This exists because leaving the level unset is not safe at
+/// ultrawide sizes.** Media Foundation infers a level from the frame
+/// size when the caller doesn't state one, and several hardware
+/// encoders infer one too small for a >4096-px-wide frame and then
+/// refuse the media type outright — which surfaces as "no H.264 encoder
+/// available" at the moment the user pressed Record. Stating the level
+/// removes the guess.
+///
+/// Bounds come from the H.264 spec's Table A-1: `MaxFS` (frame size in
+/// macroblocks), `MaxMBPS` (macroblocks per second), and `MaxBR` (bits
+/// per second, at Main profile's VCL factor). The lowest level that
+/// satisfies all three wins, floored at 4.2 — below that the levels
+/// start capping bitrate tightly enough to hurt a small region, and
+/// nothing that plays H.264 at all is short of 4.2 support.
+///
+/// Returns the top level (6.2) rather than failing for a frame larger
+/// than the spec covers: refusing to record is worse than handing the
+/// encoder a level it will reject on its own terms with a real message.
+pub fn h264_level(width: u32, height: u32, fps: u32, bitrate_bps: u32) -> u32 {
+    // Macroblocks are 16×16; a partial one still occupies a whole block.
+    let mbs = width.div_ceil(16) as u64 * height.div_ceil(16) as u64;
+    let mbps = mbs * fps.max(1) as u64;
+    let br = bitrate_bps as u64;
+
+    // (level code, MaxFS, MaxMBPS, MaxBR)
+    const LEVELS: &[(u32, u64, u64, u64)] = &[
+        (42, 8_704, 522_240, 20_000_000),
+        (50, 22_080, 589_824, 135_000_000),
+        (51, 36_864, 983_040, 240_000_000),
+        (52, 36_864, 2_073_600, 240_000_000),
+        (60, 139_264, 4_177_920, 240_000_000),
+        (61, 139_264, 8_355_840, 480_000_000),
+        (62, 139_264, 16_711_680, 800_000_000),
+    ];
+
+    LEVELS
+        .iter()
+        .find(|&&(_, max_fs, max_mbps, max_br)| mbs <= max_fs && mbps <= max_mbps && br <= max_br)
+        .map(|&(level, ..)| level)
+        .unwrap_or(62)
 }
 
 /// Thickness of the recording outline, in physical pixels.
@@ -811,9 +908,41 @@ mod tests {
             cursor: false,
             clicks: true,
             preview: false,
+            clipboard: false,
         };
         let v = validate(req, 1920, 1080, None).unwrap();
         assert!(v.toggles.cursor, "a click ring needs a pointer under it");
+    }
+
+    #[test]
+    fn the_clipboard_toggle_survives_validation_for_both_formats() {
+        // Unlike audio, this is not format-dependent: a GIF is as
+        // pasteable as an MP4, so validation must not quietly drop it
+        // the way it drops an audio selection for GIF.
+        for format in [RecorderFormat::Mp4, RecorderFormat::Gif] {
+            let mut req = request(RecorderTarget::Region, format);
+            req.toggles = RecorderToggles {
+                clipboard: true,
+                ..Default::default()
+            };
+            let v = validate(req, 1920, 1080, None).unwrap();
+            assert!(v.toggles.clipboard, "{format:?} lost the clipboard toggle");
+        }
+    }
+
+    #[test]
+    fn toggles_default_to_not_touching_the_clipboard() {
+        // A recorder that replaces whatever the user had copied without
+        // being asked is the same surprise the audio defaults avoid.
+        assert!(!RecorderToggles::default().clipboard);
+    }
+
+    #[test]
+    fn an_older_payload_without_the_clipboard_toggle_still_parses() {
+        let t: RecorderToggles =
+            serde_json::from_str(r#"{"cursor":true,"clicks":false,"preview":false}"#).unwrap();
+        assert!(t.cursor);
+        assert!(!t.clipboard);
     }
 
     #[test]
@@ -891,8 +1020,9 @@ mod tests {
     fn gif_downscales_only_when_oversized() {
         assert_eq!(gif_target_size(640, 480), (640, 480));
         let (w, h) = gif_target_size(3840, 2160);
-        assert_eq!(w.max(h), GIF_MAX_EDGE);
-        // Aspect ratio survives the fit, to within the even-rounding.
+        // The area budget was chosen so a 16:9 recording lands exactly
+        // where the old longest-edge rule put it — this is the
+        // regression guard on "the common case didn't move".
         assert_eq!((w, h), (800, 450));
         assert_eq!(w % 2, 0);
         assert_eq!(h % 2, 0);
@@ -901,8 +1031,35 @@ mod tests {
     #[test]
     fn gif_downscale_keeps_a_tall_recording_upright() {
         let (w, h) = gif_target_size(1080, 1920);
-        assert_eq!(h, GIF_MAX_EDGE);
         assert!(w < h);
+        assert!(w as u64 * h as u64 <= GIF_MAX_PIXELS as u64);
+    }
+
+    #[test]
+    fn gif_downscale_does_not_flatten_an_ultrawide_clip() {
+        // The ultrawide fix. Under a longest-edge cap a 32:9 clip came
+        // out 800×225 — the same pixel budget squeezed into a letterbox
+        // with no vertical resolution left for text. Budgeting area
+        // instead spends those pixels on both axes.
+        let (w, h) = gif_target_size(5120, 1440);
+        assert!(
+            h > 300,
+            "a 32:9 clip should keep usable height, got {w}×{h}"
+        );
+        // …without costing more than a 16:9 clip does.
+        assert!(w as u64 * h as u64 <= GIF_MAX_PIXELS as u64);
+        // Aspect ratio survives, to within the even-rounding.
+        let ratio = w as f64 / h as f64;
+        assert!((ratio - 5120.0 / 1440.0).abs() < 0.05, "ratio {ratio}");
+    }
+
+    #[test]
+    fn gif_edge_cap_still_bounds_a_pathologically_thin_strip() {
+        // Area alone would let this through at full width, because a
+        // 50 px-tall strip is already inside the pixel budget.
+        let (w, h) = gif_target_size(4000, 50);
+        assert_eq!(w, GIF_MAX_EDGE);
+        assert!(h >= 2);
     }
 
     // ---------- bitrate ----------
@@ -921,6 +1078,66 @@ mod tests {
         assert_eq!(video_bitrate_bps(64, 64, 10), BITRATE_MIN_BPS);
         // An 8K60 session is capped rather than asking for the disk.
         assert_eq!(video_bitrate_bps(7680, 4320, 60), BITRATE_MAX_BPS);
+    }
+
+    #[test]
+    fn the_bitrate_ceiling_does_not_bind_on_a_real_ultrawide() {
+        // The ceiling is a runaway guard. If it clamps a panel someone
+        // owns, it has stopped being a guard and started being a
+        // quality cap — which is what 40 Mbps was doing to 5120×2160.
+        for (w, h) in [(3440, 1440), (5120, 1440), (5120, 2160), (3840, 2160)] {
+            assert!(
+                video_bitrate_bps(w, h, 60) < BITRATE_MAX_BPS,
+                "{w}×{h}@60 is being clamped"
+            );
+        }
+    }
+
+    // ---------- H.264 level ----------
+
+    #[test]
+    fn h264_level_covers_ordinary_sizes_at_the_floor() {
+        // 1080p60 fits inside 4.2, and nothing should push it higher —
+        // a needlessly high level costs decoder compatibility.
+        assert_eq!(h264_level(1920, 1080, 60, 8_000_000), 42);
+    }
+
+    #[test]
+    fn h264_level_rises_for_ultrawide_frames() {
+        // The bug this exists for: a >4096-wide frame with no stated
+        // level gets one guessed for it, and some encoders guess too
+        // small and then refuse the media type.
+        let level = h264_level(5120, 1440, 60, video_bitrate_bps(5120, 1440, 60));
+        assert!(level > 42, "5120×1440@60 needs more than level 4.2");
+
+        // 5120×2160 is 43 200 macroblocks — past level 5.2's 36 864
+        // MaxFS, so it has to reach level 6.
+        assert!(h264_level(5120, 2160, 60, video_bitrate_bps(5120, 2160, 60)) >= 60);
+    }
+
+    #[test]
+    fn h264_level_accounts_for_frame_rate_not_just_size() {
+        // Same frame, more macroblocks per second: MaxMBPS binds even
+        // when MaxFS doesn't.
+        let slow = h264_level(3840, 2160, 24, 20_000_000);
+        let fast = h264_level(3840, 2160, 60, 20_000_000);
+        assert!(fast >= slow, "a faster frame rate cannot need a lower level");
+        assert!(fast > 42);
+    }
+
+    #[test]
+    fn h264_level_accounts_for_bitrate() {
+        // Level 4.2 tops out at 20 Mbps; a small region asking for more
+        // than that must not be pinned to a level that forbids it.
+        assert!(h264_level(1280, 720, 30, 40_000_000) > 42);
+    }
+
+    #[test]
+    fn h264_level_never_gives_up_on_an_absurd_frame() {
+        // Past the spec's largest level we hand over the top code
+        // rather than failing — the encoder can refuse with a real
+        // message, which beats us refusing to record at all.
+        assert_eq!(h264_level(30_000, 30_000, 240, 900_000_000), 62);
     }
 
     // ---------- recording outline ----------

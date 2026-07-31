@@ -31,10 +31,10 @@ export interface AudioSelection {
 }
 
 /**
- * Recording toggles. Not `CaptureToggles` — `enhance` and `clipboard`
- * are meaningless for a frame stream, and `clicks` has no still
- * equivalent. `clicks` implies `cursor` (the backend turns it on rather
- * than rejecting the pair).
+ * Recording toggles. Not `CaptureToggles` — `enhance` is meaningless for
+ * a frame stream, `clicks` has no still equivalent, and `clipboard`
+ * means something different here (see below). `clicks` implies `cursor`
+ * (the backend turns it on rather than rejecting the pair).
  */
 export interface RecorderToggles {
   cursor: boolean;
@@ -42,6 +42,11 @@ export interface RecorderToggles {
   /** Open the finished recording in the library inspector — the
    *  recorder's counterpart to "Preview in Editor". */
   preview: boolean;
+  /** Put the finished clip on the clipboard as a file reference
+   *  (`CF_HDROP`), not as bytes — which is what makes it viable for a
+   *  video, and what makes it paste as an attachment. The clipboard
+   *  names a path, so moving the clip before pasting breaks it. */
+  clipboard: boolean;
 }
 
 /** Payload sent to `start_recording`. */

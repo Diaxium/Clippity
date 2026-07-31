@@ -63,6 +63,7 @@ export function buildRecorderRequest(
       // The editor cannot open a video, so a finished recording is
       // never handed to it — see ADR 0031.
       preview: false,
+      clipboard: settings.clipboard,
     },
   };
 }

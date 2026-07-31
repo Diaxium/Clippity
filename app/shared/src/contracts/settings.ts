@@ -155,6 +155,9 @@ export interface CaptureSettings {
  *   the session. **Ships on** — between choosing a region and stopping,
  *   nothing else says what is being recorded. Click-through and excluded
  *   from capture, so it never lands in the file.
+ * - `clipboard`: copy every finished clip to the clipboard as a file
+ *   reference. **Ships off**, matching `CaptureSettings.clipboard` —
+ *   replacing what the user had copied is a surprise either way.
  */
 export interface RecordingSettings {
   microphone: boolean;
@@ -165,6 +168,7 @@ export interface RecordingSettings {
   gifFps: number;
   cursor: boolean;
   outline: boolean;
+  clipboard: boolean;
 }
 
 /**

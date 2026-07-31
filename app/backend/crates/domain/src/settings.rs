@@ -599,6 +599,15 @@ pub struct RecordingSettings {
     /// screenshot of the screen) is the one case where it's noise.
     #[serde(default = "default_outline")]
     pub outline: bool,
+    /// Put every finished clip on the clipboard as a file reference, so
+    /// it can be pasted straight into a chat window.
+    ///
+    /// Ships **off**, matching `CaptureSettings::clipboard` — silently
+    /// replacing whatever the user had copied is a surprise whichever
+    /// pipeline does it. See `recorder::RecorderToggles::clipboard` for
+    /// why this copies a path rather than the file's bytes.
+    #[serde(default)]
+    pub clipboard: bool,
 }
 
 fn default_outline() -> bool {
@@ -624,6 +633,7 @@ impl Default for RecordingSettings {
             gif_fps: default_gif_fps(),
             cursor: false,
             outline: default_outline(),
+            clipboard: false,
         }
     }
 }

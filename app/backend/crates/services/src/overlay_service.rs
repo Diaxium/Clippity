@@ -1327,9 +1327,46 @@ fn cursor_canvas_position(
     }
 }
 
+/// How faithfully a canvas grab should reproduce an HDR display.
+///
+/// The distinction exists because this function is called from two
+/// places with very different budgets: once per *capture* (where a
+/// millisecond is free and correctness is everything) and once per
+/// *frame* of a straddling recording (where 60 of them happen a second).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CanvasColor {
+    /// Grab each monitor the way it is actually composed — the scRGB
+    /// float path on a display running in HDR, tone-mapped down. Costs
+    /// a display-config query per monitor, plus a D3D device and a
+    /// staging read-back for each HDR one.
+    Accurate,
+    /// Ordinary 8-bit grab from every monitor, HDR or not.
+    Sdr,
+}
+
 /// Build the stitched virtual-desktop image (all monitors composited
 /// into one `RgbaImage` whose `(0, 0)` is the virtual-desktop top-left).
+///
+/// HDR-accurate. Use [`build_virtual_canvas_sdr`] on a per-frame path.
 pub(crate) fn build_virtual_canvas() -> AppResult<RgbaImage> {
+    build_virtual_canvas_with(CanvasColor::Accurate)
+}
+
+/// [`build_virtual_canvas`] without the HDR path.
+///
+/// For callers that run this per frame rather than per capture. The
+/// recorder is the one that matters: its straddling-region path rebuilds
+/// the whole canvas for every frame, and setting up a Direct3D device
+/// and a staging read-back 60 times a second — per HDR monitor — would
+/// cost far more than the recording is worth. A recording off an HDR
+/// display therefore has the same washed-out look a screenshot used to;
+/// fixing that properly means holding one duplication open across the
+/// session rather than making this call slower.
+pub(crate) fn build_virtual_canvas_sdr() -> AppResult<RgbaImage> {
+    build_virtual_canvas_with(CanvasColor::Sdr)
+}
+
+fn build_virtual_canvas_with(color: CanvasColor) -> AppResult<RgbaImage> {
     let (min_x, min_y, vw, vh) = virtual_bounds()?;
     let monitors = Monitor::all().map_err(|e| AppError::Overlay(e.to_string()))?;
 
@@ -1337,12 +1374,42 @@ pub(crate) fn build_virtual_canvas() -> AppResult<RgbaImage> {
     for m in &monitors {
         let mx = m.x().map_err(|e| AppError::Overlay(e.to_string()))?;
         let my = m.y().map_err(|e| AppError::Overlay(e.to_string()))?;
-        let img = m
-            .capture_image()
-            .map_err(|e| AppError::Overlay(e.to_string()))?;
+        // Per monitor, not per canvas: HDR is a per-display mode, so a
+        // desk with one HDR panel and one SDR panel has to grab each
+        // one the way that display is actually composed. `None` is the
+        // ordinary path — see `platform::windows::hdr_capture`.
+        let hdr = match color {
+            CanvasColor::Accurate => hdr_grab_at(mx, my),
+            CanvasColor::Sdr => None,
+        };
+        let img = match hdr {
+            Some(img) => img,
+            None => m
+                .capture_image()
+                .map_err(|e| AppError::Overlay(e.to_string()))?,
+        };
         image::imageops::replace(&mut canvas, &img, (mx - min_x) as i64, (my - min_y) as i64);
     }
     Ok(canvas)
+}
+
+/// Tone-mapped RGBA for the monitor at a screen point, when that
+/// monitor is running in HDR. `None` means "use the ordinary grab".
+///
+/// Mirrors `capture_service::hdr_grab_at`, including the one-pixel
+/// nudge inside the origin — a monitor's top-left corner is shared with
+/// its neighbour, and `MonitorFromPoint` may resolve it either way.
+/// Duplicated rather than promoted: each is a three-line `cfg` shim over
+/// the same platform call, and the shared thing they would be promoted
+/// *to* is the platform function they both already call.
+#[cfg(target_os = "windows")]
+fn hdr_grab_at(x: i32, y: i32) -> Option<RgbaImage> {
+    clippity_platform::windows::hdr_capture::rgba_monitor_at(x + 1, y + 1)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn hdr_grab_at(_x: i32, _y: i32) -> Option<RgbaImage> {
+    None
 }
 
 /// Enumerate capturable windows for file-producing overlay modes and

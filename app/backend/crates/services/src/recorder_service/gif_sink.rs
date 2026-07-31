@@ -188,16 +188,24 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("big.gif");
 
-        // 1600 wide is over GIF_MAX_EDGE, so the written frames must be
-        // smaller than the captured region.
+        // 1600×900 is past GIF's pixel budget, so the written frames
+        // must be smaller than the captured region.
         let mut sink = open(&path, &request(1_600, 900, 10)).expect("opens");
         sink.write_frame(&frame(1_600, 900, 200), 0, 0).unwrap();
         sink.finish().unwrap();
 
         let file = std::fs::File::open(&path).unwrap();
         let decoder = image::codecs::gif::GifDecoder::new(std::io::BufReader::new(file)).unwrap();
-        let (w, _) = image::ImageDecoder::dimensions(&decoder);
-        assert_eq!(w, recorder::GIF_MAX_EDGE, "downscaled to the GIF ceiling");
+        let (w, h) = image::ImageDecoder::dimensions(&decoder);
+        // Asserted against the rule rather than a literal, so this stays
+        // a test of "the sink honours the budget" instead of a second
+        // copy of the budget itself.
+        assert_eq!(
+            (w, h),
+            recorder::gif_target_size(1_600, 900),
+            "downscaled to the GIF budget"
+        );
+        assert!(w < 1_600);
 
         let _ = std::fs::remove_dir_all(&dir);
     }

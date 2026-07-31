@@ -45,7 +45,7 @@ use clippity_infra::events;
 
 use crate::capture_io::{next_id, promote_capture_file, resolve_save_dir};
 use crate::sidecar;
-use crate::overlay_service::{build_virtual_canvas, monitor_for_regions, virtual_bounds};
+use crate::overlay_service::{build_virtual_canvas_sdr, monitor_for_regions, virtual_bounds};
 use crate::settings_service::{
     CapturesDirSource, NameTemplateSource, RecordingSettingsSource,
 };
@@ -633,6 +633,19 @@ fn run_session_inner(
         }
     }
 
+    // Also after the promotion, and for a sharper version of the same
+    // reason: the clipboard holds a *path*, so copying the working file
+    // would hand the user a reference that goes stale one rename later.
+    if request.toggles.clipboard {
+        if let Err(e) = copy_file_to_clipboard(&path) {
+            // Logged, never fatal. The recording is on disk and is the
+            // thing the user asked for; a clipboard the OS wouldn't
+            // hand over (another app holding it is the common case) is
+            // not worth failing a finished session over.
+            tracing::warn!("recording not copied to the clipboard: {e}");
+        }
+    }
+
     Ok(SessionOutcome {
         reason,
         result: Some(RecorderResult {
@@ -649,6 +662,24 @@ fn run_session_inner(
         }),
         error: failure,
     })
+}
+
+/// Put the finished recording on the system clipboard as a file
+/// reference, so it pastes into a chat or a folder as an attachment.
+///
+/// Split out behind a `cfg` because the mechanism is `CF_HDROP` and has
+/// no cross-platform stand-in: `arboard`, which every other clipboard
+/// path in the app uses, copies content rather than files. On a
+/// non-Windows build this reports the gap rather than silently claiming
+/// to have copied something.
+#[cfg(target_os = "windows")]
+fn copy_file_to_clipboard(path: &std::path::Path) -> Result<(), String> {
+    clippity_platform::windows::clipboard_files::copy_files_to_clipboard(&[path])
+}
+
+#[cfg(not(target_os = "windows"))]
+fn copy_file_to_clipboard(_path: &std::path::Path) -> Result<(), String> {
+    Err("copying a recording to the clipboard is Windows-only".into())
 }
 
 /// Encode a captured frame as the library's poster PNG.
@@ -752,7 +783,10 @@ fn capture_frame(region: Region) -> AppResult<RgbaImage> {
         }
     }
 
-    let canvas = build_virtual_canvas()?;
+    // The SDR variant deliberately: this runs once per frame, and the
+    // HDR-accurate path sets up a Direct3D device and a staging
+    // read-back per HDR monitor per call. See `build_virtual_canvas_sdr`.
+    let canvas = build_virtual_canvas_sdr()?;
     Ok(
         image::imageops::crop_imm(&canvas, region.x, region.y, region.width, region.height)
             .to_image(),

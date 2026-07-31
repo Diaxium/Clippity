@@ -126,9 +126,16 @@ export function visibleRecordOptionKeys(
   format: RecorderFormat
 ): ReadonlySet<string> {
   if (format === "gif") {
-    return new Set(["cursor", "outline", "fps"]);
+    return new Set(["cursor", "outline", "clipboard", "fps"]);
   }
-  return new Set(["microphone", "systemAudio", "cursor", "outline", "fps"]);
+  return new Set([
+    "microphone",
+    "systemAudio",
+    "cursor",
+    "outline",
+    "clipboard",
+    "fps",
+  ]);
 }
 
 /**
