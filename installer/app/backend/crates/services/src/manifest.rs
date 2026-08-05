@@ -20,7 +20,7 @@ const GB: u64 = 1_000_000_000;
 pub fn product() -> ProductInfo {
     ProductInfo {
         name: "Clippity".into(),
-        version: "0.1.0".into(),
+        version: "0.2.0".into(),
         arch: "64-bit".into(),
         publisher: "Clippity".into(),
         default_install_dir: installer_infra::paths::DEFAULT_INSTALL_DIR.into(),
