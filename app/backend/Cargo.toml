@@ -42,7 +42,7 @@ base64 = "0.22.1"
 arboard = "3"
 
 # --- Window effects ---
-window-vibrancy = "0.7.1"
+window-vibrancy = "0.8.0"
 
 # --- Vision (ONNX object detection) ---
 # ORT pulls matching DLLs at build time; copy-dylibs places them next to
