@@ -59,7 +59,7 @@ rusqlite = { version = "0.40", features = ["bundled"] }
 ureq = "3"
 
 # --- Diagnostics ---
-thiserror = "1"
+thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 
