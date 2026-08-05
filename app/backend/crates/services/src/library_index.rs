@@ -940,15 +940,16 @@ fn tags_to_json(tags: &[String]) -> Option<String> {
 /// Unicode folding (SQLite's `lower()` is ASCII-only).
 fn search_blob(meta: &CaptureMeta) -> String {
     let mut parts: Vec<&str> = vec![meta.title.as_str()];
-    for opt in [
+    for v in [
         &meta.source_app,
         &meta.source_window,
         &meta.mode,
         &meta.text,
-    ] {
-        if let Some(v) = opt {
-            parts.push(v.as_str());
-        }
+    ]
+    .into_iter()
+    .flatten()
+    {
+        parts.push(v.as_str());
     }
     for tag in &meta.tags {
         parts.push(tag.as_str());

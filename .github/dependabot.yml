@@ -1,0 +1,44 @@
+version: 2
+
+# Clippity is two products in one repository: the app (`/`, `/app/backend`)
+# and the installer that ships it (`/installer`, `/installer/app/backend`).
+# Both carry their own lockfiles, so both need their own ecosystem entries —
+# a single root entry would leave the installer's tree unwatched.
+updates:
+  # --- GitHub Actions ---
+  # Actions are pinned to commit SHAs in the workflows, which is what keeps a
+  # compromised upstream tag from reaching CI. That pinning is also what makes
+  # this entry necessary: a pinned SHA never picks up a security fix on its
+  # own, so Dependabot is the thing that moves it forward.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+
+  # --- Application ---
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: cargo
+    directory: /app/backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # --- Installer ---
+  - package-ecosystem: npm
+    directory: /installer
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: cargo
+    directory: /installer/app/backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

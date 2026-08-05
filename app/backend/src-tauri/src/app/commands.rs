@@ -245,9 +245,15 @@ pub fn finish_fullscreen_capture(
 /// absolute path to the clipboard. Nothing leaves the machine — see
 /// `domain::share::ShareTarget`.
 ///
+/// The path is checked against the captures root before it is used — see
+/// `share_service::share`, which does the validating so it can be tested.
 #[tauri::command]
-pub fn share_capture(path: String, target: ShareTarget) -> AppResult<()> {
-    share_service::share(std::path::Path::new(&path), target)
+pub fn share_capture(
+    state: tauri::State<'_, AppState>,
+    path: String,
+    target: ShareTarget,
+) -> AppResult<()> {
+    share_service::share(&path, &state.library_service.captures_dir(), target)
 }
 
 /// Finalize a Freehand (lasso) selection: mask everything outside the

@@ -11,15 +11,26 @@
 use std::path::Path;
 
 use crate::capture_io::copy_text_to_clipboard;
+use clippity_domain::library;
 use clippity_domain::share::ShareTarget;
 use clippity_infra::error::{AppError, AppResult};
 
-/// Hand `path` to `target`.
+/// Hand the capture at `id` to `target`.
 ///
-/// The file must exist: every target is a silent no-op or a confusing
-/// OS-level error otherwise (Explorer opens the wrong folder, the
-/// clipboard gets a path to nothing), so this fails loudly instead.
-pub fn share(path: &Path, target: ShareTarget) -> AppResult<()> {
+/// `id` is checked against `captures_root` before anything touches it.
+/// That check is the security boundary, not a tidiness one:
+/// [`ShareTarget::Open`] hands the file to the shell's registered
+/// handler, and the shell's handler for an executable is "run it", so an
+/// id that escaped the captures root would turn any scripting of the
+/// webview into arbitrary local execution. Same `validate_id` every other
+/// id-taking service call uses.
+///
+/// The file must also exist: every target is a silent no-op or a
+/// confusing OS-level error otherwise (Explorer opens the wrong folder,
+/// the clipboard gets a path to nothing), so this fails loudly instead.
+pub fn share(id: &str, captures_root: &Path, target: ShareTarget) -> AppResult<()> {
+    let path = library::validate_id(id, captures_root)?;
+    let path = path.as_path();
     if !path.is_file() {
         return Err(AppError::Share(format!(
             "{} is not a file that can be shared",
@@ -55,24 +66,70 @@ mod tests {
     use super::*;
     use crate::capture_io::next_id;
 
+    /// A captures root that actually exists, so "outside the root" is the
+    /// only reason a rejection can happen in the tests below.
+    fn root() -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!("clippity-share-root-{}", next_id()));
+        std::fs::create_dir_all(&dir).expect("temp captures root");
+        dir
+    }
+
     #[test]
     fn share_rejects_a_path_that_is_not_a_file() {
-        let missing = std::env::temp_dir().join(format!("clippity-share-missing-{}", next_id()));
+        let root = root();
+        let missing = root.join(format!("clippity-share-missing-{}.png", next_id()));
+        let missing = missing.to_string_lossy().into_owned();
         // Every target refuses equally — the guard is before the match.
         for t in [
             ShareTarget::Reveal,
             ShareTarget::Open,
             ShareTarget::CopyPath,
         ] {
-            let err = share(&missing, t).unwrap_err();
+            let err = share(&missing, &root, t).unwrap_err();
             assert_eq!(err.code(), "share");
         }
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]
     fn share_rejects_a_directory() {
-        let dir = std::env::temp_dir();
-        assert!(share(&dir, ShareTarget::Reveal).is_err());
+        let root = root();
+        let sub = root.join("a-folder");
+        std::fs::create_dir_all(&sub).expect("subdir");
+        assert!(share(&sub.to_string_lossy(), &root, ShareTarget::Reveal).is_err());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn share_refuses_an_id_outside_the_captures_root() {
+        // `Open` hands the file to the shell, so an id that escaped the
+        // root would be arbitrary local execution. It has to be refused
+        // before the `is_file` check, not after — an attacker would point
+        // at a file that certainly exists.
+        let root = root();
+        let outside = std::env::temp_dir().join(format!("clippity-outside-{}.png", next_id()));
+        std::fs::write(&outside, b"x").expect("write");
+
+        for t in [
+            ShareTarget::Reveal,
+            ShareTarget::Open,
+            ShareTarget::CopyPath,
+        ] {
+            let err = share(&outside.to_string_lossy(), &root, t).unwrap_err();
+            assert_eq!(err.code(), "library", "target {t:?}");
+        }
+
+        let _ = std::fs::remove_file(&outside);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn share_refuses_a_parent_traversal_out_of_the_captures_root() {
+        let root = root();
+        let escape = format!("{}/../evil.exe", root.display());
+        let err = share(&escape, &root, ShareTarget::Open).unwrap_err();
+        assert_eq!(err.code(), "library");
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]
@@ -87,7 +144,7 @@ mod tests {
         let file = dir.join("Shot.png");
         std::fs::write(&file, b"x").expect("write");
 
-        share(&file, ShareTarget::CopyPath).expect("copy-path ok");
+        share(&file.to_string_lossy(), &dir, ShareTarget::CopyPath).expect("copy-path ok");
         let mut cb = arboard::Clipboard::new().expect("clipboard");
         assert_eq!(cb.get_text().expect("text"), file.display().to_string());
 

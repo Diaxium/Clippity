@@ -111,7 +111,14 @@ impl LibraryService {
         }
     }
 
-    fn captures_dir(&self) -> PathBuf {
+    /// The configured captures root.
+    ///
+    /// Public because it is the trust boundary for ids, not just an
+    /// internal convenience: any command that turns a frontend-supplied
+    /// path into a filesystem or shell operation has to check it against
+    /// this via [`library::validate_id`], and `share_capture` lives in the
+    /// app crate rather than here.
+    pub fn captures_dir(&self) -> PathBuf {
         self.captures.captures_dir()
     }
 
