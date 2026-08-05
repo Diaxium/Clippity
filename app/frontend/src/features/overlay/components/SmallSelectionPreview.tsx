@@ -197,7 +197,12 @@ export function place(
     EDGE_PAD,
     Math.max(EDGE_PAD, vw - EDGE_PAD - boxW)
   );
-  const toolbar: Rect = { x: 0, y: vh - TOOLBAR_RESERVE, w: vw, h: TOOLBAR_RESERVE };
+  const toolbar: Rect = {
+    x: 0,
+    y: vh - TOOLBAR_RESERVE,
+    w: vw,
+    h: TOOLBAR_RESERVE,
+  };
 
   const above = rect.y - GAP - boxH;
   const below = rect.y + rect.h + GAP;
@@ -243,7 +248,11 @@ function actionBarRect(rect: Rect, vw: number, vh: number): Rect {
   let y = rect.y + rect.h + BAR_GUTTER;
   if (y + BAR_H > vh - TOOLBAR_RESERVE) y = rect.y - BAR_H - BAR_GUTTER;
   if (y < 14) y = Math.max(rect.y + 8, 14);
-  const x = clampNum(rect.x + rect.w / 2 - BAR_W / 2, 14, Math.max(14, vw - BAR_W - 14));
+  const x = clampNum(
+    rect.x + rect.w / 2 - BAR_W / 2,
+    14,
+    Math.max(14, vw - BAR_W - 14)
+  );
   return { x, y, w: BAR_W, h: BAR_H };
 }
 

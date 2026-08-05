@@ -6,11 +6,21 @@
 
 import { AppWindow, Crop, Maximize, Plus, SquarePen } from "lucide-react";
 
-import { runPreset, type CapturePreset } from "@services/tauri/clients/presets";
+import {
+  presetTarget,
+  runPreset,
+  type CapturePreset,
+} from "@services/tauri/clients/presets";
 import type { CaptureType } from "@services/tauri/clients/capture";
 
 import { tintForIndex } from "../types";
-import { CardEmpty, IconTile, LinkAction, SectionCard, SectionHeading } from "./primitives";
+import {
+  CardEmpty,
+  IconTile,
+  LinkAction,
+  SectionCard,
+  SectionHeading,
+} from "./primitives";
 
 const TYPE_ICON: Record<CaptureType, typeof Crop> = {
   region: Crop,
@@ -58,7 +68,7 @@ export function PinnedPresets({
                 className="focus-ring flex w-full items-center gap-3 rounded-[10px] text-left transition-colors hover:bg-[var(--color-overlay-1)]"
               >
                 <IconTile
-                  icon={TYPE_ICON[preset.request.type]}
+                  icon={TYPE_ICON[presetTarget(preset.request) as CaptureType]}
                   tint={tintForIndex(i)}
                   size={36}
                 />
@@ -67,7 +77,7 @@ export function PinnedPresets({
                     {preset.name}
                   </span>
                   <span className="block text-[12px] text-[var(--color-slate)]">
-                    {TYPE_LABEL[preset.request.type]}
+                    {TYPE_LABEL[presetTarget(preset.request) as CaptureType]}
                   </span>
                 </span>
               </button>

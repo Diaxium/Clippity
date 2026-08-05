@@ -8,6 +8,8 @@
  * tick, stop-or-discard), different pipeline, separate events.
  */
 
+import type { Source } from "./composition";
+
 /** What surface the session records. */
 export type RecorderTarget = "region" | "window" | "fullscreen";
 
@@ -28,6 +30,30 @@ export interface AudioSelection {
   system: boolean;
   microphoneDevice?: string | null;
   systemDevice?: string | null;
+  /** Level each input is mixed at, as a percentage of unity — 100 is
+   *  unchanged, 0 is silence, 200 is the ceiling. Percentages rather
+   *  than a multiplier because that is the unit the slider shows and it
+   *  round-trips through JSON exactly. Omitted = 100. */
+  microphoneGainPct?: number;
+  systemGainPct?: number;
+}
+
+/** Which input a gain, a mute or a level reading refers to. */
+export type AudioSource = "microphone" | "system";
+
+/**
+ * Peak level of each input since the previous reading, `0..=1`, carried
+ * on `clippity://recorder/levels` roughly ten times a second while a
+ * session has audio.
+ *
+ * Peak rather than RMS: a recording meter answers "is this live" and "is
+ * it clipping", and both are peak questions. A session with no audio
+ * emits this not at all, so the HUD shows meters only when there is
+ * something to meter.
+ */
+export interface RecorderLevels {
+  microphone: number;
+  system: number;
 }
 
 /**
@@ -49,6 +75,50 @@ export interface RecorderToggles {
   clipboard: boolean;
 }
 
+/**
+ * How generously the H.264 encoder is budgeted — a multiplier on the
+ * bits-per-pixel-per-frame target the backend derives from the frame
+ * size and rate.
+ *
+ * Named steps rather than a raw bitrate box, because the right bitrate
+ * depends on resolution and frame rate: the same 8 Mbps that is generous
+ * for a 720p region starves a 4K desktop. `balanced` is what every
+ * recording made before this setting existed used.
+ */
+export type RecorderQuality = "efficient" | "balanced" | "high";
+
+/**
+ * How the encoder may spend its bitrate over time. `variable` lets the
+ * long motionless stretches of a screen recording cost almost nothing;
+ * `constant` trades that saving for a predictable size per minute.
+ */
+export type RateControl = "variable" | "constant";
+
+/**
+ * H.264 encoder settings. **Ignored entirely by the GIF path**, which is
+ * a palettized per-frame format with no bitrate, keyframes or rate
+ * control.
+ *
+ * Every field is optional on the wire and defaults backend-side, so an
+ * older preset or a partial patch stays valid.
+ */
+export interface RecorderEncoding {
+  quality?: RecorderQuality;
+  /** Fixed average bitrate in bits per second, overriding what `quality`
+   *  would derive. Omitted / null / 0 derives. Clamped backend-side to
+   *  1.5–60 Mbps whether typed or derived. */
+  bitrateBps?: number | null;
+  /** Seconds between keyframes (1–10, default 2). A decoder can only
+   *  start at a keyframe, so this is the granularity Studio's scrubber
+   *  can seek to — not a cosmetic setting. */
+  keyframeSeconds?: number;
+  rateControl?: RateControl;
+  /** Prefer the GPU's encoder. On by default; software encode cannot
+   *  keep up at 4K60. Turning it off is the escape hatch for a driver
+   *  that encodes visibly worse than the software path. */
+  preferHardware?: boolean;
+}
+
 /** Payload sent to `start_recording`. */
 export interface RecorderRequest {
   target: RecorderTarget;
@@ -62,7 +132,17 @@ export interface RecorderRequest {
   /** Omit for the format's default. Out-of-range values are clamped by
    *  the backend, not rejected. */
   fps?: number | null;
+  /** Cap on the encoded frame's height, in pixels. Omit / null / `0` to
+   *  encode at the captured size. Never upscales, and preserves the
+   *  aspect ratio; GIF's own pixel budget still applies on top. */
+  maxHeight?: number | null;
   audio?: AudioSelection;
+  /** H.264 encoder settings. Ignored for `gif`. */
+  encoding?: RecorderEncoding;
+  /** Things composited over the captured frame — a webcam, a logo
+   *  (ADR 0033). Order is meaningful: later sources draw over earlier
+   *  ones. Applies to both formats. */
+  sources?: Source[];
   toggles?: RecorderToggles;
   /** Save-directory override (preset "save to"). Omitted / null = the
    *  live captures dir. */
@@ -116,7 +196,4 @@ export interface RecorderResult {
 /** Why a session ended. Only `committed` (and the two salvage cases)
  *  produce a `RecorderResult`; `discarded` deletes the partial file. */
 export type RecorderStopReason =
-  | "committed"
-  | "discarded"
-  | "duration-limit"
-  | "failed";
+  "committed" | "discarded" | "duration-limit" | "failed";

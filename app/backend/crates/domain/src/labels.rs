@@ -85,10 +85,7 @@ fn is_not_favorite(favorite: &bool) -> bool {
 /// is theirs — while [`normalize_tags`] compares case-insensitively, so
 /// `Bug` and `bug` never coexist.
 pub fn normalize_tag(raw: &str) -> Option<String> {
-    let collapsed: String = raw
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
+    let collapsed: String = raw.split_whitespace().collect::<Vec<_>>().join(" ");
     if collapsed.is_empty() {
         return None;
     }
@@ -285,7 +282,10 @@ mod tests {
 
     #[test]
     fn removing_ignores_case() {
-        assert_eq!(remove_tags(&v(&["Bug", "docs"]), &v(&["BUG"])), v(&["docs"]));
+        assert_eq!(
+            remove_tags(&v(&["Bug", "docs"]), &v(&["BUG"])),
+            v(&["docs"])
+        );
     }
 
     #[test]
@@ -316,7 +316,10 @@ mod tests {
         let (_, favorite, changed) = apply(LabelEdit::Favorite(true), &[], false);
         assert!(favorite && changed);
         let (_, favorite, changed) = apply(LabelEdit::Favorite(true), &[], true);
-        assert!(favorite && !changed, "re-starring must not rewrite the record");
+        assert!(
+            favorite && !changed,
+            "re-starring must not rewrite the record"
+        );
     }
 
     #[test]

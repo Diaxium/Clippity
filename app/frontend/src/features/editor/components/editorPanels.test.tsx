@@ -383,7 +383,9 @@ describe("Inspector mode curation", () => {
     const { rect } = seed();
     state().select([rect.id]);
     render(<InspectorSections mode="design" />);
-    expect(screen.getByRole("heading", { name: "Effects" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Effects" })
+    ).toBeInTheDocument();
     // Geometry moved to its own tab and is no longer in Style.
     expect(screen.queryByRole("heading", { name: "Position" })).toBeNull();
   });
@@ -493,12 +495,8 @@ describe("FloatingInspector", () => {
     state().select([rect.id]);
     state().setCanvasSize(1200, 800);
     const { rerender } = render(<FloatingInspector mode="annotate" />);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Close inspector" })
-    );
-    expect(
-      screen.queryByRole("group", { name: "Inspector" })
-    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Close inspector" }));
+    expect(screen.queryByRole("group", { name: "Inspector" })).toBeNull();
 
     act(() => state().select([frameId]));
     rerender(<FloatingInspector mode="annotate" />);
@@ -515,9 +513,7 @@ describe("EditorTopBar export menu", () => {
     // The Export face exports straight away; the caret beside it has the
     // format/scale options.
     fireEvent.click(screen.getByRole("button", { name: "Export options" }));
-    expect(
-      screen.getByRole("heading", { name: "Export" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Export" })).toBeInTheDocument();
   });
 
   it("Mod+Shift+E (exportRequest) reveals the menu", () => {
@@ -525,9 +521,7 @@ describe("EditorTopBar export menu", () => {
     render(<EditorTopBar />);
     expect(screen.queryByRole("heading", { name: "Export" })).toBeNull();
     act(() => state().requestExport());
-    expect(
-      screen.getByRole("heading", { name: "Export" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Export" })).toBeInTheDocument();
   });
 });
 
@@ -553,8 +547,9 @@ describe("inspector docking", () => {
 
     // jsdom gives the canvas-area lookup a zero rect, so the workspace falls
     // back to the window — drop just inside its right edge.
-    const header = screen.getByRole("group", { name: "Inspector" })
-      .firstElementChild!;
+    const header = screen.getByRole("group", {
+      name: "Inspector",
+    }).firstElementChild!;
     dragTo(header, 600, window.innerWidth - 4);
 
     expect(state().inspectorDock.annotate).toBe("right");
@@ -568,8 +563,9 @@ describe("inspector docking", () => {
     state().setCanvasSize(1200, 800);
     render(<FloatingInspector mode="annotate" />);
 
-    const header = screen.getByRole("group", { name: "Inspector" })
-      .firstElementChild!;
+    const header = screen.getByRole("group", {
+      name: "Inspector",
+    }).firstElementChild!;
     dragTo(header, 600, Math.round(window.innerWidth / 2));
 
     expect(state().inspectorDock.annotate).toBeNull();
@@ -582,8 +578,9 @@ describe("inspector docking", () => {
     state().setCanvasSize(1200, 800);
     render(<FloatingInspector mode="annotate" />);
 
-    const header = screen.getByRole("group", { name: "Inspector" })
-      .firstElementChild!;
+    const header = screen.getByRole("group", {
+      name: "Inspector",
+    }).firstElementChild!;
     fireEvent.pointerDown(header, { pointerId: 1, clientX: 600, clientY: 100 });
     fireEvent.pointerMove(header, {
       pointerId: 1,

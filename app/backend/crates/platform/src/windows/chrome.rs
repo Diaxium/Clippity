@@ -20,6 +20,7 @@
 //! edge-to-edge status strip), and a Mica backdrop would paint a
 //! visible translucent fill across them.
 
+use clippity_domain::settings::{BackdropTuning, WindowBackdrop};
 use tauri::{AppHandle, Manager};
 
 /// Windows that get rounded corners + Mica backdrop. `overlay` and
@@ -73,24 +74,57 @@ pub fn round_window_corners(app: &AppHandle) {
     }
 }
 
-/// Paint the Windows 11 Mica backdrop into every frosted window.
-/// `dark = None` follows the OS theme (used at boot); the frontend
-/// pushes its persisted choice down via the `apply_window_theme`
-/// command on mount + every theme flip.
+/// Paint the selected native backdrop into every frosted window.
+/// `dark = None` follows the OS theme for Mica / Tabbed (used at boot);
+/// the frontend pushes its persisted choice down via the
+/// `apply_window_theme` command on mount + every theme flip.
 ///
-/// Errors are intentionally swallowed — Mica is a polish, not a
+/// `tuning` is the user's per-material fine-tuning for `backdrop`. Only
+/// `tint_strength` lands here — the other three knobs (glass / blur /
+/// saturation) drive CSS in the webview, since they describe how the
+/// app's own panels sit *over* the material. Mica, Tabbed and Clear
+/// ignore the tint too: the first two are DWM system backdrops that
+/// tint themselves, and Clear paints nothing at all.
+///
+/// `WindowBackdrop::Clear` is just "cleared and left cleared" — with
+/// the window already `transparent: true`, removing the DWM material
+/// leaves a plain hole onto the desktop. It's the only mode where
+/// lowering chrome opacity reveals *live* content on every build.
+///
+/// Errors are intentionally swallowed — the backdrop is polish, not a
 /// correctness concern, and we'd rather degrade to a flat translucent
 /// background than fail boot on a Win10 machine.
 #[cfg(target_os = "windows")]
-pub fn apply_backdrop(app: &AppHandle, dark: Option<bool>) {
+pub fn apply_backdrop(
+    app: &AppHandle,
+    dark: Option<bool>,
+    backdrop: WindowBackdrop,
+    tuning: BackdropTuning,
+) {
+    let alpha = tuning.tint_alpha();
     for label in FROSTED_WINDOWS {
         if let Some(win) = app.get_webview_window(label) {
-            let _ = window_vibrancy::apply_mica(&win, dark);
+            clear_window_backdrop(&win);
+            let result = match backdrop {
+                WindowBackdrop::Mica => window_vibrancy::apply_mica(&win, dark),
+                WindowBackdrop::Acrylic => {
+                    window_vibrancy::apply_acrylic(&win, backdrop_tint(dark, alpha))
+                }
+                WindowBackdrop::Blur => {
+                    window_vibrancy::apply_blur(&win, backdrop_tint(dark, alpha))
+                }
+                WindowBackdrop::Tabbed => window_vibrancy::apply_tabbed(&win, dark),
+                // Already cleared above — that *is* the material.
+                WindowBackdrop::Clear => Ok(()),
+            };
+            if let Err(e) = result {
+                tracing::debug!("window backdrop: could not apply '{label}': {e}");
+            }
         }
     }
 }
 
-/// Strip the Mica backdrop from every frosted window. Used when the
+/// Strip the native backdrop from every frosted window. Used when the
 /// `performance.window_effects` setting is off so the windows fall back
 /// to their flat opaque canvas. Errors are swallowed for the same reason
 /// `apply_backdrop` swallows them — the backdrop is polish, not
@@ -99,24 +133,47 @@ pub fn apply_backdrop(app: &AppHandle, dark: Option<bool>) {
 pub fn clear_backdrop(app: &AppHandle) {
     for label in FROSTED_WINDOWS {
         if let Some(win) = app.get_webview_window(label) {
-            let _ = window_vibrancy::clear_mica(&win);
+            clear_window_backdrop(&win);
         }
     }
 }
 
-/// Apply or clear the Mica backdrop in one call, driven by the
-/// `performance.window_effects` setting. On (the default) tints Mica to
-/// the resolved theme; off strips it so the window reads as a flat
+/// Apply or clear the native backdrop in one call, driven by the
+/// `performance.window_effects` setting. On (the default) tints the
+/// selected material to the resolved theme; off strips it so the window reads as a flat
 /// opaque surface — the frontend simultaneously drops `backdrop-filter`
 /// blur via `data-effects="flat"`, so the pair together removes the DWM
 /// compositor + GPU cost of the frosted chrome.
 #[cfg(target_os = "windows")]
-pub fn refresh_backdrop(app: &AppHandle, dark: bool, effects: bool) {
+pub fn refresh_backdrop(
+    app: &AppHandle,
+    dark: bool,
+    effects: bool,
+    backdrop: WindowBackdrop,
+    tuning: BackdropTuning,
+) {
     if effects {
-        apply_backdrop(app, Some(dark));
+        apply_backdrop(app, Some(dark), backdrop, tuning);
     } else {
         clear_backdrop(app);
     }
+}
+
+#[cfg(target_os = "windows")]
+fn clear_window_backdrop(win: &tauri::WebviewWindow) {
+    let _ = window_vibrancy::clear_mica(win);
+    let _ = window_vibrancy::clear_tabbed(win);
+    let _ = window_vibrancy::clear_acrylic(win);
+    let _ = window_vibrancy::clear_blur(win);
+}
+
+#[cfg(target_os = "windows")]
+fn backdrop_tint(dark: Option<bool>, alpha: u8) -> Option<window_vibrancy::Color> {
+    Some(if dark.unwrap_or(false) {
+        (22, 23, 27, alpha)
+    } else {
+        (253, 253, 252, alpha)
+    })
 }
 
 /// Toggle `WDA_EXCLUDEFROMCAPTURE` on a window so it's invisible to

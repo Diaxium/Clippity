@@ -63,7 +63,11 @@ describe("parseCombo + signatures", () => {
 describe("formatCombo (platform-aware labels)", () => {
   it("renders the Mod label for the host platform", () => {
     const mod = IS_MAC ? "⌘" : "Ctrl";
-    expect(formatCombo("Mod+Shift+]")).toEqual([mod, IS_MAC ? "⇧" : "Shift", "]"]);
+    expect(formatCombo("Mod+Shift+]")).toEqual([
+      mod,
+      IS_MAC ? "⇧" : "Shift",
+      "]",
+    ]);
     expect(formatCombo("Mod+D")).toEqual([mod, "D"]);
   });
 

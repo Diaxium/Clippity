@@ -140,7 +140,10 @@ function StatusPill({ children }: { children: ReactNode }) {
     <div className="absolute left-1/2 top-[18%] -translate-x-1/2">
       <span
         className="inline-flex max-w-[70vw] items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium text-white shadow-[var(--shadow-deep)]"
-        style={{ background: "rgba(16,20,28,0.82)", backdropFilter: "blur(8px)" }}
+        style={{
+          background: "rgba(16,20,28,0.82)",
+          backdropFilter: "blur(8px)",
+        }}
       >
         {children}
       </span>

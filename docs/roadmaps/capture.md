@@ -14,6 +14,13 @@ pen/Bézier, magnetic lasso and brush. Cursor, clipboard, delay, enhancement,
 editor preview, provenance and last-region repeat are implemented. The overlay
 is Clippity's strongest interaction surface and should remain fast and focused.
 
+Playback and trim landed 2026-08-02 ([ADR 0032](../decisions/0032-studio-is-a-separate-surface-that-streams-and-re-encodes.md)):
+recordings open in **Studio**, a dashboard view beside the annotation
+editor, with scrubbing, frame stepping, in/out handles and export to MP4
+or GIF. A trim decodes and re-encodes through the recorder's existing
+sinks, so the cut lands on the frame the handles showed rather than on
+the nearest keyframe.
+
 Screen recording landed 2026-07-25 ([ADR 0031](../decisions/0031-recording-is-media-foundation-one-session-two-outputs.md)):
 Media Foundation H.264/AAC MP4 and streaming GIF from one capture
 session, with a pause/stop HUD, crash-safe fragmented output, and
@@ -34,7 +41,7 @@ Recording.
 | Phase | Initiative | Priority | Impact | Complexity | Prerequisites |
 | --- | --- | --- | --- | --- | --- |
 | C0: polish (0–8 wk) | Canonical result event/actions; import; consistent mode switch; repeat-region in hub; permission/disk/model recovery; honest unavailable UI. | P0/P1 | High | L | Result contract, UX3, security foundations. |
-| C1: recorder beta (2–4 mo) | ~~Region/window/fullscreen video + GIF, mic/system audio, pause/stop, crash-safe partial file~~ **done**; remaining: cursor/click effects, trim, WebM. | P1 | Transformative | XL | Media job service, recorder screens, native fixtures. |
+| C1: recorder beta (2–4 mo) | ~~Region/window/fullscreen video + GIF, mic/system audio, pause/stop, crash-safe partial file~~ **done**; ~~trim~~ **done** ([ADR 0032](../decisions/0032-studio-is-a-separate-surface-that-streams-and-re-encodes.md)); remaining: cursor/click effects, WebM. | P1 | Transformative | XL | Media job service, recorder screens, native fixtures. |
 | C2: recorder finish (4–6 mo) | GIF optimization, webcam overlay, annotations during recording, hotkey customization, presets and performance profiles. | P2 | High | XL | C1 telemetry and editor/media renderer. |
 | C3: intelligent capture (6–12 mo) | Change Detection, Asset Extract, sensitive-data detection/redaction and Live Lens. | P2/P3 | High | XL | Vision integrity, search/library schema. |
 | C4: automation (9–18 mo) | Scheduled visual monitors, CLI/URI triggers and recipe capture steps. | P2/P3 | Transformative | XL | Recipe/security/scheduler architecture. |

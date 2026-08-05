@@ -83,6 +83,5 @@ if (typeof globalThis.PointerEvent === "undefined") {
       this.pressure = params.pressure ?? 0;
     }
   }
-  globalThis.PointerEvent =
-    StubPointerEvent as unknown as typeof PointerEvent;
+  globalThis.PointerEvent = StubPointerEvent as unknown as typeof PointerEvent;
 }

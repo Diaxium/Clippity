@@ -35,6 +35,7 @@ import { Magnifier } from "./Magnifier";
 import { RegionSelection } from "./RegionSelection";
 import { SmallSelectionPreview } from "./SmallSelectionPreview";
 import { SelectionActionBar } from "./SelectionActionBar";
+import { SelectionTips } from "./SelectionTips";
 import { TopBanner } from "./TopBanner";
 import { WindowHighlight } from "./WindowHighlight";
 import { ObjectHighlights } from "./ObjectHighlights";
@@ -133,37 +134,36 @@ export function OverlayLayout() {
     onPointerDown?: (e: PointerEventReact) => void;
     onPointerMove?: (e: PointerEventReact) => void;
     onPointerUp?: (e: PointerEventReact) => void;
-  } =
-    isWindowMode
+  } = isWindowMode
+    ? {
+        onPointerDown: windowSel.onPointerDown,
+        onPointerMove: windowSel.onPointerMove,
+      }
+    : mode === "object"
       ? {
-          onPointerDown: windowSel.onPointerDown,
-          onPointerMove: windowSel.onPointerMove,
+          onPointerDown: objectSel.onPointerDown,
+          onPointerMove: objectSel.onPointerMove,
         }
-      : mode === "object"
-        ? {
-            onPointerDown: objectSel.onPointerDown,
-            onPointerMove: objectSel.onPointerMove,
-          }
-        : mode === "freehand"
-          ? freehand
-          : mode === "pen"
+      : mode === "freehand"
+        ? freehand
+        : mode === "pen"
           ? pen
           : mode === "magnetic-lasso"
-          ? magneticLasso
-          : mode === "brush"
-          ? brush
-          : mode === "multi-area"
-            ? multiArea
-            : mode === "color-pick"
-              ? {
-                  onPointerDown: colorPick.onPointerDown,
-                  onPointerMove: colorPick.onPointerMove,
-                }
-              : {
-                  onPointerDown: region.onPointerDown,
-                  onPointerMove: region.onPointerMove,
-                  onPointerUp: region.onPointerUp,
-                };
+            ? magneticLasso
+            : mode === "brush"
+              ? brush
+              : mode === "multi-area"
+                ? multiArea
+                : mode === "color-pick"
+                  ? {
+                      onPointerDown: colorPick.onPointerDown,
+                      onPointerMove: colorPick.onPointerMove,
+                    }
+                  : {
+                      onPointerDown: region.onPointerDown,
+                      onPointerMove: region.onPointerMove,
+                      onPointerUp: region.onPointerUp,
+                    };
 
   // The overlay window is reused — reset state every time it gains
   // focus so a new session starts at `empty` phase.
@@ -381,6 +381,7 @@ export function OverlayLayout() {
       <ObjectHighlights />
 
       <TopBanner />
+      <SelectionTips />
       {mode === "region" && <SelectionActionBar />}
       {mode === "color-pick" ? <ColorPickToolbar /> : <BottomToolbar />}
       <KeybindHelp />

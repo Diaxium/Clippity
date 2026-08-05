@@ -23,8 +23,10 @@ plan is [editor-tools.md](editor-tools.md). Supporting work lives in:
 4. **P1 – keep it fast:** large-image lifecycle and render-performance budgets.
 5. **P2 – deepen the capture-specific advantage:** OCR text, irreversible
    redaction export, diff layers and narrative documents.
-6. **P3 – extend to media only after recording succeeds:** timeline annotation
-   and tracked effects.
+6. **P3 – extend to media only after recording succeeds:** playback and trim
+   have shipped as [Studio](../decisions/0032-studio-is-a-separate-surface-that-streams-and-re-encodes.md),
+   a surface beside the editor rather than a mode of it; timeline annotation
+   and tracked effects remain.
 
 The editor should remain the best place to explain a captured moment, not try to
 replace a full illustration or video-production suite.

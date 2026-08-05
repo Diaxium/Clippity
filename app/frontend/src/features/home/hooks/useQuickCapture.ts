@@ -36,13 +36,10 @@ export function useQuickCapture(): (id: QuickCaptureId) => void {
     (format: RecorderFormat) => {
       void startRecording(
         buildRecorderRequest("fullscreen", format, recording)
-      ).catch(
-        (err: unknown) =>
-          emitErrorToast(
-            err instanceof Error
-              ? err.message
-              : "Couldn't start the recording."
-          )
+      ).catch((err: unknown) =>
+        emitErrorToast(
+          err instanceof Error ? err.message : "Couldn't start the recording."
+        )
       );
     },
     [recording]

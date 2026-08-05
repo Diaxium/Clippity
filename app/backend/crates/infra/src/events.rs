@@ -88,12 +88,31 @@ pub mod names {
     /// belong to the scroll stitcher, which is a different session type
     /// producing a still image. See `domain::recorder`.
     pub const RECORDER_TICK: &str = "clippity://recorder/tick";
+    /// Emitted ten times a second while a session has audio, carrying
+    /// `RecorderLevels` — the peak of each input since the last one.
+    /// Drives the HUD's meters.
+    ///
+    /// Its own event rather than fields on [`RECORDER_TICK`]: a meter
+    /// needs an order of magnitude more updates than a clock, and
+    /// raising the tick's rate to suit it would make every reader of
+    /// elapsed time, frame counts and file size pay for the meters. A
+    /// session with no audio emits this not at all.
+    pub const RECORDER_LEVELS: &str = "clippity://recorder/levels";
     /// Emitted once when a recording session ends, whatever the reason.
     /// Payload: `{ reason, result }` — `result` is null for a discard
     /// or a session that produced nothing. The main window's persistent
     /// listener opens the result when `result.preview` is set, mirroring
     /// how `capture/finished` is handled.
     pub const RECORDER_FINISHED: &str = "clippity://recorder/finished";
+    /// Progress of a Studio trim export. Payload: `TrimProgress`.
+    ///
+    /// Scoped to the main window rather than broadcast, for the same
+    /// reason `RECORDER_TICK` is scoped to the toast: it fires many
+    /// times over one export and exactly one surface renders it. The
+    /// *result* travels back as the command's return value, not as an
+    /// event, because unlike a recording — which can end with nobody
+    /// having called anything — an export always has a caller waiting.
+    pub const MEDIA_TRIM_PROGRESS: &str = "clippity://media/trim-progress";
     /// Emitted by `model_service` after any model status transition
     /// (download started / finished / failed / cancelled, model
     /// removed). Payload: the full `Vec<ModelInfo>` so every window
@@ -108,6 +127,11 @@ pub mod names {
 /// Label of the toast / recording-HUD window, the sole consumer of the
 /// high-frequency recording events.
 pub const TOAST_WINDOW: &str = "toast";
+
+/// Label of the dashboard window, which hosts Studio — the sole consumer
+/// of trim-export progress. Must match `WINDOW_LABELS.main` in the
+/// frontend's constants.
+pub const MAIN_WINDOW: &str = "main";
 
 /// Where an outbound event should be delivered.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -133,14 +157,20 @@ pub enum EventTarget {
 /// Kept as a pure function so the routing policy is unit-testable without
 /// a Tauri runtime.
 pub fn target_for(event: &str) -> EventTarget {
-    use names::{RECORDER_TICK, RECORDING_AUTO_STOP, RECORDING_PREVIEW, RECORDING_TICK};
+    use names::{
+        MEDIA_TRIM_PROGRESS, RECORDER_LEVELS, RECORDER_TICK, RECORDING_AUTO_STOP,
+        RECORDING_PREVIEW, RECORDING_TICK,
+    };
     match event {
+        // Studio lives in the main window and is the only reader of its
+        // own export's progress.
+        MEDIA_TRIM_PROGRESS => EventTarget::Window(MAIN_WINDOW),
         // The recorder's tick is the same shape of problem as the
         // stitcher's: a once-a-second payload for the whole length of a
-        // recording that only the HUD reads.
-        RECORDING_TICK | RECORDING_PREVIEW | RECORDING_AUTO_STOP | RECORDER_TICK => {
-            EventTarget::Window(TOAST_WINDOW)
-        }
+        // recording that only the HUD reads. The levels event is that
+        // argument at ten times the rate, so it matters ten times more.
+        RECORDING_TICK | RECORDING_PREVIEW | RECORDING_AUTO_STOP | RECORDER_TICK
+        | RECORDER_LEVELS => EventTarget::Window(TOAST_WINDOW),
         // RECORDER_FINISHED deliberately broadcasts: the library
         // refreshes on it and the main window may open the result.
         _ => EventTarget::Broadcast,
@@ -164,7 +194,7 @@ pub fn emit<P: Serialize + Clone>(app: &AppHandle, event: &str, payload: P) -> A
 
 #[cfg(test)]
 mod tests {
-    use super::{names, target_for, EventTarget, TOAST_WINDOW};
+    use super::{names, target_for, EventTarget, MAIN_WINDOW, TOAST_WINDOW};
 
     #[test]
     fn recording_events_scope_to_the_toast_window() {
@@ -173,6 +203,9 @@ mod tests {
             names::RECORDING_PREVIEW,
             names::RECORDING_AUTO_STOP,
             names::RECORDER_TICK,
+            // The one that fires most, and the one a broadcast would
+            // cost the most: ten a second for the length of a session.
+            names::RECORDER_LEVELS,
         ] {
             assert_eq!(
                 target_for(event),
@@ -202,5 +235,15 @@ mod tests {
                 "{event} must broadcast to all windows"
             );
         }
+    }
+
+    #[test]
+    fn trim_progress_reaches_only_the_window_that_renders_it() {
+        // Many emits over one export, one surface reading them — the
+        // same argument that scopes the recorder's tick to the HUD.
+        assert_eq!(
+            target_for(names::MEDIA_TRIM_PROGRESS),
+            EventTarget::Window(MAIN_WINDOW)
+        );
     }
 }

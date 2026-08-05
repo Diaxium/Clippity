@@ -62,7 +62,11 @@ export function renderBody(payload: ToastPayload): JSX.Element {
       return <RecordingToastBody mode={payload.mode} frames={payload.frames} />;
     case "recorder":
       return (
-        <RecorderToastBody format={payload.format} audio={payload.audio} />
+        <RecorderToastBody
+          format={payload.format}
+          microphone={payload.microphone}
+          system={payload.system}
+        />
       );
     default:
       // Every current `kind` has a real body above, so `payload` narrows

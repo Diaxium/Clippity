@@ -423,7 +423,14 @@ mod tests {
         let entry = CaptureMeta {
             tags: vec!["bug".into(), "docs".into()],
             favorite: true,
-            ..CaptureMeta::new("/t/s.png".into(), "s".into(), CaptureKind::Image, 1, 2, false)
+            ..CaptureMeta::new(
+                "/t/s.png".into(),
+                "s".into(),
+                CaptureKind::Image,
+                1,
+                2,
+                false,
+            )
         };
         let s = serde_json::to_string(&entry).unwrap();
         assert!(s.contains(r#""tags":["bug","docs"]"#), "got {s}");

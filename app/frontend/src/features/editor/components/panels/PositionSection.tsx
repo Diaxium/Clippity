@@ -95,7 +95,6 @@ export function PositionSection() {
 
   return (
     <PanelSection id="position" title="Position">
-
       <p className={FIELD_LABEL}>Alignment</p>
       <div className="mb-2.5 flex items-center gap-1">
         <div className="flex rounded-[6px] bg-[var(--ed-input-bg)]">
@@ -178,7 +177,8 @@ export function PositionSection() {
           onClick={() => updateNodes(ids, { flipH: toggleTarget(flipH) })}
           className={cn(
             ICON_BTN,
-            flipH === "on" && "bg-[var(--ed-accent-soft)] text-[var(--ed-accent)]"
+            flipH === "on" &&
+              "bg-[var(--ed-accent-soft)] text-[var(--ed-accent)]"
           )}
         >
           <FlipHorizontal2 size={15} strokeWidth={1.75} />
@@ -191,7 +191,8 @@ export function PositionSection() {
           onClick={() => updateNodes(ids, { flipV: toggleTarget(flipV) })}
           className={cn(
             ICON_BTN,
-            flipV === "on" && "bg-[var(--ed-accent-soft)] text-[var(--ed-accent)]"
+            flipV === "on" &&
+              "bg-[var(--ed-accent-soft)] text-[var(--ed-accent)]"
           )}
         >
           <FlipVertical2 size={15} strokeWidth={1.75} />

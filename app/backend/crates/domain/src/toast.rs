@@ -61,9 +61,15 @@ pub enum ToastPayload {
     /// it actually is on every render.
     Recorder {
         format: RecorderToastFormat,
-        /// Whether an audio track was requested, so the HUD can show a
-        /// level indicator rather than implying silence.
-        audio: bool,
+        /// Which inputs the session actually opened.
+        ///
+        /// Two flags rather than one `audio: bool`, because the HUD
+        /// draws one mixer row per live source and a single boolean
+        /// cannot say which. A source that is on but silent still gets a
+        /// row — that is the row that tells the user their microphone is
+        /// muted at the OS level.
+        microphone: bool,
+        system: bool,
     },
 }
 

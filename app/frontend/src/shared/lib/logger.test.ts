@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  createLogger,
-  formatPrefix,
-  redact,
-  setLoggerEnabled,
-} from "./logger";
+import { createLogger, formatPrefix, redact, setLoggerEnabled } from "./logger";
 
 afterEach(() => {
   setLoggerEnabled(false); // restore the test-mode default (silent)

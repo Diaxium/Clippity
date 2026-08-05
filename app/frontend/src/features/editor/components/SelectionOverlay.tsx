@@ -81,7 +81,8 @@ export function SelectionOverlay({
   const gradientFill =
     single && gradientEditFillId
       ? (single.fills.find(
-          (f) => f.id === gradientEditFillId && f.type === "gradient" && f.gradient
+          (f) =>
+            f.id === gradientEditFillId && f.type === "gradient" && f.gradient
         ) ?? null)
       : null;
 

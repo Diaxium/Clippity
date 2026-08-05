@@ -201,7 +201,8 @@ export function NumberField({
       const dx = e.clientX - drag.startX;
       const dy = e.clientY - drag.startY;
       // Require horizontal intent so a vertical drag still scrolls the panel.
-      if (Math.abs(dx) <= SCRUB_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return;
+      if (Math.abs(dx) <= SCRUB_THRESHOLD || Math.abs(dx) < Math.abs(dy))
+        return;
       drag.active = true;
       setScrubbing(true);
       beginTxn(scrubTxnRef);
@@ -211,7 +212,9 @@ export function NumberField({
     }
     e.preventDefault();
     const dx = e.clientX - drag.startX;
-    onChange(clamp(round3(drag.startValue + dx * (step ?? 1) * modifierFactor(e))));
+    onChange(
+      clamp(round3(drag.startValue + dx * (step ?? 1) * modifierFactor(e)))
+    );
   };
 
   const endScrub = (e: ReactPointerEvent<HTMLDivElement>): void => {

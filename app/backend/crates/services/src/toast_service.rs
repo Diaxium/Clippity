@@ -20,10 +20,10 @@ use std::sync::Arc;
 use serde::Serialize;
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
 
-use clippity_infra::events;
+use crate::settings_service::ToastSettingsSource;
 use clippity_domain::toast::{self, ToastPayload};
 use clippity_infra::error::{AppError, AppResult};
-use crate::settings_service::ToastSettingsSource;
+use clippity_infra::events;
 
 /// Breathing room between the toast and the work-area edge, in
 /// physical pixels. Matches legacy.
@@ -224,8 +224,8 @@ struct ToastShowEvent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clippity_domain::toast::ToastDefaults;
     use crate::settings_service::StaticToastSettings;
+    use clippity_domain::toast::ToastDefaults;
 
     #[test]
     fn service_constructs() {

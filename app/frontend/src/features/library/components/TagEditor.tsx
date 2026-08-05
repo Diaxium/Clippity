@@ -96,9 +96,7 @@ export function TagEditor({
       );
       const below = trigger.bottom + GAP;
       const flip = height > 0 && below + height > window.innerHeight - MARGIN;
-      const top = flip
-        ? Math.max(MARGIN, trigger.top - height - GAP)
-        : below;
+      const top = flip ? Math.max(MARGIN, trigger.top - height - GAP) : below;
       setPos({ top, left });
     };
     place();

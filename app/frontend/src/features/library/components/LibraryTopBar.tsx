@@ -3,7 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ClipboardPaste, Focus, Search, X } from "lucide-react";
 
 import { ingestClipboard } from "@services/tauri/clients/capture";
-import { emitErrorToast, showCaptureWindow } from "@services/tauri/clients/toast";
+import {
+  emitErrorToast,
+  showCaptureWindow,
+} from "@services/tauri/clients/toast";
 import { cn } from "@shared/lib/cn";
 
 /**

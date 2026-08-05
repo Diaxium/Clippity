@@ -1,7 +1,15 @@
-import { Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  Info,
+  Monitor,
+  Moon,
+  RotateCcw,
+  Sun,
+  type LucideIcon,
+} from "lucide-react";
 
 import { cn } from "@shared/lib/cn";
-import { Brand } from "@shared/ui";
+import { Brand, TickedSlider } from "@shared/ui";
 
 import {
   APP_ICON_OPTIONS,
@@ -10,11 +18,25 @@ import {
   UI_SCALE_MAX_PCT,
   UI_SCALE_MIN_PCT,
   UI_SCALE_STEP_PCT,
+  WINDOW_BACKDROP_OPTIONS,
   WINDOW_OPACITY_MAX_PCT,
   WINDOW_OPACITY_MIN_PCT,
   WINDOW_OPACITY_STEP_PCT,
 } from "../constants";
-import type { AppearanceSettings, ThemePref } from "../types";
+import {
+  BACKDROP_SAMPLES_LIVE_CONTENT,
+  BACKDROP_TUNING_STEP_PCT,
+  backdropTuningControls,
+  defaultBackdropTuning,
+  resolveBackdropTuning,
+  withBackdropTuning,
+} from "../lib/backdrop";
+import type {
+  AppearanceSettings,
+  BackdropTuning,
+  ThemePref,
+  WindowBackdrop,
+} from "../types";
 import { AccentPicker } from "./AccentPicker";
 import { Row } from "./Row";
 import { SectionCard } from "./SectionCard";
@@ -35,6 +57,18 @@ const THEME_OPTS: readonly {
 ];
 
 export function AppearancePanel({ value, onChange }: AppearancePanelProps) {
+  const [preview, setPreview] = useState({
+    uiScale: value.uiScale,
+    windowOpacity: value.windowOpacity,
+  });
+
+  useEffect(() => {
+    setPreview({
+      uiScale: value.uiScale,
+      windowOpacity: value.windowOpacity,
+    });
+  }, [value.uiScale, value.windowOpacity]);
+
   return (
     <>
       <SectionCard title="Theme">
@@ -87,9 +121,9 @@ export function AppearancePanel({ value, onChange }: AppearancePanelProps) {
 
       <SectionCard title="App icon">
         <div className="px-5 py-3 text-[12px] text-[var(--color-slate)]">
-          Choose the mark shown in the system tray, the taskbar, and inside
-          the app. The light / dark variant is picked automatically to match
-          your theme.
+          Choose the mark shown in the system tray, the taskbar, and inside the
+          app. The light / dark variant is picked automatically to match your
+          theme.
         </div>
         <Row
           label="Style"
@@ -145,6 +179,9 @@ export function AppearancePanel({ value, onChange }: AppearancePanelProps) {
               max={UI_SCALE_MAX_PCT}
               step={UI_SCALE_STEP_PCT}
               ariaLabel="Interface scale"
+              onPreview={(uiScale) =>
+                setPreview((current) => ({ ...current, uiScale }))
+              }
               onChange={(uiScale) => onChange({ ...value, uiScale })}
             />
           }
@@ -152,9 +189,38 @@ export function AppearancePanel({ value, onChange }: AppearancePanelProps) {
       </SectionCard>
 
       <SectionCard title="Window">
+        <div className="flex items-center gap-4 px-5 py-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-medium text-[var(--color-ink)]">
+              Preview
+            </p>
+            <p className="mt-0.5 text-[12px] text-[var(--color-slate)]">
+              Draft window scale and opacity.
+            </p>
+          </div>
+          <WindowPreview
+            uiScale={preview.uiScale}
+            windowOpacity={preview.windowOpacity}
+            backdrop={value.windowBackdrop}
+            appIcon={value.appIcon}
+          />
+        </div>
+        <Row
+          label="Backdrop"
+          description="Choose the native material behind the window. Acrylic is the clearest live blur; Clear removes the material entirely."
+          control={
+            <Segmented
+              options={WINDOW_BACKDROP_OPTIONS}
+              selected={value.windowBackdrop}
+              onSelect={(windowBackdrop) =>
+                onChange({ ...value, windowBackdrop })
+              }
+            />
+          }
+        />
         <Row
           label="Transparency"
-          description="Let the desktop show through the window chrome. Lower is more see-through."
+          description="Controls app chrome opacity. Acrylic and Clear reveal the desktop most reliably."
           control={
             <PercentSlider
               value={value.windowOpacity}
@@ -162,12 +228,168 @@ export function AppearancePanel({ value, onChange }: AppearancePanelProps) {
               max={WINDOW_OPACITY_MAX_PCT}
               step={WINDOW_OPACITY_STEP_PCT}
               ariaLabel="Window opacity"
-              onChange={(windowOpacity) => onChange({ ...value, windowOpacity })}
+              onPreview={(windowOpacity) =>
+                setPreview((current) => ({ ...current, windowOpacity }))
+              }
+              onChange={(windowOpacity) =>
+                onChange({ ...value, windowOpacity })
+              }
             />
           }
         />
       </SectionCard>
+
+      <BackdropTuningCard value={value} onChange={onChange} />
     </>
+  );
+}
+
+/**
+ * Per-material tuning for the selected backdrop.
+ *
+ * Separate from the Window card because the rows *change* with the
+ * material: the tint slider is hidden where Windows ignores it, and the
+ * heading names the material so it's obvious the numbers belong to that
+ * one choice rather than to transparency as a whole.
+ *
+ * The note at the top is the honest part. Mica and Tabbed are
+ * wallpaper-derived, so no slider anywhere can make live content show
+ * through them — saying so beats letting the user drag every knob to
+ * its end looking for the one that will.
+ */
+function BackdropTuningCard({ value, onChange }: AppearancePanelProps) {
+  const backdrop = value.windowBackdrop;
+  const tuning = resolveBackdropTuning(value.backdropTuning, backdrop);
+  const shipped = defaultBackdropTuning(backdrop);
+  const label =
+    WINDOW_BACKDROP_OPTIONS.find((option) => option.value === backdrop)
+      ?.label ?? backdrop;
+  const isDefault = (Object.keys(shipped) as (keyof BackdropTuning)[]).every(
+    (key) => tuning[key] === shipped[key]
+  );
+
+  const commit = (next: BackdropTuning) =>
+    onChange({
+      ...value,
+      backdropTuning: withBackdropTuning(value.backdropTuning, backdrop, next),
+    });
+
+  return (
+    <SectionCard title={`${label} tuning`}>
+      <div className="flex items-start gap-3 px-5 py-3">
+        <Info
+          size={14}
+          strokeWidth={1.85}
+          className="mt-0.5 shrink-0 text-[var(--color-slate)]"
+        />
+        <p className="min-w-0 flex-1 text-[12px] text-[var(--color-slate)]">
+          {BACKDROP_SAMPLES_LIVE_CONTENT[backdrop]
+            ? `${label} samples what is actually behind the window, so these knobs change how much of it reaches you.`
+            : `${label} is drawn by Windows from your desktop wallpaper, not from what is behind the window — apps behind Clippity can never show through it at any transparency. Switch to Acrylic or Clear for that. These knobs still control how much of the material itself you see.`}
+        </p>
+        <button
+          type="button"
+          disabled={isDefault}
+          onClick={() => commit(shipped)}
+          className={cn(
+            "focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-[8px] px-2.5 py-1.5 text-[12px] font-medium transition-colors",
+            isDefault
+              ? "cursor-default text-[var(--color-slate)] opacity-50"
+              : "text-[var(--color-ink)] hover:bg-[color:var(--color-overlay-2)]"
+          )}
+        >
+          <RotateCcw size={12} strokeWidth={1.85} />
+          Reset
+        </button>
+      </div>
+      {backdropTuningControls(backdrop).map((control) => (
+        <Row
+          key={control.key}
+          label={control.label}
+          description={control.description}
+          control={
+            // `TickedSlider` drives its own draft + readout and commits
+            // on release, so these rows need no preview state of their
+            // own — unlike the transparency / scale sliders above, whose
+            // draft the window preview card also renders.
+            <TickedSlider
+              value={tuning[control.key]}
+              min={control.min}
+              max={control.max}
+              step={BACKDROP_TUNING_STEP_PCT}
+              ariaLabel={control.label}
+              onChange={(next) => commit({ ...tuning, [control.key]: next })}
+              formatValue={(next) => `${next}%`}
+              width={160}
+            />
+          }
+        />
+      ))}
+    </SectionCard>
+  );
+}
+
+function WindowPreview({
+  uiScale,
+  windowOpacity,
+  backdrop,
+  appIcon,
+}: {
+  uiScale: number;
+  windowOpacity: number;
+  backdrop: WindowBackdrop;
+  appIcon: AppearanceSettings["appIcon"];
+}) {
+  const scale = uiScale / 100;
+  const backdropLabel =
+    WINDOW_BACKDROP_OPTIONS.find((option) => option.value === backdrop)
+      ?.label ?? "Mica";
+
+  return (
+    <div className="w-[236px] shrink-0">
+      <div
+        className="grid h-[116px] place-items-center overflow-hidden rounded-[12px] border border-[color:var(--hairline)]"
+        style={{
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 24%, transparent), color-mix(in srgb, #4f8cff 18%, transparent) 48%, color-mix(in srgb, var(--color-ink) 12%, transparent))",
+        }}
+      >
+        <div
+          className="w-[180px] rounded-[12px] border border-[color:var(--hairline-strong)] p-2 shadow-[var(--shadow-medium)]"
+          style={{
+            transform: `scale(${scale})`,
+            background: `color-mix(in srgb, var(--color-canvas) ${windowOpacity}%, transparent)`,
+          }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5">
+              <Brand
+                variant={appIcon === "monochrome" ? "mono" : "app"}
+                size={16}
+                showWordmark={false}
+              />
+              <span className="text-[10px] font-semibold text-[var(--color-ink)]">
+                Clippity
+              </span>
+            </span>
+            <span className="h-2 w-8 rounded-full bg-[color:var(--color-overlay-2)]" />
+          </div>
+          <div className="mt-2 grid grid-cols-[1fr_42px] gap-2">
+            <div className="space-y-1.5">
+              <span className="block h-2 rounded-full bg-[color:var(--color-overlay-3)]" />
+              <span className="block h-2 w-10/12 rounded-full bg-[color:var(--color-overlay-2)]" />
+              <span className="block h-2 w-7/12 rounded-full bg-[color:var(--color-overlay-2)]" />
+            </div>
+            <div className="rounded-[8px] bg-[color:var(--color-accent-soft)]" />
+          </div>
+        </div>
+      </div>
+      <div className="mt-2 flex justify-between font-mono text-[10.5px] text-[var(--color-slate)]">
+        <span>{uiScale}% scale</span>
+        <span>{windowOpacity}% opacity</span>
+      </div>
+      <p className="sr-only">Backdrop preview: {backdropLabel}</p>
+    </div>
   );
 }
 
@@ -223,6 +445,7 @@ function PercentSlider({
   max,
   step,
   ariaLabel,
+  onPreview,
   onChange,
 }: {
   value: number;
@@ -230,23 +453,20 @@ function PercentSlider({
   max: number;
   step: number;
   ariaLabel: string;
+  onPreview(next: number): void;
   onChange(next: number): void;
 }) {
   return (
-    <span className="inline-flex items-center gap-3">
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseInt(e.currentTarget.value, 10))}
-        className="clippity-slider h-1 w-[160px] cursor-pointer appearance-none rounded-full bg-[color:var(--color-overlay-2)]"
-        aria-label={ariaLabel}
-      />
-      <span className="w-11 text-right font-mono text-[12px] text-[var(--color-ink)]">
-        {value}%
-      </span>
-    </span>
+    <TickedSlider
+      value={value}
+      min={min}
+      max={max}
+      step={step}
+      ariaLabel={ariaLabel}
+      onPreview={onPreview}
+      onChange={onChange}
+      formatValue={(next) => `${next}%`}
+      width={160}
+    />
   );
 }

@@ -1,4 +1,10 @@
-import { act, configure, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  configure,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaptureMeta } from "../types";
@@ -165,125 +171,169 @@ function scrollToSentinel() {
 const RENDER_TIMEOUT = 20_000;
 
 describe("LibraryLayout paged library", () => {
-  it("mounts only the first batch of a large library", async () => {
-    render(<LibraryLayout />);
-    await waitFor(() =>
+  it(
+    "mounts only the first batch of a large library",
+    async () => {
+      render(<LibraryLayout />);
+      await waitFor(() =>
+        expect(
+          screen.getByText(`cap-${INITIAL_RENDERED - 1}`)
+        ).toBeInTheDocument()
+      );
+
+      // The prefix is up, and nothing past it is in the DOM.
+      expect(screen.getByText("cap-0")).toBeInTheDocument();
       expect(
-        screen.getByText(`cap-${INITIAL_RENDERED - 1}`)
-      ).toBeInTheDocument()
-    );
+        screen.queryByText(`cap-${INITIAL_RENDERED}`)
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(`cap-${TOTAL - 1}`)).not.toBeInTheDocument();
+    },
+    RENDER_TIMEOUT
+  );
 
-    // The prefix is up, and nothing past it is in the DOM.
-    expect(screen.getByText("cap-0")).toBeInTheDocument();
-    expect(screen.queryByText(`cap-${INITIAL_RENDERED}`)).not.toBeInTheDocument();
-    expect(screen.queryByText(`cap-${TOTAL - 1}`)).not.toBeInTheDocument();
-  }, RENDER_TIMEOUT);
+  it(
+    "never asks the backend for the whole library",
+    async () => {
+      render(<LibraryLayout />);
+      await waitFor(() =>
+        expect(screen.getByText("cap-0")).toBeInTheDocument()
+      );
 
-  it("never asks the backend for the whole library", async () => {
-    render(<LibraryLayout />);
-    await waitFor(() => expect(screen.getByText("cap-0")).toBeInTheDocument());
+      // The listing call is the thing P5 removes from this path.
+      const commands = invokeMock.mock.calls.map(([c]) => c);
+      expect(commands).not.toContain("library_list");
+      expect(commands).toContain("library_query");
+      expect(commands).toContain("library_facets");
 
-    // The listing call is the thing P5 removes from this path.
-    const commands = invokeMock.mock.calls.map(([c]) => c);
-    expect(commands).not.toContain("library_list");
-    expect(commands).toContain("library_query");
-    expect(commands).toContain("library_facets");
+      // And every page it did ask for was bounded.
+      const pages = invokeMock.mock.calls
+        .filter(([c]) => c === "library_query")
+        .map(([, a]) => (a as { query: { limit?: number } }).query);
+      expect(pages.length).toBeGreaterThan(0);
+      expect(pages.every((q) => (q.limit ?? Infinity) <= 100)).toBe(true);
+    },
+    RENDER_TIMEOUT
+  );
 
-    // And every page it did ask for was bounded.
-    const pages = invokeMock.mock.calls
-      .filter(([c]) => c === "library_query")
-      .map(([, a]) => (a as { query: { limit?: number } }).query);
-    expect(pages.length).toBeGreaterThan(0);
-    expect(pages.every((q) => (q.limit ?? Infinity) <= 100)).toBe(true);
-  }, RENDER_TIMEOUT);
+  it(
+    "reports the scope's true size, not how far it has loaded",
+    async () => {
+      render(<LibraryLayout />);
+      await waitFor(() =>
+        expect(screen.getByText("cap-0")).toBeInTheDocument()
+      );
 
-  it("reports the scope's true size, not how far it has loaded", async () => {
-    render(<LibraryLayout />);
-    await waitFor(() => expect(screen.getByText("cap-0")).toBeInTheDocument());
+      // The toolbar reads the backend's match count …
+      expect(screen.getByText(`${TOTAL} items`)).toBeInTheDocument();
+      // … while the client is holding far fewer rows than that.
+      expect(useLibraryStore.getState().visibleIds.length).toBeLessThan(TOTAL);
+    },
+    RENDER_TIMEOUT
+  );
 
-    // The toolbar reads the backend's match count …
-    expect(screen.getByText(`${TOTAL} items`)).toBeInTheDocument();
-    // … while the client is holding far fewer rows than that.
-    expect(
-      useLibraryStore.getState().visibleIds.length
-    ).toBeLessThan(TOTAL);
-  }, RENDER_TIMEOUT);
+  it(
+    "labels the rail from the whole-library aggregate",
+    async () => {
+      render(<LibraryLayout />);
+      await waitFor(() =>
+        expect(screen.getByText("cap-0")).toBeInTheDocument()
+      );
 
-  it("labels the rail from the whole-library aggregate", async () => {
-    render(<LibraryLayout />);
-    await waitFor(() => expect(screen.getByText("cap-0")).toBeInTheDocument());
+      // Counts the grid's page cannot see: trashed rows, and a tag on rows
+      // that were never loaded.
+      expect(screen.getByText("Trash").closest("div")).toHaveTextContent("7");
+      expect(screen.getByText("bug")).toBeInTheDocument();
+    },
+    RENDER_TIMEOUT
+  );
 
-    // Counts the grid's page cannot see: trashed rows, and a tag on rows
-    // that were never loaded.
-    expect(screen.getByText("Trash").closest("div")).toHaveTextContent("7");
-    expect(screen.getByText("bug")).toBeInTheDocument();
-  }, RENDER_TIMEOUT);
-
-  it("mounts and fetches the next batch when the sentinel is reached", async () => {
-    render(<LibraryLayout />);
-    await waitFor(() =>
+  it(
+    "mounts and fetches the next batch when the sentinel is reached",
+    async () => {
+      render(<LibraryLayout />);
+      await waitFor(() =>
+        expect(
+          screen.getByText(`cap-${INITIAL_RENDERED - 1}`)
+        ).toBeInTheDocument()
+      );
       expect(
-        screen.getByText(`cap-${INITIAL_RENDERED - 1}`)
-      ).toBeInTheDocument()
-    );
-    expect(screen.queryByText(`cap-${INITIAL_RENDERED}`)).not.toBeInTheDocument();
+        screen.queryByText(`cap-${INITIAL_RENDERED}`)
+      ).not.toBeInTheDocument();
 
-    scrollToSentinel();
+      scrollToSentinel();
 
-    await waitFor(() =>
-      expect(screen.getByText(`cap-${INITIAL_RENDERED}`)).toBeInTheDocument()
-    );
-    // Still bounded — one step, not the whole library.
-    expect(screen.queryByText(`cap-${TOTAL - 1}`)).not.toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.getByText(`cap-${INITIAL_RENDERED}`)).toBeInTheDocument()
+      );
+      // Still bounded — one step, not the whole library.
+      expect(screen.queryByText(`cap-${TOTAL - 1}`)).not.toBeInTheDocument();
 
-    // Scrolling is what pulls rows through the backend: pages were
-    // requested at increasing offsets rather than all at once.
-    const offsets = invokeMock.mock.calls
-      .filter(([c]) => c === "library_query")
-      .map(([, a]) => (a as { query: { offset?: number } }).query.offset ?? 0);
-    expect(Math.max(...offsets)).toBeGreaterThan(0);
-  }, RENDER_TIMEOUT);
+      // Scrolling is what pulls rows through the backend: pages were
+      // requested at increasing offsets rather than all at once.
+      const offsets = invokeMock.mock.calls
+        .filter(([c]) => c === "library_query")
+        .map(
+          ([, a]) => (a as { query: { offset?: number } }).query.offset ?? 0
+        );
+      expect(Math.max(...offsets)).toBeGreaterThan(0);
+    },
+    RENDER_TIMEOUT
+  );
 
-  it("restarts the budget when the search narrows the list", async () => {
-    render(<LibraryLayout />);
-    // Settle at the steady state (a full budget mounted) before growing
-    // it — until then the sentinel has nothing to observe.
-    await waitFor(() =>
-      expect(
-        screen.getByText(`cap-${INITIAL_RENDERED - 1}`)
-      ).toBeInTheDocument()
-    );
-    scrollToSentinel();
-    await waitFor(() =>
-      expect(screen.getByText(`cap-${INITIAL_RENDERED}`)).toBeInTheDocument()
-    );
+  it(
+    "restarts the budget when the search narrows the list",
+    async () => {
+      render(<LibraryLayout />);
+      // Settle at the steady state (a full budget mounted) before growing
+      // it — until then the sentinel has nothing to observe.
+      await waitFor(() =>
+        expect(
+          screen.getByText(`cap-${INITIAL_RENDERED - 1}`)
+        ).toBeInTheDocument()
+      );
+      scrollToSentinel();
+      await waitFor(() =>
+        expect(screen.getByText(`cap-${INITIAL_RENDERED}`)).toBeInTheDocument()
+      );
 
-    // A different list — the rows scrolled past aren't in it. The search
-    // goes to the backend, so the grid restarts from a fresh first page.
-    act(() => useLibraryStore.getState().setSearch("cap-4"));
+      // A different list — the rows scrolled past aren't in it. The search
+      // goes to the backend, so the grid restarts from a fresh first page.
+      act(() => useLibraryStore.getState().setSearch("cap-4"));
 
-    await waitFor(() =>
-      expect(screen.queryByText("cap-0")).not.toBeInTheDocument()
-    );
-    expect(screen.getByText("cap-4")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.queryByText("cap-0")).not.toBeInTheDocument()
+      );
+      expect(screen.getByText("cap-4")).toBeInTheDocument();
 
-    // The needle reached SQL rather than being applied to loaded rows.
-    const searches = invokeMock.mock.calls
-      .filter(([c]) => c === "library_query")
-      .map(([, a]) => (a as { query: { search?: string } }).query.search);
-    expect(searches).toContain("cap-4");
-  }, RENDER_TIMEOUT);
+      // The needle reached SQL rather than being applied to loaded rows.
+      const searches = invokeMock.mock.calls
+        .filter(([c]) => c === "library_query")
+        .map(([, a]) => (a as { query: { search?: string } }).query.search);
+      expect(searches).toContain("cap-4");
+    },
+    RENDER_TIMEOUT
+  );
 
-  it("falls back to the full listing only where a query can't express the scope", async () => {
-    render(<LibraryLayout />);
-    await waitFor(() => expect(screen.getByText("cap-0")).toBeInTheDocument());
-    expect(invokeMock.mock.calls.map(([c]) => c)).not.toContain("library_list");
+  it(
+    "falls back to the full listing only where a query can't express the scope",
+    async () => {
+      render(<LibraryLayout />);
+      await waitFor(() =>
+        expect(screen.getByText("cap-0")).toBeInTheDocument()
+      );
+      expect(invokeMock.mock.calls.map(([c]) => c)).not.toContain(
+        "library_list"
+      );
 
-    // A smart collection is a rule over every row, not a WHERE clause.
-    act(() => useLibraryStore.getState().setScope({ kind: "smart", id: "large" }));
+      // A smart collection is a rule over every row, not a WHERE clause.
+      act(() =>
+        useLibraryStore.getState().setScope({ kind: "smart", id: "large" })
+      );
 
-    await waitFor(() =>
-      expect(invokeMock.mock.calls.map(([c]) => c)).toContain("library_list")
-    );
-  }, RENDER_TIMEOUT);
+      await waitFor(() =>
+        expect(invokeMock.mock.calls.map(([c]) => c)).toContain("library_list")
+      );
+    },
+    RENDER_TIMEOUT
+  );
 });

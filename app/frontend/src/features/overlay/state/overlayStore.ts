@@ -13,7 +13,10 @@
 
 import { create } from "zustand";
 
-import type { RecorderFormat } from "@services/tauri/clients/recorder";
+import type {
+  RecorderFormat,
+  RecorderRequest,
+} from "@services/tauri/clients/recorder";
 import type { ScrollDirection } from "@services/tauri/clients/scroll";
 
 import { clearMask } from "../brushMask";
@@ -112,6 +115,20 @@ interface OverlayStoreState {
    *  selection. Defaults to video, the format a session started without
    *  a mirror (a preset, a future hotkey) should get. */
   recordFormat: RecorderFormat;
+  /** A recording **preset's** request, mirrored across when the overlay
+   *  was opened by one — everything but the rectangle, which is what the
+   *  overlay is here to pick.
+   *
+   *  Null for an ordinary Record-Region / Record-Window session, which
+   *  builds its request from live settings at finalize. Without this a
+   *  region recording preset would silently ignore its own frame rate,
+   *  resolution, audio and encoder settings, because the overlay is a
+   *  separate window that can only see the settings store.
+   *
+   *  Mirrored on **every** overlay open (null when there is no preset),
+   *  for the same reason the format is: a value left over from the last
+   *  preset would quietly apply to the next ordinary recording. */
+  recordOverride: RecorderRequest | null;
   /** `?` / F1 keybind cheat-sheet visibility. */
   helpOpen: boolean;
   /** Pre-overlay desktop snapshot for the loupe. */
@@ -170,6 +187,7 @@ interface OverlayStoreState {
   setToggles(partial: Partial<OverlayToggles>): void;
   setScrollDirection(d: ScrollDirection): void;
   setRecordFormat(f: RecorderFormat): void;
+  setRecordOverride(r: RecorderRequest | null): void;
   setHelpOpen(b: boolean): void;
   setSnapshot(s: SnapshotState): void;
   setActiveResize(dir: ResizeDir | null): void;
@@ -242,6 +260,7 @@ export const useOverlayStore = create<OverlayStoreState>((set) => ({
   toggles: INITIAL_TOGGLES,
   scrollDirection: "down",
   recordFormat: "mp4",
+  recordOverride: null,
   helpOpen: false,
   snapshot: { url: null, sampleCtx: null },
   interaction: INITIAL_INTERACTION,
@@ -300,6 +319,7 @@ export const useOverlayStore = create<OverlayStoreState>((set) => ({
     set((s) => ({ toggles: { ...s.toggles, ...partial } })),
   setScrollDirection: (scrollDirection) => set({ scrollDirection }),
   setRecordFormat: (recordFormat) => set({ recordFormat }),
+  setRecordOverride: (recordOverride) => set({ recordOverride }),
   setHelpOpen: (helpOpen) => set({ helpOpen }),
   setSnapshot: (snapshot) => set({ snapshot }),
   setActiveResize: (dir) =>
@@ -363,8 +383,7 @@ export const useOverlayStore = create<OverlayStoreState>((set) => ({
       const penPath = s.penPath.slice(0, -1);
       return {
         penPath,
-        phase:
-          penPath.length > 0 ? "dragging" : s.cursor ? "idle" : "empty",
+        phase: penPath.length > 0 ? "dragging" : s.cursor ? "idle" : "empty",
       };
     }),
   setBrushSize: (brushSize) =>

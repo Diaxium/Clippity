@@ -13,9 +13,4 @@
  */
 
 export type DashboardView =
-  | "home"
-  | "library"
-  | "editor"
-  | "settings"
-  | "presets"
-  | "palette";
+  "home" | "library" | "editor" | "studio" | "settings" | "presets" | "palette";

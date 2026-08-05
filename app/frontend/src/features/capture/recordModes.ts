@@ -126,7 +126,14 @@ export function visibleRecordOptionKeys(
   format: RecorderFormat
 ): ReadonlySet<string> {
   if (format === "gif") {
-    return new Set(["cursor", "outline", "clipboard", "fps"]);
+    // Resolution is dropped too, and for the same reason as the audio
+    // rows: GIF's own pixel budget is well under every height the menu
+    // offers, so the control would be a promise nothing keeps. Quality
+    // goes with it — it scales an H.264 bitrate, and GIF has none.
+    //
+    // **Sources stay.** A GIF is still a picture of the screen, and a
+    // webcam in the corner is as meaningful there as in a video.
+    return new Set(["cursor", "outline", "clipboard", "fps", "sources"]);
   }
   return new Set([
     "microphone",
@@ -135,6 +142,9 @@ export function visibleRecordOptionKeys(
     "outline",
     "clipboard",
     "fps",
+    "resolution",
+    "quality",
+    "sources",
   ]);
 }
 

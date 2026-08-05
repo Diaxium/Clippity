@@ -1,16 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Mic, Pause, Play, Square } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  Pause,
+  Play,
+  Square,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 import {
   onRecorderFinished,
+  onRecorderLevels,
   onRecorderTick,
   pauseRecording,
   recordingStatus,
   resumeRecording,
+  setRecordingGain,
+  setRecordingMute,
   stopRecording,
 } from "@services/tauri/clients/recorder";
-import type { RecorderStatus } from "@services/tauri/clients/recorder";
+import type {
+  AudioSource,
+  RecorderLevels,
+  RecorderStatus,
+} from "@services/tauri/clients/recorder";
 import type { RecorderToastFormat } from "@services/tauri/clients/toast";
 import { emitErrorToast } from "@services/tauri/clients/toast";
 
@@ -18,6 +33,12 @@ const FORMAT_LABEL: Record<RecorderToastFormat, string> = {
   mp4: "Video",
   gif: "GIF",
 };
+
+/** Gain envelope, mirroring `domain::recorder::GAIN_PCT_*`. */
+const GAIN_MAX_PCT = 200;
+const GAIN_DEFAULT_PCT = 100;
+
+const SILENT: RecorderLevels = { microphone: 0, system: 0 };
 
 /**
  * The video/GIF recorder HUD (ADR 0031) — a sticky, capture-excluded
@@ -36,12 +57,16 @@ const FORMAT_LABEL: Record<RecorderToastFormat, string> = {
  */
 export function RecorderToastBody({
   format,
-  audio,
+  microphone,
+  system,
 }: {
   format: RecorderToastFormat;
-  audio: boolean;
+  microphone: boolean;
+  system: boolean;
 }) {
   const [status, setStatus] = useState<RecorderStatus | null>(null);
+  const [levels, setLevels] = useState<RecorderLevels>(SILENT);
+  const audio = microphone || system;
   // A session is reaped exactly once. The Stop button, the Discard
   // button and the finished event can all race each other here.
   const reaped = useRef(false);
@@ -67,14 +92,22 @@ export function RecorderToastBody({
       });
 
     const offTick = onRecorderTick(setStatus);
+    const offLevels = onRecorderLevels(setLevels);
     const offFinished = onRecorderFinished(() => reap(false));
     return () => {
       offTick();
+      offLevels();
       offFinished();
     };
   }, [reap]);
 
   const paused = status?.state === "paused";
+
+  // A paused session hears nothing, and the backend zeroes the meters
+  // when it pauses — but the last event can land either side of the
+  // transition, so the render pins them too rather than leaving a bar
+  // frozen mid-height on a session that stopped listening.
+  const shown = paused ? SILENT : levels;
   const toggle = useCallback(() => {
     const next = paused ? resumeRecording : pauseRecording;
     void next()
@@ -114,6 +147,29 @@ export function RecorderToastBody({
         </span>
       </div>
 
+      {audio && (
+        <div className="float-card flex flex-col gap-1.5 rounded-[12px] border border-[color:var(--hairline)] px-3.5 py-2.5 shadow-[var(--shadow-modal)] backdrop-blur-md">
+          {microphone && (
+            <MixerRow
+              source="microphone"
+              label="Microphone"
+              level={shown.microphone}
+              OnIcon={Mic}
+              OffIcon={MicOff}
+            />
+          )}
+          {system && (
+            <MixerRow
+              source="system"
+              label="System audio"
+              level={shown.system}
+              OnIcon={Volume2}
+              OffIcon={VolumeX}
+            />
+          )}
+        </div>
+      )}
+
       <div className="float-card flex items-center justify-between gap-2 rounded-[12px] border border-[color:var(--hairline)] px-3.5 py-2.5 shadow-[var(--shadow-modal)] backdrop-blur-md">
         <button
           type="button"
@@ -146,6 +202,108 @@ export function RecorderToastBody({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * One input's live strip: mute, a peak meter, and a level slider.
+ *
+ * **Level state is local, and that is deliberate.** The backend owns the
+ * session's gain and there is no event reporting it back, so this is the
+ * only writer — which is what lets a drag stay smooth instead of
+ * fighting a value echoed back a frame later. Every session starts from
+ * the persisted default, so the local state is never stale on mount.
+ *
+ * Mute is separate from dragging to zero: it remembers the level to come
+ * back to, which is the thing a slider alone cannot do.
+ */
+function MixerRow({
+  source,
+  label,
+  level,
+  OnIcon,
+  OffIcon,
+}: {
+  source: AudioSource;
+  label: string;
+  level: number;
+  OnIcon: typeof Mic;
+  OffIcon: typeof MicOff;
+}) {
+  const [gain, setGain] = useState(GAIN_DEFAULT_PCT);
+  const [muted, setMuted] = useState(false);
+
+  const toggleMute = () => {
+    const next = !muted;
+    setMuted(next);
+    // Fire-and-forget: the command is infallible backend-side and a
+    // session that ended mid-click is a race, not something to put an
+    // error toast on screen about.
+    void setRecordingMute(source, next);
+  };
+
+  const commit = (pct: number) => {
+    setGain(pct);
+    // Un-mute implicitly: moving the slider is an unambiguous request
+    // for that level, and leaving it silent would read as a dead
+    // control.
+    if (muted) setMuted(false);
+    void setRecordingGain(source, pct);
+  };
+
+  const Icon = muted ? OffIcon : OnIcon;
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={toggleMute}
+        aria-label={`${muted ? "Unmute" : "Mute"} ${label.toLowerCase()}`}
+        aria-pressed={muted}
+        className={`grid h-6 w-6 shrink-0 place-items-center rounded-[7px] transition-colors hover:bg-[color:var(--color-overlay-1)] ${
+          muted ? "text-[var(--color-danger)]" : "text-[var(--color-slate)]"
+        }`}
+      >
+        <Icon size={12} strokeWidth={2.25} />
+      </button>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {/* Meter above the slider so the bar the user is watching does
+            not sit under the thumb they are dragging. */}
+        <div
+          className="h-1 w-full overflow-hidden rounded-full bg-[color:var(--color-overlay-1)]"
+          role="meter"
+          aria-label={`${label} level`}
+          aria-valuenow={Math.round(level * 100)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className={`h-full rounded-full transition-[width] duration-100 ${
+              // Red from -3 dBFS up: the point where the next transient
+              // is the one that clips.
+              level > 0.71
+                ? "bg-[var(--color-danger)]"
+                : "bg-[var(--color-accent)]"
+            }`}
+            style={{ width: `${Math.min(100, level * 100)}%` }}
+          />
+        </div>
+        <input
+          type="range"
+          className="clippity-slider h-1 w-full"
+          min={0}
+          max={GAIN_MAX_PCT}
+          step={5}
+          value={muted ? 0 : gain}
+          aria-label={`${label} volume`}
+          onChange={(e) => commit(Number(e.currentTarget.value))}
+        />
+      </div>
+
+      <span className="w-8 shrink-0 text-right font-mono text-[10px] text-[var(--color-hint)] tabular-nums">
+        {muted ? "—" : `${gain}%`}
+      </span>
     </div>
   );
 }

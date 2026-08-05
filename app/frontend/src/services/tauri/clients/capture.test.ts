@@ -18,7 +18,11 @@ vi.mock("@services/tauri", () => ({
   },
 }));
 
-import { captureFullscreen, ingestClipboard, onCaptureFinished } from "./capture";
+import {
+  captureFullscreen,
+  ingestClipboard,
+  onCaptureFinished,
+} from "./capture";
 
 const sampleRequest: CaptureRequest = {
   type: "fullscreen",

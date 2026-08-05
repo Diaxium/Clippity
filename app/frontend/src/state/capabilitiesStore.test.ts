@@ -19,9 +19,8 @@ const {
   resetCapabilitiesHydration,
   useCapabilitiesStore,
 } = await import("./capabilitiesStore");
-const { UNMANAGED_PROFILE } = await import(
-  "@services/tauri/clients/provisioning"
-);
+const { UNMANAGED_PROFILE } =
+  await import("@services/tauri/clients/provisioning");
 
 /** A managed install with OCR and the GIF encoder declined. */
 const DECLINED = {
@@ -77,7 +76,9 @@ describe("capabilitiesStore", () => {
     await hydrateCapabilities();
     expect(getInstallationProfile).toHaveBeenCalledTimes(1);
     // …and the one result still landed.
-    expect(useCapabilitiesStore.getState().capabilities.gifRecording).toBe(false);
+    expect(useCapabilitiesStore.getState().capabilities.gifRecording).toBe(
+      false
+    );
   });
 
   it("keeps everything available when the backend call fails", async () => {

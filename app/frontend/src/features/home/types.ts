@@ -21,7 +21,12 @@ export type IconComponent = ComponentType<{
 export type TileTint = "warm" | "cool" | "violet" | "gold";
 
 /** Rotating tile tints, so a list of items reads as a small multi-hue set. */
-export const TILE_TINTS: readonly TileTint[] = ["warm", "cool", "violet", "gold"];
+export const TILE_TINTS: readonly TileTint[] = [
+  "warm",
+  "cool",
+  "violet",
+  "gold",
+];
 
 /** Pick a stable tint for list position `i`. */
 export function tintForIndex(i: number): TileTint {

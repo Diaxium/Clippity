@@ -32,12 +32,12 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut};
 
-use clippity_infra::events;
+use crate::window_service;
 use clippity_domain::countdown::{
     validate_request, CountdownRequest, CountdownStartEvent, COUNTDOWN_HEIGHT_LOGICAL,
 };
 use clippity_infra::error::{AppError, AppResult};
-use crate::window_service;
+use clippity_infra::events;
 
 /// Tracks which primary window (`capture` / `main` / `overlay`) was
 /// visible at `start` time so `cancel` can put the user back where

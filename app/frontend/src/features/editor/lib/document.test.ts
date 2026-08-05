@@ -7,11 +7,7 @@ import {
   reseedNodeIds,
   type SceneNode,
 } from "../types";
-import {
-  DOCUMENT_VERSION,
-  parseDocument,
-  serializeDocument,
-} from "./document";
+import { DOCUMENT_VERSION, parseDocument, serializeDocument } from "./document";
 import { sceneFromSaved } from "./seed";
 
 function sampleSource() {
@@ -38,7 +34,9 @@ describe("serializeDocument / parseDocument", () => {
 
   it("rejects malformed JSON, wrong version, and missing fields", () => {
     expect(parseDocument("not json")).toBeNull();
-    expect(parseDocument(JSON.stringify({ version: 2, rootIds: [], nodes: {} }))).toBeNull();
+    expect(
+      parseDocument(JSON.stringify({ version: 2, rootIds: [], nodes: {} }))
+    ).toBeNull();
     expect(parseDocument(JSON.stringify({ version: 1, nodes: {} }))).toBeNull();
     expect(
       parseDocument(JSON.stringify({ version: 1, rootIds: [], nodes: null }))

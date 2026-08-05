@@ -182,9 +182,7 @@ export function keybindGroups(): KeybindGroup[] {
   const list = effectiveEditorKeybinds();
   const groups: KeybindGroup[] = [];
   for (const category of CATEGORY_ORDER) {
-    const items = list.filter(
-      (kb) => kb.category === category && !kb.hidden
-    );
+    const items = list.filter((kb) => kb.category === category && !kb.hidden);
     if (items.length > 0) {
       groups.push({ category, label: CATEGORY_LABEL[category], items });
     }

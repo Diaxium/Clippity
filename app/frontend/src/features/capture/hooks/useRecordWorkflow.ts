@@ -4,6 +4,7 @@ import { useSettingsStore } from "@features/settings";
 import { beginRegionCapture } from "@services/tauri/clients/overlay";
 import {
   emitOverlayRecordFormat,
+  emitOverlayRecordPreset,
   startRecording,
 } from "@services/tauri/clients/recorder";
 import type { RecorderStatus } from "@services/tauri/clients/recorder";
@@ -60,6 +61,10 @@ export function useRecordWorkflow(): UseRecordWorkflow {
         // the overlay's own finalize starts the session and raises the
         // HUD, so there is no status to return here.
         await emitOverlayRecordFormat(format);
+        // Null, explicitly: the overlay keeps whatever it was last told,
+        // so skipping this would make the next Record-Region session
+        // silently inherit the last recording preset's configuration.
+        await emitOverlayRecordPreset(null);
         await beginRegionCapture(overlayMode);
         return null;
       }

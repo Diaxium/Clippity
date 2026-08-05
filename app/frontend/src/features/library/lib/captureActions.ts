@@ -3,7 +3,6 @@ import {
   ExternalLink,
   Folder,
   Maximize2,
-  PenLine,
   RotateCcw,
   Star,
   StarOff,
@@ -11,13 +10,18 @@ import {
 } from "lucide-react";
 
 import { openDashboard } from "@services/tauri/clients/dashboard";
-import { openInEditor } from "@services/tauri/clients/editor";
 import { shareCapture, type ShareTarget } from "@services/tauri/clients/share";
 import { emitErrorToast } from "@services/tauri/clients/toast";
 import type { ContextMenuEntry } from "@shared/ui/contextMenu";
 
 import { copyAux } from "./auxClipboard";
 import { setFavorite } from "./labelActions";
+import {
+  openCapture,
+  openIconFor,
+  openLabelFor,
+  openSurfaceFor,
+} from "./openCapture";
 import type { CaptureMeta, LibraryMode } from "../types";
 
 /**
@@ -76,12 +80,6 @@ export function captureActionEntries(
   const isAux =
     meta.kind === "color" || meta.kind === "palette" || meta.kind === "text";
   const isPalette = meta.kind === "palette" && !!meta.palette?.length;
-  // A recording has no editor to open — the annotation editor loads a
-  // capture as an image, and a video is not one. Same reasoning that
-  // keeps aux kinds out of it: a menu entry that always errors is worse
-  // than an absent one. GIF stays in; it decodes as an image, and
-  // flattening it there is a choice the user can make.
-  const isVideo = meta.kind === "video";
 
   const entries: ContextMenuEntry[] = isAux
     ? [
@@ -97,24 +95,16 @@ export function captureActionEntries(
         },
       ]
     : [
-        ...(isVideo
-          ? []
-          : [
-              {
-                id: "open-editor",
-                label: "Open in editor",
-                icon: PenLine,
-                onSelect: () => {
-                  void openInEditor(meta.id).catch((err: unknown) =>
-                    emitErrorToast(
-                      err instanceof Error
-                        ? err.message
-                        : "Failed to open editor."
-                    )
-                  );
-                },
-              } satisfies ContextMenuEntry,
-            ]),
+        // Destination, label and icon all come from `openCapture`, so
+        // this menu cannot offer a different surface than the card's own
+        // double-click does — which is exactly how a recording ended up
+        // being handed to the image editor.
+        {
+          id: openSurfaceFor(meta) === "studio" ? "open-studio" : "open-editor",
+          label: openLabelFor(meta),
+          icon: openIconFor(meta),
+          onSelect: () => openCapture(meta),
+        } satisfies ContextMenuEntry,
         {
           id: "open-default",
           label: "Open in default app",

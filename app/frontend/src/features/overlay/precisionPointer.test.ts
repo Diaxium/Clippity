@@ -159,7 +159,14 @@ describe("precisionPoint", () => {
     const crept = move({ x: 500, y: 400 }, true);
     // canResync=false — a drag is in flight, so the release must NOT
     // snap; the offset reels in gradually instead.
-    const released = precisionPoint({}, { x: 500, y: 400 }, false, VW, VH, false);
+    const released = precisionPoint(
+      {},
+      { x: 500, y: 400 },
+      false,
+      VW,
+      VH,
+      false
+    );
     expect(released).toEqual(crept);
     expect(Math.abs(precisionOffset().x)).toBeGreaterThan(50);
   });

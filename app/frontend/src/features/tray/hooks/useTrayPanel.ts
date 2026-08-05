@@ -43,7 +43,10 @@ import {
   emitOverlayToggles,
   recaptureLastRegion,
 } from "@services/tauri/clients/overlay";
-import { emitErrorToast, showCaptureWindow } from "@services/tauri/clients/toast";
+import {
+  emitErrorToast,
+  showCaptureWindow,
+} from "@services/tauri/clients/toast";
 import {
   hideTrayPanel,
   onTrayOpened,
@@ -144,18 +147,24 @@ export function useTrayPanel() {
     if (!(await runTimedGate())) return;
     // Mirror toggles so the overlay bottom bar matches, then open it —
     // same handshake as `useCaptureWorkflow`.
-    await emitOverlayToggles({ preview: true, clipboard, cursor, enhance: false }).catch(
-      () => {}
-    );
+    await emitOverlayToggles({
+      preview: true,
+      clipboard,
+      cursor,
+      enhance: false,
+    }).catch(() => {});
     await beginRegionCapture("region").catch(() => {});
   }, [cursor, clipboard, runTimedGate]);
 
   const windowCapture = useCallback(async () => {
     await hideTrayPanel();
     if (!(await runTimedGate())) return;
-    await emitOverlayToggles({ preview: true, clipboard, cursor, enhance: false }).catch(
-      () => {}
-    );
+    await emitOverlayToggles({
+      preview: true,
+      clipboard,
+      cursor,
+      enhance: false,
+    }).catch(() => {});
     await beginRegionCapture("window").catch(() => {});
   }, [cursor, clipboard, runTimedGate]);
 
@@ -166,13 +175,16 @@ export function useTrayPanel() {
     // fresh snapshot. It rejects when nothing is remembered or the
     // display layout changed since — surface that, since the user
     // clicked expecting a capture and would otherwise see nothing happen.
-    await recaptureLastRegion({ preview: true, clipboard, cursor, enhance: false }).catch(
-      (err: unknown) => {
-        void emitErrorToast(
-          err instanceof Error ? err.message : "Nothing to recapture yet."
-        );
-      }
-    );
+    await recaptureLastRegion({
+      preview: true,
+      clipboard,
+      cursor,
+      enhance: false,
+    }).catch((err: unknown) => {
+      void emitErrorToast(
+        err instanceof Error ? err.message : "Nothing to recapture yet."
+      );
+    });
   }, [cursor, clipboard, runTimedGate]);
 
   const openCaptureWindow = useCallback(() => {

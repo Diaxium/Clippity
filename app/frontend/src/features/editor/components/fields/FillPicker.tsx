@@ -453,7 +453,9 @@ function GradientBody({
               }}
               className="min-w-0 flex-1 bg-transparent text-right text-[12px] tabular-nums text-[var(--ed-text)] outline-none"
             />
-            <span className="pl-0.5 text-[12px] text-[var(--ed-text-dim)]">°</span>
+            <span className="pl-0.5 text-[12px] text-[var(--ed-text-dim)]">
+              °
+            </span>
           </div>
         )}
         {gradient.kind === "radial" && (
@@ -477,82 +479,84 @@ function GradientBody({
         <MeshBody gradient={gradient} onChange={onChange} />
       ) : (
         <>
-      <GradientBar
-        gradient={gradient}
-        activeId={active.id}
-        onChange={onChange}
-        onSelectStop={setActiveId}
-        onAddStop={addStop}
-      />
+          <GradientBar
+            gradient={gradient}
+            activeId={active.id}
+            onChange={onChange}
+            onSelectStop={setActiveId}
+            onAddStop={addStop}
+          />
 
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] text-[var(--ed-text-dim)]">Stops</span>
-        <button
-          type="button"
-          title="Add stop"
-          aria-label="Add stop"
-          onClick={() => addStop()}
-          className="flex h-5 w-5 items-center justify-center rounded-[4px] text-[var(--ed-text-dim)] hover:bg-[var(--ed-input-bg)] hover:text-[var(--ed-text)]"
-        >
-          <Plus size={14} strokeWidth={2} />
-        </button>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        {ordered.map((s) => (
-          <div key={s.id} className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <StopPercent
-                ariaLabel="Stop position"
-                value={s.position}
-                onChange={(position) => patchStop(s.id, { position })}
-              />
-              <button
-                type="button"
-                aria-label="Stop color"
-                onClick={() => {
-                  setActiveId(s.id);
-                  setColorOpenId((id) => (id === s.id ? null : s.id));
-                }}
-                className="flex h-7 min-w-0 flex-1 items-center gap-1.5 rounded-[6px] bg-[var(--ed-input-bg)] px-1.5 hover:bg-[var(--ed-input-bg-hover)]"
-              >
-                <span
-                  className="h-4 w-4 shrink-0 rounded-[3px] border border-[color:var(--ed-hairline)]"
-                  style={{ background: rgba(s.color, s.opacity) }}
-                />
-                <span className="flex-1 truncate text-left text-[12px] uppercase text-[var(--ed-text)]">
-                  {s.color.replace(/^#/, "")}
-                </span>
-                <ChevronDown
-                  size={12}
-                  className="shrink-0 text-[var(--ed-text-dim)]"
-                />
-              </button>
-              <StopPercent
-                ariaLabel="Stop opacity"
-                value={s.opacity}
-                onChange={(opacity) => patchStop(s.id, { opacity })}
-              />
-              <button
-                type="button"
-                title="Remove stop"
-                aria-label="Remove stop"
-                disabled={gradient.stops.length <= 2}
-                onClick={() => removeStop(s.id)}
-                className="flex h-7 w-6 shrink-0 items-center justify-center rounded-[5px] text-[var(--ed-text-dim)] hover:text-[var(--ed-danger)] disabled:opacity-30"
-              >
-                <Minus size={13} strokeWidth={2} />
-              </button>
-            </div>
-            {colorOpenId === s.id && (
-              <ColorPicker
-                color={s.color}
-                opacity={s.opacity}
-                onChange={(color, opacity) => patchStop(s.id, { color, opacity })}
-              />
-            )}
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-[var(--ed-text-dim)]">Stops</span>
+            <button
+              type="button"
+              title="Add stop"
+              aria-label="Add stop"
+              onClick={() => addStop()}
+              className="flex h-5 w-5 items-center justify-center rounded-[4px] text-[var(--ed-text-dim)] hover:bg-[var(--ed-input-bg)] hover:text-[var(--ed-text)]"
+            >
+              <Plus size={14} strokeWidth={2} />
+            </button>
           </div>
-        ))}
-      </div>
+          <div className="flex flex-col gap-1.5">
+            {ordered.map((s) => (
+              <div key={s.id} className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5">
+                  <StopPercent
+                    ariaLabel="Stop position"
+                    value={s.position}
+                    onChange={(position) => patchStop(s.id, { position })}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Stop color"
+                    onClick={() => {
+                      setActiveId(s.id);
+                      setColorOpenId((id) => (id === s.id ? null : s.id));
+                    }}
+                    className="flex h-7 min-w-0 flex-1 items-center gap-1.5 rounded-[6px] bg-[var(--ed-input-bg)] px-1.5 hover:bg-[var(--ed-input-bg-hover)]"
+                  >
+                    <span
+                      className="h-4 w-4 shrink-0 rounded-[3px] border border-[color:var(--ed-hairline)]"
+                      style={{ background: rgba(s.color, s.opacity) }}
+                    />
+                    <span className="flex-1 truncate text-left text-[12px] uppercase text-[var(--ed-text)]">
+                      {s.color.replace(/^#/, "")}
+                    </span>
+                    <ChevronDown
+                      size={12}
+                      className="shrink-0 text-[var(--ed-text-dim)]"
+                    />
+                  </button>
+                  <StopPercent
+                    ariaLabel="Stop opacity"
+                    value={s.opacity}
+                    onChange={(opacity) => patchStop(s.id, { opacity })}
+                  />
+                  <button
+                    type="button"
+                    title="Remove stop"
+                    aria-label="Remove stop"
+                    disabled={gradient.stops.length <= 2}
+                    onClick={() => removeStop(s.id)}
+                    className="flex h-7 w-6 shrink-0 items-center justify-center rounded-[5px] text-[var(--ed-text-dim)] hover:text-[var(--ed-danger)] disabled:opacity-30"
+                  >
+                    <Minus size={13} strokeWidth={2} />
+                  </button>
+                </div>
+                {colorOpenId === s.id && (
+                  <ColorPicker
+                    color={s.color}
+                    opacity={s.opacity}
+                    onChange={(color, opacity) =>
+                      patchStop(s.id, { color, opacity })
+                    }
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </>
       )}
     </div>
@@ -671,7 +675,8 @@ function FreeformBody({
 }) {
   const mode = gradient.freeformMode ?? "points";
   const line = gradient.lines?.[0];
-  const stops = mode === "lines" ? (line?.stops ?? []) : (gradient.points ?? []);
+  const stops =
+    mode === "lines" ? (line?.stops ?? []) : (gradient.points ?? []);
 
   const [activeId, setActiveId] = useState<string>(stops[0]?.id ?? "");
   const active = stops.find((s) => s.id === activeId) ?? stops[0];
@@ -682,7 +687,9 @@ function FreeformBody({
         ? {
             ...gradient,
             freeformMode: m,
-            lines: gradient.lines?.length ? gradient.lines : [makeFreeformLine()],
+            lines: gradient.lines?.length
+              ? gradient.lines
+              : [makeFreeformLine()],
           }
         : {
             ...gradient,
@@ -706,10 +713,7 @@ function FreeformBody({
         : { ...gradient, points: next }
     );
 
-  const patchStop = (
-    sid: string,
-    patch: Partial<FreeformStop>
-  ): void =>
+  const patchStop = (sid: string, patch: Partial<FreeformStop>): void =>
     writeStops(stops.map((s) => (s.id === sid ? { ...s, ...patch } : s)));
 
   const addStop = (): void => {
@@ -725,7 +729,12 @@ function FreeformBody({
         : { x: 0.5, y: 0.5 };
     writeStops([
       ...stops,
-      { id, point, color: active?.color ?? "#ffffff", opacity: active?.opacity ?? 1 },
+      {
+        id,
+        point,
+        color: active?.color ?? "#ffffff",
+        opacity: active?.opacity ?? 1,
+      },
     ]);
     setActiveId(id);
   };

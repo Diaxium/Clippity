@@ -2,11 +2,7 @@ import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useEditorStore } from "../state/editorStore";
-import {
-  formatCombo,
-  keybindGroups,
-  type EditorKeybind,
-} from "../keybinds";
+import { formatCombo, keybindGroups, type EditorKeybind } from "../keybinds";
 
 /** Pre-formatted chip labels for a binding (explicit `helpKeys`, else the first
  *  combo's platform-aware formatting). */

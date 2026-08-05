@@ -18,7 +18,13 @@ beforeEach(() => {
   // too means its teardown removes `window.cancelAnimationFrame` out
   // from under React's unmount cleanup, which calls it.
   vi.useFakeTimers({
-    toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+    toFake: [
+      "setTimeout",
+      "clearTimeout",
+      "setInterval",
+      "clearInterval",
+      "Date",
+    ],
   });
   nowMock = 0;
   performance.now = () => nowMock;

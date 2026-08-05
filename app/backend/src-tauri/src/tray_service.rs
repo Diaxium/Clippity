@@ -28,10 +28,10 @@ use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
 
-use clippity_infra::events;
 use crate::app::state::AppState;
 use clippity_domain::dashboard::{DashboardRequest, DashboardView};
 use clippity_infra::error::{AppError, AppResult};
+use clippity_infra::events;
 use clippity_services::window_service;
 
 /// Flyout size in logical pixels. Fixed — the React layout fits within

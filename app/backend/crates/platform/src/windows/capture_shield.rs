@@ -109,12 +109,7 @@ mod tests {
     /// `WNDCLASSW.lpfnWndProc` wants a raw `extern "system"` pointer; the
     /// crate's `DefWindowProcW` is a Rust-callable wrapper, so bounce
     /// through this trivial proc.
-    unsafe extern "system" fn wndproc(
-        hwnd: HWND,
-        msg: u32,
-        wp: WPARAM,
-        lp: LPARAM,
-    ) -> LRESULT {
+    unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> LRESULT {
         DefWindowProcW(hwnd, msg, wp, lp)
     }
 
@@ -219,7 +214,10 @@ mod tests {
                 }
             );
 
-            assert!(before > 0, "probe window wasn't even captured — test setup is wrong");
+            assert!(
+                before > 0,
+                "probe window wasn't even captured — test setup is wrong"
+            );
         }
     }
 }

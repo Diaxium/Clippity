@@ -271,7 +271,11 @@ describe("flattenBezier", () => {
   });
 
   it("samples curved segments and stays within the convex hull of handles", () => {
-    const a: PenAnchor = { p: { x: 0, y: 0 }, hIn: null, hOut: { x: 0, y: 10 } };
+    const a: PenAnchor = {
+      p: { x: 0, y: 0 },
+      hIn: null,
+      hOut: { x: 0, y: 10 },
+    };
     const b: PenAnchor = {
       p: { x: 10, y: 0 },
       hIn: { x: 10, y: 10 },

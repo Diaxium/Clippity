@@ -105,9 +105,8 @@ const THUMBS = new Map(
 const { StrictMode } = await import("react");
 const { createRoot } = await import("react-dom/client");
 const { LibraryLayout } = await import("@features/library");
-const { useLibraryStore } = await import(
-  "@features/library/state/libraryStore"
-);
+const { useLibraryStore } =
+  await import("@features/library/state/libraryStore");
 
 await import("@styles/theme.css");
 await import("@styles/globals.css");

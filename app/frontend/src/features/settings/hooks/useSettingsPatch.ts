@@ -29,6 +29,7 @@ function merge(
     recording: patch.recording ?? current.recording,
     models: patch.models ?? current.models,
     shortcuts: patch.shortcuts ?? current.shortcuts,
+    developer: patch.developer ?? current.developer,
   };
 }
 

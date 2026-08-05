@@ -68,7 +68,7 @@ export function KeyRecorderField({
             ? "border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]"
             : conflict
               ? "border-[color:var(--color-danger)] bg-[var(--color-surface)] hover:bg-[var(--color-overlay-1)]"
-              : "border-[color:var(--hairline)] bg-[var(--color-surface)] hover:bg-[var(--color-overlay-1)]",
+              : "border-[color:var(--hairline)] bg-[var(--color-surface)] hover:bg-[var(--color-overlay-1)]"
         )}
       >
         {recorder.recording ? (
@@ -84,7 +84,9 @@ export function KeyRecorderField({
             {combos.map((combo, ci) => (
               <span key={combo} className="flex items-center gap-1">
                 {ci > 0 && (
-                  <span className="text-[10px] text-[var(--color-hint)]">or</span>
+                  <span className="text-[10px] text-[var(--color-hint)]">
+                    or
+                  </span>
                 )}
                 {formatCombo(combo).map((k, ki) => (
                   <Cap key={`${combo}-${ki}`} label={k} />
@@ -117,7 +119,7 @@ export function KeyRecorderField({
           "focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-[7px] transition-colors",
           overridden
             ? "text-[var(--color-slate)] hover:bg-[var(--color-overlay-1)] hover:text-[var(--color-ink)]"
-            : "cursor-default text-[var(--color-hint)] opacity-40",
+            : "cursor-default text-[var(--color-hint)] opacity-40"
         )}
       >
         <RotateCcw size={14} strokeWidth={1.9} />

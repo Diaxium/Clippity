@@ -5,6 +5,7 @@ import { HomeLayout } from "@features/home";
 import { LibraryLayout, PaletteView } from "@features/library";
 import { PresetsLayout } from "@features/presets";
 import { SettingsLayout } from "@features/settings";
+import { StudioLayout } from "@features/studio";
 import {
   consumePendingDashboardView,
   onDashboardView,
@@ -33,10 +34,13 @@ export function DashboardLayout() {
   const sidebarCollapsed = useDashboardStore((s) => s.sidebarCollapsed);
   const setSidebarCollapsed = useDashboardStore((s) => s.setSidebarCollapsed);
   const editorCaptureId = useDashboardStore((s) => s.editorCaptureId);
+  const studioCaptureId = useDashboardStore((s) => s.studioCaptureId);
   const paletteId = useDashboardStore((s) => s.paletteId);
-  // The palette view is library-adjacent and has no nav row of its own —
-  // keep the Library rail item highlighted while it's open.
-  const navActive = view === "palette" ? "library" : view;
+  // Neither the palette nor Studio has a nav row of its own — both are
+  // opened from a specific capture rather than browsed to — so the rail
+  // keeps showing where the user came from.
+  const navActive =
+    view === "palette" ? "library" : view === "studio" ? "library" : view;
 
   // Drain any pending request stashed by the opening window. Runs
   // once on mount — subsequent runtime switches come through the
@@ -92,13 +96,16 @@ export function DashboardLayout() {
                   onOpenLibrary={() => setView("library")}
                 />
               )}
+              {view === "studio" && (
+                <StudioLayout
+                  id={studioCaptureId}
+                  onOpenLibrary={() => setView("library")}
+                />
+              )}
               {view === "settings" && <SettingsLayout />}
               {view === "presets" && <PresetsLayout />}
               {view === "palette" && (
-                <PaletteView
-                  id={paletteId}
-                  onBack={() => setView("library")}
-                />
+                <PaletteView id={paletteId} onBack={() => setView("library")} />
               )}
             </div>
           </div>

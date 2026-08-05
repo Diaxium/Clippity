@@ -24,12 +24,7 @@ export interface SwatchLike {
 
 /** Copy formats offered in the toast + library "Copy as" control. */
 export type PaletteFormat =
-  | "hex-list"
-  | "rgb"
-  | "hsl"
-  | "css"
-  | "json"
-  | "tailwind";
+  "hex-list" | "rgb" | "hsl" | "css" | "json" | "tailwind";
 
 export interface PaletteFormatDef {
   id: PaletteFormat;
@@ -51,7 +46,11 @@ export const PALETTE_FORMATS: readonly PaletteFormatDef[] = [
  * Convert 0-255 sRGB to HSL — hue in `[0, 360)`, saturation + lightness
  * as integer percents. Pure; the standard piecewise hue formula.
  */
-export function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+export function rgbToHsl(
+  r: number,
+  g: number,
+  b: number
+): [number, number, number] {
   const rn = r / 255;
   const gn = g / 255;
   const bn = b / 255;
@@ -66,7 +65,7 @@ export function rgbToHsl(r: number, g: number, b: number): [number, number, numb
     s = d / (1 - Math.abs(2 * l - 1));
     switch (max) {
       case rn:
-        h = (((gn - bn) / d) % 6 + 6) % 6;
+        h = ((((gn - bn) / d) % 6) + 6) % 6;
         break;
       case gn:
         h = (bn - rn) / d + 2;

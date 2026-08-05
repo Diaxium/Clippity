@@ -27,10 +27,7 @@ import {
   eventSigKey,
   isTypingTarget,
 } from "@features/editor/keybinds/keybindUtils";
-import {
-  effectiveKeys,
-  getKeybindOverrides,
-} from "@shared/keybinds/overrides";
+import { effectiveKeys, getKeybindOverrides } from "@shared/keybinds/overrides";
 import { useKeybindOverridesVersion } from "@shared/keybinds/useKeybindOverrides";
 
 import { useCapabilities } from "@state/useCapabilities";
@@ -60,7 +57,12 @@ export function useQuickCaptureHotkeys(
     for (const action of QUICK_CAPTURE_ACTIONS) {
       if (unavailabilityOf(action, capabilities)) continue;
       const defaults = action.combo ? [action.combo] : [];
-      for (const combo of effectiveKeys("quickCapture", action.id, defaults, overrides)) {
+      for (const combo of effectiveKeys(
+        "quickCapture",
+        action.id,
+        defaults,
+        overrides
+      )) {
         bindings.set(comboSigKey(combo), action.id);
       }
     }

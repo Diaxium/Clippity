@@ -21,6 +21,7 @@ use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
+use clippity_domain::developer::ShortcutDiagnostics;
 use clippity_domain::settings::ShortcutsSettings;
 
 #[derive(Default)]
@@ -47,10 +48,7 @@ impl GlobalShortcutService {
     /// from inside the plugin's own shortcut handler — the handler holds
     /// the plugin's registry lock, and register/unregister re-lock it.
     pub fn apply(&self, app: &AppHandle, shortcuts: &ShortcutsSettings) {
-        let mut slot = self
-            .registered
-            .lock()
-            .unwrap_or_else(|p| p.into_inner());
+        let mut slot = self.registered.lock().unwrap_or_else(|p| p.into_inner());
 
         if let Some(old) = slot.take() {
             let _ = app.global_shortcut().unregister(old);
@@ -101,6 +99,39 @@ impl GlobalShortcutService {
     pub fn is_capture_shortcut(&self, shortcut: &Shortcut) -> bool {
         let slot = self.registered.lock().unwrap_or_else(|p| p.into_inner());
         slot.as_ref() == Some(shortcut)
+    }
+
+    /// What the OS actually holds for the capture accelerator, and — when
+    /// it holds nothing — why.
+    ///
+    /// "The hotkey stopped working" is one of the few complaints the app
+    /// cannot answer from its own settings: the combo is stored, the
+    /// user can see it, and the registration silently lost to another
+    /// application. Settings → Advanced reports this so the answer is
+    /// visible rather than buried in a log line from startup.
+    pub fn status(&self, shortcuts: &ShortcutsSettings) -> ShortcutDiagnostics {
+        let registered = self
+            .registered
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_some();
+        let combo = shortcuts.global_capture.clone();
+        let detail = if registered {
+            None
+        } else if !shortcuts.global_capture_enabled {
+            Some("turned off in Settings → Shortcuts".to_string())
+        } else if combo.trim().is_empty() {
+            Some("no combo set".to_string())
+        } else if parse_combo(&combo).is_none() {
+            Some("the combo could not be parsed".to_string())
+        } else {
+            Some("the OS refused it — another application may already own it".to_string())
+        };
+        ShortcutDiagnostics {
+            combo,
+            registered,
+            detail,
+        }
     }
 }
 
@@ -218,23 +249,16 @@ mod tests {
     fn parses_mod_shift_digit() {
         let s = parse_combo("Mod+Shift+2").unwrap();
         #[cfg(not(target_os = "macos"))]
-        let expected = Shortcut::new(
-            Some(Modifiers::CONTROL | Modifiers::SHIFT),
-            Code::Digit2,
-        );
+        let expected = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Digit2);
         #[cfg(target_os = "macos")]
-        let expected =
-            Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::Digit2);
+        let expected = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::Digit2);
         assert_eq!(s, expected);
     }
 
     #[test]
     fn parses_single_letter_case_insensitively() {
         assert_eq!(parse_combo("r"), parse_combo("R"));
-        assert_eq!(
-            parse_combo("Mod+r").unwrap(),
-            parse_combo("Mod+R").unwrap()
-        );
+        assert_eq!(parse_combo("Mod+r").unwrap(), parse_combo("Mod+R").unwrap());
     }
 
     #[test]

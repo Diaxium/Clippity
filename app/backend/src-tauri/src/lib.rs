@@ -23,6 +23,7 @@
 //! desktop session.
 
 pub mod app;
+mod media_scheme;
 mod tray_service;
 
 use tauri::Manager;
@@ -30,6 +31,15 @@ use tauri::Manager;
 /// URI scheme the overlay loads its frozen-desktop snapshot over. Must
 /// match `SNAPSHOT_SCHEME` in the frontend's overlay client.
 const SNAPSHOT_SCHEME: &str = "clippity-snapshot";
+
+/// URI scheme the Studio player streams a saved recording over. Must
+/// match `MEDIA_SCHEME` in the frontend's media client.
+///
+/// Separate from the snapshot scheme rather than a second path under it,
+/// because the two answer differently: that one serves a whole image and
+/// caches it forever, this one serves byte ranges and caches nothing.
+/// See [`media_scheme`].
+const MEDIA_SCHEME: &str = "clippity-media";
 
 /// Serve the current overlay snapshot's PNG bytes to the overlay webview.
 ///
@@ -159,7 +169,22 @@ mod snapshot_scheme_tests {
 /// Kept narrow so `main.rs` stays a one-liner and tests can spin the
 /// builder up with mocked services.
 pub fn run() {
+    clippity_infra::runtime::mark_started();
     clippity_infra::logging::init();
+
+    // Consumed before anything reads a preference, because safe mode
+    // overrides several of them — starting with GPU acceleration, whose
+    // browser arg is frozen when the first webview environment is
+    // created a few lines below. The marker is deleted as it is read,
+    // so safe mode lasts exactly one launch.
+    if let Some(data) = clippity_infra::paths::early_data_dir() {
+        if clippity_infra::runtime::consume_safe_mode_marker(&data) {
+            tracing::warn!(
+                "starting in SAFE MODE — GPU acceleration, window effects and the \
+                 global capture hotkey are off for this session"
+            );
+        }
+    }
 
     let context = tauri::generate_context!();
 
@@ -174,6 +199,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .register_uri_scheme_protocol(SNAPSHOT_SCHEME, serve_desktop_snapshot)
+        .register_uri_scheme_protocol(MEDIA_SCHEME, media_scheme::serve_media)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(
@@ -263,8 +289,23 @@ pub fn run() {
             // capture (and future) services through AppState. Done
             // inside setup() so the AppHandle is available — Tauri's
             // path resolver depends on it.
-            let paths = std::sync::Arc::new(clippity_infra::paths::AppPaths::resolve(app.handle())?);
+            let paths =
+                std::sync::Arc::new(clippity_infra::paths::AppPaths::resolve(app.handle())?);
             app.manage(app::state::AppState::new(paths.clone())?);
+
+            // Point the log at `<data>/logs` and set its severity floor
+            // from the persisted developer preferences. Done as early as
+            // state allows, so the startup banner below is the first
+            // thing in the file rather than the first thing missing
+            // from it.
+            {
+                let settings = &app.state::<app::state::AppState>().settings_service;
+                settings.apply_logging();
+                // The capture-path flags, for the same reason: a flag
+                // left off in a previous session has to still be off on
+                // the first capture of this one.
+                settings.apply_feature_flags();
+            }
 
             // Anchor the session log with the environment it ran in:
             // version, OS, the resolved app directories, and a compact
@@ -316,9 +357,8 @@ pub fn run() {
                 // they're still on screen when the grab fires. All windows
                 // exist by now (`create_app_windows` ran above), so one
                 // pass here shields them for the session.
-                let shielded = clippity_platform::windows::capture_shield::shield_windows(
-                    app.handle(),
-                );
+                let shielded =
+                    clippity_platform::windows::capture_shield::shield_windows(app.handle());
                 app.state::<app::state::AppState>()
                     .overlay_service
                     .set_capture_shielded(shielded);
@@ -331,14 +371,25 @@ pub fn run() {
                 // resolved theme via `apply_window_theme` on mount; when
                 // off we skip it entirely so the window stays a flat
                 // opaque surface.
-                let effects = app
+                let settings = app
                     .state::<app::state::AppState>()
                     .settings_service
-                    .snapshot()
+                    .snapshot();
+                let effects = settings
                     .performance
-                    .window_effects;
+                    .window_effects
+                    // Safe mode boots the flattest chrome it can: Mica is
+                    // a compositor effect, and a compositor that is why
+                    // the app misbehaves is exactly what safe mode is for.
+                    && !clippity_infra::runtime::is_safe_mode();
                 if effects {
-                    clippity_platform::windows::chrome::apply_backdrop(app.handle(), None);
+                    let backdrop = settings.appearance.window_backdrop;
+                    clippity_platform::windows::chrome::apply_backdrop(
+                        app.handle(),
+                        None,
+                        backdrop,
+                        settings.appearance.backdrop_tuning.clamped().get(backdrop),
+                    );
                 }
             }
 
@@ -359,7 +410,11 @@ pub fn run() {
             // absence rather than showing a dead control.
             {
                 let state = app.state::<app::state::AppState>();
-                if state.provisioning_service.capabilities().global_hotkeys {
+                if clippity_infra::runtime::is_safe_mode() {
+                    // A hotkey registered by a build that won't start is
+                    // one more thing to rule out; safe mode rules it out.
+                    tracing::info!("safe mode — the OS-global capture hotkey is not registered");
+                } else if state.provisioning_service.capabilities().global_hotkeys {
                     let shortcuts = state.settings_service.snapshot().shortcuts;
                     state
                         .global_shortcut_service
@@ -369,6 +424,24 @@ pub fn run() {
                         "capture integration was not installed — no OS-global \
                          capture hotkey will be registered"
                     );
+                }
+            }
+
+            // Developer tools on the dashboard, when the user asked for
+            // them to open at launch. Only the main window: opening five
+            // inspectors for the overlay, toast, countdown and tray
+            // windows is nobody's intent.
+            #[cfg(any(debug_assertions, feature = "devtools"))]
+            {
+                let wanted = app
+                    .state::<app::state::AppState>()
+                    .settings_service
+                    .snapshot()
+                    .developer;
+                if wanted.enabled && wanted.devtools_on_startup {
+                    if let Some(main) = app.get_webview_window("main") {
+                        main.open_devtools();
+                    }
                 }
             }
 
@@ -400,8 +473,11 @@ pub fn run() {
             app::commands::pause_recording,
             app::commands::resume_recording,
             app::commands::recording_status,
+            app::commands::set_recording_gain,
+            app::commands::set_recording_mute,
             app::commands::stop_recording,
             app::commands::list_audio_devices,
+            app::commands::list_webcams,
             app::commands::get_desktop_snapshot_id,
             app::commands::last_region,
             app::commands::recapture_last_region,
@@ -433,6 +509,10 @@ pub fn run() {
             app::commands::editor_load,
             app::commands::editor_save,
             app::commands::editor_save_scene,
+            app::commands::media_probe,
+            app::commands::media_trim,
+            app::commands::media_stage_overlay,
+            app::commands::media_cancel_trim,
             app::commands::request_dashboard_view,
             app::commands::consume_pending_dashboard_view,
             app::commands::settings_get,
@@ -457,6 +537,18 @@ pub fn run() {
             app::commands::models_update,
             app::commands::ensure_object_model,
             app::commands::detect_objects,
+            app::commands::developer_system_info,
+            app::commands::developer_runtime_status,
+            app::commands::developer_runtime_flags,
+            app::commands::developer_open_devtools,
+            app::commands::developer_log,
+            app::commands::developer_log_tail,
+            app::commands::developer_clear_logs,
+            app::commands::developer_open_folder,
+            app::commands::developer_export_bundle,
+            app::commands::developer_clear_cache,
+            app::commands::developer_recorder_diagnostics,
+            app::commands::developer_restart_safe_mode,
         ])
         .on_window_event(|window, event| match event {
             // The tray flyout is a focus-dismissed popover: when it loses
@@ -670,6 +762,10 @@ fn apply_gpu_preference() {
         .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
         .and_then(|v| v.get("performance")?.get("gpuAcceleration")?.as_bool())
         .unwrap_or(true);
+
+    // Safe mode overrides the preference: the whole point of it is to
+    // boot a machine whose GPU driver is why the app won't start.
+    let gpu_on = gpu_on && !clippity_infra::runtime::is_safe_mode();
 
     if !gpu_on {
         // `--disable-gpu` drops hardware-accelerated rendering;

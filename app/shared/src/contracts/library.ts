@@ -8,7 +8,8 @@
  * live in the aux catalog.
  */
 
-export type CaptureKind = "image" | "video" | "gif" | "color" | "palette" | "text";
+export type CaptureKind =
+  "image" | "video" | "gif" | "color" | "palette" | "text";
 
 /** A sampled / quantized color stored in the aux catalog. */
 export interface AuxColor {

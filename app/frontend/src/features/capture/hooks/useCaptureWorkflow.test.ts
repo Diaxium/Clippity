@@ -520,7 +520,10 @@ describe("useCaptureWorkflow — clipboard branch", () => {
 
   it("emits an error toast on ingest failure", async () => {
     ingestClipboardMock.mockRejectedValueOnce(
-      new TauriCommandError({ code: "capture", message: "clipboard open: denied" })
+      new TauriCommandError({
+        code: "capture",
+        message: "clipboard open: denied",
+      })
     );
     const { result } = renderHook(() => useCaptureWorkflow());
     await act(async () => {

@@ -74,6 +74,9 @@ windows = { version = "0.62.2", features = [
   "Win32_UI_Accessibility",
   "Win32_System_Com",
   "Win32_System_Variant",
+  # RegGetValueW — reads the OS product name / build for the
+  # diagnostics card, which `GetVersionEx` lies about.
+  "Win32_System_Registry",
   # CF_HDROP file-drop clipboard copy for finished recordings — a clip
   # goes on the clipboard by path, not by value (see
   # `platform::windows::clipboard_files`).
@@ -116,3 +119,32 @@ opt-level = 3
 lto = "thin"
 codegen-units = 1
 strip = "symbols"
+
+# Optimise the pixel-pushing crates even in a dev build.
+#
+# `tauri dev` builds the Rust side unoptimised, and for most of this app
+# that is exactly the right trade. For the code that touches every pixel
+# of every frame it is not: a 5120x1440 frame is 7.4 million pixels, and
+# an unoptimised per-pixel loop over it takes *two orders of magnitude*
+# longer than an optimised one. Measured on this desk, one recorded
+# frame cost 366 ms in a dev build against 10.7 ms in release — 3 fps
+# versus 94 — which makes the recorder look broken to anyone developing
+# against it, and sends people hunting for a bug that is not there.
+#
+# Overriding per package rather than raising `[profile.dev]` wholesale
+# keeps incremental rebuilds of the app's own logic fast: these crates
+# change rarely and are compiled once.
+[profile.dev.package.clippity-platform]
+opt-level = 3
+
+[profile.dev.package.clippity-domain]
+opt-level = 3
+
+# The decoders and scalers behind captures, thumbnails and GIF output.
+[profile.dev.package.image]
+opt-level = 3
+
+# The one-shot grab: every screenshot, and the recorder's fallback when
+# duplication is refused or the region spans two outputs.
+[profile.dev.package.xcap]
+opt-level = 3

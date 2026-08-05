@@ -300,7 +300,10 @@ mod tests {
         let mut catalog = vec![sample(), second];
         assert!(forget(&mut catalog, "/caps/a.png"));
         assert!(!catalog.iter().any(|c| c.contains("/caps/a.png")));
-        assert!(!forget(&mut catalog, "/caps/a.png"), "second call is a no-op");
+        assert!(
+            !forget(&mut catalog, "/caps/a.png"),
+            "second call is a no-op"
+        );
     }
 
     // ---------- names ----------

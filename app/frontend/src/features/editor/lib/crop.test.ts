@@ -229,12 +229,14 @@ describe("applyCropAspect", () => {
 
 describe("roundCrop", () => {
   it("snaps to whole scene pixels without losing a fractional edge", () => {
-    expect(roundCrop({ x: 10.4, y: 20.6, width: 100.3, height: 50.2 })).toEqual({
-      x: 10,
-      y: 21,
-      width: 101,
-      height: 50,
-    });
+    expect(roundCrop({ x: 10.4, y: 20.6, width: 100.3, height: 50.2 })).toEqual(
+      {
+        x: 10,
+        y: 21,
+        width: 101,
+        height: 50,
+      }
+    );
   });
 
   it("never rounds below the minimum", () => {

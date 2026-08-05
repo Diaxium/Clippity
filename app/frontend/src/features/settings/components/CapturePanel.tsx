@@ -92,7 +92,9 @@ export function CapturePanel({ value, onChange }: CapturePanelProps) {
             <span className="flex items-center gap-2 text-[12px] text-[var(--color-slate)]">
               <Stepper
                 value={value.delaySeconds}
-                onChange={(delaySeconds) => onChange({ ...value, delaySeconds })}
+                onChange={(delaySeconds) =>
+                  onChange({ ...value, delaySeconds })
+                }
                 min={CAPTURE_DELAY_MIN_S}
                 max={CAPTURE_DELAY_MAX_S}
                 disabled={!value.delay}

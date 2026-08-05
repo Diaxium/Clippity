@@ -195,7 +195,10 @@ export function isCustomModeUsable(
   mode: CustomMode,
   capabilities: Capabilities
 ): boolean {
-  return AVAILABLE_CUSTOM_MODES.has(mode) && isCustomModeInstalled(mode, capabilities);
+  return (
+    AVAILABLE_CUSTOM_MODES.has(mode) &&
+    isCustomModeInstalled(mode, capabilities)
+  );
 }
 
 /** Map an armable custom capture-mode to the overlay mode it opens.

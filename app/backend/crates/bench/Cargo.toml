@@ -14,6 +14,11 @@ publish = false
 [dependencies]
 clippity-domain = { workspace = true }
 clippity-services = { workspace = true }
+# The recorder's per-frame work — the colour conversion and the
+# duplication read-back — lives in the platform crate, and it is the one
+# budget on this list that a recording either meets or visibly drops
+# frames against.
+clippity-platform = { workspace = true }
 image = { workspace = true }
 # The overlay handoff bench measures the data-URI wrapper separately from
 # the PNG encode, so it needs the same base64 engine the service uses.

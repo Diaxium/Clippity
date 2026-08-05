@@ -20,15 +20,26 @@ use std::sync::{Arc, RwLock};
 
 use tauri::AppHandle;
 
-use clippity_infra::events;
-use clippity_domain::recorder;
 use clippity_domain::provisioning as provisioning_rules;
-use clippity_domain::settings::{self, CaptureCompression, GeneralSettings, Settings, SettingsPatch};
+use clippity_domain::recorder;
+use clippity_domain::settings::{
+    self, CaptureCompression, GeneralSettings, Settings, SettingsPatch,
+};
 use clippity_domain::toast::ToastDefaults;
 use clippity_infra::error::{AppError, AppResult};
+use clippity_infra::events;
+use clippity_infra::logging;
 use clippity_infra::paths::AppPaths;
 
 use crate::provisioning_service::ProvisioningService;
+
+/// Feature-flag id gating the HDR (scRGB) capture path. Must match the
+/// frontend's flag registry — `shared/lib/featureFlags.ts`.
+pub const FLAG_CAPTURE_HDR: &str = "capture.hdr";
+
+/// Feature-flag id gating the recorder's Desktop Duplication frame
+/// source. Must match the frontend's flag registry.
+pub const FLAG_RECORDER_DUPLICATION: &str = "recorder.duplication";
 
 /// Live read of the active captures directory. Implemented by
 /// `SettingsService` (returns the user override if non-empty, else
@@ -78,6 +89,10 @@ pub trait RecordingSettingsSource: Send + Sync {
 
 pub struct SettingsService {
     file: PathBuf,
+    /// Where the rotating log files live — `<data>/logs`. Held here
+    /// because this service is the one that knows when the developer
+    /// logging preferences changed.
+    log_dir: PathBuf,
     fallback_captures: PathBuf,
     state: RwLock<Settings>,
     /// True when no `settings.json` existed at load — this process is the
@@ -98,13 +113,83 @@ impl SettingsService {
         // happen; better to leave a corrupt file on defaults than to
         // resurrect install-time answers over it.
         let first_launch = !file.exists();
-        let state = read_or_log(&file);
+        let mut state = read_or_log(&file);
+        // Developer mode's expiry is evaluated exactly here — a fresh
+        // process, before any window can read the flag — which is what
+        // makes the `restart` policy mean what it says. Not persisted:
+        // the next save writes the disarmed value, and until then the
+        // file still records the policy the user chose.
+        if settings::developer_mode_expired(&state.developer, epoch_ms()) {
+            tracing::info!(
+                expiry = ?state.developer.expiry,
+                "developer mode expired — disarming for this session"
+            );
+            state.developer.enabled = false;
+        }
         Ok(Self {
             file,
+            log_dir: paths.data.join("logs"),
             fallback_captures: paths.captures.clone(),
             state: RwLock::new(state),
             first_launch,
         })
+    }
+
+    /// Push the persisted developer log preferences into the logging
+    /// subsystem: severity floor, on-disk writing, size + retention.
+    ///
+    /// Called once at startup and after every settings save, so a
+    /// changed level takes effect on the next log line rather than on
+    /// the next launch. Cheap and idempotent — an unchanged
+    /// configuration leaves the open file alone.
+    pub fn apply_logging(&self) {
+        let dev = self.snapshot().developer;
+        if !logging::set_level(dev.backend_log.as_str()) {
+            tracing::debug!(
+                "log level is pinned by CLIPPITY_LOG/RUST_LOG — the setting is inert \
+                 for this process"
+            );
+        }
+        logging::configure_files(
+            &self.log_dir,
+            dev.log_to_disk,
+            dev.log_max_bytes(),
+            dev.retained_files(),
+        );
+    }
+
+    /// Where the rotating log files live.
+    pub fn log_dir(&self) -> PathBuf {
+        self.log_dir.clone()
+    }
+
+    /// Push the backend-consumed developer feature flags into the
+    /// platform paths they gate.
+    ///
+    /// Only flags with a real consumer live here — a flag table that
+    /// lists switches nothing reads is a lie the settings page tells on
+    /// the app's behalf. Today that is two capture paths, both of which
+    /// already have a tested fallback for "unavailable", which is what
+    /// makes turning them off safe rather than merely possible.
+    ///
+    /// Called next to [`SettingsService::apply_logging`], for the same
+    /// reason: a flag flipped in Settings has to take effect on the next
+    /// capture, not the next launch.
+    pub fn apply_feature_flags(&self) {
+        let flags = self.snapshot().developer.feature_flags;
+        let on = |id: &str| flags.get(id).copied().unwrap_or(true);
+
+        #[cfg(target_os = "windows")]
+        {
+            clippity_platform::windows::hdr_capture::set_enabled(on(FLAG_CAPTURE_HDR));
+            clippity_platform::windows::duplication_capture::set_enabled(on(
+                FLAG_RECORDER_DUPLICATION,
+            ));
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            let _ = on(FLAG_CAPTURE_HDR);
+        }
     }
 
     /// Carry the installer's answers into settings, once, on first launch.
@@ -180,7 +265,17 @@ impl SettingsService {
     /// with the full new `Settings`.
     pub fn update(&self, app: &AppHandle, patch: SettingsPatch) -> AppResult<Settings> {
         let mut next = self.snapshot();
+        let touches_developer = patch.developer.is_some();
+        let was_armed = next.developer.enabled;
         apply_patch(&mut next, patch);
+        // Stamp the moment developer mode was armed, so the 24-hour
+        // policy has something to measure from. Done here rather than in
+        // the frontend because a clock the user can set is not the one
+        // the expiry should trust, and because every entry point
+        // (settings page, a future menu item) goes through this write.
+        if next.developer.enabled && !was_armed {
+            next.developer.enabled_at_ms = epoch_ms();
+        }
         validate(&next)?;
         ensure_captures_dir_exists(&next.general, &self.fallback_captures)?;
 
@@ -191,6 +286,13 @@ impl SettingsService {
                 .write()
                 .map_err(|_| AppError::Settings("settings lock poisoned".into()))?;
             *guard = next.clone();
+        }
+        // Logging is machinery, not presentation: a changed level or a
+        // flipped "write to disk" has to take effect on the next log
+        // line, not the next launch.
+        if touches_developer {
+            self.apply_logging();
+            self.apply_feature_flags();
         }
         events::emit(app, events::names::SETTINGS_CHANGED, next.clone())?;
         Ok(next)
@@ -249,6 +351,7 @@ fn apply_patch(target: &mut Settings, patch: SettingsPatch) {
         // the valid envelope (mirrors palette_count / confidence).
         appearance.window_opacity = settings::clamp_window_opacity(appearance.window_opacity);
         appearance.ui_scale = settings::clamp_ui_scale(appearance.ui_scale);
+        appearance.backdrop_tuning = appearance.backdrop_tuning.clamped();
         target.appearance = appearance;
     }
     if let Some(notifications) = patch.notifications {
@@ -272,6 +375,11 @@ fn apply_patch(target: &mut Settings, patch: SettingsPatch) {
         // has to defend against a value the writer let through.
         recording.video_fps = recording.fps_for(recorder::RecorderFormat::Mp4);
         recording.gif_fps = recording.fps_for(recorder::RecorderFormat::Gif);
+        recording.max_height = recording.max_height();
+        recording.microphone_gain_pct = recorder::clamp_gain_pct(recording.microphone_gain_pct);
+        recording.system_gain_pct = recorder::clamp_gain_pct(recording.system_gain_pct);
+        recording.encoding = recording.encoding();
+        recording.sources = recording.sources();
         target.recording = recording;
     }
     if let Some(models) = patch.models {
@@ -280,6 +388,26 @@ fn apply_patch(target: &mut Settings, patch: SettingsPatch) {
     if let Some(shortcuts) = patch.shortcuts {
         target.shortcuts = shortcuts;
     }
+    if let Some(mut developer) = patch.developer {
+        // Same write-clamping as the other loosely-stored numbers: what
+        // is persisted and re-emitted to every window has to be inside
+        // the envelope, so no reader has to defend against a value the
+        // writer let through.
+        developer.log_max_file_mb = settings::clamp_log_file_mb(developer.log_max_file_mb);
+        developer.log_retain_files = settings::clamp_log_files(developer.log_retain_files);
+        developer.slow_command_ms = settings::clamp_slow_command_ms(developer.slow_command_ms);
+        target.developer = developer;
+    }
+}
+
+/// Wall-clock milliseconds since the Unix epoch. Only the developer
+/// section's expiry uses this — everything else in settings is
+/// timeless.
+fn epoch_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
 }
 
 fn validate(s: &Settings) -> AppResult<()> {
@@ -500,7 +628,8 @@ mod tests {
     #[test]
     fn first_launch_seeds_the_installers_answers() {
         let h = harness();
-        h.service.seed_from_installer(&provisioning("opted-out", OPTED_OUT));
+        h.service
+            .seed_from_installer(&provisioning("opted-out", OPTED_OUT));
         let s = h.service.snapshot();
         assert!(s.general.start_on_startup, "the user ticked start-at-login");
         assert!(!s.general.automatic_updates);
@@ -519,7 +648,8 @@ mod tests {
         existing.general.start_on_startup = false;
         let h = harness_with_existing_settings(&existing);
 
-        h.service.seed_from_installer(&provisioning("later", OPTED_OUT));
+        h.service
+            .seed_from_installer(&provisioning("later", OPTED_OUT));
 
         let s = h.service.snapshot();
         assert!(s.general.automatic_updates, "the user's choice survives");
@@ -776,7 +906,10 @@ mod tests {
     fn apply_patch_replaces_shortcuts_section() {
         let mut s = Settings::default();
         let mut overrides = std::collections::BTreeMap::new();
-        overrides.insert("editor:select-all".to_string(), vec!["Mod+Shift+A".to_string()]);
+        overrides.insert(
+            "editor:select-all".to_string(),
+            vec!["Mod+Shift+A".to_string()],
+        );
         apply_patch(
             &mut s,
             SettingsPatch {
@@ -796,6 +929,83 @@ mod tests {
         assert!(!s.shortcuts.global_capture_enabled);
     }
 
+    // ---------- developer ----------
+
+    #[test]
+    fn apply_patch_clamps_developer_numeric_knobs() {
+        let mut s = Settings::default();
+        apply_patch(
+            &mut s,
+            SettingsPatch {
+                developer: Some(clippity_domain::settings::DeveloperSettings {
+                    log_max_file_mb: 0,       // below the 1 MiB floor
+                    log_retain_files: 500,    // above the 20 ceiling
+                    slow_command_ms: 900_000, // above the 5 s ceiling
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            s.developer.log_max_file_mb,
+            clippity_domain::settings::MIN_LOG_FILE_MB
+        );
+        assert_eq!(
+            s.developer.log_retain_files,
+            clippity_domain::settings::MAX_LOG_FILES
+        );
+        assert_eq!(
+            s.developer.slow_command_ms,
+            clippity_domain::settings::MAX_SLOW_COMMAND_MS
+        );
+    }
+
+    #[test]
+    fn a_restart_scoped_developer_mode_is_disarmed_at_load() {
+        // The whole point of the default policy: an armed developer mode
+        // must not survive the launch that follows it.
+        let mut existing = Settings::default();
+        existing.developer.enabled = true;
+        existing.developer.enabled_at_ms = epoch_ms();
+        let h = harness_with_existing_settings(&existing);
+
+        assert!(!h.service.snapshot().developer.enabled);
+        // The *file* still records what the user chose, so the next save
+        // doesn't quietly rewrite their policy.
+        let text = fs::read_to_string(&h.service.file).unwrap();
+        assert!(text.contains("\"expiry\": \"restart\""), "{text}");
+    }
+
+    #[test]
+    fn a_never_expiring_developer_mode_survives_a_launch() {
+        let mut existing = Settings::default();
+        existing.developer.enabled = true;
+        existing.developer.expiry = clippity_domain::settings::DeveloperExpiry::Never;
+        let h = harness_with_existing_settings(&existing);
+        assert!(h.service.snapshot().developer.enabled);
+    }
+
+    #[test]
+    fn a_day_scoped_developer_mode_armed_just_now_survives_a_launch() {
+        let mut existing = Settings::default();
+        existing.developer.enabled = true;
+        existing.developer.expiry = clippity_domain::settings::DeveloperExpiry::Day;
+        existing.developer.enabled_at_ms = epoch_ms();
+        let h = harness_with_existing_settings(&existing);
+        assert!(h.service.snapshot().developer.enabled);
+    }
+
+    #[test]
+    fn a_day_scoped_developer_mode_armed_last_week_does_not() {
+        let mut existing = Settings::default();
+        existing.developer.enabled = true;
+        existing.developer.expiry = clippity_domain::settings::DeveloperExpiry::Day;
+        existing.developer.enabled_at_ms =
+            epoch_ms() - 7 * clippity_domain::settings::DEVELOPER_DAY_MS;
+        let h = harness_with_existing_settings(&existing);
+        assert!(!h.service.snapshot().developer.enabled);
+    }
+
     #[test]
     fn apply_patch_clamps_appearance_numeric_knobs() {
         let mut s = Settings::default();
@@ -803,8 +1013,8 @@ mod tests {
             &mut s,
             SettingsPatch {
                 appearance: Some(clippity_domain::settings::AppearanceSettings {
-                    window_opacity: 3,  // below the 60 floor
-                    ui_scale: 250,      // above the 120 ceiling
+                    window_opacity: 3, // below the opacity floor
+                    ui_scale: 250,     // above the 120 ceiling
                     ..Default::default()
                 }),
                 ..Default::default()
@@ -817,6 +1027,34 @@ mod tests {
         assert_eq!(
             s.appearance.ui_scale,
             clippity_domain::settings::MAX_UI_SCALE_PCT
+        );
+    }
+
+    #[test]
+    fn apply_patch_clamps_backdrop_tuning() {
+        use clippity_domain::settings::{BackdropTuning, WindowBackdrop};
+
+        let mut appearance = clippity_domain::settings::AppearanceSettings::default();
+        appearance.backdrop_tuning.set(
+            WindowBackdrop::Acrylic,
+            BackdropTuning::new(200, 250, 250, 5),
+        );
+        let mut s = Settings::default();
+        apply_patch(
+            &mut s,
+            SettingsPatch {
+                appearance: Some(appearance),
+                ..Default::default()
+            },
+        );
+        let acrylic = s.appearance.backdrop_tuning.get(WindowBackdrop::Acrylic);
+        assert_eq!(
+            acrylic.tint_strength,
+            clippity_domain::settings::MAX_BACKDROP_TINT_PCT
+        );
+        assert_eq!(
+            acrylic.saturation,
+            clippity_domain::settings::MIN_BACKDROP_SATURATION_PCT
         );
     }
 

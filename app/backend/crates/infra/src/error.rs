@@ -67,6 +67,15 @@ pub enum AppError {
     #[error("recording failed: {0}")]
     Recorder(String),
 
+    /// Reading or re-cutting a clip that already exists — probing a
+    /// file, decoding it, or encoding a trim of it. Separate from
+    /// `Recorder`, which is about a *live* session: the recoveries have
+    /// nothing in common. A failed recording is about a moment that is
+    /// gone and a partial file to account for; a failed trim leaves the
+    /// source untouched and can simply be retried.
+    #[error("media error: {0}")]
+    Media(String),
+
     #[error("unsupported on this platform: {0}")]
     Unsupported(&'static str),
 
@@ -101,6 +110,7 @@ impl AppError {
             AppError::Ocr(_) => "ocr",
             AppError::Share(_) => "share",
             AppError::Recorder(_) => "recorder",
+            AppError::Media(_) => "media",
             AppError::Unsupported(_) => "unsupported",
             AppError::NotInstalled(_) => "not-installed",
         }

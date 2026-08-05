@@ -52,7 +52,10 @@ export function WindowHighlight() {
       >
         <span
           className="absolute left-0 top-0 max-w-full truncate rounded-tl-[5px] rounded-br-md px-2 py-1 text-[12px] font-medium"
-          style={{ background: "var(--color-accent)", color: "var(--color-accent-ink)" }}
+          style={{
+            background: "var(--color-accent)",
+            color: "var(--color-accent-ink)",
+          }}
         >
           {label}
         </span>

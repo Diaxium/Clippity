@@ -1,6 +1,8 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DEFAULT_BACKDROP_TUNING_SET } from "../lib/backdrop";
+
 const updateSettingsMock = vi.fn();
 const emitErrorToastMock = vi.fn();
 
@@ -13,6 +15,8 @@ vi.mock("@services/tauri/clients/toast", () => ({
 
 import { useSettingsStore } from "../state/settingsStore";
 import { useSettingsPatch } from "./useSettingsPatch";
+import { DEFAULT_DEVELOPER_SETTINGS } from "@clippity/shared";
+
 import type { Settings } from "../types";
 
 const initial: Settings = {
@@ -28,6 +32,8 @@ const initial: Settings = {
     theme: "system",
     accent: "#FF6E4A",
     windowOpacity: 100,
+    windowBackdrop: "mica",
+    backdropTuning: DEFAULT_BACKDROP_TUNING_SET,
     uiScale: 100,
     cornerRadius: "default",
     density: "comfortable",
@@ -65,8 +71,13 @@ const initial: Settings = {
     systemAudio: false,
     microphoneDevice: null,
     systemDevice: null,
+    microphoneGainPct: 100,
+    systemGainPct: 100,
     videoFps: 30,
     gifFps: 15,
+    maxHeight: 0,
+    encoding: {},
+    sources: [],
     cursor: false,
     outline: true,
     clipboard: false,
@@ -81,6 +92,7 @@ const initial: Settings = {
     globalCapture: "Mod+Shift+2",
     globalCaptureEnabled: true,
   },
+  developer: DEFAULT_DEVELOPER_SETTINGS,
 };
 
 describe("useSettingsPatch", () => {

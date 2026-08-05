@@ -1,4 +1,10 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useOverlayStore } from "../state/overlayStore";
@@ -97,7 +103,12 @@ describe("SmallSelectionPreview — move handle", () => {
     // Pointer-down on the magnified view starts a move with the current rect.
     fireEvent.pointerDown(handle!);
     expect(beginMove).toHaveBeenCalledTimes(1);
-    expect(beginMove.mock.calls[0]![0]).toEqual({ x: 200, y: 200, w: 20, h: 16 });
+    expect(beginMove.mock.calls[0]![0]).toEqual({
+      x: 200,
+      y: 200,
+      w: 20,
+      h: 16,
+    });
   });
 
   it("stays presentational (no move handle) while still dragging out the box", () => {

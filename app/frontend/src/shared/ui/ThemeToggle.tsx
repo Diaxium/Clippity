@@ -1,5 +1,6 @@
 import { Moon, Settings, Sun } from "lucide-react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 import { useThemeStore } from "@state/themeStore";
 import type { Theme } from "@state/themeStore";
@@ -9,7 +10,7 @@ interface ThemeToggleProps {
   /** Compact rail layout — buttons stack vertically. */
   collapsed?: boolean;
   /** Optional Settings shortcut. Renders to the right (or below in
-   *  collapsed mode) of the theme buttons. */
+   *  collapsed mode) of the theme button. */
   onSettings?: () => void;
   /** Highlight the Settings button when it's the current view. */
   settingsActive?: boolean;
@@ -29,24 +30,90 @@ interface ThemeToggleProps {
   switchLabel?: string;
 }
 
-const THEMES: { id: Theme; icon: typeof Sun; label: string }[] = [
-  { id: "light", icon: Sun, label: "Light theme" },
-  { id: "dark", icon: Moon, label: "Dark theme" },
-];
-
 const BTN_BASE =
-  "focus-ring grid h-8 w-8 place-items-center rounded-md transition-colors";
+  "focus-ring relative isolate grid h-8 w-8 place-items-center overflow-hidden rounded-md transition-colors";
+
+type UtilityAction = "switch" | "theme" | "settings";
+
+interface UtilityButtonProps {
+  action: UtilityAction;
+  "aria-label": string;
+  "aria-pressed"?: boolean;
+  title?: string;
+  onClick: () => void;
+  className: string;
+  icon?: ComponentType<{ size?: number; strokeWidth?: number }>;
+  children?: ReactNode;
+}
+
+const UTILITY_MOTION = {
+  switch: {
+    button: {
+      rest: { y: 0, scale: 1 },
+      hover: { y: -2, scale: 1.04 },
+    },
+    icon: {
+      rest: {
+        x: 0,
+        rotate: 0,
+        scale: 1,
+        transition: { type: "spring", stiffness: 430, damping: 27, mass: 0.5 },
+      },
+      hover: {
+        x: 2,
+        rotate: -10,
+        scale: 1.12,
+        transition: { type: "spring", stiffness: 520, damping: 21, mass: 0.45 },
+      },
+    },
+  },
+  theme: {
+    button: {
+      rest: { y: 0, scale: 1 },
+      hover: { y: -1, scale: 1.04 },
+    },
+    icon: {
+      rest: {
+        rotate: 0,
+        scale: 1,
+        transition: { type: "spring", stiffness: 420, damping: 30, mass: 0.5 },
+      },
+      hover: {
+        rotate: 28,
+        scale: 1.18,
+        transition: { type: "spring", stiffness: 520, damping: 18, mass: 0.45 },
+      },
+    },
+  },
+  settings: {
+    button: {
+      rest: { rotate: 0, scale: 1 },
+      hover: { rotate: 3, scale: 1.04 },
+    },
+    icon: {
+      rest: {
+        rotate: 0,
+        scale: 1,
+        transition: { type: "spring", stiffness: 460, damping: 30, mass: 0.48 },
+      },
+      hover: {
+        rotate: 90,
+        scale: 1.1,
+        transition: { type: "spring", stiffness: 560, damping: 23, mass: 0.44 },
+      },
+    },
+  },
+} as const;
 
 /**
  * Bottom-of-sidebar utility cluster: an optional leading "switch
- * workspace" button (Dashboard ⇄ Capture), explicit Light / Dark
- * buttons, and an optional Settings shortcut, all sharing one rounded
- * pill. Reads + writes the global theme store directly.
+ * workspace" button (Dashboard ⇄ Capture), a single Light/Dark toggle,
+ * and an optional Settings shortcut, all sharing one rounded pill.
+ * Reads + writes the global theme store directly.
  *
- * Active theme renders against the surface fill with a subtle inset
- * shadow so the current choice is unambiguous — matches the legacy
- * footer cluster's feel. Hubs that surface Settings as a dedicated
- * sidebar row (e.g. the future Main hub) omit `onSettings`.
+ * The theme button renders against the surface fill with a subtle inset
+ * shadow so the current choice is unambiguous. Hubs that surface
+ * Settings as a dedicated sidebar row omit `onSettings`.
  */
 export function ThemeToggle({
   collapsed = false,
@@ -59,13 +126,16 @@ export function ThemeToggle({
 }: ThemeToggleProps) {
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
+  const nextTheme = theme === "light" ? "dark" : "light";
+  const themeToggleLabel =
+    nextTheme === "dark" ? "Switch to dark theme" : "Switch to light theme";
 
-  const handleThemePick = (next: Theme) => {
+  const handleThemeToggle = () => {
     // Mirror locally for instant feedback; persistence (when wired)
     // arrives via `onThemeChange` and pushes the same value back
     // through the settings change event.
-    setTheme(next);
-    onThemeChange?.(next);
+    setTheme(nextTheme);
+    onThemeChange?.(nextTheme);
   };
 
   return (
@@ -76,8 +146,8 @@ export function ThemeToggle({
       )}
     >
       {onSwitch && SwitchIcon && (
-        <button
-          type="button"
+        <UtilityButton
+          action="switch"
           aria-label={switchLabel ?? "Switch window"}
           title={switchLabel}
           onClick={onSwitch}
@@ -85,35 +155,105 @@ export function ThemeToggle({
             BTN_BASE,
             "text-[var(--color-slate)] hover:bg-[color:var(--color-overlay-2)] hover:text-[var(--color-ink)]"
           )}
-        >
-          <SwitchIcon size={15} strokeWidth={1.85} />
-        </button>
+          icon={SwitchIcon}
+        />
       )}
 
-      {THEMES.map(({ id, icon: Icon, label }) => {
-        const active = theme === id;
-        return (
-          <button
-            key={id}
-            type="button"
-            aria-label={label}
-            aria-pressed={active}
-            onClick={() => handleThemePick(id)}
-            className={cn(
-              BTN_BASE,
-              active
-                ? "bg-[var(--color-surface)] text-[var(--color-ink)] shadow-[var(--shadow-subtle)]"
-                : "text-[var(--color-slate)] hover:bg-[color:var(--color-overlay-2)] hover:text-[var(--color-ink)]"
-            )}
+      <UtilityButton
+        action="theme"
+        aria-label={themeToggleLabel}
+        aria-pressed={theme === "dark"}
+        title={themeToggleLabel}
+        onClick={handleThemeToggle}
+        className={cn(
+          BTN_BASE,
+          "bg-[var(--color-surface)] text-[var(--color-ink)] shadow-[var(--shadow-subtle)]"
+        )}
+      >
+        <motion.span
+          className="absolute inset-0 -z-10 rounded-md bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]"
+          layout
+          transition={{ type: "spring", stiffness: 440, damping: 34 }}
+        />
+        <motion.span
+          className="relative grid h-[15px] w-[15px] origin-center place-items-center"
+          variants={UTILITY_MOTION.theme.icon}
+        >
+          <motion.span
+            className="pointer-events-none absolute inset-0 grid place-items-center text-[var(--color-slate)]"
+            variants={{
+              rest: {
+                opacity: 0,
+                x: theme === "light" ? 9 : -9,
+                y: theme === "light" ? 6 : -6,
+                rotate: theme === "light" ? -38 : 38,
+                scale: 0.42,
+                transition: {
+                  type: "spring",
+                  stiffness: 430,
+                  damping: 29,
+                  mass: 0.45,
+                },
+              },
+              hover: {
+                opacity: 0.58,
+                x: theme === "light" ? 8 : -8,
+                y: theme === "light" ? 5 : -5,
+                rotate: theme === "light" ? -14 : 14,
+                scale: 0.7,
+                transition: {
+                  type: "spring",
+                  stiffness: 520,
+                  damping: 22,
+                  mass: 0.42,
+                },
+              },
+            }}
           >
-            <Icon size={15} strokeWidth={1.85} />
-          </button>
-        );
-      })}
+            {nextTheme === "dark" ? (
+              <Moon size={15} strokeWidth={1.85} />
+            ) : (
+              <Sun size={15} strokeWidth={1.85} />
+            )}
+          </motion.span>
+
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={theme}
+              initial={{
+                opacity: 0,
+                rotate: theme === "light" ? -70 : 70,
+                scale: 0.5,
+                y: theme === "light" ? 6 : -6,
+              }}
+              animate={{ opacity: 1, rotate: 0, scale: 1, y: 0 }}
+              exit={{
+                opacity: 0,
+                rotate: theme === "light" ? 70 : -70,
+                scale: 0.5,
+                y: theme === "light" ? -6 : 6,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 520,
+                damping: 24,
+                mass: 0.46,
+              }}
+              className="absolute inset-0 grid place-items-center"
+            >
+              {theme === "light" ? (
+                <Sun size={15} strokeWidth={1.85} />
+              ) : (
+                <Moon size={15} strokeWidth={1.85} />
+              )}
+            </motion.span>
+          </AnimatePresence>
+        </motion.span>
+      </UtilityButton>
 
       {onSettings && (
-        <button
-          type="button"
+        <UtilityButton
+          action="settings"
           aria-label="Open Settings"
           aria-pressed={settingsActive}
           onClick={onSettings}
@@ -123,10 +263,49 @@ export function ThemeToggle({
               ? "bg-[color:var(--color-accent-soft)] text-[var(--color-accent)]"
               : "text-[var(--color-slate)] hover:bg-[color:var(--color-overlay-2)] hover:text-[var(--color-ink)]"
           )}
-        >
-          <Settings size={15} strokeWidth={1.85} />
-        </button>
+          icon={Settings}
+        />
       )}
     </div>
+  );
+}
+
+function UtilityButton({
+  action,
+  "aria-label": ariaLabel,
+  "aria-pressed": ariaPressed,
+  title,
+  onClick,
+  className,
+  icon: Icon,
+  children,
+}: UtilityButtonProps) {
+  const motionSpec = UTILITY_MOTION[action];
+
+  return (
+    <motion.button
+      type="button"
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      title={title}
+      onClick={onClick}
+      initial="rest"
+      animate="rest"
+      whileHover="hover"
+      whileTap={{ scale: 0.92 }}
+      variants={motionSpec.button}
+      transition={{ type: "spring", stiffness: 500, damping: 28, mass: 0.48 }}
+      className={className}
+    >
+      {children}
+      {Icon && (
+        <motion.span
+          className="grid origin-center place-items-center"
+          variants={motionSpec.icon}
+        >
+          <Icon size={15} strokeWidth={1.85} />
+        </motion.span>
+      )}
+    </motion.button>
   );
 }

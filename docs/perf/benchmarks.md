@@ -21,6 +21,27 @@ live in `app/backend/crates/bench`:
 | `library_query/page_50` | **P5**: fetch one filtered/sorted page (50 of 50k) with the query pushed into SQL. |
 | `library_query/search_50k` | **P5**: substring search over 50k rows returning a page. |
 | `library_facets/facets_50k` | **P5**: the rail's whole-library counts (kinds, favorites, trash, smart sets, tag vocabulary). |
+| `recorder_frame/readback_{1080p,4k,ultrawide}` | Copying one frame out of a mapped staging surface at a driver-realistic row pitch — what a held Desktop Duplication costs per frame. |
+| `recorder_frame/nv12_{1080p,4k,ultrawide}` | BGRA→NV12 colour conversion into what the H.264 encoder takes. |
+
+### Why the recorder rows are different
+
+Every other budget here is a comfort threshold: a slower PNG encode is a
+slower save. The recorder's two are a **deadline**. A capture loop that
+overruns its frame interval does not fail or report an error — it silently
+produces fewer frames, and the user gets a recording that stutters. So the
+bands are set from the interval rather than from headroom over the current
+number: 33.3 ms at 30 fps, 16.7 ms at 60, shared between the read-back, the
+conversion and the encoder itself.
+
+`ultrawide` (5120×1440, 7.4 Mpx) is the row worth watching. It is nearly
+twice 4K's per-frame work at a rate people record games at, and it is the
+size at which this pipeline first failed to keep up. Read-back and
+conversion together are ~3.3 ms there, a fifth of a 60 fps frame.
+
+Both stages are measured apart on purpose. A recording that misses its rate
+gives no clue which half is over budget, and the two scale differently — the
+read-back is pure memory bandwidth, the conversion scales with cores.
 
 Corpora are **synthetic and deterministic** (`crates/bench/src/lib.rs`): a
 fixed seed regenerates the same frames and rows byte-for-byte on every

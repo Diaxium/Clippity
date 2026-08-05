@@ -67,7 +67,11 @@ describe("shared", () => {
   });
 
   it("detects a disagreement past the first pair", () => {
-    const sel = [rect({ opacity: 1 }), rect({ opacity: 1 }), rect({ opacity: 0.2 })];
+    const sel = [
+      rect({ opacity: 1 }),
+      rect({ opacity: 1 }),
+      rect({ opacity: 0.2 }),
+    ];
     expect(shared(sel, (n) => n.opacity)).toEqual({ value: 1, mixed: true });
   });
 });
@@ -105,7 +109,10 @@ describe("sharedWhere", () => {
   });
 
   it("reads the first carrier, not the first node, as the primary value", () => {
-    const sel: SceneNode[] = [makeRectangle(BOX), makeText(BOX, { fontSize: 30 })];
+    const sel: SceneNode[] = [
+      makeRectangle(BOX),
+      makeText(BOX, { fontSize: 30 }),
+    ];
     const s = sharedWhere(sel, (n) =>
       n.type === "text" ? n.fontSize : undefined
     );
@@ -115,7 +122,10 @@ describe("sharedWhere", () => {
 
 describe("entriesAt / refsOf (edit-by-index, Fork P-F1)", () => {
   function selWithStrokes(): SceneNode[] {
-    const a = { ...makeRectangle(BOX), strokes: [makeStroke("#111111", 1), makeStroke("#222222", 2)] };
+    const a = {
+      ...makeRectangle(BOX),
+      strokes: [makeStroke("#111111", 1), makeStroke("#222222", 2)],
+    };
     const b = { ...makeRectangle(BOX), strokes: [makeStroke("#333333", 3)] };
     return [a, b] as SceneNode[];
   }
@@ -164,7 +174,10 @@ describe("entriesAt / refsOf (edit-by-index, Fork P-F1)", () => {
   it("reads a row's shared value across the peers", () => {
     const sel = selWithStrokes();
     const peers = entriesAt(sel, "strokes", 0);
-    expect(sharedEntry(peers, (s) => s.width)).toEqual({ value: 1, mixed: true });
+    expect(sharedEntry(peers, (s) => s.width)).toEqual({
+      value: 1,
+      mixed: true,
+    });
     expect(sharedEntry(peers, (s) => s.visible)).toEqual({
       value: true,
       mixed: false,
@@ -174,9 +187,24 @@ describe("entriesAt / refsOf (edit-by-index, Fork P-F1)", () => {
 
 describe("triState / toggleTarget", () => {
   it("reads all-on, all-off, and split", () => {
-    expect(triState([rect({ visible: true }), rect({ visible: true })], (n) => n.visible)).toBe("on");
-    expect(triState([rect({ visible: false }), rect({ visible: false })], (n) => n.visible)).toBe("off");
-    expect(triState([rect({ visible: true }), rect({ visible: false })], (n) => n.visible)).toBe("mixed");
+    expect(
+      triState(
+        [rect({ visible: true }), rect({ visible: true })],
+        (n) => n.visible
+      )
+    ).toBe("on");
+    expect(
+      triState(
+        [rect({ visible: false }), rect({ visible: false })],
+        (n) => n.visible
+      )
+    ).toBe("off");
+    expect(
+      triState(
+        [rect({ visible: true }), rect({ visible: false })],
+        (n) => n.visible
+      )
+    ).toBe("mixed");
   });
 
   it("reads an empty selection as off rather than throwing", () => {

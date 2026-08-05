@@ -116,8 +116,8 @@ pub fn copy_files_to_clipboard<P: AsRef<Path>>(paths: &[P]) -> Result<(), String
         // A moveable block, because ownership passes to the clipboard on
         // a successful `SetClipboardData` and the system frees it with
         // `GlobalFree` later.
-        let hglobal: HGLOBAL =
-            GlobalAlloc(GMEM_MOVEABLE, payload.len()).map_err(|e| format!("clipboard alloc: {e}"))?;
+        let hglobal: HGLOBAL = GlobalAlloc(GMEM_MOVEABLE, payload.len())
+            .map_err(|e| format!("clipboard alloc: {e}"))?;
 
         let locked = GlobalLock(hglobal);
         if locked.is_null() {

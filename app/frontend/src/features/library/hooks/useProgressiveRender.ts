@@ -54,7 +54,7 @@ export interface UseProgressiveRenderResult {
 export function useProgressiveRender(
   total: number,
   resetKey: string,
-  { initial = INITIAL_RENDERED, step = RENDER_STEP } = {},
+  { initial = INITIAL_RENDERED, step = RENDER_STEP } = {}
 ): UseProgressiveRenderResult {
   const [budget, setBudget] = useState(initial);
 
@@ -62,7 +62,10 @@ export function useProgressiveRender(
   // re-runs the effect below — a plain ref's `.current` assignment
   // wouldn't, and the observer would never attach.
   const [sentinel, setSentinel] = useState<HTMLElement | null>(null);
-  const sentinelRef = useCallback((el: HTMLElement | null) => setSentinel(el), []);
+  const sentinelRef = useCallback(
+    (el: HTMLElement | null) => setSentinel(el),
+    []
+  );
 
   // A different list — start again from the top.
   useEffect(() => {
@@ -84,7 +87,7 @@ export function useProgressiveRender(
           setBudget((b) => Math.min(b + step, total));
         }
       },
-      { rootMargin: PREFETCH_MARGIN },
+      { rootMargin: PREFETCH_MARGIN }
     );
     io.observe(sentinel);
     return () => io.disconnect();

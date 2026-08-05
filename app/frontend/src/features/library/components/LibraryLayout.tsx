@@ -14,12 +14,8 @@ import {
   libraryRestore,
 } from "@services/tauri/clients/library";
 import { openDashboard } from "@services/tauri/clients/dashboard";
-import { openInEditor } from "@services/tauri/clients/editor";
 import { emitErrorToast } from "@services/tauri/clients/toast";
-import {
-  useContextMenu,
-  type ContextMenuEntry,
-} from "@shared/ui/contextMenu";
+import { useContextMenu, type ContextMenuEntry } from "@shared/ui/contextMenu";
 
 import { useCollections } from "../hooks/useCollections";
 import { useLibraryFacets } from "../hooks/useLibraryFacets";
@@ -36,6 +32,7 @@ import {
 import { takeSections, type Section } from "../lib/paging";
 import { dayLabel } from "../lib/format";
 import { SMART_COLLECTIONS } from "../lib/smart";
+import { openCapture } from "../lib/openCapture";
 import { activeScope, useLibraryStore } from "../state/libraryStore";
 import { KIND_TABS } from "../modes";
 import type { CaptureMeta, LibraryQuery } from "../types";
@@ -322,14 +319,20 @@ export function LibraryLayout() {
   /**
    * Open a capture for real — the destination half of "open".
    *
-   * File-backed captures go to the editor; palette entries open the main
-   * window's large palette view (race-free cross-window handoff, same as
-   * the editor). The remaining two kinds never reach here: a color and a
-   * text run have no view worth opening, so *their* open is a clipboard
-   * write, which the card and row perform themselves because only they
-   * can show that it happened (see `CaptureCard`). The guard stays
-   * anyway — a future caller that doesn't know that must not fall
-   * through to `openInEditor` with an id that has no file behind it.
+   * Palette entries open the main window's large palette view; every
+   * other file-backed capture goes to whichever surface `openCapture`
+   * routes it to, which is a recording's Studio or a still's editor. The
+   * remaining two kinds never reach here: a color and a text run have no
+   * view worth opening, so *their* open is a clipboard write, which the
+   * card and row perform themselves because only they can show that it
+   * happened (see `CaptureCard`). The guard stays anyway — a future
+   * caller that doesn't know that must not fall through with an id that
+   * has no file behind it.
+   *
+   * The routing is deferred rather than decided here on purpose: this
+   * handler used to send *everything* to the editor, which is how a
+   * recording came to be opened as an image long after the context menu
+   * and Inspector had learned better.
    */
   const onOpen = useCallback((m: CaptureMeta) => {
     if (m.kind === "palette") {
@@ -337,11 +340,7 @@ export function LibraryLayout() {
       return;
     }
     if (m.kind === "color" || m.kind === "text") return;
-    void openInEditor(m.id).catch((err: unknown) =>
-      emitErrorToast(
-        err instanceof Error ? err.message : "Failed to open editor."
-      )
-    );
+    openCapture(m);
   }, []);
 
   const onFocus = useCallback(

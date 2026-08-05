@@ -29,13 +29,7 @@ export type LibraryView = "grid" | "list";
 /** Kind filter tab. File-backed kinds + the armed aux kinds
  *  (color / palette / text). */
 export type KindTab =
-  | "all"
-  | "image"
-  | "video"
-  | "gif"
-  | "color"
-  | "palette"
-  | "text";
+  "all" | "image" | "video" | "gif" | "color" | "palette" | "text";
 
 /** How the grid orders the captures it is showing. */
 export type LibrarySort = "newest" | "oldest" | "name" | "largest";

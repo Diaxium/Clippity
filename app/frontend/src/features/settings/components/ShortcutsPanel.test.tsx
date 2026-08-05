@@ -17,12 +17,12 @@ describe("ShortcutsPanel", () => {
   it("renders the capture, library, and editor sections", () => {
     render(<ShortcutsPanel value={base()} onChange={() => {}} />);
     expect(
-      screen.getByRole("heading", { name: "Global capture hotkey" }),
+      screen.getByRole("heading", { name: "Global capture hotkey" })
     ).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Capture" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Library" })).toBeTruthy();
     expect(
-      screen.getAllByRole("heading", { name: /^Editor · / }).length,
+      screen.getAllByRole("heading", { name: /^Editor · / }).length
     ).toBeGreaterThan(0);
   });
 
@@ -49,17 +49,17 @@ describe("ShortcutsPanel", () => {
       <ShortcutsPanel
         value={base({ overrides: { "editor:undo": ["Mod+A"] } })}
         onChange={() => {}}
-      />,
+      />
     );
     expect(
-      screen.getByText(/share the same keys within one area/i),
+      screen.getByText(/share the same keys within one area/i)
     ).toBeTruthy();
   });
 
   it("reset-all is disabled with no overrides and clears them when clicked", () => {
     const onChange = vi.fn();
     const { rerender } = render(
-      <ShortcutsPanel value={base()} onChange={onChange} />,
+      <ShortcutsPanel value={base()} onChange={onChange} />
     );
     const resetAll = screen.getByRole("button", { name: "Reset all" });
     expect((resetAll as HTMLButtonElement).disabled).toBe(true);
@@ -68,13 +68,13 @@ describe("ShortcutsPanel", () => {
       <ShortcutsPanel
         value={base({ overrides: { "editor:undo": ["Mod+U"] } })}
         onChange={onChange}
-      />,
+      />
     );
     const resetAll2 = screen.getByRole("button", { name: "Reset all" });
     expect((resetAll2 as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(resetAll2);
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ overrides: {} }),
+      expect.objectContaining({ overrides: {} })
     );
   });
 
@@ -87,7 +87,7 @@ describe("ShortcutsPanel", () => {
     const toggle = within(globalSection).getByRole("switch");
     fireEvent.click(toggle);
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ globalCaptureEnabled: false }),
+      expect.objectContaining({ globalCaptureEnabled: false })
     );
   });
 });

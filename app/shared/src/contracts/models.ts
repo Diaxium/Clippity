@@ -9,11 +9,7 @@ export type ModelTask = "object-detection";
  *  fields on `ModelInfo`. `update-available` means a complete but older
  *  release is on disk and the registry has newer bytes. */
 export type ModelPhase =
-  | "not-installed"
-  | "downloading"
-  | "installed"
-  | "update-available"
-  | "error";
+  "not-installed" | "downloading" | "installed" | "update-available" | "error";
 
 /** One registry model + its live status. `downloaded`/`total` are only
  *  present while `phase === "downloading"`; `message` only when

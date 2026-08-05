@@ -27,11 +27,7 @@ import {
 } from "@services/tauri/clients/library";
 
 /** Kinds that have a file on disk (a thumbnail + an editor target). */
-const FILE_KINDS: ReadonlySet<CaptureKind> = new Set([
-  "image",
-  "video",
-  "gif",
-]);
+const FILE_KINDS: ReadonlySet<CaptureKind> = new Set(["image", "video", "gif"]);
 
 const RECENT_COUNT = 4;
 const EDITING_COUNT = 3;
@@ -82,10 +78,10 @@ export function useHomeCaptures(): HomeCaptures {
     // top up with the most recent captures, de-duplicated by id.
     const edited = files.filter((c) => c.mode === "Edited");
     const seen = new Set(edited.map((c) => c.id));
-    const editing = [
-      ...edited,
-      ...files.filter((c) => !seen.has(c.id)),
-    ].slice(0, EDITING_COUNT);
+    const editing = [...edited, ...files.filter((c) => !seen.has(c.id))].slice(
+      0,
+      EDITING_COUNT
+    );
 
     const activity = files.slice(0, ACTIVITY_COUNT);
 

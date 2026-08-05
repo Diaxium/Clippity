@@ -15,13 +15,13 @@ use std::sync::Arc;
 use base64::Engine;
 use image::ImageReader;
 
+use crate::capture_io;
+use crate::settings_service::{CapturesDirSource, NameTemplateSource};
+use crate::sidecar::{self, SCENES_DIRNAME};
 use clippity_domain::editor::{self, EditorImage};
 use clippity_domain::library;
 use clippity_domain::metadata::CaptureSource;
 use clippity_infra::error::{AppError, AppResult};
-use crate::capture_io;
-use crate::settings_service::{CapturesDirSource, NameTemplateSource};
-use crate::sidecar::{self, SCENES_DIRNAME};
 
 pub struct EditorService {
     captures: Arc<dyn CapturesDirSource>,

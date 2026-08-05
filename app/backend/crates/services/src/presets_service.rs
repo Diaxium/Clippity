@@ -19,9 +19,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use tauri::AppHandle;
 
-use clippity_infra::events;
 use clippity_domain::preset::{self, CapturePreset, PresetInput};
 use clippity_infra::error::{AppError, AppResult};
+use clippity_infra::events;
 use clippity_infra::paths::AppPaths;
 
 /// Disambiguates ids minted within the same millisecond.
@@ -168,13 +168,13 @@ fn persist(path: &Path, presets: &[CapturePreset]) -> AppResult<()> {
 mod tests {
     use super::*;
     use clippity_domain::capture::{CaptureKind, CaptureRequest, CaptureToggles};
-    use clippity_domain::preset::PresetOutput;
+    use clippity_domain::preset::{PresetOutput, PresetRequest};
 
     fn sample(name: &str, id: &str) -> CapturePreset {
         CapturePreset {
             id: id.into(),
             name: name.into(),
-            request: CaptureRequest {
+            request: PresetRequest::Capture(CaptureRequest {
                 kind: CaptureKind::Fullscreen,
                 custom_mode: None,
                 toggles: CaptureToggles {
@@ -188,7 +188,7 @@ mod tests {
                 share: None,
                 output_dir: None,
                 preset: None,
-            },
+            }),
             output: PresetOutput {
                 open_editor: true,
                 save_dir: None,

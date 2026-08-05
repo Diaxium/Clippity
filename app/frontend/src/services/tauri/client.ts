@@ -1,10 +1,17 @@
 import { invoke as tauriInvoke, type InvokeArgs } from "@tauri-apps/api/core";
 
+import {
+  beginIpcCall,
+  endIpcCall,
+  recordIpcSample,
+} from "@shared/lib/ipcMetrics";
 import { createLogger } from "@shared/lib/logger";
 
 /** Every IPC call funnels through `invoke`, so this is the one place a
  *  failed command can be observed for free — no caller has to remember
- *  to log. */
+ *  to log. The same property is what makes it the right place to time
+ *  every call for the developer page's command inspector — see
+ *  `recordIpcSample`, which is a no-op until that is armed. */
 const log = createLogger("ipc");
 
 /**
@@ -50,9 +57,31 @@ export async function invoke<TResult, TArgs extends InvokeArgs = InvokeArgs>(
   command: string,
   args?: TArgs
 ): Promise<TResult> {
+  // `performance.now()` rather than `Date.now()`: this measures a
+  // sub-millisecond-resolution duration, not a point in time, and is
+  // immune to the wall clock being adjusted mid-call.
+  const started = performance.now();
+  beginIpcCall();
   try {
-    return await tauriInvoke<TResult>(command, args);
+    const result = await tauriInvoke<TResult>(command, args);
+    endIpcCall();
+    recordIpcSample({
+      command,
+      ms: performance.now() - started,
+      ok: true,
+      args,
+      result,
+    });
+    return result;
   } catch (raw) {
+    endIpcCall();
+    recordIpcSample({
+      command,
+      ms: performance.now() - started,
+      ok: false,
+      code: isWireError(raw) ? raw.code : "bridge",
+      args,
+    });
     if (isWireError(raw)) {
       // Expected, handled failures (validation, unsupported mode, a
       // cancelled dialog). Debug-level so dev sees every failed command

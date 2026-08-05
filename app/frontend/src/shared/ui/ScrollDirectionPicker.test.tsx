@@ -22,9 +22,7 @@ describe("ScrollDirectionPicker", () => {
 
   it("does not fire when disabled", () => {
     const onChange = vi.fn();
-    render(
-      <ScrollDirectionPicker value="down" onChange={onChange} disabled />
-    );
+    render(<ScrollDirectionPicker value="down" onChange={onChange} disabled />);
     fireEvent.click(screen.getByRole("radio", { name: "Scroll left" }));
     expect(onChange).not.toHaveBeenCalled();
   });

@@ -143,9 +143,9 @@ describe("applyGradientHandle", () => {
       applyGradientHandle("radius", g, geo, { x: 0.8, y: 0.5 }).radius
     ).toBeCloseTo(0.3, 5);
     // Dragging onto the center floors the radius rather than collapsing to 0.
-    expect(applyGradientHandle("radius", g, geo, { x: 0.5, y: 0.5 }).radius).toBe(
-      0.02
-    );
+    expect(
+      applyGradientHandle("radius", g, geo, { x: 0.5, y: 0.5 }).radius
+    ).toBe(0.02);
   });
 
   it("sets the focal point directly", () => {
@@ -187,8 +187,18 @@ describe("moveFreeformPoint", () => {
         {
           id: "l",
           stops: [
-            { id: "a", point: { x: 0.2, y: 0.2 }, color: "#ffffff", opacity: 1 },
-            { id: "b", point: { x: 0.8, y: 0.8 }, color: "#000000", opacity: 1 },
+            {
+              id: "a",
+              point: { x: 0.2, y: 0.2 },
+              color: "#ffffff",
+              opacity: 1,
+            },
+            {
+              id: "b",
+              point: { x: 0.8, y: 0.8 },
+              color: "#000000",
+              opacity: 1,
+            },
           ],
         },
       ],
@@ -207,7 +217,11 @@ describe("moveFreeformPoint", () => {
 
 describe("moveMeshPoint", () => {
   it("moves only the targeted node", () => {
-    const g = { ...makeGradientPaint().gradient!, kind: "mesh" as const, mesh: makeMesh() };
+    const g = {
+      ...makeGradientPaint().gradient!,
+      kind: "mesh" as const,
+      mesh: makeMesh(),
+    };
     const before = g.mesh.points[0]!.point;
     const out = moveMeshPoint(g, 3, { x: 0.4, y: 0.6 });
     expect(out.mesh!.points[3]!.point).toEqual({ x: 0.4, y: 0.6 });
@@ -215,13 +229,21 @@ describe("moveMeshPoint", () => {
   });
 
   it("clamps the position to the box", () => {
-    const g = { ...makeGradientPaint().gradient!, kind: "mesh" as const, mesh: makeMesh() };
+    const g = {
+      ...makeGradientPaint().gradient!,
+      kind: "mesh" as const,
+      mesh: makeMesh(),
+    };
     const out = moveMeshPoint(g, 1, { x: 1.8, y: -0.5 });
     expect(out.mesh!.points[1]!.point).toEqual({ x: 1, y: 0 });
   });
 
   it("ignores an out-of-range index", () => {
-    const g = { ...makeGradientPaint().gradient!, kind: "mesh" as const, mesh: makeMesh() };
+    const g = {
+      ...makeGradientPaint().gradient!,
+      kind: "mesh" as const,
+      mesh: makeMesh(),
+    };
     expect(moveMeshPoint(g, 99, { x: 0.5, y: 0.5 })).toBe(g);
   });
 });

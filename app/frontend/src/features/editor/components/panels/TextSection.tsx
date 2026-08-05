@@ -74,7 +74,6 @@ export function TextSection() {
 
   return (
     <PanelSection id="text" title="Text">
-
       <div className="grid grid-cols-2 gap-1.5">
         <div>
           <p className={SUB}>Size</p>
@@ -91,7 +90,9 @@ export function TextSection() {
             ariaLabel="Font weight"
             // A disagreeing selection shows a "Mixed" entry rather than
             // claiming the primary's weight; picking a real one unifies them.
-            value={fontWeight.mixed ? MIXED_WEIGHT.value : String(fontWeight.value)}
+            value={
+              fontWeight.mixed ? MIXED_WEIGHT.value : String(fontWeight.value)
+            }
             options={fontWeight.mixed ? [MIXED_WEIGHT, ...WEIGHTS] : WEIGHTS}
             onChange={(v) =>
               v !== MIXED_WEIGHT.value &&

@@ -505,10 +505,7 @@ pub fn frame_difference(a: &RgbaImage, b: &RgbaImage) -> f64 {
 /// coordinates — where the panoramic worker parks the cursor before
 /// sending wheel input so the scroll lands on the captured content.
 /// Pure; the I/O (SetCursorPos / SendInput) lives in `platform`.
-pub fn region_scroll_anchor(
-    region: &crate::overlay::Region,
-    origin: (i32, i32),
-) -> (i32, i32) {
+pub fn region_scroll_anchor(region: &crate::overlay::Region, origin: (i32, i32)) -> (i32, i32) {
     (
         origin.0 + region.x as i32 + region.width as i32 / 2,
         origin.1 + region.y as i32 + region.height as i32 / 2,

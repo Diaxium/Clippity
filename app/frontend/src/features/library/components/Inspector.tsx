@@ -10,7 +10,6 @@ import {
   FolderPlus,
   Link2,
   Maximize2,
-  PenLine,
   Plus,
   RotateCcw,
   Share2,
@@ -23,7 +22,6 @@ import {
   collectionsRemoveMembers,
 } from "@services/tauri/clients/collections";
 import { openDashboard } from "@services/tauri/clients/dashboard";
-import { openInEditor } from "@services/tauri/clients/editor";
 import { shareCapture, type ShareTarget } from "@services/tauri/clients/share";
 import { emitErrorToast } from "@services/tauri/clients/toast";
 import { cn } from "@shared/lib/cn";
@@ -32,6 +30,7 @@ import { INSPECTOR_W, THUMBNAIL_INSPECTOR_W } from "../constants";
 import { useThumbnail } from "../hooks/useThumbnail";
 import { copyAux } from "../lib/auxClipboard";
 import { formatBytes, formatDimensions, formatTime } from "../lib/format";
+import { openCapture, openIconFor, openLabelFor } from "../lib/openCapture";
 import { KIND_BADGE } from "../modes";
 import type { CaptureMeta, Collection, LibraryMode } from "../types";
 import { AuxDetails } from "./AuxDetails";
@@ -88,7 +87,11 @@ export function Inspector({
   const isPalette = meta.kind === "palette" && !!meta.palette?.length;
   // No ref: the pane is small and always on screen when mounted, so the
   // grid's lazy intersection gate would only add a frame of blank.
-  const thumb = useThumbnail(null, isAux ? null : meta.id, THUMBNAIL_INSPECTOR_W);
+  const thumb = useThumbnail(
+    null,
+    isAux ? null : meta.id,
+    THUMBNAIL_INSPECTOR_W
+  );
   const dimensions = formatDimensions(meta.width, meta.height);
   const created = new Date(meta.createdAtMs);
 
@@ -193,7 +196,9 @@ export function Inspector({
         <dl className="flex flex-col">
           <Fact label="Type" value={KIND_BADGE[meta.kind] ?? meta.kind} />
           {dimensions && <Fact label="Dimensions" value={dimensions} />}
-          {!isAux && <Fact label="File size" value={formatBytes(meta.sizeBytes)} />}
+          {!isAux && (
+            <Fact label="File size" value={formatBytes(meta.sizeBytes)} />
+          )}
           <Fact
             label="Created"
             value={`${created.toLocaleDateString(undefined, {
@@ -300,25 +305,17 @@ export function Inspector({
               )
             ) : (
               <>
-                {/* A recording has no editor to open — the annotation
-                    editor loads a capture as an image, and a video is
-                    not one. "Open in default app" is a recording's play
-                    button. */}
-                {meta.kind === "video" ? null : (
-                  <Action
-                    icon={PenLine}
-                    label="Open in editor"
-                    onClick={() => {
-                      void openInEditor(meta.id).catch((err: unknown) =>
-                        emitErrorToast(
-                          err instanceof Error
-                            ? err.message
-                            : "Failed to open editor."
-                        )
-                      );
-                    }}
-                  />
-                )}
+                {/* Destination, label and icon all come from
+                    `openCapture` — a recording's Studio or a still's
+                    editor — so this pane cannot disagree with the
+                    context menu or with the card's own double-click.
+                    "Play" below still hands the clip to the OS, for
+                    anyone who wants it full-screen. */}
+                <Action
+                  icon={openIconFor(meta)}
+                  label={openLabelFor(meta)}
+                  onClick={() => openCapture(meta)}
+                />
                 <Action
                   icon={ExternalLink}
                   label={meta.kind === "video" ? "Play" : "Open in default app"}
@@ -399,7 +396,9 @@ function SectionLabel({ children }: { children: ReactNode }) {
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-3 py-[3px]">
-      <dt className="shrink-0 text-[12px] text-[var(--color-slate)]">{label}</dt>
+      <dt className="shrink-0 text-[12px] text-[var(--color-slate)]">
+        {label}
+      </dt>
       <dd
         className="min-w-0 text-right text-[12px] text-[var(--color-ink)]"
         title={value}

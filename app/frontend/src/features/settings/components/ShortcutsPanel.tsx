@@ -74,11 +74,12 @@ export function ShortcutsPanel({ value, onChange }: ShortcutsPanelProps) {
 
   const conflicts = useMemo(
     () => findShortcutConflicts(overrides),
-    [overrides],
+    [overrides]
   );
   const overriddenCount = useMemo(
-    () => SHORTCUT_ENTRIES.filter((e) => isEntryOverridden(e, overrides)).length,
-    [overrides],
+    () =>
+      SHORTCUT_ENTRIES.filter((e) => isEntryOverridden(e, overrides)).length,
+    [overrides]
   );
 
   const setOverride = (fqid: string, combos: string[]) =>
@@ -93,7 +94,8 @@ export function ShortcutsPanel({ value, onChange }: ShortcutsPanelProps) {
   const resetAll = () => onChange({ ...value, overrides: {} });
 
   const globalOverridden =
-    value.globalCapture !== DEFAULT_GLOBAL_CAPTURE || !value.globalCaptureEnabled;
+    value.globalCapture !== DEFAULT_GLOBAL_CAPTURE ||
+    !value.globalCaptureEnabled;
   const globalNeedsModifier = lacksGlobalModifier(value.globalCapture);
 
   return (

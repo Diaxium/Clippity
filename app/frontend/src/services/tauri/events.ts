@@ -33,12 +33,26 @@ export const EVENT_NAMES = {
   /** Video/GIF recorder (ADR 0031). Note `recorder/`, not `recording/`
    *  — those belong to the scroll stitcher, which produces a still. */
   recorderTick: "clippity://recorder/tick",
+  /** Audio peak levels, ~10×/s while a session has audio, for the HUD's
+   *  meters. Its own event rather than fields on the tick: a meter needs
+   *  an order of magnitude more updates than a clock. */
+  recorderLevels: "clippity://recorder/levels",
   recorderFinished: "clippity://recorder/finished",
+  /** Studio's trim export. Scoped to the main window by the backend —
+   *  many emits over one export, one surface reading them. The *result*
+   *  is the command's return value, not an event. */
+  mediaTrimProgress: "clippity://media/trim-progress",
   modelsChanged: "clippity://models/changed",
   modelsProgress: "clippity://models/progress",
   /** Capture-window → overlay mirror of the scroll-direction option.
    *  Frontend-to-frontend (no backend emit), like `overlayToggles`. */
   overlayScrollDirection: "clippity://overlay/scroll-direction",
+  /** Capture-window → overlay mirror of a recording **preset's** request
+   *  (everything but the rectangle), or null for an ordinary session.
+   *  Frontend-to-frontend, like the format mirror beside it. Emitted on
+   *  every overlay open so a preset's settings can't leak into the next
+   *  non-preset recording. */
+  overlayRecordPreset: "clippity://overlay/record-preset",
   /** Capture-window → overlay mirror of the chosen recording format, so
    *  a region/window recording started from the overlay encodes to what
    *  the Record screen selected. Frontend-to-frontend, same mechanism as

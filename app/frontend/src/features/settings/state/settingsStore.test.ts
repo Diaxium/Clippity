@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { useSettingsStore } from "./settingsStore";
+import { DEFAULT_DEVELOPER_SETTINGS } from "@clippity/shared";
+
+import { DEFAULT_BACKDROP_TUNING_SET } from "../lib/backdrop";
 import type { Settings } from "../types";
 
 const sample: Settings = {
@@ -16,6 +19,8 @@ const sample: Settings = {
     theme: "system",
     accent: "#FF6E4A",
     windowOpacity: 100,
+    windowBackdrop: "mica",
+    backdropTuning: DEFAULT_BACKDROP_TUNING_SET,
     uiScale: 100,
     cornerRadius: "default",
     density: "comfortable",
@@ -53,8 +58,13 @@ const sample: Settings = {
     systemAudio: false,
     microphoneDevice: null,
     systemDevice: null,
+    microphoneGainPct: 100,
+    systemGainPct: 100,
     videoFps: 30,
     gifFps: 15,
+    maxHeight: 0,
+    encoding: {},
+    sources: [],
     cursor: false,
     outline: true,
     clipboard: false,
@@ -69,6 +79,7 @@ const sample: Settings = {
     globalCapture: "Mod+Shift+2",
     globalCaptureEnabled: true,
   },
+  developer: DEFAULT_DEVELOPER_SETTINGS,
 };
 
 describe("useSettingsStore", () => {

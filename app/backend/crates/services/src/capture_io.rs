@@ -17,10 +17,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use base64::Engine;
 use image::{DynamicImage, ImageFormat, RgbaImage};
 
+use crate::sidecar;
 use clippity_domain::metadata::{self, CaptureSource};
 use clippity_domain::naming::{self, LocalTime};
 use clippity_infra::error::{AppError, AppResult};
-use crate::sidecar;
 
 /// Render a recognisable file name from the user's template + the
 /// capture's `source`, then persist `bytes` under it as a PNG. The entry
@@ -527,8 +527,8 @@ mod tests {
         let dir = std::env::temp_dir()
             .join(format!("clippity-capture-io-meta3-{}", next_id()))
             .join("preset-output");
-        let path = save_capture_png(&dir, b"x", "", &CaptureSource::from_mode("Region"))
-            .expect("save ok");
+        let path =
+            save_capture_png(&dir, b"x", "", &CaptureSource::from_mode("Region")).expect("save ok");
         assert!(dir.join(".meta").is_dir(), "sidecar dir beside the capture");
         assert!(sidecar::read_metadata(&path).is_some());
         let _ = std::fs::remove_dir_all(dir.parent().unwrap());

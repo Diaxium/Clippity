@@ -184,6 +184,161 @@ Consequences that follow rather than being separate decisions:
   unsafe or media-type code:
   `cargo test -p clippity-platform -- --ignored` and
   `cargo test -p clippity-services -- --ignored`.
+- **Output resolution is a height cap applied in the encoder, not in Rust.**
+  `RecordingSettings::max_height` (default `0` = the captured size) caps the
+  encoded frame's height; `domain::recorder::scale_to_max_height` preserves the
+  aspect ratio, rounds even, and **never upscales**. Deliberately a height cap
+  rather than the area budget `gif_target_size` argues for a few lines above:
+  GIF's budget is a promise about *file size*, and area is what file size
+  tracks, but "1080p" is a promise about *vertical resolution* — capping an
+  ultrawide session there has to mean 3840×1080, not a letterbox with a 16:9
+  clip's pixel count. The two compose, tighter one winning
+  (`recorder::output_size`), so the setting is one value for both formats
+  instead of the split the frame rates need.
+
+  The scaling itself is Media Foundation's: `Mp4Config` carries the capture
+  size as `source_*` alongside the encoded size, and declaring an input media
+  type that differs from the output is what makes the sink writer load its
+  Video Processor MFT. A CPU resize per frame — the obvious implementation, and
+  what `gif_sink` does at a quarter the resolution and half the rate — does not
+  fit in a 60 fps budget at 4K, so the setting meant to make recording cheaper
+  would have made it drop frames. `Mp4Writer::input_size` reports what was
+  actually negotiated and `mp4_sink` resizes only if the processor was
+  unavailable, so a machine without one honours the setting slowly instead of
+  failing when Record was pressed.
+
+  `RecorderResult` now reports the **encoded** size rather than the region's.
+  It always should have — a downscaled GIF has been misreporting its dimensions
+  to the library since C1 — and a resolution cap makes the gap routine rather
+  than an edge case.
+- **Audio is a two-channel mixer, not two switches.** `AudioSelection` carries a
+  per-source gain and `AudioMixer::pump` applies it **pre-mix**, which is the
+  only place it can do what a mixer is for — scaling the sum would move both
+  inputs together and could not fix the imbalance that motivates the control
+  (a headset mic sits well below the system mix on most machines, and the two
+  are muxed into one AAC stream, so it is unfixable afterwards).
+
+  **Gain is an integer percentage, not a float multiplier.** It is the unit the
+  slider shows, it round-trips through JSON exactly, it keeps `AudioSelection`
+  `Eq` — which `ValidatedRecorderRequest` and its tests rely on — and there is
+  no NaN to defend against. Read-clamped by `clamp_gain_pct` on the same
+  contract as `clamp_fps` and `clamp_max_height`. The ceiling is +6 dB because
+  the mix is clamped to full scale on the way to 16-bit PCM, so past that a
+  bigger number buys distortion rather than volume.
+
+  **Mute is gain zero plus a remembered level, and lives only on the session.**
+  Storing it would make "I muted once" outlive the recording it was for; a
+  muted source still keeps its endpoint open, so unmuting is instant and the
+  meter keeps reading, which is the difference between a mute button and a
+  toggle. `SessionControl` holds both the live and the pre-mute value in
+  atomics, so a slider drag never blocks on a worker inside a blocking encoder
+  call.
+
+  **The persisted level is a starting level.** Settings → Recording sets what a
+  session begins at; the HUD's sliders move the running session and deliberately
+  do not write back, so a level nudged for one awkward recording does not become
+  the level every future one starts at.
+
+  **Meters get their own event.** `clippity://recorder/levels` carries peak (not
+  RMS — "is this live" and "is it clipping" are both peak questions) at 10 Hz,
+  scoped to the toast window. Folding it into `recorder/tick` would have meant
+  raising a 2 Hz payload of elapsed time, frame counts and file size to meter
+  rate, making every existing reader pay for the meters. A session with no audio
+  emits it not at all. The mixer *holds* peaks between emits rather than
+  sampling at emit time — audio is polled ten times more often than the meters
+  are sent, and a meter that misses the loud part is worse than no meter.
+
+  `ToastPayload::Recorder`'s `audio: bool` became `microphone` + `system`: the
+  HUD draws one row per live source and one boolean cannot say which. It is now
+  also gated on `RecorderFormat::supports_audio`, so a GIF session cannot show a
+  microphone row for a track `validate` has already emptied.
+- **The encoder is configurable, through named steps rather than a bitrate box.**
+  `RecorderEncoding` groups quality, an optional fixed bitrate, keyframe
+  interval, rate control and the hardware preference — grouped for the same
+  reason `AudioSelection` and `RecorderToggles` are: they are read together,
+  defaulted together, and only the MP4 path has any use for them.
+
+  **Quality is a bits-per-pixel multiplier, not a number the user types.** The
+  right bitrate depends on frame size and rate — the same 8 Mbps that is
+  generous for a 720p region starves a 4K desktop — so a typed number is only
+  meaningful for the one recording it was typed for. `Balanced` is the previous
+  fixed 0.07 bpp exactly, so choosing it changes nothing. The fixed-bitrate
+  override remains for the case where something downstream needs a known
+  number, and is clamped by the same floor and ceiling as a derived value:
+  those bounds do not stop applying because somebody typed it.
+
+  **Variable rate control is now the default, and that is a behaviour change.**
+  Before this the code declared only `MF_MT_AVG_BITRATE` and let the MFT pick,
+  which is constant-rate on every encoder we have seen — so a recording of a
+  motionless desktop spent full bitrate padding frames where nothing happened.
+  Screen capture is the definitional case for VBR. `UnconstrainedVBR` rather
+  than a peak-constrained mode, because a peak constraint gives back exactly
+  the saving this is for.
+
+  **Rate control is best-effort; everything else is negotiated.** Keyframe
+  spacing (`MF_MT_MAX_KEYFRAME_SPACING`) and the hardware preference are a
+  media-type attribute and an attribute-store value, so a machine that dislikes
+  either fails loudly at negotiation. Rate control is not — it lives on the
+  encoder's `ICodecAPI`, reached through `GetServiceForStream`, and not every
+  encoder exposes one. That path logs and continues: the file is still correct
+  at the declared average bitrate, and refusing to record over a tuning
+  preference would be the wrong trade. Same degradation shape as the resolution
+  cap's missing video processor.
+
+  **Keyframe interval is stored in seconds and used in frames.** It is not
+  cosmetic — a decoder can only start at a keyframe, so the interval *is* the
+  granularity Studio's scrubber can seek to, and left unset the encoders pick
+  wildly different values. Storing seconds means changing the frame rate does
+  not silently change how finely a recording can be seeked.
+
+  A fifth `#[ignore]`d integration test covers what compiles and then fails at
+  runtime: five settings combinations negotiated against the real encoders,
+  including forced *software* encoding — the one path a GPU-equipped machine
+  otherwise never exercises.
+- **A recording is a preset, not a "scene".** OBS calls a saved, switchable
+  capture configuration a scene. This codebase already had that concept and
+  called it a preset — `CapturePreset` only ever held a `CaptureRequest`
+  because the recorder was built afterwards. A parallel "scenes" surface would
+  have meant two managers, two editors, two run paths and two places to look
+  for the same idea, so `PresetRequest` became a two-variant union instead and
+  the existing manager grew a mode switch.
+
+  **The union is untagged, and that is the migration.** Presets already on disk
+  are bare `CaptureRequest` objects with no discriminant; an internally-tagged
+  enum would refuse every one of them. Untagged is safe here because the two
+  shapes are **disjoint by required field** — a capture must carry `type` and
+  `toggles`, a recording must carry `target` and `format`, and neither has a
+  serde default — so a payload can satisfy at most one variant and the
+  declaration order carries no meaning. Two tests assert that disjointness in
+  both directions, because it is a property of *other* structs: if a future
+  refactor defaults one of those four fields, the guarantee quietly disappears
+  and those tests are what notices.
+
+  **A recording preset mirrors its whole request to the overlay, not just its
+  format.** Region and Window recordings finalize in the overlay, which is a
+  separate window that rebuilds the request from the live settings store — so a
+  preset's frame rate, resolution, audio and encoder settings would have been
+  silently discarded for two of the three targets, which is worse than not
+  supporting them. `clippity://overlay/record-preset` carries the request; both
+  finalize paths resolve it through one helper (`overlayRecorderRequest`), for
+  the same reason all four entry points share one request builder.
+
+  The mirror is emitted on **every** overlay open, `null` included. The overlay
+  keeps whatever it was last told, so an unsent null would make the next
+  ordinary region recording quietly inherit the last preset's configuration —
+  a leak with no visible cause. There is a test for exactly that.
+
+  **What a recording preset does not store:** audio gains and encoder settings.
+  Those are tuning for a machine, not for a workflow; duplicating them per
+  preset would mean a user who fixes their mic level once has to fix it again
+  everywhere. `openEditor` is dropped rather than stored-and-ignored, because
+  the editor cannot open a video at all.
+
+  **Per-preset global hotkeys are not part of this.** Shortcuts today are one
+  `global_capture` binding plus static in-app registries keyed by fixed ids;
+  binding *a* preset needs dynamically registered, user-data-keyed shortcuts
+  with their own conflict handling. That is a feature, not a follow-on, and
+  pretending otherwise would have meant a half-built one.
 - Not attempted, and deliberately not faked: **cursor and click effects**
   (`RecorderToggles` carries them and the capture path ignores them),
   **webcam overlay**, **trim**, and **WebM** — all C2 in the roadmap.

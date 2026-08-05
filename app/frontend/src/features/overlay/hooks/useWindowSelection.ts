@@ -5,7 +5,7 @@ import { finishRegionCapture } from "@services/tauri/clients/overlay";
 import { startRecording } from "@services/tauri/clients/recorder";
 import type { RecorderFormat } from "@services/tauri/clients/recorder";
 import { emitErrorToast } from "@services/tauri/clients/toast";
-import { buildRecorderRequest } from "@shared/lib/recorderRequest";
+import { overlayRecorderRequest } from "@shared/lib/recorderRequest";
 
 import { windowAtPoint } from "../geometry";
 import { useOverlayStore } from "../state/overlayStore";
@@ -113,10 +113,11 @@ export function recordWindow(
   format: RecorderFormat,
   onDone: () => void
 ): void {
-  const request = buildRecorderRequest(
+  const request = overlayRecorderRequest(
     "window",
     format,
     useSettingsStore.getState().settings?.recording,
+    useOverlayStore.getState().recordOverride,
     win.rect
   );
   startRecording({ ...request, windowId: win.id })

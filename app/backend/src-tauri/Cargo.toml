@@ -10,6 +10,16 @@ description = "Clippity — modern screen capture, recording, annotation, and wo
 name = "clippity_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[features]
+# On by default so a shipped build can open the WebView inspector from
+# Settings → Advanced. Tauri gates `open_devtools()` behind its own
+# `devtools` feature outside debug builds, so without this the button
+# would work only in a development run — the build where it is least
+# needed. Turn it off (`--no-default-features`) for a build that must
+# not carry the inspector at all.
+default = ["devtools"]
+devtools = ["tauri/devtools"]
+
 [build-dependencies]
 tauri-build = { workspace = true }
 

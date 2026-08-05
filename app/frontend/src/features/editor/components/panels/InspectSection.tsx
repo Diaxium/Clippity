@@ -98,7 +98,9 @@ function PaintList({ node }: { node: SceneNode }) {
 
   if (rows.length === 0)
     return (
-      <p className="text-[12px] text-[var(--ed-text-dim)]">No fills or strokes.</p>
+      <p className="text-[12px] text-[var(--ed-text-dim)]">
+        No fills or strokes.
+      </p>
     );
 
   return (
@@ -116,7 +118,10 @@ function PaintList({ node }: { node: SceneNode }) {
           <span className="min-w-0 flex-1 truncate text-right text-[12px] tabular-nums text-[var(--ed-text)]">
             {row.value}
           </span>
-          <CopyButton label={`Copy ${row.label.toLowerCase()}`} text={row.value} />
+          <CopyButton
+            label={`Copy ${row.label.toLowerCase()}`}
+            text={row.value}
+          />
         </div>
       ))}
     </div>
@@ -156,7 +161,11 @@ function CopyButton({ label, text }: { label: string; text: string }) {
       className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] text-[var(--ed-text-faint)] hover:bg-[var(--ed-elev)] hover:text-[var(--ed-text)]"
     >
       {copied ? (
-        <Check size={13} strokeWidth={2.5} className="text-[var(--ed-accent)]" />
+        <Check
+          size={13}
+          strokeWidth={2.5}
+          className="text-[var(--ed-accent)]"
+        />
       ) : (
         <Copy size={13} strokeWidth={1.75} />
       )}

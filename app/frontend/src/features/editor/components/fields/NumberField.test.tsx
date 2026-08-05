@@ -67,14 +67,18 @@ describe("NumberField drag-scrub", () => {
 
   it("ignores presses below the movement threshold (so clicks still type)", () => {
     const onChange = vi.fn();
-    const { container } = render(<NumberField value={50} onChange={onChange} />);
+    const { container } = render(
+      <NumberField value={50} onChange={onChange} />
+    );
     scrub(container.firstChild as HTMLElement, 100, 102); // 2px ≤ threshold
     expect(onChange).not.toHaveBeenCalled();
   });
 
   it("ignores vertical-dominant drags so the panel can scroll", () => {
     const onChange = vi.fn();
-    const { container } = render(<NumberField value={50} onChange={onChange} />);
+    const { container } = render(
+      <NumberField value={50} onChange={onChange} />
+    );
     const field = container.firstChild as HTMLElement;
     fireEvent.pointerDown(field, {
       pointerId: 1,

@@ -110,11 +110,22 @@ pub fn webview_data_dir(app: &AppHandle) -> AppResult<PathBuf> {
 /// the file yet — that is a benign miss (GPU stays on, the default) and
 /// self-corrects once migration has moved the file into place.
 pub fn early_settings_file() -> Option<PathBuf> {
+    Some(early_data_dir()?.join("settings.json"))
+}
+
+/// The `data\` directory, resolved without a Tauri handle.
+///
+/// Same early-boot constraint as [`early_settings_file`], and the same
+/// caveat: on the first boot after an upgrade this runs before
+/// [`migrate_legacy_layout`], so the directory may not be populated yet.
+/// Used by the safe-mode marker, which has to be read before the first
+/// webview exists.
+pub fn early_data_dir() -> Option<PathBuf> {
     let root = match portable_root() {
         Some(root) => root.to_path_buf(),
         None => PathBuf::from(std::env::var_os("LOCALAPPDATA")?).join(DATA_DIR_NAME),
     };
-    Some(root.join("data").join("settings.json"))
+    Some(root.join("data"))
 }
 
 #[derive(Debug, Clone)]

@@ -284,7 +284,11 @@ export function EditorTopBar() {
 
   return (
     <div className="relative z-40 flex h-12 items-center border-b border-[color:var(--ed-hairline)] bg-[var(--ed-panel)] px-3">
-      <div role="radiogroup" aria-label="Editor mode" className="flex items-center gap-1">
+      <div
+        role="radiogroup"
+        aria-label="Editor mode"
+        className="flex items-center gap-1"
+      >
         {(["annotate", "design"] as const).map((m) => (
           <button
             key={m}
@@ -335,7 +339,10 @@ export function EditorTopBar() {
           <IconButton label="Undo" disabled={!canUndo} onClick={() => undo()}>
             <Undo2 size={16} />
           </IconButton>
-          <span aria-hidden className="h-5 w-px bg-[color:var(--ed-hairline-strong)]" />
+          <span
+            aria-hidden
+            className="h-5 w-px bg-[color:var(--ed-hairline-strong)]"
+          />
           <IconButton label="Redo" disabled={!canRedo} onClick={() => redo()}>
             <Redo2 size={16} />
           </IconButton>

@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+import { DeveloperPanel, useRuntimeFlags } from "@features/developer";
+import type { RuntimeFlags } from "@services/tauri/clients/developer";
+
 import { CATEGORIES } from "../constants";
 import { useSettings } from "../hooks/useSettings";
 import { useSettingsPatch } from "../hooks/useSettingsPatch";
@@ -25,6 +28,10 @@ export function SettingsLayout() {
   const settings = useSettings();
   const patch = useSettingsPatch();
   const [category, setCategory] = useState<SettingsCategory>("general");
+  // Safe mode / a pinned log level / devtools availability are fixed for
+  // the process, so they are fetched once here and handed down rather
+  // than re-asked by the panel on every render.
+  const runtimeFlags = useRuntimeFlags();
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -47,6 +54,7 @@ export function SettingsLayout() {
               category={category}
               settings={settings}
               onPatch={(p) => patch(p)}
+              runtimeFlags={runtimeFlags}
             />
           )}
           {settings && !isBuilt(category) && (
@@ -62,9 +70,10 @@ interface PanelProps {
   category: SettingsCategory;
   settings: Settings;
   onPatch: (patch: SettingsPatch) => void;
+  runtimeFlags: RuntimeFlags | null;
 }
 
-function Panel({ category, settings, onPatch }: PanelProps) {
+function Panel({ category, settings, onPatch, runtimeFlags }: PanelProps) {
   switch (category) {
     case "general":
       return (
@@ -120,6 +129,14 @@ function Panel({ category, settings, onPatch }: PanelProps) {
         <ModelsPanel
           value={settings.models}
           onChange={(models) => onPatch({ models })}
+        />
+      );
+    case "advanced":
+      return (
+        <DeveloperPanel
+          value={settings.developer}
+          onChange={(developer) => onPatch({ developer })}
+          flags={runtimeFlags}
         />
       );
     default:

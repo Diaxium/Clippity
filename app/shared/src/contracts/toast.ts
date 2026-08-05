@@ -58,7 +58,15 @@ export type ToastPayload =
    * offers Stop & Stitch, this one runs a clock and offers
    * pause/resume. Always sticky — it is the only way to stop a session.
    */
-  | { kind: "recorder"; format: RecorderToastFormat; audio: boolean };
+  | {
+      kind: "recorder";
+      format: RecorderToastFormat;
+      /** Which inputs the session opened. Two flags rather than one
+       *  `audio` boolean because the HUD draws one mixer row per live
+       *  source, and a single boolean cannot say which. */
+      microphone: boolean;
+      system: boolean;
+    };
 
 /** Convenience extractor — the discriminant. */
 export type ToastKind = ToastPayload["kind"];
@@ -74,7 +82,8 @@ export interface ToastDurations {
 }
 
 /** Anchor corner of the cursor's monitor's work area. */
-export type ToastCorner = "bottom-right" | "bottom-left" | "top-right" | "top-left";
+export type ToastCorner =
+  "bottom-right" | "bottom-left" | "top-right" | "top-left";
 
 /**
  * Wire shape of `clippity://toast/show`. The Rust event-emitter

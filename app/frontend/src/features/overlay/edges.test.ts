@@ -60,7 +60,7 @@ describe("strongestEdge", () => {
     const two: number[] = [];
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        const v = (x >= 3 && x < 8) ? 255 : 0;
+        const v = x >= 3 && x < 8 ? 255 : 0;
         two.push(v);
       }
     }

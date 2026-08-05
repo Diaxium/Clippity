@@ -1,13 +1,17 @@
 //! Native benchmark suite — performance roadmap P2.
 //!
 //! Each `bench_function` id here has a matching row in
-//! `backend/benches-budgets.toml`; `scripts/check-bench-budgets.mjs`
+//! `backend/benches-budgets.json`; `scripts/check-bench-budgets.mjs`
 //! reads Criterion's `estimates.json` for these ids and gates the median
 //! against the budget. Keep the ids and the budget keys in sync.
 //!
 //! Scope: the CPU/IO-bound native work a capture actually spends time in
-//! — scroll stitching, still (PNG) encode, thumbnail generation and the
-//! library index at 50k rows. App-lifecycle metrics (cold/warm startup,
+//! — scroll stitching, still (PNG) encode, thumbnail generation, the
+//! library index at 50k rows, and the recorder's per-frame path. That
+//! last one is the only budget here with a *hard* deadline rather than a
+//! comfort threshold: a still encode that takes twice as long is a
+//! slower save, but a frame that overruns its interval is a frame the
+//! recording does not contain. App-lifecycle metrics (cold/warm startup,
 //! hotkey-to-overlay, OCR, idle CPU/RAM, installer size) need a running
 //! app or a model on disk; they are tracked as non-automated budgets in
 //! the same manifest until a native driver lands.
@@ -122,7 +126,10 @@ fn bench_library(c: &mut Criterion) {
         g.sample_size(20);
         g.bench_function("page_50", |b| {
             b.iter(|| {
-                let q = LibraryQuery { limit: Some(50), ..Default::default() };
+                let q = LibraryQuery {
+                    limit: Some(50),
+                    ..Default::default()
+                };
                 black_box(index.query(black_box(&q)).unwrap())
             })
         });
@@ -239,6 +246,89 @@ fn to_data_uri(png: &[u8]) -> String {
     )
 }
 
+/// Display sizes a recording actually runs at, and the frame budget each
+/// rate allows.
+///
+/// The ultrawide row is the one that matters: 5120x1440 is 7.4 million
+/// pixels — nearly twice 4K's per-frame work at a rate people record
+/// games at — and it is the size at which this pipeline first failed to
+/// keep up.
+const RECORD_SIZES: [(&str, u32, u32); 3] = [
+    ("1080p", 1_920, 1_080),
+    ("4k", 3_840, 2_160),
+    ("ultrawide", 5_120, 1_440),
+];
+
+/// Everything one recorded frame pays between the screen and the
+/// encoder, measured per stage.
+///
+/// A recording that misses its rate does not fail — it silently produces
+/// fewer frames — so the only way to know which stage is over budget is
+/// to time them apart. The two here are the whole of it:
+///
+/// - `readback` is the copy out of the mapped staging surface, which is
+///   what a held Desktop Duplication costs per frame once its setup is
+///   out of the loop. Pure memory bandwidth, and benchmarked against a
+///   padded stride because that is what a driver hands over.
+/// - `nv12` is the colour conversion into what H.264 wants. It is the
+///   larger of the two and the one that scales with core count.
+///
+/// Their sum is the frame's CPU cost, against 33.3 ms at 30 fps and
+/// 16.7 ms at 60. The budgets in `benches-budgets.json` are set from
+/// that, not from the current numbers.
+#[cfg(target_os = "windows")]
+fn bench_recorder_frame(c: &mut Criterion) {
+    use clippity_platform::windows::duplication_capture::pack_rows;
+    use clippity_platform::windows::nv12::{nv12_len, to_nv12, PixelOrder};
+
+    for (label, w, h) in RECORD_SIZES {
+        let frame = synthetic_frame(w, h, 11);
+        let source = frame.as_raw();
+
+        let mut g = c.benchmark_group("recorder_frame");
+        g.sample_size(20);
+        g.measurement_time(Duration::from_secs(6));
+
+        // A driver's row pitch is its own alignment, not `width * 4`.
+        // 256-byte alignment is the common one and is what makes the
+        // copy row-by-row rather than one big memcpy.
+        let row_bytes = w as usize * 4;
+        let pitch = row_bytes.next_multiple_of(256);
+        let surface = vec![0x5Au8; pitch * h as usize];
+        let mut packed = Vec::new();
+        g.bench_function(format!("readback_{label}"), |b| {
+            b.iter(|| {
+                pack_rows(
+                    black_box(&surface),
+                    pitch,
+                    0,
+                    row_bytes,
+                    h as usize,
+                    black_box(&mut packed),
+                )
+            })
+        });
+
+        let mut nv12 = vec![0u8; nv12_len(w, h)];
+        g.bench_function(format!("nv12_{label}"), |b| {
+            b.iter(|| {
+                to_nv12(
+                    black_box(source),
+                    black_box(&mut nv12),
+                    w,
+                    h,
+                    PixelOrder::Bgra,
+                )
+            })
+        });
+
+        g.finish();
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn bench_recorder_frame(_c: &mut Criterion) {}
+
 criterion_group!(
     benches,
     bench_scroll_stitch,
@@ -246,5 +336,6 @@ criterion_group!(
     bench_thumbnail,
     bench_library,
     bench_overlay_handoff,
+    bench_recorder_frame,
 );
 criterion_main!(benches);

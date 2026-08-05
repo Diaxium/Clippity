@@ -378,9 +378,7 @@ mod tests {
     #[test]
     fn a_declined_component_gates_exactly_its_own_feature() {
         // The recommended default selection: no GIF, no OCR, no cloud.
-        let caps = Capabilities::resolve(Some(&doc_with(&[
-            "core", "capture", "assoc", "startup",
-        ])));
+        let caps = Capabilities::resolve(Some(&doc_with(&["core", "capture", "assoc", "startup"])));
         assert!(!caps.text_recognition, "OCR was declined");
         assert!(!caps.gif_recording, "GIF encoder was declined");
         assert!(!caps.cloud_sync, "cloud sync was declined");
@@ -421,7 +419,10 @@ mod tests {
     fn unknown_component_ids_are_carried_without_effect() {
         let mut doc = everything();
         doc.components.push("some-future-feature".into());
-        assert_eq!(Capabilities::resolve(Some(&doc)), Capabilities::resolve(Some(&everything())));
+        assert_eq!(
+            Capabilities::resolve(Some(&doc)),
+            Capabilities::resolve(Some(&everything()))
+        );
     }
 
     // ---------- preference gating ----------

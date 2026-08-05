@@ -165,7 +165,11 @@ let keydownIndex = buildIndex(LIBRARY_KEYBINDS);
 function ensureEffective(): void {
   const version = keybindOverridesVersion();
   if (version === cachedVersion && cachedVersion !== -1) return;
-  effectiveList = applyOverrides("library", LIBRARY_KEYBINDS, getKeybindOverrides());
+  effectiveList = applyOverrides(
+    "library",
+    LIBRARY_KEYBINDS,
+    getKeybindOverrides()
+  );
   keydownIndex = buildIndex(effectiveList);
   cachedVersion = version;
 }

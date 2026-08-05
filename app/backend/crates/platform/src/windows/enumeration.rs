@@ -310,9 +310,7 @@ fn friendly_app_name(exe_path: &str) -> String {
     if stem.is_empty() {
         return String::new();
     }
-    let all_lower = stem
-        .chars()
-        .all(|c| !c.is_alphabetic() || c.is_lowercase());
+    let all_lower = stem.chars().all(|c| !c.is_alphabetic() || c.is_lowercase());
     if !all_lower {
         return stem.to_owned();
     }

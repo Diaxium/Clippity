@@ -28,10 +28,9 @@ use std::time::Duration;
 use windows::core::PCWSTR;
 use windows::Win32::Devices::FunctionDiscovery::PKEY_Device_FriendlyName;
 use windows::Win32::Media::Audio::{
-    eCapture, eConsole, eRender, IAudioCaptureClient, IAudioClient, IMMDevice, IMMDeviceEnumerator,
-    MMDeviceEnumerator, AUDCLNT_BUFFERFLAGS_SILENT, AUDCLNT_SHAREMODE_SHARED,
-    AUDCLNT_STREAMFLAGS_LOOPBACK, DEVICE_STATE_ACTIVE, EDataFlow, WAVEFORMATEX,
-    WAVEFORMATEXTENSIBLE,
+    eCapture, eConsole, eRender, EDataFlow, IAudioCaptureClient, IAudioClient, IMMDevice,
+    IMMDeviceEnumerator, MMDeviceEnumerator, AUDCLNT_BUFFERFLAGS_SILENT, AUDCLNT_SHAREMODE_SHARED,
+    AUDCLNT_STREAMFLAGS_LOOPBACK, DEVICE_STATE_ACTIVE, WAVEFORMATEX, WAVEFORMATEXTENSIBLE,
 };
 use windows::Win32::System::Com::{CoCreateInstance, CoTaskMemFree, CLSCTX_ALL, STGM_READ};
 
@@ -197,7 +196,11 @@ impl AudioCapture {
     /// `device_id` pins a specific endpoint; `None` follows the OS
     /// default. Errors are returned rather than logged so the caller can
     /// decide — the recorder logs and continues without this track.
-    pub fn open(direction: Direction, device_id: Option<&str>, target_rate: u32) -> AppResult<Self> {
+    pub fn open(
+        direction: Direction,
+        device_id: Option<&str>,
+        target_rate: u32,
+    ) -> AppResult<Self> {
         // SAFETY: standard COM activation; caller is on an initialised
         // apartment.
         let enumerator: IMMDeviceEnumerator =

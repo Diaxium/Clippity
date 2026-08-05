@@ -11,7 +11,7 @@ import { useThemeStore } from "@state/themeStore";
 // Split into its own chunk — only the capture/main windows ever mount
 // the wizard, so the transient utility windows shouldn't ship it.
 const OnboardingLayout = lazy(() =>
-  import("@features/onboarding").then((m) => ({ default: m.OnboardingLayout })),
+  import("@features/onboarding").then((m) => ({ default: m.OnboardingLayout }))
 );
 
 /** Reads the current hash route (e.g. `#/main` → `/main`). */

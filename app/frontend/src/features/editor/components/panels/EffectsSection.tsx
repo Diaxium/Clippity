@@ -178,7 +178,9 @@ export function EffectsSection() {
                   <button
                     type="button"
                     title={visible === "on" ? "Hide effect" : "Show effect"}
-                    aria-label={visible === "on" ? "Hide effect" : "Show effect"}
+                    aria-label={
+                      visible === "on" ? "Hide effect" : "Show effect"
+                    }
                     onClick={() =>
                       updateEffects(refs, { visible: toggleTarget(visible) })
                     }

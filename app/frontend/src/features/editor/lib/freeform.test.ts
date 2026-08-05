@@ -96,9 +96,9 @@ describe("freeformAllSources", () => {
   }
 
   it("uses points by default and lines in lines mode", () => {
-    expect(freeformAllSources(gp({ freeformMode: "points" }), 40, 40)).toHaveLength(
-      1
-    );
+    expect(
+      freeformAllSources(gp({ freeformMode: "points" }), 40, 40)
+    ).toHaveLength(1);
     expect(
       freeformAllSources(gp({ freeformMode: "lines" }), 40, 40).length
     ).toBeGreaterThan(1);

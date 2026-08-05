@@ -127,7 +127,11 @@ describe("visibleOptionKeys", () => {
   it("drops enhance for the modes that produce no image", () => {
     // Color/palette/text modes yield swatches or a string — there are no
     // captured pixels for the enhance pass to run over.
-    for (const mode of ["color-picker", "palette-capture", "grab-text"] as const) {
+    for (const mode of [
+      "color-picker",
+      "palette-capture",
+      "grab-text",
+    ] as const) {
       expect(visibleOptionKeys("custom", mode).has("enhance")).toBe(false);
     }
     expect(visibleOptionKeys("custom", "clipboard").has("enhance")).toBe(false);
@@ -167,9 +171,9 @@ describe("installation gating", () => {
   });
 
   it("reports grab-text as not installed when OCR was declined", () => {
-    expect(isCustomModeInstalled("grab-text", caps({ textRecognition: false }))).toBe(
-      false
-    );
+    expect(
+      isCustomModeInstalled("grab-text", caps({ textRecognition: false }))
+    ).toBe(false);
   });
 
   it("leaves the other modes alone when OCR was declined", () => {
@@ -184,9 +188,9 @@ describe("installation gating", () => {
 
   it("requires a mode to be both built and installed to be usable", () => {
     expect(isCustomModeUsable("grab-text", caps())).toBe(true);
-    expect(isCustomModeUsable("grab-text", caps({ textRecognition: false }))).toBe(
-      false
-    );
+    expect(
+      isCustomModeUsable("grab-text", caps({ textRecognition: false }))
+    ).toBe(false);
     // A mode the build doesn't implement stays unusable however the install
     // was configured.
     expect(isCustomModeUsable("freehand", caps())).toBe(false);

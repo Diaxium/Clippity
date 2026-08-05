@@ -59,7 +59,7 @@ function editorGroups(): ShortcutGroup[] {
   const groups: ShortcutGroup[] = [];
   for (const category of CATEGORY_ORDER) {
     const entries = EDITOR_KEYBINDS.filter(
-      (kb) => kb.category === category && !kb.hidden && !kb.paletteHidden,
+      (kb) => kb.category === category && !kb.hidden && !kb.paletteHidden
     ).map<ShortcutEntry>((kb) => ({
       fqid: fqid("editor", kb.id),
       scope: "editor",
@@ -106,7 +106,7 @@ function captureGroup(): ShortcutGroup {
         label: a.title,
         context: "quickCapture",
         defaultKeys: a.combo ? [a.combo] : [],
-      }),
+      })
     ),
   };
 }
@@ -123,14 +123,13 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
 ].filter((g) => g.entries.length > 0);
 
 /** Flat view of every catalog entry (conflict scan, reset-all). */
-export const SHORTCUT_ENTRIES: readonly ShortcutEntry[] = SHORTCUT_GROUPS.flatMap(
-  (g) => g.entries,
-);
+export const SHORTCUT_ENTRIES: readonly ShortcutEntry[] =
+  SHORTCUT_GROUPS.flatMap((g) => g.entries);
 
 /** An entry's effective combos given the current overrides map. */
 export function entryKeys(
   entry: ShortcutEntry,
-  overrides: KeybindOverrides,
+  overrides: KeybindOverrides
 ): string[] {
   return effectiveKeys(entry.scope, entry.id, entry.defaultKeys, overrides);
 }
@@ -138,7 +137,7 @@ export function entryKeys(
 /** Is this entry currently remapped away from its registry default? */
 export function isEntryOverridden(
   entry: ShortcutEntry,
-  overrides: KeybindOverrides,
+  overrides: KeybindOverrides
 ): boolean {
   return Object.prototype.hasOwnProperty.call(overrides, entry.fqid);
 }
@@ -150,7 +149,7 @@ export function isEntryOverridden(
  * higher-priority one, silently shadowing the other.
  */
 export function findShortcutConflicts(
-  overrides: KeybindOverrides,
+  overrides: KeybindOverrides
 ): Set<string> {
   const buckets = new Map<string, Set<string>>();
   for (const entry of SHORTCUT_ENTRIES) {

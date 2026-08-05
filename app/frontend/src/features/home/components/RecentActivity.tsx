@@ -9,7 +9,13 @@ import type { CaptureKind, CaptureMeta } from "@services/tauri/clients/library";
 
 import { formatRelative } from "../lib/format";
 import { tintForIndex, type IconComponent } from "../types";
-import { CardEmpty, IconTile, LinkAction, SectionCard, SectionHeading } from "./primitives";
+import {
+  CardEmpty,
+  IconTile,
+  LinkAction,
+  SectionCard,
+  SectionHeading,
+} from "./primitives";
 
 const KIND_ICON: Partial<Record<CaptureKind, IconComponent>> = {
   image: ImageIcon,

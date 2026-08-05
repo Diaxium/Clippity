@@ -6,18 +6,20 @@
 
 use std::sync::{Arc, Mutex};
 
+use crate::tray_service::TrayService;
 use clippity_domain::dashboard::DashboardRequest;
 use clippity_infra::error::AppResult;
 use clippity_infra::paths::AppPaths;
 use clippity_services::capture_service::CaptureService;
 use clippity_services::collections_service::CollectionsService;
 use clippity_services::countdown_service::CountdownService;
+use clippity_services::diagnostics_service::DiagnosticsService;
 use clippity_services::editor_service::EditorService;
 use clippity_services::global_shortcut_service::GlobalShortcutService;
 use clippity_services::last_region_store::LastRegionStore;
 use clippity_services::library_index;
 use clippity_services::library_service::LibraryService;
-use clippity_vision::model_service::ModelService;
+use clippity_services::media_service::MediaService;
 use clippity_services::overlay_service::OverlayService;
 use clippity_services::presets_service::PresetsService;
 use clippity_services::provisioning_service::ProvisioningService;
@@ -28,7 +30,7 @@ use clippity_services::settings_service::{
     SettingsService, ToastSettingsSource,
 };
 use clippity_services::toast_service::ToastService;
-use crate::tray_service::TrayService;
+use clippity_vision::model_service::ModelService;
 use clippity_vision::vision_service::VisionService;
 
 pub struct AppState {
@@ -41,7 +43,16 @@ pub struct AppState {
     /// across an id change through its own handle (ADR 0029).
     pub collections_service: Arc<CollectionsService>,
     pub editor_service: EditorService,
+    /// Studio's side of the editor split: describes a saved recording
+    /// and holds the token registry the `clippity-media` scheme resolves
+    /// playback requests against.
+    pub media_service: MediaService,
     pub countdown_service: CountdownService,
+    /// What Settings → Advanced reads, and the redacted bundle it
+    /// exports. Holds no state of its own beyond the app's paths —
+    /// every answer is read fresh, because a diagnostics page that
+    /// showed a cached truth would be worse than none.
+    pub diagnostics_service: DiagnosticsService,
     pub tray_service: TrayService,
     /// Owns the OS-global capture hotkey registration. `apply`d at
     /// startup from the persisted `shortcuts` section and re-applied on
@@ -119,7 +130,9 @@ impl AppState {
             ),
             collections_service: collections,
             editor_service: EditorService::new(captures_dir.clone(), name_template.clone()),
+            media_service: MediaService::new(captures_dir.clone(), name_template.clone()),
             countdown_service: CountdownService::new(),
+            diagnostics_service: DiagnosticsService::new(paths.clone()),
             tray_service: TrayService::new(),
             global_shortcut_service: GlobalShortcutService::new(),
             presets_service: PresetsService::load(paths.clone())?,

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  formatPalette,
-  rgbToHsl,
-  type SwatchLike,
-} from "./paletteExport";
+import { formatPalette, rgbToHsl, type SwatchLike } from "./paletteExport";
 
 const PALETTE: SwatchLike[] = [
   { hex: "#FF0000", r: 255, g: 0, b: 0 },

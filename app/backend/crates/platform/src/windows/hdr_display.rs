@@ -178,6 +178,26 @@ fn sdr_white_nits(hmonitor: HMONITOR) -> Option<f32> {
     None
 }
 
+/// Describe the colour handling of the monitor containing the screen
+/// point `(x, y)`.
+///
+/// The coordinate-taking entry point, for the same reason
+/// [`crate::windows::hdr_capture::rgba_monitor_at`] has one: callers
+/// above the platform crate (the diagnostics service, which reports
+/// per-monitor HDR state) should never have to name an `HMONITOR`.
+/// `None` when the point is on no monitor — stale geometry, rather than
+/// a monitor that failed to answer.
+pub fn describe_at(x: i32, y: i32) -> Option<DisplayColorInfo> {
+    use windows::Win32::Foundation::POINT;
+    use windows::Win32::Graphics::Gdi::{MonitorFromPoint, MONITOR_DEFAULTTONULL};
+
+    // SAFETY: a by-value POINT and a documented flag. `DEFAULTTONULL`
+    // so a point on no monitor reports nothing rather than silently
+    // describing the nearest display.
+    let hmon = unsafe { MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONULL) };
+    (!hmon.is_invalid()).then(|| describe(hmon))
+}
+
 /// Convert the display-config API's `SDRWhiteLevel` to nits.
 ///
 /// The API reports the level as a multiple of the scRGB reference white

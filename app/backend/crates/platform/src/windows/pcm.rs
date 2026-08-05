@@ -84,7 +84,12 @@ pub fn decode_to_stereo(raw: &[u8], format: SampleFormat, channels: u16) -> Vec<
 fn sample_at(raw: &[u8], offset: usize, format: SampleFormat) -> f32 {
     match format {
         SampleFormat::F32 => {
-            let b = [raw[offset], raw[offset + 1], raw[offset + 2], raw[offset + 3]];
+            let b = [
+                raw[offset],
+                raw[offset + 1],
+                raw[offset + 2],
+                raw[offset + 3],
+            ];
             f32::from_le_bytes(b)
         }
         SampleFormat::I16 => {
@@ -223,6 +228,41 @@ pub fn mix_into(base: &mut Vec<f32>, addition: &[f32]) {
     for (b, a) in base.iter_mut().zip(addition) {
         *b += *a;
     }
+}
+
+/// Scale a source's samples in place before it reaches the mix.
+///
+/// Applied **per source, pre-mix** — which is the only place it can do
+/// what a mixer is for. Scaling the summed result would move both inputs
+/// together and could not fix the imbalance that motivates the control
+/// (see `domain::recorder`'s gain constants).
+///
+/// Unity is a no-op rather than a multiply-by-one pass over the buffer:
+/// this runs on the encode thread every poll, and the overwhelmingly
+/// common case is a user who never touched the slider.
+pub fn apply_gain(samples: &mut [f32], gain: f32) {
+    if gain == 1.0 {
+        return;
+    }
+    for s in samples.iter_mut() {
+        // Clamped here as well as in `to_i16_bytes`, so a boosted source
+        // cannot dominate the sum with values the mix then has to
+        // squeeze back down — that reads as the *other* source ducking.
+        *s = (*s * gain).clamp(-1.0, 1.0);
+    }
+}
+
+/// Loudest absolute sample in a packet, `0.0..=1.0` — one meter reading.
+///
+/// Peak rather than RMS because the questions a recording meter answers
+/// are "is this input live" and "is it clipping", and both are peak
+/// questions. Returns `0.0` for an empty packet, which is what a source
+/// that produced nothing this poll should read.
+pub fn peak(samples: &[f32]) -> f32 {
+    samples
+        .iter()
+        .fold(0.0f32, |acc, s| acc.max(s.abs()))
+        .min(1.0)
 }
 
 /// Convert interleaved f32 to the little-endian 16-bit PCM bytes the
@@ -413,6 +453,50 @@ mod tests {
         mix_into(&mut base, &[0.2, 0.2, 0.3, 0.3]);
         assert_eq!(base.len(), 4);
         assert!((base[2] - 0.3).abs() < 1e-6);
+    }
+
+    #[test]
+    fn gain_scales_a_source_before_it_reaches_the_mix() {
+        let mut s = vec![0.25, -0.25];
+        apply_gain(&mut s, 2.0);
+        assert_eq!(s, vec![0.5, -0.5]);
+
+        let mut quiet = vec![0.8, -0.8];
+        apply_gain(&mut quiet, 0.5);
+        assert_eq!(quiet, vec![0.4, -0.4]);
+    }
+
+    #[test]
+    fn gain_of_zero_silences_without_removing_the_source() {
+        let mut s = vec![0.9, -0.9];
+        apply_gain(&mut s, 0.0);
+        assert_eq!(s, vec![0.0, 0.0]);
+        // Still two samples of timeline — a muted source keeps the
+        // audio clock running rather than leaving a gap.
+        assert_eq!(s.len(), 2);
+    }
+
+    #[test]
+    fn a_boosted_source_clips_rather_than_dominating_the_sum() {
+        let mut s = vec![0.9, -0.9];
+        apply_gain(&mut s, 2.0);
+        assert_eq!(s, vec![1.0, -1.0]);
+    }
+
+    #[test]
+    fn unity_gain_leaves_the_buffer_untouched() {
+        let mut s = vec![0.3, -0.7, 0.0];
+        apply_gain(&mut s, 1.0);
+        assert_eq!(s, vec![0.3, -0.7, 0.0]);
+    }
+
+    #[test]
+    fn peak_reads_the_loudest_absolute_sample() {
+        assert_eq!(peak(&[0.1, -0.6, 0.3]), 0.6);
+        // An empty packet is silence, not an error.
+        assert_eq!(peak(&[]), 0.0);
+        // Never over full scale, however hot the input.
+        assert_eq!(peak(&[3.0]), 1.0);
     }
 
     #[test]

@@ -40,15 +40,15 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use base64::Engine;
 use image::{ImageFormat, ImageReader};
 
-use clippity_domain::labels::{CaptureLabels, LabelEdit};
-use clippity_domain::library::{self, AuxColor, CaptureKind, CaptureMeta, StorageInfo};
-use clippity_infra::error::{AppError, AppResult};
 use crate::collections_service::{self, CollectionsService};
 use crate::library_index::{
     FacetsQuery, LibraryFacets, LibraryIndex, LibraryQuery, QueryPage, Stamp,
 };
 use crate::settings_service::CapturesDirSource;
 use crate::sidecar;
+use clippity_domain::labels::{CaptureLabels, LabelEdit};
+use clippity_domain::library::{self, AuxColor, CaptureKind, CaptureMeta, StorageInfo};
+use clippity_infra::error::{AppError, AppResult};
 
 /// Display cap for `StorageInfo.total_bytes`. Cross-platform free-
 /// disk-space via Tauri v2's path API is unreliable, so the UI
@@ -99,9 +99,7 @@ impl LibraryService {
         let index = index_db.and_then(|path| match LibraryIndex::open(path) {
             Ok(index) => Some(index),
             Err(e) => {
-                tracing::warn!(
-                    "library index unavailable ({e}); listing will scan the filesystem"
-                );
+                tracing::warn!("library index unavailable ({e}); listing will scan the filesystem");
                 None
             }
         });
@@ -129,7 +127,10 @@ impl LibraryService {
         let Some(index) = self.index.as_ref() else {
             return Ok(self.scan(include_trashed));
         };
-        match self.reconcile(index).and_then(|()| index.rows(include_trashed)) {
+        match self
+            .reconcile(index)
+            .and_then(|()| index.rows(include_trashed))
+        {
             Ok(rows) => Ok(rows),
             Err(e) => {
                 // The cache broke mid-flight (locked file, disk full,
@@ -345,11 +346,7 @@ impl LibraryService {
     /// thumbnails from the real file and only true video needs a poster.
     fn can_decode_directly(id: &str) -> bool {
         !matches!(
-            library::kind_of(
-                Path::new(id)
-                    .extension()
-                    .and_then(|e| e.to_str())
-            ),
+            library::kind_of(Path::new(id).extension().and_then(|e| e.to_str())),
             library::CaptureKind::Video
         )
     }
@@ -437,10 +434,8 @@ impl LibraryService {
     /// captures root still fails loudly: that is a malformed request, not
     /// a race.
     pub fn update_labels(&self, ids: &[String], edit: LabelEdit<'_>) -> AppResult<u64> {
-        let (aux_ids, file_ids): (Vec<String>, Vec<String>) = ids
-            .iter()
-            .cloned()
-            .partition(|id| library::is_aux_id(id));
+        let (aux_ids, file_ids): (Vec<String>, Vec<String>) =
+            ids.iter().cloned().partition(|id| library::is_aux_id(id));
 
         let mut changed = 0;
         for id in &file_ids {
@@ -886,8 +881,8 @@ fn text_title(text: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clippity_domain::library::CaptureKind;
     use crate::settings_service::StaticCapturesDir;
+    use clippity_domain::library::CaptureKind;
     use std::time::SystemTime;
 
     /// Build a `LibraryService` rooted at a unique temporary
@@ -1110,9 +1105,11 @@ mod tests {
         let in_trash = h.service.list(true).unwrap();
         let row = in_trash.iter().find(|m| m.trashed).unwrap();
         assert_eq!(row.source_app.as_deref(), Some("Figma"));
-        assert!(sidecar::path_for(Path::new(&trashed), sidecar::SCENES_DIRNAME)
-            .unwrap()
-            .exists());
+        assert!(
+            sidecar::path_for(Path::new(&trashed), sidecar::SCENES_DIRNAME)
+                .unwrap()
+                .exists()
+        );
         // Nothing was left orphaned in the original directory.
         assert!(!scene.exists());
 
@@ -1442,7 +1439,10 @@ mod tests {
 
         let changed = h
             .service
-            .update_labels(std::slice::from_ref(&id), LabelEdit::AddTags(&["Bug".into()]))
+            .update_labels(
+                std::slice::from_ref(&id),
+                LabelEdit::AddTags(&["Bug".into()]),
+            )
             .unwrap();
         assert_eq!(changed, 1);
         assert_eq!(tags(&h.service.list(false).unwrap(), &id), vec!["Bug"]);
@@ -1482,7 +1482,10 @@ mod tests {
         let p = write_capture(&h.captures, "Shot.png", b"\x89PNG");
         let id = p.to_string_lossy().into_owned();
         h.service
-            .update_labels(std::slice::from_ref(&id), LabelEdit::AddTags(&["bug".into()]))
+            .update_labels(
+                std::slice::from_ref(&id),
+                LabelEdit::AddTags(&["bug".into()]),
+            )
             .unwrap();
         let changed = h
             .service
@@ -1510,7 +1513,9 @@ mod tests {
             .unwrap();
         assert_eq!(changed, 3);
         let items = h.service.list(false).unwrap();
-        assert!(items.iter().all(|m| m.tags == vec!["sprint-12".to_string()]));
+        assert!(items
+            .iter()
+            .all(|m| m.tags == vec!["sprint-12".to_string()]));
     }
 
     #[test]
@@ -1519,14 +1524,23 @@ mod tests {
         let p = write_capture(&h.captures, "Shot.png", b"\x89PNG");
         let id = p.to_string_lossy().into_owned();
         h.service
-            .update_labels(std::slice::from_ref(&id), LabelEdit::AddTags(&["old".into()]))
+            .update_labels(
+                std::slice::from_ref(&id),
+                LabelEdit::AddTags(&["old".into()]),
+            )
             .unwrap();
         h.service
-            .update_labels(std::slice::from_ref(&id), LabelEdit::SetTags(&["new".into()]))
+            .update_labels(
+                std::slice::from_ref(&id),
+                LabelEdit::SetTags(&["new".into()]),
+            )
             .unwrap();
         assert_eq!(tags(&h.service.list(false).unwrap(), &id), vec!["new"]);
         h.service
-            .update_labels(std::slice::from_ref(&id), LabelEdit::RemoveTags(&["NEW".into()]))
+            .update_labels(
+                std::slice::from_ref(&id),
+                LabelEdit::RemoveTags(&["NEW".into()]),
+            )
             .unwrap();
         assert!(tags(&h.service.list(false).unwrap(), &id).is_empty());
     }
@@ -1537,7 +1551,10 @@ mod tests {
         let p = write_capture(&h.captures, "Round.png", b"\x89PNG");
         let id = p.to_string_lossy().into_owned();
         h.service
-            .update_labels(std::slice::from_ref(&id), LabelEdit::AddTags(&["keep".into()]))
+            .update_labels(
+                std::slice::from_ref(&id),
+                LabelEdit::AddTags(&["keep".into()]),
+            )
             .unwrap();
         h.service
             .update_labels(std::slice::from_ref(&id), LabelEdit::Favorite(true))
@@ -1587,7 +1604,10 @@ mod tests {
         let id = h.service.add_color(sample_color()).unwrap().id;
         let changed = h
             .service
-            .update_labels(std::slice::from_ref(&id), LabelEdit::AddTags(&["brand".into()]))
+            .update_labels(
+                std::slice::from_ref(&id),
+                LabelEdit::AddTags(&["brand".into()]),
+            )
             .unwrap();
         assert_eq!(changed, 1);
         h.service

@@ -34,21 +34,6 @@ use serde::Serialize;
 use tauri::{AppHandle, Manager};
 use xcap::Monitor;
 
-use clippity_infra::events;
-use clippity_domain::enhance;
-use clippity_domain::library::AuxColor;
-use clippity_domain::overlay::{
-    point_in_polygon, polygon_bounds, resolve_last_region, validate_region, BrushMask,
-    FinishBrushRequest, FinishFreehandRequest, FinishMultiAreaRequest, FinishRegionRequest,
-    OverlayMode, OverlayResult, OverlayToggles, OverlayWindow, Region, MULTI_AREA_GAP_PX,
-};
-use clippity_domain::metadata::{self, CaptureSource};
-use clippity_domain::palette;
-use clippity_domain::toast::PickedColor;
-use clippity_domain::window_attribution::{
-    self, MonitorRect, Rect as AttributionRect, WindowRect,
-};
-use clippity_infra::error::{AppError, AppResult};
 use crate::capture_io::{
     copy_rgba_to_clipboard, copy_text_to_clipboard, next_id, resolve_save_dir, save_capture_png,
     thumbnail_data_uri,
@@ -56,6 +41,19 @@ use crate::capture_io::{
 use crate::last_region_store::LastRegionStore;
 use crate::settings_service::{CapturesDirSource, NameTemplateSource};
 use crate::window_service::{self, CompositorWait};
+use clippity_domain::enhance;
+use clippity_domain::library::AuxColor;
+use clippity_domain::metadata::{self, CaptureSource};
+use clippity_domain::overlay::{
+    point_in_polygon, polygon_bounds, resolve_last_region, validate_region, BrushMask,
+    FinishBrushRequest, FinishFreehandRequest, FinishMultiAreaRequest, FinishRegionRequest,
+    OverlayMode, OverlayResult, OverlayToggles, OverlayWindow, Region, MULTI_AREA_GAP_PX,
+};
+use clippity_domain::palette;
+use clippity_domain::toast::PickedColor;
+use clippity_domain::window_attribution::{self, MonitorRect, Rect as AttributionRect, WindowRect};
+use clippity_infra::error::{AppError, AppResult};
+use clippity_infra::events;
 
 /// Longest-edge cap (physical px) for the Palette-Capture toast preview
 /// thumbnail. Small — it's a 12×12-rem swatch source, not the artifact.
@@ -205,6 +203,14 @@ impl OverlayService {
     /// compositor settle.
     pub fn set_capture_shielded(&self, shielded: bool) {
         self.capture_shielded.store(shielded, Ordering::Relaxed);
+    }
+
+    /// Whether the capture shield applied. Reported in Settings →
+    /// Advanced: when it didn't, the app's own windows can land in a
+    /// capture, which is exactly the symptom a user would otherwise
+    /// describe as "my screenshot has Clippity in it".
+    pub fn capture_shielded(&self) -> bool {
+        self.capture_shielded.load(Ordering::Relaxed)
     }
 
     /// The remembered region resolved against the CURRENT virtual
@@ -1103,7 +1109,9 @@ impl OverlayService {
     /// `None` rather than this session's pixels under the wrong name.
     pub fn snapshot_png(&self, id: u64) -> Option<Arc<Vec<u8>>> {
         let s = self.state.lock().ok()?;
-        (s.snapshot_id == id).then(|| s.snapshot_png.clone()).flatten()
+        (s.snapshot_id == id)
+            .then(|| s.snapshot_png.clone())
+            .flatten()
     }
 
     /// The cached desktop snapshot for object detection (Object mode).
@@ -1467,14 +1475,8 @@ fn gather_monitors(min_x: i32, min_y: i32, vw: u32, vh: u32) -> Vec<SessionMonit
         .iter()
         .filter_map(|m| {
             let name = m.name().ok().and_then(|n| metadata::monitor_label(&n))?;
-            let frame = (
-                m.x().ok()?,
-                m.y().ok()?,
-                m.width().ok()?,
-                m.height().ok()?,
-            );
-            frame_to_region(frame, (min_x, min_y, vw, vh))
-                .map(|rect| SessionMonitor { name, rect })
+            let frame = (m.x().ok()?, m.y().ok()?, m.width().ok()?, m.height().ok()?);
+            frame_to_region(frame, (min_x, min_y, vw, vh)).map(|rect| SessionMonitor { name, rect })
         })
         .collect()
 }
@@ -2576,11 +2578,19 @@ mod tests {
 
         let t = Instant::now();
         let windows = gather_windows(min_x, min_y, vw, vh, OverlayMode::Region);
-        println!("gather_windows          {:>8.2} ms  ({} windows)", ms(t), windows.len());
+        println!(
+            "gather_windows          {:>8.2} ms  ({} windows)",
+            ms(t),
+            windows.len()
+        );
 
         let t = Instant::now();
         let monitors = gather_monitors(min_x, min_y, vw, vh);
-        println!("gather_monitors         {:>8.2} ms  ({} monitors)", ms(t), monitors.len());
+        println!(
+            "gather_monitors         {:>8.2} ms  ({} monitors)",
+            ms(t),
+            monitors.len()
+        );
 
         let t = Instant::now();
         let png = render_loupe_png(&canvas).expect("loupe png");
@@ -2597,9 +2607,7 @@ mod tests {
         // two of the hide landing.
         let t = Instant::now();
         std::thread::sleep(clippity_infra::config::compositor_unpaint_floor());
-        window_service::wait_compositor_compose(
-            clippity_infra::config::COMPOSITOR_SETTLE_FLUSHES,
-        );
+        window_service::wait_compositor_compose(clippity_infra::config::COMPOSITOR_SETTLE_FLUSHES);
         println!(
             "compositor settle       {:>8.2} ms  (floor {} ms + {} DwmFlush; wait-for-hidden not shown)",
             ms(t),

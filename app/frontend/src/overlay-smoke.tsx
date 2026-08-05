@@ -57,7 +57,14 @@ function seedSnapshot(): void {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const cols = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#a855f7", "#ffffff"];
+  const cols = [
+    "#ef4444",
+    "#f59e0b",
+    "#10b981",
+    "#3b82f6",
+    "#a855f7",
+    "#ffffff",
+  ];
   const cell = 80 * dpr;
   let i = 0;
   for (let y = 0; y < canvas.height; y += cell) {

@@ -129,6 +129,27 @@
   --t-std: 200ms var(--ease-std);
   --t-slow: 300ms var(--ease-std);
 
+  /* Solid paint bases. The public --color-* tokens alias these in flat
+     mode, then become transparent paints in rich mode so every existing
+     `bg-[var(--color-surface)]` / canvas utility participates in window
+     transparency instead of repainting an opaque rectangle. */
+  --color-bg-solid: #fcfcfb;
+  --color-bg-beige-solid: #faf7f2;
+  --color-bg-gray-solid: #f7f8f9;
+  --color-surface-solid: #ffffff;
+  --color-surface-2-solid: #fbfbfa;
+  --color-canvas-solid: #fdfdfc;
+  --color-canvas-inset-solid: #f6f6f4;
+  --color-sidebar-solid: #fbfbfa;
+  --color-bg: var(--color-bg-solid);
+  --color-bg-beige: var(--color-bg-beige-solid);
+  --color-bg-gray: var(--color-bg-gray-solid);
+  --color-surface: var(--color-surface-solid);
+  --color-surface-2: var(--color-surface-2-solid);
+  --color-canvas: var(--color-canvas-solid);
+  --color-canvas-inset: var(--color-canvas-inset-solid);
+  --color-sidebar: var(--color-sidebar-solid);
+
   --glow-focus: 0 0 8px rgba(168, 213, 216, 0.4);
   --glow-coral: 0 0 8px color-mix(in srgb, var(--color-accent) 40%, transparent);
   --inset-hl: inset 0 1px 2px rgba(255, 255, 255, 0.3);
@@ -148,10 +169,25 @@
     0 6px 16px -8px rgba(17, 24, 39, 0.18),
     0 2px 5px -3px rgba(17, 24, 39, 0.12);
 
-  /* Chrome opacity over the Mica backdrop (0.5..1.0). The
-     window-shell utilities below color-mix this with the canvas tokens
-     so dragging the slider gradually reveals the desktop behind. */
+  /* Chrome opacity over the native backdrop. Rich mode color-mixes the
+     public background / surface tokens from solid bases, so dragging the
+     slider affects both shell utilities and direct `--color-surface`
+     backgrounds across the app. */
   --window-opacity: 1;
+  --window-opacity-pct: 100%;
+  --window-glass-1-pct: 86%;
+  --window-glass-2-pct: 80%;
+  --window-glass-3-pct: 62%;
+  --window-glass-4-pct: 52%;
+  --window-float-pct: 96%;
+
+  /* Per-backdrop chrome tuning (Settings → Appearance → Window).
+     Unitless multipliers so one knob scales every `.glass-*` /
+     `.surface-*` blur radius at once, and one saturate() rides along.
+     `Providers.tsx` sets both from `appearance.backdropTuning` for the
+     selected material; 1 reproduces the shipped look. */
+  --backdrop-blur-scale: 1;
+  --backdrop-saturate: 1;
 
   /* Glass surfaces — translucent panels stacked over the desktop. */
   --glass-1: rgba(248, 249, 250, 0.85);
@@ -207,17 +243,25 @@
   --color-accent-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
 
   /* Backgrounds — warm dark, just a hair off pure neutral. */
-  --color-bg: #15161a;
-  --color-bg-beige: #1a1a1d;
-  --color-bg-gray: #15171a;
-  --color-surface: #1f2024;
-  --color-surface-2: #1a1b1f;
+  --color-bg-solid: #15161a;
+  --color-bg-beige-solid: #1a1a1d;
+  --color-bg-gray-solid: #15171a;
+  --color-surface-solid: #1f2024;
+  --color-surface-2-solid: #1a1b1f;
 
   /* Window-shell tokens. Sidebar a hair lighter than canvas reads as
      one surface in this palette too. */
-  --color-canvas: #18191d;
-  --color-canvas-inset: #131418;
-  --color-sidebar: #1c1d21;
+  --color-canvas-solid: #18191d;
+  --color-canvas-inset-solid: #131418;
+  --color-sidebar-solid: #1c1d21;
+  --color-bg: var(--color-bg-solid);
+  --color-bg-beige: var(--color-bg-beige-solid);
+  --color-bg-gray: var(--color-bg-gray-solid);
+  --color-surface: var(--color-surface-solid);
+  --color-surface-2: var(--color-surface-2-solid);
+  --color-canvas: var(--color-canvas-solid);
+  --color-canvas-inset: var(--color-canvas-inset-solid);
+  --color-sidebar: var(--color-sidebar-solid);
 
   /* Hairlines — white-with-alpha instead of black-with-alpha. */
   --hairline: rgba(255, 255, 255, 0.06);
@@ -441,15 +485,98 @@ body {
   animation-play-state: paused !important;
 }
 
-/* Reduced transparency (performance.windowEffects = false). The backend
-   clears the Win11 Mica backdrop; here we turn the glassmorphic surfaces
-   opaque and drop every `backdrop-filter` blur so the DWM compositor +
-   GPU stop doing per-frame blur work. Placed after the :root / dark
-   token blocks (same specificity) so the token overrides win on the
-   <html> element; the blur removals are unlayered so they beat the
-   layered `@layer components` glass utilities without needing to match
-   their specificity. */
+/* Transparency paint modes. Rich mode makes the public surface tokens
+   opacity-aware so direct uses like `bg-[var(--color-surface)]` do not
+   repaint the window solid. Flat mode restores solid paints and drops
+   every `backdrop-filter` blur; the backend clears the native backdrop
+   at the same time so the DWM compositor + GPU stop doing frosted work. */
+[data-effects="rich"] {
+  --color-bg: color-mix(
+    in srgb,
+    var(--color-bg-solid) var(--window-opacity-pct),
+    transparent
+  );
+  --color-bg-beige: color-mix(
+    in srgb,
+    var(--color-bg-beige-solid) var(--window-opacity-pct),
+    transparent
+  );
+  --color-bg-gray: color-mix(
+    in srgb,
+    var(--color-bg-gray-solid) var(--window-opacity-pct),
+    transparent
+  );
+  --color-surface: color-mix(
+    in srgb,
+    var(--color-surface-solid) var(--window-opacity-pct),
+    transparent
+  );
+  --color-surface-2: color-mix(
+    in srgb,
+    var(--color-surface-2-solid) var(--window-opacity-pct),
+    transparent
+  );
+  --color-canvas: color-mix(
+    in srgb,
+    var(--color-canvas-solid) var(--window-opacity-pct),
+    transparent
+  );
+  --color-canvas-inset: color-mix(
+    in srgb,
+    var(--color-canvas-inset-solid) var(--window-opacity-pct),
+    transparent
+  );
+  --color-sidebar: color-mix(
+    in srgb,
+    var(--color-sidebar-solid) var(--window-opacity-pct),
+    transparent
+  );
+  --glass-1: color-mix(
+    in srgb,
+    var(--color-surface-solid) var(--window-glass-1-pct),
+    transparent
+  );
+  --glass-2: color-mix(
+    in srgb,
+    var(--color-surface-solid) var(--window-glass-2-pct),
+    transparent
+  );
+  --glass-3: color-mix(
+    in srgb,
+    var(--color-surface-solid) var(--window-glass-3-pct),
+    transparent
+  );
+  --glass-4: color-mix(
+    in srgb,
+    var(--color-surface-2-solid) var(--window-glass-4-pct),
+    transparent
+  );
+  --float-bg: color-mix(
+    in srgb,
+    var(--color-surface-solid) var(--window-float-pct),
+    transparent
+  );
+}
 [data-effects="flat"] {
+  --window-opacity: 1;
+  --window-opacity-pct: 100%;
+  --window-glass-1-pct: 100%;
+  --window-glass-2-pct: 100%;
+  --window-glass-3-pct: 100%;
+  --window-glass-4-pct: 100%;
+  --window-float-pct: 100%;
+  /* Belt-and-braces with the `backdrop-filter: none` rule below —
+     nothing per-backdrop survives into flat mode. */
+  --backdrop-blur-scale: 1;
+  --backdrop-saturate: 1;
+  --color-bg: var(--color-bg-solid);
+  --color-bg-beige: var(--color-bg-beige-solid);
+  --color-bg-gray: var(--color-bg-gray-solid);
+  --color-surface: var(--color-surface-solid);
+  --color-surface-2: var(--color-surface-2-solid);
+  --color-canvas: var(--color-canvas-solid);
+  --color-canvas-inset: var(--color-canvas-inset-solid);
+  --color-sidebar: var(--color-sidebar-solid);
   --glass-1: var(--color-surface);
   --glass-2: var(--color-surface);
   --glass-3: var(--color-surface-2);
@@ -471,21 +598,30 @@ body {
  * Surface component utilities (glassmorphic / neumorphic layers)
  * ------------------------------------------------------------------ */
 @layer components {
-  /* Glass surface levels — UI_DOCUMENTATION "Glassmorphic Surfaces" */
+  /* Glass surface levels — UI_DOCUMENTATION "Glassmorphic Surfaces".
+     Radii are the shipped values scaled by `--backdrop-blur-scale`, and
+     every level carries `--backdrop-saturate`, so the two per-backdrop
+     knobs reach the whole stack from one place. */
   .glass-1 {
     background: var(--glass-1);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
+    backdrop-filter: blur(calc(30px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
+    -webkit-backdrop-filter: blur(calc(30px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
   }
   .glass-2 {
     background: var(--glass-2);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(calc(20px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
+    -webkit-backdrop-filter: blur(calc(20px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
   }
   .glass-3 {
     background: var(--glass-3);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(calc(15px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
+    -webkit-backdrop-filter: blur(calc(15px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
   }
   .glass-4 {
     background: var(--glass-4);
@@ -499,8 +635,10 @@ body {
   /* Elevated container — main app shells */
   .surface-elevated {
     background: var(--glass-1);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
+    backdrop-filter: blur(calc(30px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
+    -webkit-backdrop-filter: blur(calc(30px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
     border: 1px solid var(--hairline-strong);
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-elevated);
@@ -509,8 +647,10 @@ body {
   /* Surface card — generic content card */
   .surface-card {
     background: var(--glass-3);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(calc(20px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
+    -webkit-backdrop-filter: blur(calc(20px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
     border: 1px solid var(--hairline-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-medium);
@@ -519,48 +659,35 @@ body {
   /* Inset neumorphic panel — sidebars */
   .surface-inset {
     background: var(--glass-4);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(calc(20px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
+    -webkit-backdrop-filter: blur(calc(20px * var(--backdrop-blur-scale)))
+      saturate(var(--backdrop-saturate));
     border: 1px solid var(--hairline-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--inset-hl);
   }
 
-  /* App-window root: warm canvas over the native Mica backdrop. The
-     --window-opacity var (0.5..1) controls how much Mica bleeds through. */
+  /* App-window root: warm canvas over the native backdrop. In rich mode,
+     --color-canvas is already opacity-aware so direct users and utility
+     classes all paint the same transparent surface. */
   .app-canvas-bg {
-    background: color-mix(
-      in srgb,
-      var(--color-canvas) calc(var(--window-opacity) * 100%),
-      transparent
-    );
+    background: var(--color-canvas);
   }
 
   /* Editor window root. */
   .window-bg {
-    background: color-mix(
-      in srgb,
-      var(--color-canvas) calc(var(--window-opacity) * 100%),
-      transparent
-    );
+    background: var(--color-canvas);
   }
 
   /* Sidebar — same shell, a hair off so it reads as one surface. */
   .sidebar-grad {
-    background: color-mix(
-      in srgb,
-      var(--color-sidebar) calc(var(--window-opacity) * 100%),
-      transparent
-    );
+    background: var(--color-sidebar);
   }
 
   /* Recessed content canvas — the inset area the chrome wraps around. */
   .content-canvas {
-    background: color-mix(
-      in srgb,
-      var(--color-canvas-inset) calc(var(--window-opacity) * 100%),
-      transparent
-    );
+    background: var(--color-canvas-inset);
   }
 
   /* Neomorphic top bar — a softly extruded chrome strip that lifts
@@ -878,6 +1005,13 @@ body {
   --ed-ruler-text: var(--color-hint);
   --ed-ruler-line: var(--hairline-strong);
   --ed-grid: var(--hairline);
+  /* Excluded-content dim — the part of a Studio timeline a trim cuts
+     away. Deliberately a fixed black wash rather than the
+     `--color-overlay-*` family: those invert to white in dark mode,
+     which would make the *discarded* footage the brightest thing on the
+     track. "Cut" has to read as recessive in both themes, so the tint
+     stays dark and only its weight is tuned. */
+  --ed-scrim: rgba(6, 9, 16, 0.42);
   --ed-danger: #f24822;
 
   color: var(--ed-text);

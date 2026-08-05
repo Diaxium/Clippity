@@ -32,9 +32,9 @@ describe("emptyStateMessage", () => {
     expect(
       emptyStateMessage(ctx({ favoritesOnly: true, kindFilter: "image" }))
     ).toContain("favorites");
-    expect(
-      emptyStateMessage(ctx({ collectionName: "Walkthrough" }))
-    ).toContain("Walkthrough");
+    expect(emptyStateMessage(ctx({ collectionName: "Walkthrough" }))).toContain(
+      "Walkthrough"
+    );
     expect(emptyStateMessage(ctx({ kindFilter: "video" }))).toContain("videos");
   });
 

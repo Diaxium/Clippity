@@ -62,10 +62,17 @@ export function FillSection() {
           const peers = entriesAt(sel, "fills", index);
           const refs = refsOf(peers);
           const opacity = sharedEntry(peers, (f) => f.opacity)!;
-          const visible = triState(peers, (p: EntryPeer<"fills">) => p.entry.visible);
+          const visible = triState(
+            peers,
+            (p: EntryPeer<"fills">) => p.entry.visible
+          );
           // The swatch previews one paint, so it can only speak for the row when
           // the selection agrees on what that paint *looks like*.
-          const paint = sharedEntry(peers, (f) => f, (f) => paintPreviewCss(f))!;
+          const paint = sharedEntry(
+            peers,
+            (f) => f,
+            (f) => paintPreviewCss(f)
+          )!;
           const label = paint.mixed
             ? MIXED_LABEL
             : fill.type === "gradient"

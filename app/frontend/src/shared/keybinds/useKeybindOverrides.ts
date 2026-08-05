@@ -22,6 +22,6 @@ export function useKeybindOverridesVersion(): number {
   return useSyncExternalStore(
     subscribeKeybindOverrides,
     keybindOverridesVersion,
-    keybindOverridesVersion,
+    keybindOverridesVersion
   );
 }

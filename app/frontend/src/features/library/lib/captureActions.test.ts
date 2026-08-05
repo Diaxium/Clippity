@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@services/tauri/clients/editor", () => ({ openInEditor: vi.fn() }));
 vi.mock("@services/tauri/clients/share", () => ({ shareCapture: vi.fn() }));
-vi.mock("@services/tauri/clients/dashboard", () => ({ openDashboard: vi.fn() }));
+vi.mock("@services/tauri/clients/dashboard", () => ({
+  openDashboard: vi.fn(),
+}));
 vi.mock("@services/tauri/clients/toast", () => ({ emitErrorToast: vi.fn() }));
 vi.mock("./auxClipboard", () => ({ copyAux: vi.fn() }));
 vi.mock("./labelActions", () => ({ setFavorite: vi.fn() }));
@@ -39,23 +41,27 @@ describe("captureActionEntries", () => {
     expect(ids(meta())).toContain("open-editor");
   });
 
-  it("does not offer the editor for a recording", () => {
+  it("sends a recording to Studio instead of the editor", () => {
     // The annotation editor loads a capture as an image, and a video is
-    // not one — the entry would always error. An action that can't work
-    // is worse than an absent one.
+    // not one — so a recording gets the surface that can actually play
+    // and trim it, not a disabled entry and not one that always errors.
     const entries = ids(meta({ id: "C:/caps/a.mp4", kind: "video" }));
+    expect(entries).toContain("open-studio");
     expect(entries).not.toContain("open-editor");
-    // …but a recording is still openable and revealable.
+    // …and is still openable and revealable through the OS.
     expect(entries).toContain("open-default");
     expect(entries).toContain("reveal");
   });
 
-  it("still offers the editor for a GIF", () => {
+  it("still offers the editor for a GIF, and not Studio", () => {
     // GIF decodes as an image, so the editor genuinely works on it —
-    // flattening the animation is a choice the user gets to make.
-    expect(ids(meta({ id: "C:/caps/a.gif", kind: "gif" }))).toContain(
-      "open-editor"
-    );
+    // flattening the animation is a choice the user gets to make. The
+    // reverse is not true: Studio's platform decoder will not seek a
+    // GIF, so an entry pointing there would open a player that can't
+    // scrub.
+    const entries = ids(meta({ id: "C:/caps/a.gif", kind: "gif" }));
+    expect(entries).toContain("open-editor");
+    expect(entries).not.toContain("open-studio");
   });
 
   it("offers neither editor nor reveal for aux kinds", () => {

@@ -187,7 +187,6 @@ describe("AppearanceSection multi-select", () => {
     expect(node(a.id).visible).toBe(true);
     expect(node(b.id).visible).toBe(true);
   });
-
 });
 
 describe("CornersSection multi-select", () => {

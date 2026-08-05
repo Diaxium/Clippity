@@ -21,7 +21,11 @@ describe("meshColorAt", () => {
     expect(meshColorAt(s, 2, 2, 0, 0)).toMatchObject({ r: 255, g: 0, b: 0 });
     expect(meshColorAt(s, 2, 2, 1, 0)).toMatchObject({ r: 0, g: 255, b: 0 });
     expect(meshColorAt(s, 2, 2, 0, 1)).toMatchObject({ r: 0, g: 0, b: 255 });
-    expect(meshColorAt(s, 2, 2, 1, 1)).toMatchObject({ r: 255, g: 255, b: 255 });
+    expect(meshColorAt(s, 2, 2, 1, 1)).toMatchObject({
+      r: 255,
+      g: 255,
+      b: 255,
+    });
   });
 
   it("blends to the four-corner average at the center", () => {

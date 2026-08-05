@@ -22,7 +22,7 @@ export interface ComboRecorder {
 }
 
 export function useComboRecorder(
-  onCapture: (combo: string) => void,
+  onCapture: (combo: string) => void
 ): ComboRecorder {
   const [recording, setRecording] = useState(false);
   // Hold the latest callback without re-installing the listener each render.
@@ -43,7 +43,11 @@ export function useComboRecorder(
 
       // Bare Escape cancels; Escape with a modifier is a real combo.
       const bareEscape =
-        e.key === "Escape" && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey;
+        e.key === "Escape" &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.shiftKey &&
+        !e.altKey;
       if (bareEscape) {
         setRecording(false);
         return;

@@ -310,8 +310,9 @@ impl LibraryQuery {
                     .cmp(&b.title.to_lowercase())
                     .then_with(|| newest(a, b))
             }),
-            QuerySort::Largest => matched
-                .sort_by(|a, b| b.size_bytes.cmp(&a.size_bytes).then_with(|| newest(a, b))),
+            QuerySort::Largest => {
+                matched.sort_by(|a, b| b.size_bytes.cmp(&a.size_bytes).then_with(|| newest(a, b)))
+            }
         }
 
         let total = matched.len() as u64;
@@ -633,14 +634,12 @@ impl LibraryIndex {
             );
             args.push(Value::Text(tag.to_lowercase()));
         }
-        if let Some(needle) = q
-            .search
-            .as_deref()
-            .map(str::trim)
-            .filter(|s| !s.is_empty())
-        {
+        if let Some(needle) = q.search.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
             clauses.push("search_blob LIKE ? ESCAPE '\\'".into());
-            args.push(Value::Text(format!("%{}%", escape_like(&needle.to_lowercase()))));
+            args.push(Value::Text(format!(
+                "%{}%",
+                escape_like(&needle.to_lowercase())
+            )));
         }
 
         let where_sql = if clauses.is_empty() {
@@ -671,7 +670,8 @@ impl LibraryIndex {
             None => String::new(),
         };
 
-        let sql = format!("SELECT {ROW_COLUMNS} FROM entries {where_sql} ORDER BY {order} {limit_sql}");
+        let sql =
+            format!("SELECT {ROW_COLUMNS} FROM entries {where_sql} ORDER BY {order} {limit_sql}");
         let mut stmt = conn.prepare(&sql).map_err(sql_err("prepare query"))?;
         let mapped = stmt
             .query_map(params_from_iter(args.iter()), read_row)
@@ -737,9 +737,7 @@ impl LibraryIndex {
         let mut kinds: HashMap<CaptureKind, u64> = HashMap::new();
         {
             let mut stmt = conn
-                .prepare(
-                    "SELECT kind, COUNT(*) FROM entries WHERE trashed = 0 GROUP BY kind",
-                )
+                .prepare("SELECT kind, COUNT(*) FROM entries WHERE trashed = 0 GROUP BY kind")
                 .map_err(sql_err("prepare kind facets"))?;
             let mapped = stmt
                 .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))
@@ -920,8 +918,7 @@ fn kind_to_text(kind: CaptureKind) -> String {
 /// extension — a row that lists as the wrong icon beats a row that
 /// doesn't list.
 fn kind_from_text(text: &str) -> CaptureKind {
-    serde_json::from_value(serde_json::Value::String(text.to_owned()))
-        .unwrap_or(CaptureKind::Image)
+    serde_json::from_value(serde_json::Value::String(text.to_owned())).unwrap_or(CaptureKind::Image)
 }
 
 /// Tags as a JSON array, or `NULL` for none — so an untagged row costs
@@ -943,7 +940,12 @@ fn tags_to_json(tags: &[String]) -> Option<String> {
 /// Unicode folding (SQLite's `lower()` is ASCII-only).
 fn search_blob(meta: &CaptureMeta) -> String {
     let mut parts: Vec<&str> = vec![meta.title.as_str()];
-    for opt in [&meta.source_app, &meta.source_window, &meta.mode, &meta.text] {
+    for opt in [
+        &meta.source_app,
+        &meta.source_window,
+        &meta.mode,
+        &meta.text,
+    ] {
         if let Some(v) = opt {
             parts.push(v.as_str());
         }
@@ -1091,7 +1093,9 @@ mod tests {
         // Pre-sidecar captures must survive the round trip as "nothing
         // to say", not as empty strings the UI would then render.
         let index = LibraryIndex::in_memory().unwrap();
-        index.put(&[(row("/caps/Legacy.png", 5, false), stamp(1))]).unwrap();
+        index
+            .put(&[(row("/caps/Legacy.png", 5, false), stamp(1))])
+            .unwrap();
         let r = &index.rows(false).unwrap()[0];
         assert_eq!(r.source_app, None);
         assert_eq!(r.mode, None);
@@ -1118,7 +1122,9 @@ mod tests {
     #[test]
     fn an_untagged_row_reads_back_empty_rather_than_null() {
         let index = LibraryIndex::in_memory().unwrap();
-        index.put(&[(row("/caps/Bare.png", 1, false), stamp(1))]).unwrap();
+        index
+            .put(&[(row("/caps/Bare.png", 1, false), stamp(1))])
+            .unwrap();
         let r = &index.rows(false).unwrap()[0];
         assert!(r.tags.is_empty());
         assert!(!r.favorite);
@@ -1129,7 +1135,9 @@ mod tests {
         // Tagging a capture touches only its `.labels` record; if that
         // mtime weren't stamped, the cached row would never rebuild.
         let index = LibraryIndex::in_memory().unwrap();
-        index.put(&[(row("/caps/A.png", 1, false), stamp(1))]).unwrap();
+        index
+            .put(&[(row("/caps/A.png", 1, false), stamp(1))])
+            .unwrap();
         let mut moved = stamp(1);
         moved.labels_ms += 1;
         assert_ne!(index.stamps().unwrap()["/caps/A.png"], moved);
@@ -1203,8 +1211,12 @@ mod tests {
     #[test]
     fn put_replaces_a_row_with_the_same_id() {
         let index = LibraryIndex::in_memory().unwrap();
-        index.put(&[(row("/caps/A.png", 1, false), stamp(1))]).unwrap();
-        index.put(&[(row("/caps/A.png", 2, true), stamp(9))]).unwrap();
+        index
+            .put(&[(row("/caps/A.png", 1, false), stamp(1))])
+            .unwrap();
+        index
+            .put(&[(row("/caps/A.png", 2, true), stamp(9))])
+            .unwrap();
         assert_eq!(index.row_count().unwrap(), 1);
         let r = &index.rows(true).unwrap()[0];
         assert_eq!(r.created_at_ms, 2);
@@ -1222,7 +1234,12 @@ mod tests {
                 (row("/caps/C.png", 200, false), stamp(1)),
             ])
             .unwrap();
-        let ids: Vec<_> = index.rows(false).unwrap().into_iter().map(|r| r.id).collect();
+        let ids: Vec<_> = index
+            .rows(false)
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
         assert_eq!(ids, ["/caps/C.png", "/caps/A.png", "/caps/B.png"]);
     }
 
@@ -1249,7 +1266,12 @@ mod tests {
             ])
             .unwrap();
         index.remove(&["/caps/A.png".to_string()]).unwrap();
-        let ids: Vec<_> = index.rows(true).unwrap().into_iter().map(|r| r.id).collect();
+        let ids: Vec<_> = index
+            .rows(true)
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
         assert_eq!(ids, ["/caps/B.png"]);
         // Removing something absent is not an error — the reconcile
         // computes its delete list from a snapshot that may have moved.
@@ -1267,7 +1289,9 @@ mod tests {
     #[test]
     fn clear_empties_the_cache() {
         let index = LibraryIndex::in_memory().unwrap();
-        index.put(&[(row("/caps/A.png", 1, false), stamp(1))]).unwrap();
+        index
+            .put(&[(row("/caps/A.png", 1, false), stamp(1))])
+            .unwrap();
         index.clear().unwrap();
         assert_eq!(index.row_count().unwrap(), 0);
         assert!(index.stamps().unwrap().is_empty());
@@ -1279,7 +1303,9 @@ mod tests {
         let db = t.0.join(DB_FILE_NAME);
         {
             let index = LibraryIndex::open(&db).unwrap();
-            index.put(&[(row("/caps/A.png", 1, false), stamp(4))]).unwrap();
+            index
+                .put(&[(row("/caps/A.png", 1, false), stamp(4))])
+                .unwrap();
         }
         let reopened = LibraryIndex::open(&db).unwrap();
         assert_eq!(reopened.row_count().unwrap(), 1);
@@ -1302,7 +1328,9 @@ mod tests {
         let db = t.0.join(DB_FILE_NAME);
         fs::write(&db, b"this is not a database").unwrap();
         let index = LibraryIndex::open(&db).expect("recreated");
-        index.put(&[(row("/caps/A.png", 1, false), stamp(1))]).unwrap();
+        index
+            .put(&[(row("/caps/A.png", 1, false), stamp(1))])
+            .unwrap();
         assert_eq!(index.row_count().unwrap(), 1);
     }
 
@@ -1312,7 +1340,9 @@ mod tests {
         let db = t.0.join(DB_FILE_NAME);
         {
             let index = LibraryIndex::open(&db).unwrap();
-            index.put(&[(row("/caps/A.png", 1, false), stamp(1))]).unwrap();
+            index
+                .put(&[(row("/caps/A.png", 1, false), stamp(1))])
+                .unwrap();
             // Pretend the row was written by a future schema.
             let conn = index.conn().unwrap();
             conn.pragma_update(None, "user_version", SCHEMA_VERSION + 1)
@@ -1348,10 +1378,36 @@ mod tests {
 
     fn seed_mixed(index: &LibraryIndex) {
         let rows = vec![
-            (rich_row("/c/a.png", 100, CaptureKind::Image, true, &["bug"], None), stamp(1)),
-            (rich_row("/c/b.png", 200, CaptureKind::Video, false, &["Work"], None), stamp(2)),
-            (rich_row("/c/c.png", 300, CaptureKind::Image, false, &[], Some("invoice total")), stamp(3)),
-            (rich_row("/c/d.png", 400, CaptureKind::Gif, true, &["bug", "work"], None), stamp(4)),
+            (
+                rich_row("/c/a.png", 100, CaptureKind::Image, true, &["bug"], None),
+                stamp(1),
+            ),
+            (
+                rich_row("/c/b.png", 200, CaptureKind::Video, false, &["Work"], None),
+                stamp(2),
+            ),
+            (
+                rich_row(
+                    "/c/c.png",
+                    300,
+                    CaptureKind::Image,
+                    false,
+                    &[],
+                    Some("invoice total"),
+                ),
+                stamp(3),
+            ),
+            (
+                rich_row(
+                    "/c/d.png",
+                    400,
+                    CaptureKind::Gif,
+                    true,
+                    &["bug", "work"],
+                    None,
+                ),
+                stamp(4),
+            ),
         ];
         index.put(&rows).unwrap();
     }
@@ -1388,18 +1444,27 @@ mod tests {
         seed_mixed(&index);
 
         let images = index
-            .query(&LibraryQuery { kind: Some(CaptureKind::Image), ..Default::default() })
+            .query(&LibraryQuery {
+                kind: Some(CaptureKind::Image),
+                ..Default::default()
+            })
             .unwrap();
         assert_eq!(images.total, 2);
 
         let favs = index
-            .query(&LibraryQuery { favorites_only: true, ..Default::default() })
+            .query(&LibraryQuery {
+                favorites_only: true,
+                ..Default::default()
+            })
             .unwrap();
         assert_eq!(favs.total, 2);
 
         // Tag match is case-insensitive: "work" hits both "Work" and "work".
         let work = index
-            .query(&LibraryQuery { tag: Some("work".into()), ..Default::default() })
+            .query(&LibraryQuery {
+                tag: Some("work".into()),
+                ..Default::default()
+            })
             .unwrap();
         let work_ids: Vec<_> = work.items.iter().map(|m| m.id.as_str()).collect();
         assert_eq!(work_ids, ["/c/d.png", "/c/b.png"]);
@@ -1426,13 +1491,19 @@ mod tests {
         seed_mixed(&index);
 
         let by_text = index
-            .query(&LibraryQuery { search: Some("INVOICE".into()), ..Default::default() })
+            .query(&LibraryQuery {
+                search: Some("INVOICE".into()),
+                ..Default::default()
+            })
             .unwrap();
         let text_ids: Vec<_> = by_text.items.iter().map(|m| m.id.as_str()).collect();
         assert_eq!(text_ids, ["/c/c.png"]);
 
         let by_tag = index
-            .query(&LibraryQuery { search: Some("bug".into()), ..Default::default() })
+            .query(&LibraryQuery {
+                search: Some("bug".into()),
+                ..Default::default()
+            })
             .unwrap();
         assert_eq!(by_tag.total, 2);
     }
@@ -1441,12 +1512,21 @@ mod tests {
     fn query_search_finds_a_swatch_hex() {
         let index = LibraryIndex::in_memory().unwrap();
         let meta = CaptureMeta {
-            color: Some(AuxColor { hex: "#FF6E4A".into(), r: 255, g: 110, b: 74, proportion: None }),
+            color: Some(AuxColor {
+                hex: "#FF6E4A".into(),
+                r: 255,
+                g: 110,
+                b: 74,
+                proportion: None,
+            }),
             ..row("/c/color.png", 500, false)
         };
         index.put(&[(meta, stamp(9))]).unwrap();
         let hit = index
-            .query(&LibraryQuery { search: Some("#ff6e4a".into()), ..Default::default() })
+            .query(&LibraryQuery {
+                search: Some("#ff6e4a".into()),
+                ..Default::default()
+            })
             .unwrap();
         assert_eq!(hit.total, 1, "a palette is findable by any of its swatches");
     }
@@ -1454,11 +1534,20 @@ mod tests {
     #[test]
     fn query_search_treats_wildcards_as_literals() {
         let index = LibraryIndex::in_memory().unwrap();
-        let plain = CaptureMeta { text: Some("abcd".into()), ..row("/c/plain.png", 10, false) };
-        let pct = CaptureMeta { text: Some("50% off".into()), ..row("/c/pct.png", 20, false) };
+        let plain = CaptureMeta {
+            text: Some("abcd".into()),
+            ..row("/c/plain.png", 10, false)
+        };
+        let pct = CaptureMeta {
+            text: Some("50% off".into()),
+            ..row("/c/pct.png", 20, false)
+        };
         index.put(&[(plain, stamp(1)), (pct, stamp(2))]).unwrap();
         let page = index
-            .query(&LibraryQuery { search: Some("50%".into()), ..Default::default() })
+            .query(&LibraryQuery {
+                search: Some("50%".into()),
+                ..Default::default()
+            })
             .unwrap();
         let ids: Vec<_> = page.items.iter().map(|m| m.id.as_str()).collect();
         assert_eq!(ids, ["/c/pct.png"], "'%' is a literal, not a wildcard");
@@ -1477,12 +1566,18 @@ mod tests {
         assert_eq!(live.total, 1);
         assert_eq!(live.items[0].id, "/c/live.png");
         let both = index
-            .query(&LibraryQuery { trash: TrashFilter::Include, ..Default::default() })
+            .query(&LibraryQuery {
+                trash: TrashFilter::Include,
+                ..Default::default()
+            })
             .unwrap();
         assert_eq!(both.total, 2, "Include widens to the whole set");
 
         let trash = index
-            .query(&LibraryQuery { trash: TrashFilter::Only, ..Default::default() })
+            .query(&LibraryQuery {
+                trash: TrashFilter::Only,
+                ..Default::default()
+            })
             .unwrap();
         assert_eq!(trash.total, 1, "Only is the trash view, not a superset");
         assert_eq!(trash.items[0].id, "/c/dead.png");
@@ -1495,12 +1590,34 @@ mod tests {
         let all = index.rows(true).unwrap();
         let cases = [
             LibraryQuery::default(),
-            LibraryQuery { kind: Some(CaptureKind::Image), ..Default::default() },
-            LibraryQuery { favorites_only: true, tag: Some("bug".into()), ..Default::default() },
-            LibraryQuery { search: Some("invoice".into()), ..Default::default() },
-            LibraryQuery { sort: QuerySort::Oldest, limit: Some(2), offset: 1, ..Default::default() },
-            LibraryQuery { trash: TrashFilter::Include, sort: QuerySort::Largest, ..Default::default() },
-            LibraryQuery { trash: TrashFilter::Only, ..Default::default() },
+            LibraryQuery {
+                kind: Some(CaptureKind::Image),
+                ..Default::default()
+            },
+            LibraryQuery {
+                favorites_only: true,
+                tag: Some("bug".into()),
+                ..Default::default()
+            },
+            LibraryQuery {
+                search: Some("invoice".into()),
+                ..Default::default()
+            },
+            LibraryQuery {
+                sort: QuerySort::Oldest,
+                limit: Some(2),
+                offset: 1,
+                ..Default::default()
+            },
+            LibraryQuery {
+                trash: TrashFilter::Include,
+                sort: QuerySort::Largest,
+                ..Default::default()
+            },
+            LibraryQuery {
+                trash: TrashFilter::Only,
+                ..Default::default()
+            },
         ];
         for q in cases {
             let sql = index.query(&q).unwrap();
@@ -1515,18 +1632,32 @@ mod tests {
     #[test]
     fn query_sorts_by_name_and_size() {
         let index = LibraryIndex::in_memory().unwrap();
-        let big = CaptureMeta { title: "alpha".into(), size_bytes: 9_000, ..row("/c/1.png", 1, false) };
-        let small = CaptureMeta { title: "Beta".into(), size_bytes: 10, ..row("/c/2.png", 2, false) };
+        let big = CaptureMeta {
+            title: "alpha".into(),
+            size_bytes: 9_000,
+            ..row("/c/1.png", 1, false)
+        };
+        let small = CaptureMeta {
+            title: "Beta".into(),
+            size_bytes: 10,
+            ..row("/c/2.png", 2, false)
+        };
         index.put(&[(big, stamp(1)), (small, stamp(2))]).unwrap();
 
         let by_name = index
-            .query(&LibraryQuery { sort: QuerySort::Name, ..Default::default() })
+            .query(&LibraryQuery {
+                sort: QuerySort::Name,
+                ..Default::default()
+            })
             .unwrap();
         let names: Vec<_> = by_name.items.iter().map(|m| m.title.as_str()).collect();
         assert_eq!(names, ["alpha", "Beta"], "NOCASE: alpha before Beta");
 
         let by_size = index
-            .query(&LibraryQuery { sort: QuerySort::Largest, ..Default::default() })
+            .query(&LibraryQuery {
+                sort: QuerySort::Largest,
+                ..Default::default()
+            })
             .unwrap();
         assert_eq!(by_size.items[0].title, "alpha", "largest first");
     }
@@ -1558,7 +1689,14 @@ mod tests {
             (
                 CaptureMeta {
                     size_bytes: 9_000,
-                    ..rich_row("/c/b.png", 2_000, CaptureKind::Video, false, &["Bug", "work"], None)
+                    ..rich_row(
+                        "/c/b.png",
+                        2_000,
+                        CaptureKind::Video,
+                        false,
+                        &["Bug", "work"],
+                        None,
+                    )
                 },
                 stamp(2),
             ),

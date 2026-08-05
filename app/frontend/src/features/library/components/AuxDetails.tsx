@@ -45,7 +45,10 @@ function ColorDetails({ color }: { color: AuxColor }) {
       <SectionLabel>Value</SectionLabel>
       <div className="flex flex-col gap-1">
         <CopyRow label="HEX" value={color.hex.toUpperCase()} />
-        <CopyRow label="RGB" value={`rgb(${color.r}, ${color.g}, ${color.b})`} />
+        <CopyRow
+          label="RGB"
+          value={`rgb(${color.r}, ${color.g}, ${color.b})`}
+        />
         <CopyRow label="HSL" value={`hsl(${h}, ${s}%, ${l}%)`} />
       </div>
     </>

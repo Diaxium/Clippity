@@ -51,11 +51,17 @@ describe("editor registry override application", () => {
   it("resolves the remapped combo and stops resolving the old one", () => {
     setKeybindOverrides({ "editor:undo": ["Mod+U"] });
 
-    const remapped = new KeyboardEvent("keydown", { code: "KeyU", ctrlKey: true });
+    const remapped = new KeyboardEvent("keydown", {
+      code: "KeyU",
+      ctrlKey: true,
+    });
     expect(resolveKeyDown(remapped, ACTIVE)?.id).toBe("undo");
 
     // The default Mod+Z no longer triggers undo.
-    const oldCombo = new KeyboardEvent("keydown", { code: "KeyZ", ctrlKey: true });
+    const oldCombo = new KeyboardEvent("keydown", {
+      code: "KeyZ",
+      ctrlKey: true,
+    });
     expect(resolveKeyDown(oldCombo, ACTIVE)?.id).not.toBe("undo");
   });
 

@@ -28,10 +28,7 @@ vi.mock("@services/tauri/clients/models", () => ({
   onModelsProgress: () => () => {},
 }));
 
-import type {
-  ModelInfo,
-  ReleaseCheck,
-} from "@services/tauri/clients/models";
+import type { ModelInfo, ReleaseCheck } from "@services/tauri/clients/models";
 import type { ModelsSettings } from "../types";
 import { ModelsPanel } from "./ModelsPanel";
 
@@ -100,9 +97,7 @@ describe("ModelsPanel", () => {
     ).toBeInTheDocument();
     // installed model → an Installed badge + Remove action.
     expect(screen.getAllByText("Installed").length).toBeGreaterThan(0);
-    expect(
-      screen.getByRole("button", { name: "Remove" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
   });
 
   it("invokes modelsDownload when Download is clicked", async () => {
@@ -121,14 +116,17 @@ describe("ModelsPanel", () => {
     });
     await act(async () => {
       emitChanged([
-        { ...seed[0]!, phase: "downloading", downloaded: 6_068_081, total: 12_136_163 },
+        {
+          ...seed[0]!,
+          phase: "downloading",
+          downloaded: 6_068_081,
+          total: 12_136_163,
+        },
         seed[1]!,
       ]);
     });
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Cancel" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
   });
 
   it("shows an Update action for an outdated model and re-downloads on click", async () => {
@@ -183,7 +181,9 @@ describe("ModelsPanel", () => {
   });
 
   it("offers to install the latest release for a not-installed model", async () => {
-    listed = [{ ...checkable, phase: "not-installed", installedVersion: undefined }];
+    listed = [
+      { ...checkable, phase: "not-installed", installedVersion: undefined },
+    ];
     releaseChecks = [
       {
         id: "checkable-model",
@@ -238,9 +238,7 @@ describe("ModelsPanel", () => {
       render(<ModelsPanel value={settings} onChange={onChange} />);
     });
     await act(async () => {
-      screen
-        .getByRole("button", { name: /General Objects — Fast/ })
-        .click();
+      screen.getByRole("button", { name: /General Objects — Fast/ }).click();
     });
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ objectModel: "yolov10n" })

@@ -147,7 +147,9 @@ export function countKinds(items: CaptureMeta[]): Map<CaptureKind, number> {
 
 /** Every tag in use with how many captures carry it, ordered by the
  *  same case-insensitive name sort `allTags` uses. */
-export function tagCounts(items: CaptureMeta[]): { tag: string; count: number }[] {
+export function tagCounts(
+  items: CaptureMeta[]
+): { tag: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const m of items) {
     for (const tag of m.tags ?? []) {

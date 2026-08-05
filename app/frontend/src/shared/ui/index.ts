@@ -21,7 +21,4 @@ export {
   openContextMenu,
   closeContextMenu,
 } from "./contextMenu";
-export type {
-  ContextMenuAction,
-  ContextMenuEntry,
-} from "./contextMenu";
+export type { ContextMenuAction, ContextMenuEntry } from "./contextMenu";

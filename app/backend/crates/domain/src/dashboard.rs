@@ -24,6 +24,11 @@ use serde::{Deserialize, Serialize};
 pub enum DashboardView {
     Library,
     Editor,
+    /// The video surface — playback, scrubbing and trim for a saved
+    /// recording (the clip's id rides in `DashboardRequest::capture_id`,
+    /// same as Editor). A peer of `Editor` rather than a mode of it: the
+    /// two share a purpose and almost no machinery.
+    Studio,
     Settings,
     Presets,
     /// Large read/copy view of a single saved palette (the aux id rides
@@ -52,6 +57,8 @@ mod tests {
         assert_eq!(s, r#""library""#);
         let s = serde_json::to_string(&DashboardView::Editor).unwrap();
         assert_eq!(s, r#""editor""#);
+        let s = serde_json::to_string(&DashboardView::Studio).unwrap();
+        assert_eq!(s, r#""studio""#);
         let s = serde_json::to_string(&DashboardView::Settings).unwrap();
         assert_eq!(s, r#""settings""#);
         let s = serde_json::to_string(&DashboardView::Presets).unwrap();

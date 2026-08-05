@@ -26,6 +26,22 @@
 //! so Clippity's own windows stay out of the shot exactly as they do
 //! from the `xcap` path (see `capture_shield`).
 //!
+//! # This path requires a DPI-aware process
+//!
+//! `DuplicateOutput1` refuses with `DXGI_ERROR_UNSUPPORTED` when the
+//! calling process is not DPI aware — undocumented, and independent of
+//! the format list, the display's colour space and the adapter. The
+//! shipped app is fine: tao calls `SetProcessDpiAwarenessContext` with
+//! `PER_MONITOR_AWARE_V2` when it builds the event loop, long before
+//! any capture runs.
+//!
+//! It is worth stating because of how the failure presents. The refusal
+//! is indistinguishable from "this display is not in HDR mode", so a
+//! host process that is not DPI aware does not get an error — it gets a
+//! silent, permanent fallback to the 8-bit path. A bare `cargo test`
+//! binary is exactly such a host, which is why the live tests here set
+//! the awareness themselves rather than inheriting it.
+//!
 //! # Failure is always recoverable
 //!
 //! Every error here means "fall back to the ordinary 8-bit path", never
@@ -35,13 +51,15 @@
 //! session is remote — and a screenshot the user asked for must not be
 //! lost to any of them.
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use windows::core::Interface;
 use windows::Win32::Foundation::{E_FAIL, HMODULE};
 use windows::Win32::Graphics::Direct3D::{D3D_DRIVER_TYPE_UNKNOWN, D3D_FEATURE_LEVEL_11_0};
 use windows::Win32::Graphics::Direct3D11::{
-    D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext, ID3D11Texture2D,
-    D3D11_CPU_ACCESS_READ, D3D11_CREATE_DEVICE_BGRA_SUPPORT, D3D11_MAPPED_SUBRESOURCE,
-    D3D11_MAP_READ, D3D11_SDK_VERSION, D3D11_TEXTURE2D_DESC, D3D11_USAGE_STAGING,
+    D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext, ID3D11Texture2D, D3D11_CPU_ACCESS_READ,
+    D3D11_CREATE_DEVICE_BGRA_SUPPORT, D3D11_MAPPED_SUBRESOURCE, D3D11_MAP_READ, D3D11_SDK_VERSION,
+    D3D11_TEXTURE2D_DESC, D3D11_USAGE_STAGING,
 };
 use windows::Win32::Graphics::Dxgi::Common::DXGI_FORMAT_R16G16B16A16_FLOAT;
 use windows::Win32::Graphics::Dxgi::{
@@ -59,11 +77,15 @@ const ACQUIRE_TIMEOUT_MS: u32 = 250;
 
 /// How many times to ask for a frame before giving up.
 ///
-/// Desktop Duplication delivers on *change*: on a still desktop the
-/// first call can time out with nothing having gone wrong. Retrying is
-/// the documented way to get the current image, and a handful of
-/// attempts covers the gap between "nothing is moving" and "this output
-/// is genuinely not going to produce anything".
+/// Two different non-answers are being retried past, and a frame has to
+/// get past both. Desktop Duplication delivers on *change*, so on a
+/// still desktop a call can time out with nothing having gone wrong;
+/// and it answers immediately with a metadata-only frame whenever
+/// nothing has been presented yet, which carries no desktop image at
+/// all (see [`acquire_frame`]). Neither consumes the budget the way a
+/// real failure would — the metadata-only case returns instantly — so a
+/// handful of attempts covers the gap between "nothing is moving" and
+/// "this output is genuinely not going to produce anything".
 const ACQUIRE_ATTEMPTS: usize = 6;
 
 /// One monitor's pixels, still in scRGB.
@@ -83,6 +105,30 @@ impl HdrGrab {
     pub fn to_rgba8(&self) -> Vec<u8> {
         hdr::tone_map_frame(&self.pixels, self.width, self.height, self.sdr_white_nits)
     }
+}
+
+/// Whether the HDR capture path may be used at all.
+///
+/// Backs the `capture.hdr` developer feature flag. Turning it off makes
+/// [`rgba_monitor_at`] report "not applicable", which routes every
+/// capture down the ordinary 8-bit grab — the exact comparison a user
+/// needs when a shot off an HDR display looks wrong and the question is
+/// whether the tone map is why.
+///
+/// A process global rather than a parameter because the two callers are
+/// three-line `cfg` shims in different services, and threading a
+/// preference through both would put a settings dependency in the
+/// capture path for a switch that is off in every ordinary session.
+static ENABLED: AtomicBool = AtomicBool::new(true);
+
+/// Arm or disarm the HDR capture path.
+pub fn set_enabled(on: bool) {
+    ENABLED.store(on, Ordering::Relaxed);
+}
+
+/// Whether the HDR capture path is armed.
+pub fn enabled() -> bool {
+    ENABLED.load(Ordering::Relaxed)
 }
 
 /// Capture `hmonitor` in scRGB, or explain why not.
@@ -113,6 +159,9 @@ pub fn capture_if_hdr(hmonitor: HMONITOR) -> Result<Option<HdrGrab>, String> {
 /// Failures are logged here rather than returned, because no caller can
 /// act on them differently.
 pub fn rgba_monitor_at(x: i32, y: i32) -> Option<image::RgbaImage> {
+    if !enabled() {
+        return None;
+    }
     let hmonitor = monitor_at(x, y)?;
     let grab = match capture_if_hdr(hmonitor) {
         Ok(Some(grab)) => grab,
@@ -240,29 +289,51 @@ unsafe fn create_device(
     }
 }
 
-/// Pull one frame, retrying past the timeouts a still desktop produces.
+/// Pull one frame that actually carries a desktop image.
+///
+/// # Why `LastPresentTime` is checked rather than trusted
+///
+/// A brand-new duplication answers its first `AcquireNextFrame`
+/// immediately and successfully, with `AccumulatedFrames` and
+/// `LastPresentTime` both zero. That frame is *metadata only* — pointer
+/// position and shape — laid over a desktop surface nothing has been
+/// composed into yet, which on a fresh allocation is zero-filled. Taking
+/// it produces a completely black capture, and one that fails silently:
+/// the format is right, the dimensions are right, every error path stays
+/// quiet, and the file is simply black.
+///
+/// `LastPresentTime` is the field that separates the two. Non-zero means
+/// a present has been composed into the surface, so the pixels are real.
 unsafe fn acquire_frame(duplication: &IDXGIOutputDuplication) -> Result<ID3D11Texture2D, String> {
     let mut last_err = String::from("no frame arrived");
     for _ in 0..ACQUIRE_ATTEMPTS {
         let mut info = DXGI_OUTDUPL_FRAME_INFO::default();
         let mut resource: Option<IDXGIResource> = None;
-        match unsafe {
-            duplication.AcquireNextFrame(ACQUIRE_TIMEOUT_MS, &mut info, &mut resource)
-        } {
+        match unsafe { duplication.AcquireNextFrame(ACQUIRE_TIMEOUT_MS, &mut info, &mut resource) }
+        {
             Ok(()) => {
                 let Some(resource) = resource else {
                     last_err = "duplication produced an empty frame".into();
                     // Nothing to release when nothing arrived.
                     continue;
                 };
+                if info.LastPresentTime == 0 {
+                    // Metadata-only: the surface behind it holds no
+                    // desktop image. Hand it back and wait for a real
+                    // present rather than capturing black.
+                    last_err = "duplication produced no desktop image".into();
+                    drop(resource);
+                    let _ = unsafe { duplication.ReleaseFrame() };
+                    continue;
+                }
                 return resource
                     .cast::<ID3D11Texture2D>()
                     .map_err(|e| format!("frame was not a 2D texture: {e}"));
             }
             Err(e) if e.code() == DXGI_ERROR_WAIT_TIMEOUT => {
-                // A static desktop, not a fault. Ask again.
+                // A static desktop, not a fault. Ask again — and do not
+                // release, because a timeout means nothing was acquired.
                 last_err = "the desktop produced no new frame".into();
-                let _ = unsafe { duplication.ReleaseFrame() };
             }
             Err(e) => return Err(format!("frame acquisition failed: {e}")),
         }
@@ -401,6 +472,46 @@ pub fn f16_to_f32(bits: u16) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Serialises the live tests that duplicate an output.
+    ///
+    /// Desktop Duplication permits one duplication per output per
+    /// process, so two of these running concurrently — which is the
+    /// default, `cargo test` being threaded — make each other fail with
+    /// `E_INVALIDARG`. That matters more than an ordinary flake: these
+    /// tests treat a refusal as "not this code's fault" and return
+    /// early, so the collision does not show up as a failure. It shows
+    /// up as a test that passes without asserting anything.
+    static DUPLICATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    /// Take the duplication lock, ignoring poisoning — a panic in
+    /// another live test says nothing about whether this one can run.
+    fn one_duplication_at_a_time() -> std::sync::MutexGuard<'static, ()> {
+        DUPLICATION.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    /// Give this process the DPI awareness the shipped app runs with.
+    ///
+    /// Not a convenience: `DuplicateOutput1` refuses with
+    /// `DXGI_ERROR_UNSUPPORTED` in a DPI-unaware process, and a bare
+    /// `cargo test` binary is DPI-unaware. tao makes the real app
+    /// per-monitor-v2 aware before any capture runs (see the module
+    /// docs), so a live test that skips this is exercising a
+    /// configuration the app is never in — every float grab refuses,
+    /// the refusal looks exactly like "this display is not HDR", and
+    /// the whole path silently reports itself as covered.
+    fn match_app_dpi_awareness() {
+        #[link(name = "user32")]
+        extern "system" {
+            fn SetProcessDpiAwarenessContext(value: isize) -> i32;
+        }
+        /// `DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2`, which is what
+        /// tao sets. Idempotent, and failing is harmless — a later
+        /// call in the same process just returns false.
+        const PER_MONITOR_AWARE_V2: isize = -4;
+        // SAFETY: a documented user32 call taking a constant.
+        unsafe { SetProcessDpiAwarenessContext(PER_MONITOR_AWARE_V2) };
+    }
 
     /// Encode an `f32` as binary16, for round-trip tests. Test-only —
     /// the capture path only ever decodes.
@@ -545,7 +656,8 @@ mod tests {
 
         // SAFETY: both are ordinary DXGI/D3D11 calls; the interfaces
         // they return are released on drop.
-        let (adapter, _output) = unsafe { find_output(hmon) }.expect("an output drives the primary");
+        let (adapter, _output) =
+            unsafe { find_output(hmon) }.expect("an output drives the primary");
         let (device, _context) =
             unsafe { create_device(&adapter) }.expect("a D3D11 device on that adapter");
 
@@ -576,6 +688,54 @@ mod tests {
         );
     }
 
+    /// A grabbed frame must contain the desktop, not a blank surface.
+    ///
+    /// The regression this pins shipped: a new duplication answers its
+    /// first `AcquireNextFrame` immediately and successfully with
+    /// `LastPresentTime == 0`, over a surface nothing has been composed
+    /// into. Taking that frame yields a fully black capture through a
+    /// path where every error check passes — right format, right
+    /// dimensions, no error returned — so nothing but the pixels can
+    /// catch it. Those metadata-only frames keep arriving throughout
+    /// the stream, so this is not a first-capture-only problem.
+    ///
+    /// Asserts "not uniformly black" rather than any particular
+    /// content, since what is on the desktop is not this test's to
+    /// know. A genuinely black desktop would false-pass, which is
+    /// preferable to a test that needs a fixture on screen.
+    #[test]
+    #[ignore = "needs a desktop session that allows desktop duplication"]
+    fn a_grabbed_frame_carries_desktop_pixels_rather_than_a_blank_surface() {
+        use windows::Win32::Foundation::POINT;
+        use windows::Win32::Graphics::Gdi::{MonitorFromPoint, MONITOR_DEFAULTTOPRIMARY};
+
+        let _guard = one_duplication_at_a_time();
+        match_app_dpi_awareness();
+        // SAFETY: DEFAULTTOPRIMARY always resolves to a monitor.
+        let hmon = unsafe { MonitorFromPoint(POINT { x: 0, y: 0 }, MONITOR_DEFAULTTOPRIMARY) };
+        let info = hdr_display::describe(hmon);
+
+        let grab = match capture_scrgb(hmon, info.sdr_white_nits) {
+            Ok(grab) => grab,
+            Err(e) => {
+                // Refusable for reasons that are not this code's fault
+                // — see the module docs.
+                println!("duplication unavailable in this session: {e}");
+                return;
+            }
+        };
+        let peak = grab.pixels.iter().cloned().fold(0.0f32, f32::max);
+        println!(
+            "grabbed {}x{} at {} nits, peak scRGB {peak:.3}",
+            grab.width, grab.height, info.sdr_white_nits
+        );
+        assert!(
+            peak > 0.0,
+            "every pixel came back zero — the grab took a metadata-only \
+             frame instead of waiting for one carrying a desktop image"
+        );
+    }
+
     /// Live check against this machine's primary display.
     ///
     /// `#[ignore]`d: needs a desktop session, and Desktop Duplication is
@@ -590,6 +750,8 @@ mod tests {
         use windows::Win32::Foundation::POINT;
         use windows::Win32::Graphics::Gdi::{MonitorFromPoint, MONITOR_DEFAULTTOPRIMARY};
 
+        let _guard = one_duplication_at_a_time();
+        match_app_dpi_awareness();
         // SAFETY: DEFAULTTOPRIMARY always resolves to a monitor.
         let hmon = unsafe { MonitorFromPoint(POINT { x: 0, y: 0 }, MONITOR_DEFAULTTOPRIMARY) };
         let info = hdr_display::describe(hmon);

@@ -392,7 +392,8 @@ const ACTION_KEYBINDS: EditorKeybind[] = [
     paletteHidden: true,
     onKeyDown: (ctx) => {
       const d = arrowDelta(ctx, 1);
-      if (d && d.dx !== 0) ctx.store.resizeSelectedBy(d.dx, 0, { proportional: true });
+      if (d && d.dx !== 0)
+        ctx.store.resizeSelectedBy(d.dx, 0, { proportional: true });
     },
   },
 

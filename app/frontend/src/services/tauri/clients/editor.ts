@@ -63,8 +63,8 @@ export function editorSaveScene(id: string, scene: string): Promise<string> {
  * Bring the dashboard window forward and switch its view to Editor
  * with `id` loaded. Used by the library card's "Open in editor"
  * button. Routes through `openDashboard` so the same race-free
- * stash-first-then-show pattern is shared with the
- * library/settings cross-window jumps from the capture window.
+ * stash-first-then-show pattern is shared with the other dashboard
+ * cross-window jumps.
  */
 export async function openInEditor(id: string): Promise<void> {
   await openDashboard("editor", id);

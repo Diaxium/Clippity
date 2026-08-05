@@ -89,7 +89,9 @@ export function LayoutSection() {
             aria-pressed={lockAspect === "on"}
             onClick={() => {
               const lock = toggleTarget(lockAspect);
-              updateEach(ids, (n) => (isLineLike(n) ? null : { lockAspect: lock }));
+              updateEach(ids, (n) =>
+                isLineLike(n) ? null : { lockAspect: lock }
+              );
             }}
             className={cn(
               "flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px]",
@@ -112,7 +114,9 @@ export function LayoutSection() {
               // claiming a state half the frames don't have.
               if (el) el.indeterminate = clip === "mixed";
             }}
-            onChange={() => updateNodes(frameIds, { clipContent: toggleTarget(clip) })}
+            onChange={() =>
+              updateNodes(frameIds, { clipContent: toggleTarget(clip) })
+            }
             className="accent-[var(--ed-accent)]"
           />
           Clip content

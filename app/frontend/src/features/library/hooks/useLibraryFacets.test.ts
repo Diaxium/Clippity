@@ -54,14 +54,19 @@ describe("useLibraryFacets", () => {
     const { result } = renderHook(() => useLibraryFacets());
     await waitFor(() => expect(result.current.facets.total).toBe(9));
 
-    const query = libraryFacetsMock.mock.calls[0]?.[0] as Record<string, number>;
+    const query = libraryFacetsMock.mock.calls[0]?.[0] as Record<
+      string,
+      number
+    >;
     expect(query).toHaveProperty("thisWeekSinceMs");
     expect(query).toHaveProperty("last30DaysSinceMs");
     expect(query.largeMinBytes).toBeGreaterThan(0);
   });
 
   it("re-counts on library/updated", async () => {
-    libraryFacetsMock.mockResolvedValueOnce(facets(9)).mockResolvedValueOnce(facets(10));
+    libraryFacetsMock
+      .mockResolvedValueOnce(facets(9))
+      .mockResolvedValueOnce(facets(10));
     const { result } = renderHook(() => useLibraryFacets());
     await waitFor(() => expect(result.current.facets.total).toBe(9));
 
@@ -77,14 +82,18 @@ describe("useLibraryFacets", () => {
     const { result } = renderHook(() => useLibraryFacets());
     await waitFor(() => expect(result.current.facets.total).toBe(1));
 
-    const first = libraryFacetsMock.mock.calls[0]?.[0] as { last30DaysSinceMs: number };
+    const first = libraryFacetsMock.mock.calls[0]?.[0] as {
+      last30DaysSinceMs: number;
+    };
     vi.setSystemTime(new Date(Date.now() + 86_400_000));
     await act(async () => {
       updatedHandler?.();
     });
     await waitFor(() => expect(libraryFacetsMock).toHaveBeenCalledTimes(2));
 
-    const second = libraryFacetsMock.mock.calls[1]?.[0] as { last30DaysSinceMs: number };
+    const second = libraryFacetsMock.mock.calls[1]?.[0] as {
+      last30DaysSinceMs: number;
+    };
     expect(second.last30DaysSinceMs).toBeGreaterThan(first.last30DaysSinceMs);
     vi.useRealTimers();
   });

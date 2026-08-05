@@ -9,10 +9,10 @@ import { PresetCard } from "./PresetCard";
 import { PresetEditor } from "./PresetEditor";
 
 /**
- * Presets manager — the dashboard's Presets view. Lists saved presets,
- * opens the create/edit modal, and (per card) Run / Edit / Delete. The
- * list mirrors `clippity://presets/changed` via `usePresets`, so a
- * create/edit/delete reflects immediately here and in the tray.
+ * Presets manager. Lists saved presets, opens the create/edit modal, and
+ * (per card) Run / Edit / Delete. The list mirrors
+ * `clippity://presets/changed` via `usePresets`, so a create/edit/delete
+ * reflects immediately here and in the tray.
  */
 export function PresetsLayout() {
   const { presets, loading } = usePresets();

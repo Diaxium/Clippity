@@ -13,20 +13,16 @@ use image::RgbaImage;
 use tauri::AppHandle;
 use xcap::Monitor;
 
-use clippity_infra::events;
+use crate::capture_io::{copy_rgba_to_clipboard, next_id, resolve_save_dir, save_capture_png};
+use crate::settings_service::{CaptureEncodingSource, CapturesDirSource, NameTemplateSource};
+use crate::window_service;
 use clippity_domain::capture::{CaptureKind, CaptureRequest, CaptureResult, CustomMode};
 use clippity_domain::enhance;
 use clippity_domain::metadata::{self, CaptureSource};
 use clippity_domain::settings::CaptureCompression;
 use clippity_domain::window_attribution::{self, Rect as AttributionRect, WindowRect};
 use clippity_infra::error::{AppError, AppResult};
-use crate::capture_io::{
-    copy_rgba_to_clipboard, next_id, resolve_save_dir, save_capture_png,
-};
-use crate::settings_service::{
-    CaptureEncodingSource, CapturesDirSource, NameTemplateSource,
-};
-use crate::window_service;
+use clippity_infra::events;
 
 /// Per-process capture state — currently just the most recent result
 /// so a later port (library / toast) can read it through an inspector
@@ -199,8 +195,7 @@ impl CaptureService {
         // came from the clipboard, not off a display. The name falls back
         // to the "Clipboard" type label and the metadata record carries
         // the mode + dimensions only.
-        let source =
-            CaptureSource::from_mode("Clipboard").with_size(png.width, png.height);
+        let source = CaptureSource::from_mode("Clipboard").with_size(png.width, png.height);
         let path = save_capture_png(&dir, &png.bytes, &self.naming.name_template(), &source)?;
 
         let result = CaptureResult {
@@ -259,12 +254,7 @@ fn foreground_window_source() -> AttributedSource {
     }
 }
 
-fn dominant_window_for_region(
-    x: i32,
-    y: i32,
-    width: u32,
-    height: u32,
-) -> Option<AttributedSource> {
+fn dominant_window_for_region(x: i32, y: i32, width: u32, height: u32) -> Option<AttributedSource> {
     #[cfg(target_os = "windows")]
     {
         let windows = clippity_platform::windows::enumeration::list_capturable_windows();

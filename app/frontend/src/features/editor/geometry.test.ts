@@ -234,7 +234,13 @@ describe("resizeFrame keepAspect", () => {
 
   it("expands the other axis on a side handle so the ratio holds", () => {
     // `e` only drives width by default; with keepAspect the height follows.
-    const r = resizeFrame(RECT, 0, "e", { x: 160, y: 999 }, { keepAspect: true });
+    const r = resizeFrame(
+      RECT,
+      0,
+      "e",
+      { x: 160, y: 999 },
+      { keepAspect: true }
+    );
     approx(r.width, 150);
     approx(r.width / r.height, RECT.width / RECT.height);
   });
@@ -243,7 +249,13 @@ describe("resizeFrame keepAspect", () => {
 describe("resizeFrame fromCenter (Alt)", () => {
   it("resizes symmetrically about the frame center", () => {
     // center of RECT is (60, 50); Alt keeps it fixed while both edges move.
-    const r = resizeFrame(RECT, 0, "se", { x: 90, y: 70 }, { fromCenter: true });
+    const r = resizeFrame(
+      RECT,
+      0,
+      "se",
+      { x: 90, y: 70 },
+      { fromCenter: true }
+    );
     approx(r.width, 60);
     approx(r.height, 40);
     const c = rectCenter(r);
@@ -378,7 +390,9 @@ describe("calloutTailGeometry", () => {
   });
 
   it("returns null when the node has no callout", () => {
-    expect(calloutTailGeometry(makeRectangle({ x: 0, y: 0, width: 8, height: 8 }))).toBeNull();
+    expect(
+      calloutTailGeometry(makeRectangle({ x: 0, y: 0, width: 8, height: 8 }))
+    ).toBeNull();
   });
 
   it("agrees with the tip calloutOutline splices in", () => {

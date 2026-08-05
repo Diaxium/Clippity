@@ -3,7 +3,7 @@
  *
  * The "dashboard" is the main window's internal-routing concept —
  * Library / Editor / Settings are views rendered inside one window.
- * Other windows (capture, library inside capture, future toast
+ * Other windows (capture settings links, library items, future toast
  * actions) call `openDashboard(view, captureId)` to focus the main
  * window and switch its view.
  *
@@ -53,9 +53,8 @@ export function consumePendingDashboardView(): Promise<DashboardRequest | null> 
 
 /**
  * Focus the dashboard window and render `view`. When `view === "editor"`,
- * pass the `captureId` to load. Used by the capture window's
- * History/Settings buttons and the library card's "Open in editor"
- * button.
+ * pass the `captureId` to load. Used by capture-window settings links and
+ * the library card's "Open in editor" button.
  *
  * Thin wrapper around `requestDashboardView` — the backend does the
  * stash + hide-other-primaries + show + emit work atomically.

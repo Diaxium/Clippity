@@ -21,7 +21,8 @@ const sections = (): Section[] => [
   { key: "c", heading: "Older", items: caps("c", 2) },
 ];
 
-const flatIds = (list: Section[]) => list.flatMap((s) => s.items.map((m) => m.id));
+const flatIds = (list: Section[]) =>
+  list.flatMap((s) => s.items.map((m) => m.id));
 
 describe("takeSections", () => {
   it("renders nothing at a zero budget", () => {

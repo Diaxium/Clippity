@@ -28,7 +28,7 @@ Its renderer and geometry tests are a major asset.
 | E1: model health (2–4 mo) | Distinct group node, versioned scene migrations, linked assets/dedupe option, relink/missing-source UI and layer-tree accessibility. | P1 | High | XL | Architecture A2/A6, AX5. |
 | E2: annotation speed (3–6 mo) | Style presets, annotation templates, reusable stamps/brand kits, smart numbering, alignment/distribution and better snapping. | P1 | High | L | Recipe/template schema. |
 | E3: content tools (4–9 mo) | Rich text runs, OCR-to-editable-text, smart redaction, perspective/keystone, multi-page/narrative documents and diff layers. | P2 | High | XL | Vision, narrative/export. |
-| E4: media/AI (6–18 mo) | Video trim/annotation timeline, tracked callouts/redaction and optional on-device annotation suggestions. | P3 | Transformative | XL | Recorder/GPU/vision maturity. |
+| E4: media/AI (6–18 mo) | ~~Video trim~~ **done** — playback, scrubbing and trim ship as **Studio**, a surface beside this one ([ADR 0032](../decisions/0032-studio-is-a-separate-surface-that-streams-and-re-encodes.md)); remaining: annotation timeline, tracked callouts/redaction and optional on-device annotation suggestions. | P3 | Transformative | XL | Recorder/GPU/vision maturity. |
 
 ## Implementation phases
 

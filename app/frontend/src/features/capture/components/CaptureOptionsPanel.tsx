@@ -108,7 +108,8 @@ export function CaptureOptionsPanel({
   const paletteCount = captureSettings?.paletteCount ?? DEFAULT_PALETTE_COUNT;
   const settingsReady = captureSettings !== null;
   const patchSettings = useSettingsPatch();
-  const isPalette = captureType === "custom" && customMode === "palette-capture";
+  const isPalette =
+    captureType === "custom" && customMode === "palette-capture";
   // Scrolling-Window + Panoramic stitch frames along a chosen axis; the
   // direction picker sets it (and, for Panoramic, which way the app
   // auto-scrolls).

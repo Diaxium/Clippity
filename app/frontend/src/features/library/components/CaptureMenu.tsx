@@ -159,7 +159,8 @@ export function CaptureMenu({
         onDoubleClick={(e: MouseEvent) => e.stopPropagation()}
         className={cn(
           "focus-ring grid h-7 w-7 place-items-center rounded-md text-[var(--color-slate)] transition-colors hover:bg-[color:var(--color-overlay-2)] hover:text-[var(--color-ink)]",
-          !open && "opacity-0 focus-visible:opacity-100 group-hover:opacity-100",
+          !open &&
+            "opacity-0 focus-visible:opacity-100 group-hover:opacity-100",
           className
         )}
       >

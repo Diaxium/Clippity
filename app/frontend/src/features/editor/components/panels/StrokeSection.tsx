@@ -77,7 +77,10 @@ export function StrokeSection() {
           const opacity = sharedEntry(peers, (s) => s.opacity)!;
           const width = sharedEntry(peers, (s) => s.width)!;
           const align = sharedEntry(peers, (s) => s.align)!;
-          const visible = triState(peers, (p: EntryPeer<"strokes">) => p.entry.visible);
+          const visible = triState(
+            peers,
+            (p: EntryPeer<"strokes">) => p.entry.visible
+          );
           return (
             <div key={stroke.id} className="flex flex-col gap-1.5">
               <div className="flex items-center gap-1.5">
@@ -88,16 +91,18 @@ export function StrokeSection() {
                     onChange={(v) => updateStrokes(refs, { color: v })}
                     onOpenEditor={(a) =>
                       openColorEditor(
-                        { kind: "stroke", nodeId: node.id, strokeId: stroke.id },
+                        {
+                          kind: "stroke",
+                          nodeId: node.id,
+                          strokeId: stroke.id,
+                        },
                         a.x,
                         a.y,
-                        peers
-                          .slice(1)
-                          .map((p) => ({
-                            kind: "stroke" as const,
-                            nodeId: p.nodeId,
-                            strokeId: p.entry.id,
-                          }))
+                        peers.slice(1).map((p) => ({
+                          kind: "stroke" as const,
+                          nodeId: p.nodeId,
+                          strokeId: p.entry.id,
+                        }))
                       )
                     }
                   />
@@ -149,7 +154,9 @@ export function StrokeSection() {
                     // unifies the rows.
                     value={align.mixed ? MIXED_ALIGN.value : align.value}
                     options={
-                      align.mixed ? [MIXED_ALIGN, ...ALIGN_OPTIONS] : ALIGN_OPTIONS
+                      align.mixed
+                        ? [MIXED_ALIGN, ...ALIGN_OPTIONS]
+                        : ALIGN_OPTIONS
                     }
                     onChange={(v) =>
                       v !== MIXED_ALIGN.value &&

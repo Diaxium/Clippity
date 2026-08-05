@@ -8,7 +8,12 @@ import type { CaptureMeta } from "@services/tauri/clients/library";
 
 import { formatRelative } from "../lib/format";
 import { CaptureThumb } from "./CaptureThumb";
-import { CardEmpty, LinkAction, SectionCard, SectionHeading } from "./primitives";
+import {
+  CardEmpty,
+  LinkAction,
+  SectionCard,
+  SectionHeading,
+} from "./primitives";
 
 interface RecentCapturesProps {
   items: CaptureMeta[];

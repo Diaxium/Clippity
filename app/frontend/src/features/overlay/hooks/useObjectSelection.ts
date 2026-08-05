@@ -45,7 +45,11 @@ export function useObjectSelection(): ObjectPointerHandlers {
     const dpr = window.devicePixelRatio || 1;
     // Re-hit-test on the actual down position rather than trusting the
     // last hover — a click can land a few px off the last move event.
-    const hit = objectIndexAtPoint(s.objects, { x: e.clientX, y: e.clientY }, dpr);
+    const hit = objectIndexAtPoint(
+      s.objects,
+      { x: e.clientX, y: e.clientY },
+      dpr
+    );
     const obj = hit === null ? undefined : s.objects[hit];
     if (!obj) return;
     // Fire the flash immediately so the user sees feedback before the

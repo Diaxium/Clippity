@@ -25,21 +25,25 @@
 
 use std::path::Path;
 
-use windows::core::PCWSTR;
+use windows::core::{Interface, PCWSTR};
+use windows::Win32::Foundation::RPC_E_CHANGED_MODE;
 use windows::Win32::Media::MediaFoundation::{
-    eAVEncH264VProfile_Main, IMFAttributes, IMFMediaType, IMFSinkWriter, MFCreateAttributes,
-    MFCreateMediaType, MFCreateMemoryBuffer, MFCreateSample, MFCreateSinkWriterFromURL, MFStartup,
-    MFTranscodeContainerType_FMPEG4, MFAudioFormat_AAC, MFAudioFormat_PCM, MFMediaType_Audio,
-    MFMediaType_Video, MFVideoFormat_H264, MFVideoFormat_NV12, MFVideoInterlace_Progressive,
-    MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, MF_MT_AAC_PAYLOAD_TYPE, MF_MT_ALL_SAMPLES_INDEPENDENT,
-    MF_MT_AUDIO_AVG_BYTES_PER_SECOND, MF_MT_AUDIO_BITS_PER_SAMPLE, MF_MT_AUDIO_BLOCK_ALIGNMENT,
-    MF_MT_AUDIO_NUM_CHANNELS, MF_MT_AUDIO_SAMPLES_PER_SECOND, MF_MT_AVG_BITRATE, MF_MT_FRAME_RATE,
-    MF_MT_FRAME_SIZE, MF_MT_INTERLACE_MODE, MF_MT_MAJOR_TYPE, MF_MT_MPEG2_LEVEL,
-    MF_MT_MPEG2_PROFILE,
-    MF_MT_PIXEL_ASPECT_RATIO, MF_MT_SUBTYPE, MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS,
-    MF_SINK_WRITER_DISABLE_THROTTLING, MF_TRANSCODE_CONTAINERTYPE, MF_VERSION, MFSTARTUP_FULL,
+    eAVEncCommonRateControlMode_CBR, eAVEncCommonRateControlMode_UnconstrainedVBR,
+    eAVEncH264VProfile_Main, CODECAPI_AVEncCommonRateControlMode, ICodecAPI, IMFAttributes,
+    IMFMediaType, IMFSinkWriter, MFAudioFormat_AAC, MFAudioFormat_PCM, MFCreateAttributes,
+    MFCreateMediaType, MFCreateMemoryBuffer, MFCreateSample, MFCreateSinkWriterFromURL,
+    MFMediaType_Audio, MFMediaType_Video, MFStartup, MFTranscodeContainerType_FMPEG4,
+    MFVideoFormat_H264, MFVideoFormat_NV12, MFVideoInterlace_Progressive, MFSTARTUP_FULL,
+    MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, MF_MT_AAC_PAYLOAD_TYPE,
+    MF_MT_ALL_SAMPLES_INDEPENDENT, MF_MT_AUDIO_AVG_BYTES_PER_SECOND, MF_MT_AUDIO_BITS_PER_SAMPLE,
+    MF_MT_AUDIO_BLOCK_ALIGNMENT, MF_MT_AUDIO_NUM_CHANNELS, MF_MT_AUDIO_SAMPLES_PER_SECOND,
+    MF_MT_AVG_BITRATE, MF_MT_FRAME_RATE, MF_MT_FRAME_SIZE, MF_MT_INTERLACE_MODE, MF_MT_MAJOR_TYPE,
+    MF_MT_MAX_KEYFRAME_SPACING, MF_MT_MPEG2_LEVEL, MF_MT_MPEG2_PROFILE, MF_MT_PIXEL_ASPECT_RATIO,
+    MF_MT_SUBTYPE, MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, MF_SINK_WRITER_DISABLE_THROTTLING,
+    MF_TRANSCODE_CONTAINERTYPE, MF_VERSION,
 };
 use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_MULTITHREADED};
+use windows::Win32::System::Variant::{VARIANT, VT_UI4};
 
 use clippity_infra::error::{AppError, AppResult};
 
@@ -77,38 +81,85 @@ const AAC_PAYLOAD_RAW: u32 = 0;
 /// panic) doesn't leave an initialised apartment behind on a thread the
 /// runtime may reuse.
 pub struct ComThread {
-    /// False when this thread was already initialised by someone else —
-    /// in which case balancing the call is *their* job, not ours.
-    owned: bool,
+    /// Whether this guard owes a `CoUninitialize`.
+    ///
+    /// True for every call that *succeeded*, which includes `S_FALSE` —
+    /// see [`ComThread::init`] on why that one is easy to get wrong in
+    /// the direction of a leak.
+    balance: bool,
 }
 
 impl ComThread {
-    /// Join the multi-threaded apartment and start Media Foundation.
+    /// Join a COM apartment and start Media Foundation.
     ///
-    /// MTA rather than STA because nothing here pumps a message loop; an
-    /// STA MF caller that never dispatches messages deadlocks the first
-    /// time the encoder marshals a call back.
+    /// # The three outcomes, and why each is handled the way it is
+    ///
+    /// `CoInitializeEx` answers in three ways, and treating any of them
+    /// as another is a real bug rather than a stylistic choice.
+    ///
+    /// - **`S_OK`** — this call created the apartment. It must be
+    ///   balanced by `CoUninitialize`.
+    /// - **`S_FALSE`** — the thread was already in the *same* kind of
+    ///   apartment. This is a **success**, and it still took a
+    ///   reference: the documented rule is one `CoUninitialize` per
+    ///   successful `CoInitializeEx`, `S_FALSE` included. Reading it as
+    ///   "someone else owns this, leave it alone" leaks the apartment
+    ///   for the life of the thread.
+    /// - **`RPC_E_CHANGED_MODE`** — the thread is already in an
+    ///   apartment of the *other* kind. No reference was taken, so this
+    ///   one must **not** be balanced.
+    ///
+    /// # Why a changed mode is not a failure
+    ///
+    /// It used to be, and that is the bug this comment exists for.
+    /// Non-async Tauri commands run on the main thread, which is already
+    /// an STA because the window and the WebView require one — so
+    /// `media_probe` asking for an MTA got `RPC_E_CHANGED_MODE` and
+    /// opening any recording in Studio failed with a COM error blaming
+    /// the recorder. `list_audio_devices` had the same latent fault.
+    ///
+    /// The thread is in a usable apartment either way; we simply did not
+    /// choose which. Refusing to proceed turns "COM is already set up,
+    /// differently" into "this feature does not work", which is the
+    /// wrong trade for every caller.
+    ///
+    /// # MTA is still what the encoders get
+    ///
+    /// The preference for MTA is real: nothing here pumps a message
+    /// loop, and an STA Media Foundation caller that never dispatches
+    /// messages can deadlock when the encoder marshals a call back. That
+    /// guarantee is preserved by *where the encoders run* rather than by
+    /// failing here — `media_trim` and the recorder both encode on their
+    /// own threads (`spawn_blocking` and the recorder worker), which
+    /// start with no apartment and therefore get the MTA they ask for.
+    ///
+    /// What lands in an inherited STA is the short, synchronous work:
+    /// probing a container's headers and enumerating audio endpoints.
+    /// Neither registers a callback, so neither has anything to marshal
+    /// back and nothing to deadlock on.
     pub fn init() -> AppResult<Self> {
-        // SAFETY: no preconditions; returns S_FALSE (not an error) when
-        // the thread is already in a compatible apartment.
+        // SAFETY: no preconditions.
         let hr = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
-        if hr.is_err() {
+
+        let balance = if hr == RPC_E_CHANGED_MODE {
+            false
+        } else if hr.is_err() {
             return Err(AppError::Recorder(format!(
-                "COM init failed: {hr:?} — the recorder cannot reach Media Foundation"
+                "COM init failed: {hr:?} — Media Foundation is unreachable"
             )));
-        }
-        // S_FALSE means "already initialised on this thread": we must
-        // not un-initialise someone else's apartment on drop.
-        let owned = hr.0 == 0;
+        } else {
+            // S_OK and S_FALSE alike.
+            true
+        };
 
         ensure_platform()?;
-        Ok(Self { owned })
+        Ok(Self { balance })
     }
 }
 
 impl Drop for ComThread {
     fn drop(&mut self) {
-        if self.owned {
+        if self.balance {
             // SAFETY: balances the CoInitializeEx above, on the same
             // thread, exactly once.
             unsafe { CoUninitialize() };
@@ -147,10 +198,34 @@ pub struct AudioTrack;
 /// Everything the writer needs to describe its output.
 #[derive(Debug, Clone, Copy)]
 pub struct Mp4Config {
+    /// Encoded frame size — what ends up in the file.
     pub width: u32,
     pub height: u32,
+    /// Size of the frames the caller will hand to
+    /// [`Mp4Writer::write_video`]. Equal to `width`/`height` unless a
+    /// resolution cap is in play, in which case the sink writer inserts
+    /// its Video Processor MFT and scales on the way to the encoder.
+    ///
+    /// Doing it here rather than resizing each frame in Rust is worth
+    /// the extra field: the processor is SIMD/GPU-backed, and a CPU box
+    /// filter over a 4K frame does not fit in a 60 fps budget — the
+    /// setting meant to make recording cheaper would have made it drop
+    /// frames.
+    pub source_width: u32,
+    pub source_height: u32,
     pub fps: u32,
     pub bitrate_bps: u32,
+    /// Frames between keyframes, for `MF_MT_MAX_KEYFRAME_SPACING`.
+    /// Resolved by `domain::recorder::keyframe_interval_frames` so the
+    /// seconds-to-frames conversion stays testable without COM.
+    pub keyframe_frames: u32,
+    /// Let the encoder vary its bitrate over time. See
+    /// [`Mp4Writer::apply_rate_control`] for why this is best-effort.
+    pub variable_bitrate: bool,
+    /// Prefer the GPU's encoder. `false` forces Media Foundation's
+    /// software H.264 encoder — the escape hatch for a driver whose
+    /// output looks wrong.
+    pub prefer_hardware: bool,
     /// H.264 level, as the level-times-ten code `MF_MT_MPEG2_LEVEL`
     /// takes. Resolved by `domain::recorder::h264_level` — the caller
     /// supplies it rather than this module deriving it, so the spec
@@ -168,12 +243,15 @@ pub struct Mp4Writer {
     writer: IMFSinkWriter,
     video_stream: u32,
     audio_stream: Option<u32>,
+    /// Geometry of the frames [`Mp4Writer::write_video`] expects, which
+    /// is the *negotiated* input size — not necessarily the one asked
+    /// for. See [`Mp4Writer::input_size`].
     width: u32,
     height: u32,
-    /// Reused NV12 scratch buffer. Allocated once at construction: at
-    /// 60 fps a per-frame allocation of several megabytes is a
-    /// measurable amount of the frame budget spent in the allocator.
-    nv12: Vec<u8>,
+    /// Size of one NV12 frame, computed once from the negotiated
+    /// geometry. Not a buffer: frames are converted straight into the
+    /// Media Foundation sample — see [`Mp4Writer::write_video`].
+    nv12_len: usize,
     finalized: bool,
 }
 
@@ -181,19 +259,23 @@ impl Mp4Writer {
     /// Create the file and negotiate both streams. The file exists (and
     /// is a valid, empty fragmented MP4) as soon as this returns.
     pub fn create(path: &Path, config: Mp4Config) -> AppResult<Self> {
-        if config.width == 0 || config.height == 0 {
+        if config.width == 0 || config.height == 0 || config.source_width == 0 {
             return Err(AppError::Recorder("recording has zero area".into()));
         }
-        if config.width % 2 != 0 || config.height % 2 != 0 {
-            // `domain::recorder::even_dimensions` is supposed to have
-            // handled this; failing loudly beats emitting a sheared file.
-            return Err(AppError::Recorder(format!(
-                "H.264 needs even dimensions, got {}×{}",
-                config.width, config.height
-            )));
+        for (w, h) in [
+            (config.width, config.height),
+            (config.source_width, config.source_height),
+        ] {
+            if w % 2 != 0 || h % 2 != 0 {
+                // `domain::recorder::even_dimensions` is supposed to have
+                // handled this; failing loudly beats emitting a sheared file.
+                return Err(AppError::Recorder(format!(
+                    "H.264 needs even dimensions, got {w}×{h}"
+                )));
+            }
         }
 
-        let attributes = sink_attributes()?;
+        let attributes = sink_attributes(config.prefer_hardware)?;
 
         let mut wide: Vec<u16> = path.as_os_str().encode_wide().collect();
         wide.push(0);
@@ -202,10 +284,16 @@ impl Mp4Writer {
         // attribute store is a valid IMFAttributes.
         let writer = unsafe { MFCreateSinkWriterFromURL(PCWSTR(wide.as_ptr()), None, &attributes) }
             .map_err(|e| {
-                AppError::Recorder(format!("could not open {} for writing: {e}", path.display()))
+                AppError::Recorder(format!(
+                    "could not open {} for writing: {e}",
+                    path.display()
+                ))
             })?;
 
-        let video_stream = add_video_stream(&writer, &config)?;
+        let (video_stream, input) = add_video_stream(&writer, &config)?;
+        // Before BeginWriting: the encoder MFT accepts codec settings
+        // only while the writer is still in its configuration phase.
+        apply_rate_control(&writer, video_stream, config.variable_bitrate);
         let audio_stream = match config.audio {
             Some(_) => Some(add_audio_stream(&writer)?),
             None => None,
@@ -220,9 +308,9 @@ impl Mp4Writer {
             writer,
             video_stream,
             audio_stream,
-            width: config.width,
-            height: config.height,
-            nv12: vec![0u8; nv12::nv12_len(config.width, config.height)],
+            width: input.0,
+            height: input.1,
+            nv12_len: nv12::nv12_len(input.0, input.1),
             finalized: false,
         })
     }
@@ -230,6 +318,18 @@ impl Mp4Writer {
     /// Whether this writer has an audio stream to feed.
     pub fn has_audio(&self) -> bool {
         self.audio_stream.is_some()
+    }
+
+    /// Frame size [`Self::write_video`] expects.
+    ///
+    /// Usually `Mp4Config::source_{width,height}`, but not always: when
+    /// a resolution cap asked the sink writer to scale and the machine's
+    /// encoder chain would not, this falls back to the *output* size and
+    /// the caller has to resize frames itself. Exposed rather than
+    /// asserted so a session on such a machine still honours the setting
+    /// instead of failing at the moment Record was pressed.
+    pub fn input_size(&self) -> (u32, u32) {
+        (self.width, self.height)
     }
 
     /// Encode one frame at `timestamp_hns`, lasting `duration_hns`.
@@ -240,6 +340,16 @@ impl Mp4Writer {
     ///
     /// Timestamps come from the session's wall clock rather than a frame
     /// counter — see `domain::recorder::hns_from_millis` for why.
+    ///
+    /// **The conversion writes straight into the sample's buffer.** A
+    /// scratch `Vec` used to sit in between, converted into and then
+    /// copied across, which meant every frame crossed an extra 11 MiB at
+    /// 5120x1440 — a millisecond of pure memory traffic, per frame, to
+    /// move bytes that were already in their final form. The buffer has
+    /// to be a fresh Media Foundation one (the sink writer keeps a
+    /// reference for as long as the encoder needs it, so it cannot be
+    /// pooled), but nothing required the conversion to happen anywhere
+    /// else first.
     pub fn write_video(
         &mut self,
         pixels: &[u8],
@@ -247,13 +357,25 @@ impl Mp4Writer {
         timestamp_hns: i64,
         duration_hns: i64,
     ) -> AppResult<()> {
-        if !nv12::to_nv12(pixels, &mut self.nv12, self.width, self.height, order) {
-            return Err(AppError::Recorder(format!(
+        let geometry = || {
+            AppError::Recorder(format!(
                 "frame does not match the recording geometry ({}×{})",
                 self.width, self.height
-            )));
+            ))
+        };
+        // Checked before a buffer is allocated for it: a mis-sized frame
+        // should cost nothing, and `to_nv12` refusing after the fact
+        // would leave an uninitialised sample to unwind past.
+        if pixels.len() < self.width as usize * self.height as usize * 4 {
+            return Err(geometry());
         }
-        let sample = build_sample(&self.nv12, timestamp_hns, duration_hns)?;
+
+        let (width, height) = (self.width, self.height);
+        let sample = build_sample(self.nv12_len, timestamp_hns, duration_hns, |dst| {
+            nv12::to_nv12(pixels, dst, width, height, order)
+                .then_some(())
+                .ok_or_else(geometry)
+        })?;
         // SAFETY: the stream index came from AddStream on this writer and
         // the sample holds a buffer of the negotiated NV12 size.
         unsafe { self.writer.WriteSample(self.video_stream, &sample) }
@@ -277,7 +399,13 @@ impl Mp4Writer {
         if pcm.is_empty() {
             return Ok(());
         }
-        let sample = build_sample(pcm, timestamp_hns, duration_hns)?;
+        // A plain copy here: an audio packet is a few kilobytes, so
+        // there is nothing to save by converting in place, and the PCM
+        // arrives already in its final form.
+        let sample = build_sample(pcm.len(), timestamp_hns, duration_hns, |dst| {
+            dst.copy_from_slice(pcm);
+            Ok(())
+        })?;
         // SAFETY: as above — a configured stream index and a valid sample.
         unsafe { self.writer.WriteSample(stream, &sample) }
             .map_err(|e| AppError::Recorder(format!("audio rejected: {e}")))
@@ -342,7 +470,7 @@ fn configure(label: &'static str, f: impl FnOnce() -> windows::core::Result<()>)
 }
 
 /// Attributes for the sink writer itself (as opposed to either stream).
-fn sink_attributes() -> AppResult<IMFAttributes> {
+fn sink_attributes(prefer_hardware: bool) -> AppResult<IMFAttributes> {
     let mut store: Option<IMFAttributes> = None;
     // SAFETY: out-pointer to a local Option, initial size is a hint.
     unsafe { MFCreateAttributes(&mut store, 4) }
@@ -357,7 +485,16 @@ fn sink_attributes() -> AppResult<IMFAttributes> {
             // Let the GPU's encoder do the work when there is one. On a
             // machine without it MF falls back to the software encoder
             // transparently — this is a preference, not a requirement.
-            attributes.SetUINT32(&MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 1)?;
+            //
+            // Turning it *off* is a real setting rather than a debug
+            // knob: a handful of drivers encode visibly worse than the
+            // software path at the same bitrate, and nothing here can
+            // detect that. Software encode cannot keep up at 4K60, which
+            // is why the default stays on.
+            attributes.SetUINT32(
+                &MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS,
+                u32::from(prefer_hardware),
+            )?;
             // Leave throttling ON (0 = do not disable). Throttling is
             // what makes `WriteSample` block once the encoder falls
             // behind, which is the backpressure the capture worker
@@ -366,7 +503,10 @@ fn sink_attributes() -> AppResult<IMFAttributes> {
             // of dropping frames.
             attributes.SetUINT32(&MF_SINK_WRITER_DISABLE_THROTTLING, 0)?;
             // Fragmented MP4 — see the module docs on crash safety.
-            attributes.SetGUID(&MF_TRANSCODE_CONTAINERTYPE, &MFTranscodeContainerType_FMPEG4)?;
+            attributes.SetGUID(
+                &MF_TRANSCODE_CONTAINERTYPE,
+                &MFTranscodeContainerType_FMPEG4,
+            )?;
         }
         Ok(())
     })?;
@@ -374,7 +514,11 @@ fn sink_attributes() -> AppResult<IMFAttributes> {
 }
 
 /// Declare the H.264 output type, then the NV12 input type feeding it.
-fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<u32> {
+///
+/// Returns the stream index and the input geometry that was actually
+/// accepted — see [`Mp4Writer::input_size`] for why those can differ
+/// from what was asked for.
+fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u32, (u32, u32))> {
     let out = new_media_type()?;
     configure("H.264 output type", || {
         let attrs: &IMFAttributes = (&out).into();
@@ -401,6 +545,12 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<u32
             attrs.SetUINT64(&MF_MT_FRAME_SIZE, pack(config.width, config.height))?;
             attrs.SetUINT64(&MF_MT_FRAME_RATE, pack(config.fps, 1))?;
             attrs.SetUINT64(&MF_MT_PIXEL_ASPECT_RATIO, pack(1, 1))?;
+            // A decoder can only start at a keyframe, so this is the
+            // granularity Studio's scrubber can seek to. Left unset the
+            // encoders pick wildly different values — some default to
+            // several hundred frames, which makes a fresh recording feel
+            // broken to scrub.
+            attrs.SetUINT32(&MF_MT_MAX_KEYFRAME_SPACING, config.keyframe_frames.max(1))?;
         }
         Ok(())
     })?;
@@ -408,11 +558,109 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<u32
     let stream = unsafe { writer.AddStream(&out) }
         .map_err(|e| AppError::Recorder(format!("no H.264 encoder available: {e}")))?;
 
+    // Try the capture size first. When it differs from the output size
+    // the sink writer resolves the mismatch by loading its Video
+    // Processor MFT, which is how a resolution cap gets applied without
+    // this process touching a pixel.
+    let source = (config.source_width, config.source_height);
+    let out = (config.width, config.height);
+    match set_video_input(writer, stream, config, source) {
+        Ok(()) => Ok((stream, source)),
+        // Nothing to fall back to when no scaling was asked for: the
+        // encoder refused the only geometry there is.
+        Err(e) if source == out => Err(e),
+        // No usable processor on this machine (rare, but it happens on
+        // stripped-down installs and some remote-desktop sessions).
+        // Declare the input at the output size and let the sink
+        // downscale in Rust: slower, and still the setting the user
+        // asked for.
+        Err(_) => set_video_input(writer, stream, config, out).map(|()| (stream, out)),
+    }
+}
+
+/// Ask the encoder MFT to vary (or hold) its bitrate over time.
+///
+/// **Best-effort, and deliberately not an error.** Rate control is not a
+/// media-type attribute — it lives on the encoder's `ICodecAPI`, reached
+/// through the sink writer's `GetServiceForStream`, and not every
+/// encoder exposes one or accepts this property. A machine where it
+/// fails still produces a correct file at the declared
+/// `MF_MT_AVG_BITRATE`; it simply spends those bits the way its encoder
+/// chose to. Refusing to record over a tuning preference would be the
+/// wrong trade, so this logs and returns.
+///
+/// `UnconstrainedVBR` rather than one of the peak-constrained modes:
+/// the point is to let long motionless stretches — which is most of a
+/// screen recording — cost almost nothing, and a peak constraint gives
+/// that saving back.
+fn apply_rate_control(writer: &IMFSinkWriter, stream: u32, variable: bool) {
+    let mode = if variable {
+        eAVEncCommonRateControlMode_UnconstrainedVBR
+    } else {
+        eAVEncCommonRateControlMode_CBR
+    };
+
+    let mut raw: *mut core::ffi::c_void = std::ptr::null_mut();
+    // SAFETY: `stream` came from AddStream on this writer; the service
+    // GUID is GUID_NULL (the documented "the stream's own encoder"
+    // value) and `raw` receives an ICodecAPI the block below owns.
+    let got = unsafe {
+        writer.GetServiceForStream(
+            stream,
+            &windows::core::GUID::zeroed(),
+            &ICodecAPI::IID,
+            &mut raw,
+        )
+    };
+    if got.is_err() || raw.is_null() {
+        tracing::debug!("encoder exposes no ICodecAPI; leaving its default rate control");
+        return;
+    }
+    // SAFETY: `GetServiceForStream` returned S_OK with a non-null
+    // pointer to an ICodecAPI, and `from_raw` takes ownership of the
+    // reference it already added.
+    let codec: ICodecAPI = unsafe { ICodecAPI::from_raw(raw) };
+
+    let value = u32_variant(mode.0 as u32);
+    // SAFETY: the property takes a VT_UI4, which is what `u32_variant`
+    // builds, and both pointers outlive the call.
+    let set = unsafe { codec.SetValue(&CODECAPI_AVEncCommonRateControlMode, &value) };
+    if let Err(e) = set {
+        tracing::debug!("encoder refused the rate-control mode, using its default: {e}");
+    }
+}
+
+/// A `VT_UI4` VARIANT.
+///
+/// Built by hand because `windows` 0.62 has no `From<u32> for VARIANT`,
+/// and the alternative — `InitVariantFromUInt32` out of propsys — would
+/// pull in another import for the same four stores.
+fn u32_variant(value: u32) -> VARIANT {
+    let mut variant = VARIANT::default();
+    // SAFETY: writing the union's UI4 arm and tagging `vt` to match, on
+    // a zeroed VARIANT. VT_UI4 owns nothing, so there is nothing to
+    // clear when it drops.
+    unsafe {
+        let inner = &mut *variant.Anonymous.Anonymous;
+        inner.vt = VT_UI4;
+        inner.Anonymous.ulVal = value;
+    }
+    variant
+}
+
+/// Set the stream's uncompressed input type at `size`.
+fn set_video_input(
+    writer: &IMFSinkWriter,
+    stream: u32,
+    config: &Mp4Config,
+    size: (u32, u32),
+) -> AppResult<()> {
     let input = new_media_type()?;
     configure("NV12 input type", || {
         let attrs: &IMFAttributes = (&input).into();
-        // SAFETY: matching uncompressed input type. Geometry and rate
-        // must agree with the output type or negotiation fails.
+        // SAFETY: matching uncompressed input type. The frame rate must
+        // agree with the output type; the frame *size* need not, and a
+        // mismatch is what asks for the scaler.
         unsafe {
             attrs.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video)?;
             attrs.SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_NV12)?;
@@ -420,17 +668,15 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<u32
             // Every uncompressed frame stands alone — lets the encoder
             // skip the "is this a delta frame?" question per sample.
             attrs.SetUINT32(&MF_MT_ALL_SAMPLES_INDEPENDENT, 1)?;
-            attrs.SetUINT64(&MF_MT_FRAME_SIZE, pack(config.width, config.height))?;
+            attrs.SetUINT64(&MF_MT_FRAME_SIZE, pack(size.0, size.1))?;
             attrs.SetUINT64(&MF_MT_FRAME_RATE, pack(config.fps, 1))?;
             attrs.SetUINT64(&MF_MT_PIXEL_ASPECT_RATIO, pack(1, 1))?;
         }
         Ok(())
     })?;
-    // SAFETY: `stream` was just returned by AddStream on this writer.
+    // SAFETY: `stream` was returned by AddStream on this writer.
     unsafe { writer.SetInputMediaType(stream, &input, None) }
-        .map_err(|e| AppError::Recorder(format!("encoder rejected the frame format: {e}")))?;
-
-    Ok(stream)
+        .map_err(|e| AppError::Recorder(format!("encoder rejected the frame format: {e}")))
 }
 
 /// Declare the AAC output type and its PCM input.
@@ -487,46 +733,63 @@ fn add_audio_stream(writer: &IMFSinkWriter) -> AppResult<u32> {
 
 fn new_media_type() -> AppResult<IMFMediaType> {
     // SAFETY: no arguments, returns a fresh empty media type.
-    unsafe { MFCreateMediaType() }
-        .map_err(|e| AppError::Recorder(format!("media type: {e}")))
+    unsafe { MFCreateMediaType() }.map_err(|e| AppError::Recorder(format!("media type: {e}")))
 }
 
-/// Copy `payload` into a fresh MF sample stamped with its place on the
-/// timeline.
+/// Build a fresh MF sample of `len` bytes, let `fill` write it, and
+/// stamp its place on the timeline.
 ///
 /// A new buffer per sample rather than a pooled one: the sink writer
 /// keeps a reference for as long as the encoder needs it, so reusing a
 /// buffer would overwrite data still queued for encode.
+///
+/// `fill` receives the buffer's bytes directly. That is what lets the
+/// NV12 conversion land in its final home rather than being converted
+/// somewhere else and copied in — see [`Mp4Writer::write_video`]. A
+/// `fill` that fails leaves the buffer unpublished and the sample is
+/// dropped, so a refused frame writes nothing.
 fn build_sample(
-    payload: &[u8],
+    len: usize,
     timestamp_hns: i64,
     duration_hns: i64,
+    fill: impl FnOnce(&mut [u8]) -> AppResult<()>,
 ) -> AppResult<windows::Win32::Media::MediaFoundation::IMFSample> {
-    let len = payload.len() as u32;
+    let requested = u32::try_from(len)
+        .map_err(|_| AppError::Recorder(format!("a {len}-byte sample is too large")))?;
     // SAFETY: a positive length; returns an owned buffer.
-    let buffer = unsafe { MFCreateMemoryBuffer(len) }
+    let buffer = unsafe { MFCreateMemoryBuffer(requested) }
         .map_err(|e| AppError::Recorder(format!("sample buffer: {e}")))?;
 
-    // SAFETY: Lock hands back a pointer to at least `len` writable
-    // bytes (the length just requested); the slice is confined to this
-    // block and Unlock is called before the buffer is used again.
+    // SAFETY: Lock hands back a pointer to at least `len` writable bytes
+    // (the length just requested, which `MFCreateMemoryBuffer` allocated
+    // and `Lock` reports through `max_len`). The slice is confined to
+    // this block and Unlock is called on every path out of it, including
+    // the one where `fill` returns an error.
     unsafe {
         let mut dst: *mut u8 = std::ptr::null_mut();
+        let mut max_len: u32 = 0;
         buffer
-            .Lock(&mut dst, None, None)
+            .Lock(&mut dst, Some(&mut max_len), None)
             .map_err(|e| AppError::Recorder(format!("sample buffer lock: {e}")))?;
-        std::ptr::copy_nonoverlapping(payload.as_ptr(), dst, payload.len());
+        let filled = if dst.is_null() || (max_len as usize) < len {
+            Err(AppError::Recorder(format!(
+                "sample buffer came back {max_len} bytes for a {len}-byte frame"
+            )))
+        } else {
+            fill(std::slice::from_raw_parts_mut(dst, len))
+        };
         buffer
             .Unlock()
             .map_err(|e| AppError::Recorder(format!("sample buffer unlock: {e}")))?;
+        filled?;
         buffer
-            .SetCurrentLength(len)
+            .SetCurrentLength(requested)
             .map_err(|e| AppError::Recorder(format!("sample length: {e}")))?;
     }
 
     // SAFETY: a fresh sample; the buffer above is valid and owned.
-    let sample = unsafe { MFCreateSample() }
-        .map_err(|e| AppError::Recorder(format!("sample: {e}")))?;
+    let sample =
+        unsafe { MFCreateSample() }.map_err(|e| AppError::Recorder(format!("sample: {e}")))?;
     unsafe {
         sample
             .AddBuffer(&buffer)
@@ -605,8 +868,13 @@ mod tests {
             Mp4Config {
                 width,
                 height,
+                source_width: width,
+                source_height: height,
                 fps,
                 bitrate_bps: 2_000_000,
+                keyframe_frames: fps * 2,
+                variable_bitrate: true,
+                prefer_hardware: true,
                 level: 42,
                 audio: Some(AudioTrack),
             },
@@ -651,7 +919,10 @@ mod tests {
         writer.finish().expect("finalize");
 
         let size = std::fs::metadata(&path).expect("file exists").len();
-        assert!(size > 1_024, "expected real encoded output, got {size} bytes");
+        assert!(
+            size > 1_024,
+            "expected real encoded output, got {size} bytes"
+        );
 
         // Sanity-check the container: every MP4 starts with a box whose
         // type is `ftyp`, at offset 4.
@@ -659,6 +930,88 @@ mod tests {
         assert_eq!(&head[4..8], b"ftyp", "not an MP4 container");
 
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// Every encoder-settings combination, against the real encoders.
+    ///
+    /// The keyframe spacing and the hardware preference are media-type
+    /// and attribute-store values, so a machine that dislikes one fails
+    /// at *negotiation* — "no H.264 encoder available" the instant the
+    /// user presses Record. Rate control is different: it is applied
+    /// through `ICodecAPI` and is allowed to fail silently, so what this
+    /// asserts is that trying it never breaks the writer.
+    ///
+    /// Ignored for the same reason as the tests above — it needs real
+    /// encoders present. Note the software-encoder case: forcing
+    /// `prefer_hardware: false` is the one path a GPU-equipped dev
+    /// machine otherwise never exercises.
+    #[test]
+    #[ignore = "needs a Windows session with Media Foundation encoders"]
+    fn every_encoder_setting_combination_negotiates() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let _com = ComThread::init().expect("COM + Media Foundation start");
+        let (width, height, fps) = (320u32, 240u32, 30u32);
+
+        for (index, (variable, hardware, keyframe_seconds)) in [
+            (true, true, 2u32),
+            (false, true, 2),
+            (true, false, 2),
+            // The bounds of the settable interval, since spacing is what
+            // the media type actually carries.
+            (true, true, 1),
+            (true, true, 10),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let stamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0);
+            let path = std::env::temp_dir().join(format!("clippity-mf-enc-{stamp}-{index}.mp4"));
+
+            let mut writer = Mp4Writer::create(
+                &path,
+                Mp4Config {
+                    width,
+                    height,
+                    source_width: width,
+                    source_height: height,
+                    fps,
+                    bitrate_bps: 2_000_000,
+                    keyframe_frames: keyframe_seconds * fps,
+                    variable_bitrate: variable,
+                    prefer_hardware: hardware,
+                    level: 42,
+                    audio: None,
+                },
+            )
+            .unwrap_or_else(|e| {
+                panic!("vbr={variable} hw={hardware} keyframes={keyframe_seconds}s rejected: {e}")
+            });
+
+            let frame_dur = 10_000_000i64 / fps as i64;
+            let bgra = vec![64u8; (width * height * 4) as usize];
+            for i in 0..fps {
+                writer
+                    .write_video(
+                        &bgra,
+                        nv12::PixelOrder::Bgra,
+                        frame_dur * i as i64,
+                        frame_dur,
+                    )
+                    .expect("video frame accepted");
+            }
+            writer.finish().expect("finalize");
+
+            let size = std::fs::metadata(&path).expect("file exists").len();
+            assert!(
+                size > 512,
+                "vbr={variable} hw={hardware} produced {size} bytes"
+            );
+            let _ = std::fs::remove_file(&path);
+        }
     }
 
     /// The ultrawide guard, against the real encoder.
@@ -690,8 +1043,13 @@ mod tests {
             Mp4Config {
                 width,
                 height,
+                source_width: width,
+                source_height: height,
                 fps,
                 bitrate_bps: 46_000_000,
+                keyframe_frames: fps * 2,
+                variable_bitrate: true,
+                prefer_hardware: true,
                 // What `domain::recorder::h264_level` resolves for this
                 // frame; hard-coded here so the two crates' agreement is
                 // asserted rather than assumed.
@@ -710,9 +1068,174 @@ mod tests {
         writer.finish().expect("finalize");
 
         let size = std::fs::metadata(&path).expect("file exists").len();
-        assert!(size > 1_024, "expected real encoded output, got {size} bytes");
+        assert!(
+            size > 1_024,
+            "expected real encoded output, got {size} bytes"
+        );
 
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// Encode one frame at each attached display's real size, with the
+    /// bitrate and level the domain would actually pick for it.
+    ///
+    /// [`accepts_an_ultrawide_frame_size`] pins one known-hard size, and
+    /// a fixed size is the right shape for a regression test. This one
+    /// covers something a fixed size cannot: that the encoder accepts
+    /// what *this* machine will ask for. The failure it guards is both
+    /// size-specific and driver-specific — an encoder that will not take
+    /// a media type for a frame wider than 4096 refuses at negotiation,
+    /// and the user sees "no H.264 encoder available" the instant they
+    /// press Record, with nothing recorded and nothing to retry.
+    ///
+    /// Deriving the bitrate and level here rather than stating them is
+    /// the point: it tests the two crates' agreement at a size neither
+    /// of them has a constant for.
+    #[test]
+    #[ignore = "needs a Windows session with Media Foundation encoders"]
+    fn accepts_every_attached_display_at_its_real_size() {
+        use clippity_domain::recorder::{h264_level, video_bitrate_bps};
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let _com = ComThread::init().expect("COM + Media Foundation start");
+        let monitors = xcap::Monitor::all().expect("enumerate monitors");
+        assert!(!monitors.is_empty(), "no monitors to test against");
+
+        for (i, monitor) in monitors.iter().enumerate() {
+            // H.264 needs even dimensions; an odd-sized mode would be
+            // rounded by the recorder before it ever reached the sink.
+            let width = monitor.width().expect("monitor width") & !1;
+            let height = monitor.height().expect("monitor height") & !1;
+            let fps = 60u32;
+            let bitrate_bps = video_bitrate_bps(
+                clippity_domain::recorder::RecorderQuality::Balanced,
+                width,
+                height,
+                fps,
+            );
+            let level = h264_level(width, height, fps, bitrate_bps);
+            println!("display {i}: {width}x{height} @ {fps} -> {bitrate_bps} bps, level {level}");
+
+            let stamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0);
+            let path = std::env::temp_dir().join(format!("clippity-mf-real-{stamp}.mp4"));
+
+            let mut writer = Mp4Writer::create(
+                &path,
+                Mp4Config {
+                    width,
+                    height,
+                    source_width: width,
+                    source_height: height,
+                    fps,
+                    bitrate_bps,
+                    keyframe_frames: fps * 2,
+                    variable_bitrate: true,
+                    prefer_hardware: true,
+                    level,
+                    audio: None,
+                },
+            )
+            .unwrap_or_else(|e| panic!("encoder refused {width}x{height} at level {level}: {e}"));
+
+            // Negotiation is what breaks at these sizes, not the steady
+            // state, so one frame is the whole test.
+            let bgra = vec![0u8; (width as usize) * (height as usize) * 4];
+            writer
+                .write_video(&bgra, nv12::PixelOrder::Bgra, 0, 10_000_000 / fps as i64)
+                .unwrap_or_else(|e| panic!("{width}x{height} frame rejected: {e}"));
+            writer.finish().expect("finalize");
+
+            let size = std::fs::metadata(&path).expect("file exists").len();
+            assert!(
+                size > 1_024,
+                "expected real encoded output, got {size} bytes"
+            );
+            let _ = std::fs::remove_file(&path);
+        }
+    }
+
+    // ---------- COM apartments ----------
+    //
+    // Each of these runs on its own thread, because an apartment is a
+    // property of a thread and the test harness's threads are shared.
+
+    #[test]
+    fn com_init_succeeds_on_a_thread_that_is_already_an_sta() {
+        // The regression. A non-async Tauri command runs on the main
+        // thread, which is an STA because the window and WebView need
+        // one — so asking for an MTA there returns RPC_E_CHANGED_MODE.
+        // Treating that as fatal made opening any recording in Studio
+        // fail with "COM init failed: HRESULT(0x80010106)".
+        use windows::Win32::System::Com::COINIT_APARTMENTTHREADED;
+
+        std::thread::spawn(|| {
+            // SAFETY: a fresh thread, initialised once as an STA — the
+            // apartment the app's main thread is already in.
+            let hr = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
+            assert!(hr.is_ok(), "the STA itself should initialise: {hr:?}");
+
+            let guard = ComThread::init();
+            assert!(
+                guard.is_ok(),
+                "an inherited STA must not stop Media Foundation being used: {:?}",
+                guard.err()
+            );
+            // Dropping must not tear down the STA we did not create.
+            drop(guard);
+
+            // Still usable afterwards: a guard that wrongly balanced the
+            // changed-mode call would have uninitialised this apartment.
+            let again = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
+            assert!(
+                again.is_ok(),
+                "the caller's apartment was torn down underneath them: {again:?}"
+            );
+            unsafe { CoUninitialize() };
+            unsafe { CoUninitialize() };
+        })
+        .join()
+        .expect("the STA thread should not panic");
+    }
+
+    #[test]
+    fn com_init_works_on_a_thread_with_no_apartment_yet() {
+        std::thread::spawn(|| {
+            let guard = ComThread::init().expect("a bare thread joins the MTA");
+            drop(guard);
+        })
+        .join()
+        .expect("the bare thread should not panic");
+    }
+
+    #[test]
+    fn nested_com_guards_leave_the_apartment_alive_for_the_outer_one() {
+        // The `S_FALSE` path. The inner guard's init returns "already
+        // initialised, same mode" — a success that still takes a
+        // reference, so it must be balanced. Getting this wrong in the
+        // other direction leaks the apartment for the thread's life.
+        std::thread::spawn(|| {
+            let outer = ComThread::init().expect("outer");
+            {
+                let inner = ComThread::init().expect("inner");
+                drop(inner);
+            }
+            // If the inner drop had over-balanced, COM would be gone
+            // here and this call would report a *fresh* initialisation
+            // (S_OK) rather than an existing one (S_FALSE).
+            // SAFETY: same thread, balanced immediately below.
+            let hr = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
+            assert_eq!(
+                hr.0, 1,
+                "expected S_FALSE — the apartment should still be up, got {hr:?}"
+            );
+            unsafe { CoUninitialize() };
+            drop(outer);
+        })
+        .join()
+        .expect("the nested thread should not panic");
     }
 
     #[test]

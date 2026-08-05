@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { TickedSlider } from "./TickedSlider";
 import { intervalFractions } from "./TrackTicks";
 
-function renderSlider(overrides: Partial<Parameters<typeof TickedSlider>[0]> = {}) {
+function renderSlider(
+  overrides: Partial<Parameters<typeof TickedSlider>[0]> = {}
+) {
   const onChange = vi.fn();
   render(
     <TickedSlider
@@ -66,6 +68,14 @@ describe("TickedSlider — lag fix (commit on settle, not per input)", () => {
     fireEvent.change(input, { target: { value: "80" } });
     // Readout reflects the draft immediately, before any commit.
     expect(screen.getByText("80%")).toBeInTheDocument();
+  });
+
+  it("emits preview values during a drag without committing", () => {
+    const onPreview = vi.fn();
+    const { onChange, input } = renderSlider({ onPreview });
+    fireEvent.change(input, { target: { value: "65" } });
+    expect(onPreview).toHaveBeenCalledWith(65);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("adopts an external value change when idle", () => {

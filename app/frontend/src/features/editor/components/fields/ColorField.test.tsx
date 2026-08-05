@@ -9,7 +9,11 @@ describe("ColorField", () => {
   it("opens the floating editor from the swatch when wired", () => {
     const onOpenEditor = vi.fn();
     render(
-      <ColorField value="#ff0000" onChange={() => {}} onOpenEditor={onOpenEditor} />
+      <ColorField
+        value="#ff0000"
+        onChange={() => {}}
+        onOpenEditor={onOpenEditor}
+      />
     );
     fireEvent.click(screen.getByLabelText("Pick color"));
     expect(onOpenEditor).toHaveBeenCalled();

@@ -60,29 +60,17 @@ pub fn nv12_len(width: u32, height: u32) -> usize {
 
 /// Byte order of the source frame's colour channels.
 ///
-/// Both orders reach this module: `xcap`'s `RgbaImage` is RGBA, while
-/// every raw Win32 surface (GDI DIBs, a future Windows Graphics Capture
-/// path) is BGRA. Passing the wrong one doesn't fail — it swaps red and
-/// blue in the recording, which is why the caller states it explicitly
-/// rather than this module assuming.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PixelOrder {
-    /// Blue, green, red, alpha — Win32's native surface order.
-    Bgra,
-    /// Red, green, blue, alpha — what `xcap` hands back.
-    Rgba,
-}
-
-impl PixelOrder {
-    /// Offsets of (red, blue) within a 4-byte pixel. Green is always at
-    /// index 1 and alpha at 3 in both orders.
-    fn red_blue(self) -> (usize, usize) {
-        match self {
-            PixelOrder::Bgra => (2, 0),
-            PixelOrder::Rgba => (0, 2),
-        }
-    }
-}
+/// Both orders reach this module: a decoded clip is RGBA, while every
+/// raw Win32 surface (GDI DIBs, the recorder's Desktop Duplication
+/// read-back) is BGRA. Passing the wrong one doesn't fail — it swaps red
+/// and blue in the recording, which is why the caller states it
+/// explicitly rather than this module assuming.
+///
+/// Re-exported from the domain, where it moved once the sinks began
+/// carrying it: absorbing the swap here — the two indices below are read
+/// per pixel either way — is what lets a BGRA capture reach the encoder
+/// without a normalising pass over the whole frame first.
+pub use clippity_domain::pixels::PixelOrder;
 
 /// Convert a top-down frame into NV12, writing into `dst`.
 ///
@@ -109,46 +97,110 @@ pub fn to_nv12(src: &[u8], dst: &mut [u8], width: u32, height: u32, order: Pixel
     let (ri, bi) = order.red_blue();
     let (luma, chroma) = dst.split_at_mut(w * h);
 
-    for y in 0..h {
-        let row = y * w * 4;
-        for x in 0..w {
-            let p = row + x * 4;
-            let b = src[p + bi] as i32;
-            let g = src[p + 1] as i32;
-            let r = src[p + ri] as i32;
-            luma[y * w + x] = clamp_y((Y_R * r + Y_G * g + Y_B * b + 128) >> 8);
-        }
-    }
+    // Bytes per row-pair in each buffer. A row-pair is the unit of work
+    // because it is the smallest span that produces a whole row of
+    // chroma: two luma rows and one chroma row come out of it together.
+    let src_pair = w * 4 * 2;
+    let luma_pair = w * 2;
+    let chroma_pair = w;
+    let pairs = h / 2;
 
-    // One chroma sample per 2×2 luma block, averaged over all four
-    // source pixels. Walk blocks rather than pixels so each block's
-    // four reads are already in cache from the luma pass above.
-    let chroma_w = w / 2;
-    for by in 0..h / 2 {
-        for bx in 0..chroma_w {
+    // Split across cores by row-pair band.
+    //
+    // This is the frame's dominant cost at any size that matters: a
+    // 5120x1440 frame is 7.4 million pixels, and doing them one after
+    // another took 200 ms — six frame budgets, on its own, before the
+    // encoder has seen anything. The work is embarrassingly parallel
+    // (no pixel depends on another) and the bands are disjoint slices,
+    // so this needs no synchronisation: the pool's `run` borrows the
+    // buffers and does not return until every band is finished.
+    //
+    // A *pool* rather than `std::thread::scope`, which is what this used
+    // to be: scope creates and joins its threads per call, so at 60 fps
+    // it spent a frame budget's worth of every second in the kernel
+    // making threads it had just destroyed. See `parallel`.
+    let pool = crate::parallel::BandPool::shared();
+    let threads = pool.parallelism().min(pairs.max(1));
+
+    let band = pairs.div_ceil(threads.max(1));
+    let mut src_rest = &src[..pairs * src_pair];
+    let mut luma_rest = &mut luma[..pairs * luma_pair];
+    let mut chroma_rest = &mut chroma[..pairs * chroma_pair];
+
+    let mut jobs: Vec<Box<dyn FnOnce() + Send>> = Vec::with_capacity(threads);
+    while !src_rest.is_empty() {
+        let take = band.min(src_rest.len() / src_pair);
+        let (src_band, s) = src_rest.split_at(take * src_pair);
+        let (luma_band, l) = luma_rest.split_at_mut(take * luma_pair);
+        let (chroma_band, c) = chroma_rest.split_at_mut(take * chroma_pair);
+        src_rest = s;
+        luma_rest = l;
+        chroma_rest = c;
+        jobs.push(Box::new(move || {
+            convert_band(src_band, luma_band, chroma_band, w, ri, bi)
+        }));
+    }
+    pool.run(jobs);
+
+    true
+}
+
+/// Convert a contiguous run of row-pairs.
+///
+/// **One pass over the source, not two.** The previous shape walked
+/// every pixel for luma and then walked them all again for chroma,
+/// which reads a 28 MiB frame twice and evicts the start of it before
+/// the second pass arrives. Doing both from the same four loaded pixels
+/// halves the memory traffic, and memory traffic is what this is made
+/// of.
+fn convert_band(src: &[u8], luma: &mut [u8], chroma: &mut [u8], w: usize, ri: usize, bi: usize) {
+    for ((src_pair, luma_pair), chroma_row) in src
+        .chunks_exact(w * 4 * 2)
+        .zip(luma.chunks_exact_mut(w * 2))
+        .zip(chroma.chunks_exact_mut(w))
+    {
+        let (top, bottom) = src_pair.split_at(w * 4);
+        let (luma_top, luma_bottom) = luma_pair.split_at_mut(w);
+
+        // Four pixels, four luma samples and one chroma sample, from a
+        // single load of each. Iterating in 2x2 blocks over slices lets
+        // the bounds checks fall out — the compiler can see every span
+        // is exactly two pixels wide.
+        for ((((top_px, bottom_px), luma_top_px), luma_bottom_px), chroma_px) in top
+            .chunks_exact(8)
+            .zip(bottom.chunks_exact(8))
+            .zip(luma_top.chunks_exact_mut(2))
+            .zip(luma_bottom.chunks_exact_mut(2))
+            .zip(chroma_row.chunks_exact_mut(2))
+        {
             let (mut sr, mut sg, mut sb) = (0i32, 0i32, 0i32);
-            for dy in 0..2 {
-                let row = (by * 2 + dy) * w * 4;
-                for dx in 0..2 {
-                    let p = row + (bx * 2 + dx) * 4;
-                    sb += src[p + bi] as i32;
-                    sg += src[p + 1] as i32;
-                    sr += src[p + ri] as i32;
+            for (i, px) in [&top_px[..4], &top_px[4..], &bottom_px[..4], &bottom_px[4..]]
+                .into_iter()
+                .enumerate()
+            {
+                let r = px[ri] as i32;
+                let g = px[1] as i32;
+                let b = px[bi] as i32;
+                sr += r;
+                sg += g;
+                sb += b;
+                let y = clamp_y((Y_R * r + Y_G * g + Y_B * b + 128) >> 8);
+                match i {
+                    0 => luma_top_px[0] = y,
+                    1 => luma_top_px[1] = y,
+                    2 => luma_bottom_px[0] = y,
+                    _ => luma_bottom_px[1] = y,
                 }
             }
+
             // Average the block, keeping the /4 inside the fixed-point
             // maths so the rounding happens once.
             let (r, g, b) = (sr / 4, sg / 4, sb / 4);
-            let u = clamp_c(((U_R * r + U_G * g + U_B * b + 128) >> 8) + C_OFFSET);
-            let v = clamp_c(((V_R * r + V_G * g + V_B * b + 128) >> 8) + C_OFFSET);
             // NV12 interleaves U before V within the chroma plane.
-            let c = (by * chroma_w + bx) * 2;
-            chroma[c] = u;
-            chroma[c + 1] = v;
+            chroma_px[0] = clamp_c(((U_R * r + U_G * g + U_B * b + 128) >> 8) + C_OFFSET);
+            chroma_px[1] = clamp_c(((V_R * r + V_G * g + V_B * b + 128) >> 8) + C_OFFSET);
         }
     }
-
-    true
 }
 
 fn clamp_y(value: i32) -> u8 {

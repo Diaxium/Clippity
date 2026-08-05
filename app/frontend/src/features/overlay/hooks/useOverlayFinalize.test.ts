@@ -93,7 +93,12 @@ describe("useOverlayFinalize", () => {
     expect(finishRegionCaptureMock).toHaveBeenCalledWith({
       rect: { x: 20, y: 40, width: 60, height: 80 },
       cursorPin: [30, 50],
-      toggles: { preview: true, clipboard: false, cursor: false, enhance: false },
+      toggles: {
+        preview: true,
+        clipboard: false,
+        cursor: false,
+        enhance: false,
+      },
     });
   });
 

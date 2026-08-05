@@ -44,10 +44,68 @@ const LEVEL_RANK: Record<LogLevel, number> = {
 const isTest = import.meta.env.MODE === "test";
 const isDev = import.meta.env.DEV;
 
-// Production keeps warn/error but drops the verbose levels; dev keeps
-// everything. The threshold is fixed at module load — the build mode
-// can't change at runtime.
-const minRank = isDev ? LEVEL_RANK.debug : LEVEL_RANK.warn;
+// The build's own floor: production keeps warn/error and drops the
+// verbose levels, dev keeps everything. Fixed at module load — the
+// build mode can't change at runtime.
+const buildMinRank = isDev ? LEVEL_RANK.debug : LEVEL_RANK.warn;
+
+/**
+ * The user's floor, from Settings → Advanced → `developer.frontendLog`.
+ * `null` until settings hydrate, at which point the build floor is what
+ * applies. Deliberately *replaces* the build floor rather than tightening
+ * it: a user who sets "debug" in a release build is asking to see debug
+ * lines, and a level control that silently did nothing outside a dev
+ * build would be worse than not offering one.
+ */
+let userMinRank: number | null = null;
+
+/**
+ * Sink that mirrors records into the backend's log file so both halves
+ * of the app share one ordered timeline. Installed by the developer IPC
+ * client; `null` in tests and in the browser preview.
+ */
+let forwarder: LogForwarder | null = null;
+
+/** What `setLogForwarder` installs. Fire-and-forget: a forward that
+ *  fails must never disturb the code that logged. */
+export type LogForwarder = (record: {
+  level: LogLevel;
+  module: string;
+  message: string;
+  context?: unknown;
+}) => void;
+
+/**
+ * Set the user's severity floor. `null` restores the build default.
+ *
+ * Takes the persisted `developer.frontendLog` union, which is the
+ * backend's `LogLevel` — it has an `off` and a `trace` this logger has
+ * no level for. `off` silences everything; `trace` maps to `debug`,
+ * the most verbose thing the console side actually emits, so choosing
+ * it shows everything rather than nothing.
+ */
+export function setLogLevel(level: LogLevel | "off" | "trace" | null): void {
+  if (level === null) {
+    userMinRank = null;
+    return;
+  }
+  if (level === "off") {
+    userMinRank = Number.POSITIVE_INFINITY;
+    return;
+  }
+  userMinRank = level === "trace" ? LEVEL_RANK.debug : LEVEL_RANK[level];
+}
+
+/** Install (or clear, with `null`) the backend log sink. */
+export function setLogForwarder(next: LogForwarder | null): void {
+  forwarder = next;
+}
+
+/** The floor in force: the user's when they have set one, else the
+ *  build's. */
+function minRank(): number {
+  return userMinRank ?? buildMinRank;
+}
 
 // Silent in the test runner by default so the suite isn't spammed (and
 // so console.error-based test tooling doesn't trip on intentional error
@@ -105,13 +163,17 @@ function emit(
   message: string,
   context?: unknown
 ): void {
-  if (!enabled || LEVEL_RANK[level] < minRank) return;
+  if (!enabled || LEVEL_RANK[level] < minRank()) return;
   const prefix = formatPrefix(module);
-  if (context === undefined) {
+  const safeContext = context === undefined ? undefined : redact(context);
+  if (safeContext === undefined) {
     console[level](prefix, message);
   } else {
-    console[level](prefix, message, redact(context));
+    console[level](prefix, message, safeContext);
   }
+  // Already-redacted context goes to the file — the same value the
+  // console got, never the raw one.
+  forwarder?.({ level, module, message, context: safeContext });
 }
 
 /**

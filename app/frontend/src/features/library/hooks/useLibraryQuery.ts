@@ -53,7 +53,7 @@ export interface UseLibraryQueryResult {
 export function useLibraryQuery(
   query: LibraryQuery,
   pageSize: number = DEFAULT_PAGE_SIZE,
-  enabled: boolean = true,
+  enabled: boolean = true
 ): UseLibraryQueryResult {
   const [items, setItems] = useState<CaptureMeta[]>([]);
   const [total, setTotal] = useState(0);
@@ -121,7 +121,7 @@ export function useLibraryQuery(
         inFlightRef.current = false;
       }
     },
-    [pageSize, enabled],
+    [pageSize, enabled]
   );
 
   // Bump the generation and reload from the top — the shared restart used
@@ -153,6 +153,6 @@ export function useLibraryQuery(
 
   return useMemo(
     () => ({ items, total, loading, hasMore, loadMore, refresh: restart }),
-    [items, total, loading, hasMore, loadMore, restart],
+    [items, total, loading, hasMore, loadMore, restart]
   );
 }

@@ -231,10 +231,7 @@ mod tests {
         assert_eq!(m.mode, "Region");
         assert_eq!(m.captured_at_ms, 1_700_000_000_000);
         assert_eq!(m.source_app.as_deref(), Some("Chrome"));
-        assert_eq!(
-            m.source_window.as_deref(),
-            Some("GitHub - PR #42 - Chrome")
-        );
+        assert_eq!(m.source_window.as_deref(), Some("GitHub - PR #42 - Chrome"));
         assert_eq!((m.width, m.height), (Some(1920), Some(1080)));
         assert_eq!(m.monitor.as_deref(), Some("Display 2"));
         assert_eq!(m.preset.as_deref(), Some("Docs shot"));
@@ -270,10 +267,7 @@ mod tests {
     fn monitor_label_passes_unrecognised_names_through() {
         // Another platform, or a virtual adapter: pass it through rather
         // than reformatting it into a number it doesn't have.
-        assert_eq!(
-            monitor_label("  HDMI-A-1  ").as_deref(),
-            Some("HDMI-A-1")
-        );
+        assert_eq!(monitor_label("  HDMI-A-1  ").as_deref(), Some("HDMI-A-1"));
         // "DISPLAY" with a non-numeric tail is not an ordinal.
         assert_eq!(
             monitor_label(r"\\.\DISPLAYLINK").as_deref(),
@@ -310,7 +304,8 @@ mod tests {
 
     #[test]
     fn attribution_is_trimmed() {
-        let src = CaptureSource::from_mode("Region").with_window(Some("  Notepad  "), Some(" Notepad "));
+        let src =
+            CaptureSource::from_mode("Region").with_window(Some("  Notepad  "), Some(" Notepad "));
         let m = build(&src, "S.png", 0);
         assert_eq!(m.source_window.as_deref(), Some("Notepad"));
         assert_eq!(m.source_app.as_deref(), Some("Notepad"));

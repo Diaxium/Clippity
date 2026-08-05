@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
-import {
-  detectObjects,
-  onOverlayShown,
-} from "@services/tauri/clients/overlay";
+import { detectObjects, onOverlayShown } from "@services/tauri/clients/overlay";
 import { createLogger } from "@shared/lib/logger";
 
 import { useOverlayStore } from "../state/overlayStore";

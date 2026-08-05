@@ -169,10 +169,7 @@ export function librarySetFavorite(
 }
 
 /** Merge `tags` into each id's existing tags. */
-export function libraryAddTags(
-  ids: string[],
-  tags: string[]
-): Promise<number> {
+export function libraryAddTags(ids: string[], tags: string[]): Promise<number> {
   return invoke<number, { ids: string[]; tags: string[] }>("library_add_tags", {
     ids,
     tags,
@@ -191,10 +188,7 @@ export function libraryRemoveTags(
 }
 
 /** Replace each id's tag list wholesale — the tag editor's "done". */
-export function librarySetTags(
-  ids: string[],
-  tags: string[]
-): Promise<number> {
+export function librarySetTags(ids: string[], tags: string[]): Promise<number> {
   return invoke<number, { ids: string[]; tags: string[] }>("library_set_tags", {
     ids,
     tags,

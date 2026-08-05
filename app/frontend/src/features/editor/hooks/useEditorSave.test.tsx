@@ -26,7 +26,12 @@ beforeEach(() => {
   const nodes: Record<string, SceneNode> = { [a.id]: a };
   useEditorStore
     .getState()
-    .loadScene({ rootIds: [a.id], nodes, docName: "Doc", sourceId: "/caps/x.png" });
+    .loadScene({
+      rootIds: [a.id],
+      nodes,
+      docName: "Doc",
+      sourceId: "/caps/x.png",
+    });
 });
 
 describe("useEditorSave", () => {
@@ -45,7 +50,12 @@ describe("useEditorSave", () => {
   it("toasts and skips the IPC when there is no source capture", async () => {
     useEditorStore
       .getState()
-      .loadScene({ rootIds: [], nodes: {}, docName: "Untitled", sourceId: null });
+      .loadScene({
+        rootIds: [],
+        nodes: {},
+        docName: "Untitled",
+        sourceId: null,
+      });
     const { result } = renderHook(() => useEditorSave());
     await act(async () => {
       await result.current.save();

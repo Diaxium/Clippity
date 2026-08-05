@@ -179,7 +179,10 @@ export function CaptureCard({
           </span>
         )}
 
-        <SelectCheckbox id={meta.id} className="absolute left-1.5 top-1.5 z-20" />
+        <SelectCheckbox
+          id={meta.id}
+          className="absolute left-1.5 top-1.5 z-20"
+        />
       </div>
 
       <div className="px-0.5 pt-2">

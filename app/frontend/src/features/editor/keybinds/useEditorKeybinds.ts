@@ -32,8 +32,7 @@ const HELP_ALLOWED = new Set(["escape", "help"]);
 function dispatchState(e: KeyboardEvent): DispatchState {
   const s = useEditorStore.getState();
   return {
-    typing:
-      isTypingTarget(e.target) || isTypingTarget(document.activeElement),
+    typing: isTypingTarget(e.target) || isTypingTarget(document.activeElement),
     hasSelection: s.selectedIds.length > 0,
     editingText: s.editingTextId !== null,
   };
@@ -82,7 +81,8 @@ export function useEditorKeybinds(enabled: boolean, api: KeybindApi): void {
       const kb = resolveKeyDown(e, st);
       if (!kb) return;
       // While help is open, only Esc (close) and ? (toggle) are live.
-      if (useEditorStore.getState().helpOpen && !HELP_ALLOWED.has(kb.id)) return;
+      if (useEditorStore.getState().helpOpen && !HELP_ALLOWED.has(kb.id))
+        return;
 
       if (kb.coalesce) touchNudge();
       else flushNudge(); // a non-nudge action commits any open nudge burst first

@@ -17,6 +17,7 @@ export * from "./toast";
 export * from "./library";
 export * from "./collections";
 export * from "./editor";
+export * from "./media";
 export * from "./dashboard";
 export * from "./models";
 export * from "./share";

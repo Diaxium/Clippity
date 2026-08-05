@@ -119,7 +119,11 @@ describe("matchesSearch", () => {
     });
     expect(matchesSearch(color, "#ff6e")).toBe(true);
 
-    const text = meta({ kind: "text", title: "aux", text: "npm run tauri:dev" });
+    const text = meta({
+      kind: "text",
+      title: "aux",
+      text: "npm run tauri:dev",
+    });
     expect(matchesSearch(text, "tauri")).toBe(true);
   });
 
@@ -196,8 +200,9 @@ describe("collectionItems", () => {
   });
 
   it("returns nothing for an empty collection", () => {
-    expect(collectionItems([meta({ id: "a" })], { ...collection, members: [] }))
-      .toEqual([]);
+    expect(
+      collectionItems([meta({ id: "a" })], { ...collection, members: [] })
+    ).toEqual([]);
   });
 });
 

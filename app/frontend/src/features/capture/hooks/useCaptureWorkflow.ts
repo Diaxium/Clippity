@@ -66,10 +66,7 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
       // Clipboard mode is instant and overlay-less — read the system
       // clipboard directly. No toggle-mirror, no delay, no overlay; an
       // empty clipboard surfaces a friendly toast, not an error.
-      if (
-        state.captureType === "custom" &&
-        state.customMode === "clipboard"
-      ) {
+      if (state.captureType === "custom" && state.customMode === "clipboard") {
         const ingest = await ingestClipboard(state.preview);
         if (ingest.kind === "empty") {
           void emitErrorToast("Clipboard is empty — copy something first.");

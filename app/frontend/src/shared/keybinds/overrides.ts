@@ -48,7 +48,7 @@ export function effectiveKeys(
   scope: KeybindScope,
   id: string,
   defaults: readonly string[],
-  overrides: KeybindOverrides,
+  overrides: KeybindOverrides
 ): string[] {
   const override = overrides[fqid(scope, id)];
   return override !== undefined ? override : [...defaults];
@@ -69,7 +69,7 @@ export function effectiveKeys(
 export function applyOverrides<T extends { id: string; keys: string[] }>(
   scope: KeybindScope,
   bindings: readonly T[],
-  overrides: KeybindOverrides,
+  overrides: KeybindOverrides
 ): readonly T[] {
   let changed = false;
   const out = bindings.map((binding) => {

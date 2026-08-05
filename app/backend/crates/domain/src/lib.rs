@@ -5,13 +5,22 @@
 //! to be useful (beyond pure `image` math), it belongs in a service.
 //!
 //! Sub-modules are one per feature:
+//!   annotation — Studio's time-ranged annotations: the redaction
+//!                filters and overlay lookup the burn-in needs (the
+//!                shapes themselves are drawn in the webview)
 //!   capture   — fullscreen capture modes + requests
 //!   overlay   — region geometry, overlay modes, finalize requests
+//!   pixels    — which of a 4-byte pixel's channels is red, so a frame
+//!               can travel from capture to encoder without a
+//!               normalising pass
 //!   toast     — toast payloads, durations, corner anchor helpers
 //!   library   — captured-item metadata + storage info
+//!   media     — clip playback description + trim-range rules (Studio)
 //!   metadata  — per-capture provenance (source app/window, mode, time)
 //!   labels    — per-capture tags + favorite flag
 //!   collections — named, ordered capture sets
+//!   developer — diagnostics wire shapes + the redaction rules an
+//!               exported bundle is run through
 //!   editor    — load/save data-URI envelope for the annotation editor
 //!   hdr       — scRGB → sRGB tone mapping for captures off an HDR display
 //!   naming    — capture file-name template engine
@@ -24,20 +33,25 @@
 //!   vision    — object-detection post-processing (decode, NMS, tiling)
 //!   window_attribution — visible-window majority scoring for names
 
+pub mod annotation;
 pub mod capture;
 pub mod collections;
+pub mod composition;
 pub mod countdown;
 pub mod dashboard;
+pub mod developer;
 pub mod editor;
 pub mod enhance;
 pub mod hdr;
 pub mod labels;
 pub mod library;
+pub mod media;
 pub mod metadata;
 pub mod models;
 pub mod naming;
 pub mod overlay;
 pub mod palette;
+pub mod pixels;
 pub mod preset;
 pub mod provisioning;
 pub mod recorder;

@@ -46,3 +46,6 @@ memory, which captured each decision in full. Numbering continues from 0013.
 - 0029 — [Labels ride a sidecar; a collection is a document](0029-labels-are-a-sidecar-collections-are-a-document.md)
 - 0030 — [Root-level pnpm + Cargo workspace restructure](0030-root-workspace-restructure.md)
 - 0031 — [Recording encodes through Media Foundation; one session, two outputs](0031-recording-is-media-foundation-one-session-two-outputs.md)
+- 0032 — [Studio is a separate surface; it streams to play and re-encodes to trim](0032-studio-is-a-separate-surface-that-streams-and-re-encodes.md)
+- 0033 — [Diagnostics are a shipped surface; developer mode is a gate over it](0033-diagnostics-are-a-shipped-surface-developer-mode-is-a-gate.md)
+- 0034 — [Recorder sources composite over the captured frame, in place and rect-bounded](0034-recorder-sources-composite-over-the-captured-frame.md)

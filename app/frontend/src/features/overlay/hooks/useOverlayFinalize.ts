@@ -17,10 +17,14 @@ import {
   startScrollCapture,
 } from "@services/tauri/clients/scroll";
 import { startRecording } from "@services/tauri/clients/recorder";
-import { buildRecorderRequest } from "@shared/lib/recorderRequest";
+import { overlayRecorderRequest } from "@shared/lib/recorderRequest";
 import { useSettingsStore } from "@features/settings";
 
-import { flattenBezier, MIN_FREEHAND_POINTS, MIN_PEN_POINTS } from "../geometry";
+import {
+  flattenBezier,
+  MIN_FREEHAND_POINTS,
+  MIN_PEN_POINTS,
+} from "../geometry";
 import { useOverlayStore } from "../state/overlayStore";
 import type { Pt, Rect } from "../types";
 
@@ -231,10 +235,11 @@ export function useOverlayFinalize(): OverlayFinalize {
       // flash — nothing was captured yet, and flashing would suggest a
       // still had been taken.
       startRecording(
-        buildRecorderRequest(
+        overlayRecorderRequest(
           "region",
           s.recordFormat,
           useSettingsStore.getState().settings?.recording,
+          s.recordOverride,
           scaleRect(s.rect, dpr)
         )
       )

@@ -26,10 +26,13 @@ import type {
   AppIconStyle,
   CaptureCompression,
   Density,
+  DeveloperExpiry,
+  LogLevel,
   RadiusScale,
   SettingsCategory,
   ToastCorner,
   ToastDurations,
+  WindowBackdrop,
 } from "./types";
 
 export interface CategoryDef {
@@ -84,13 +87,7 @@ export const CATEGORIES: readonly CategoryDef[] = [
     built: false,
     blockedBy: "privacy controls",
   },
-  {
-    id: "advanced",
-    label: "Advanced",
-    icon: Sliders,
-    built: false,
-    blockedBy: "advanced options",
-  },
+  { id: "advanced", label: "Advanced", icon: Sliders, built: true },
   {
     id: "about",
     label: "About",
@@ -153,10 +150,47 @@ export const APP_ICON_OPTIONS: readonly AppIconOption[] = [
   { value: "monochrome", label: "Monochrome", hint: "Single-hue glyph" },
 ] as const;
 
+/** Native window-backdrop options. `value` mirrors the kebab-case wire
+ *  shape of `WindowBackdrop`. The Performance tab's "Transparency &
+ *  blur effects" switch remains the master on/off control. */
+export interface WindowBackdropOption {
+  value: WindowBackdrop;
+  label: string;
+  hint: string;
+}
+
+export const WINDOW_BACKDROP_OPTIONS: readonly WindowBackdropOption[] = [
+  {
+    value: "mica",
+    label: "Mica",
+    hint: "Wallpaper-tinted material; not live desktop blur",
+  },
+  { value: "acrylic", label: "Acrylic", hint: "True translucent blur" },
+  {
+    value: "blur",
+    label: "Blur",
+    hint: "Legacy Windows blur; varies by build",
+  },
+  {
+    value: "tabbed",
+    label: "Tabbed",
+    hint: "Tabbed Mica material; not live desktop blur",
+  },
+  {
+    value: "clear",
+    label: "Clear",
+    hint: "No material — the desktop shows through unblurred",
+  },
+] as const;
+
+// The per-material tuning tables + helpers live in `lib/backdrop.ts` —
+// `Providers.tsx` needs them on every window and shouldn't drag this
+// icon-laden module into every bundle to get them.
+
 /** Chrome-opacity slider envelope, in percent. Mirrors the Rust
  *  `domain::settings::{MIN,MAX}_WINDOW_OPACITY_PCT` clamp — keep in
  *  lock-step. */
-export const WINDOW_OPACITY_MIN_PCT = 60;
+export const WINDOW_OPACITY_MIN_PCT = 10;
 export const WINDOW_OPACITY_MAX_PCT = 100;
 export const WINDOW_OPACITY_STEP_PCT = 1;
 
@@ -271,6 +305,177 @@ export const VIDEO_FPS_MIN = 10;
 export const VIDEO_FPS_MAX = 60;
 export const GIF_FPS_MIN = 5;
 export const GIF_FPS_MAX = 30;
+
+/** Audio-gain envelope, as a percentage of unity. Mirrors the Rust
+ *  `domain::recorder::{GAIN_PCT_DEFAULT,GAIN_PCT_MAX}` clamp.
+ *
+ *  The floor is 0 (silence — what mute sends) and the ceiling is +6 dB;
+ *  past that a bigger number buys distortion rather than volume, because
+ *  the mix is clamped to full scale on its way to 16-bit PCM. */
+export const GAIN_MIN_PCT = 0;
+export const GAIN_MAX_PCT = 200;
+export const GAIN_DEFAULT_PCT = 100;
+export const GAIN_STEP_PCT = 5;
+/** Ticks every 50% — unity lands on one, which is what makes "back to
+ *  normal" findable by eye during a drag. */
+export const GAIN_TICK_STEP_PCT = 50;
+
+/** Encoder-quality steps. Mirrors `domain::recorder::RecorderQuality`,
+ *  whose bits-per-pixel table is the thing that actually differs —
+ *  these labels describe the trade in the terms a user makes it in. */
+export const QUALITY_OPTIONS: readonly { value: string; label: string }[] = [
+  { value: "efficient", label: "Efficient — smaller files" },
+  { value: "balanced", label: "Balanced (recommended)" },
+  { value: "high", label: "High — larger files" },
+];
+
+/** Rate-control modes. Mirrors `domain::recorder::RateControl`. */
+export const RATE_CONTROL_OPTIONS: readonly {
+  value: string;
+  label: string;
+}[] = [
+  { value: "variable", label: "Variable — smaller files" },
+  { value: "constant", label: "Constant — predictable size" },
+];
+
+/** Keyframe-interval envelope in seconds. Mirrors
+ *  `domain::recorder::KEYFRAME_SECONDS_{MIN,MAX}`. */
+export const KEYFRAME_SECONDS_MIN = 1;
+export const KEYFRAME_SECONDS_MAX = 10;
+
+/** Bitrate-override envelope in **megabits** per second — the unit the
+ *  field is typed in. Mirrors `domain::recorder::BITRATE_{MIN,MAX}_BPS`
+ *  (1.5–60 Mbps); the backend clamps in bits, so the field rounds up to
+ *  2 rather than offering a value that would be clamped on arrival. */
+export const BITRATE_MIN_MBPS = 2;
+export const BITRATE_MAX_MBPS = 60;
+
+/** Most sources one recording may carry. Mirrors
+ *  `domain::composition::MAX_SOURCES`. */
+export const MAX_SOURCES = 8;
+
+/** Where a source sits, as a fraction of the recorded frame.
+ *
+ *  Corners rather than free positioning: dragging wants a live preview
+ *  of the frame, and a recording's frame is whatever the user is about
+ *  to point at — which does not exist while this panel is open. A
+ *  quarter-width box in a corner is what people actually do with a
+ *  webcam, and because the rect is normalized the same choice lands
+ *  correctly on any region or monitor. */
+export const CORNER_PRESETS: readonly {
+  key: string;
+  label: string;
+  rect: { x: number; y: number; w: number; h: number };
+}[] = [
+  {
+    key: "tl",
+    label: "Top left",
+    rect: { x: 0.03, y: 0.04, w: 0.25, h: 0.25 },
+  },
+  {
+    key: "tr",
+    label: "Top right",
+    rect: { x: 0.72, y: 0.04, w: 0.25, h: 0.25 },
+  },
+  {
+    key: "bl",
+    label: "Bottom left",
+    rect: { x: 0.03, y: 0.71, w: 0.25, h: 0.25 },
+  },
+  {
+    key: "br",
+    label: "Bottom right",
+    rect: { x: 0.72, y: 0.71, w: 0.25, h: 0.25 },
+  },
+] as const;
+
+/** Sentinel for "encode at whatever was captured". Mirrors the Rust
+ *  `domain::recorder::RESOLUTION_SOURCE`. */
+export const RESOLUTION_SOURCE = 0;
+
+/** Output-resolution menu, high to low. Mirrors
+ *  `domain::recorder::RESOLUTION_CHOICES`, plus the source entry.
+ *
+ *  Heights, not `width×height` pairs: a recording's aspect ratio comes
+ *  from the region the user picked, and stating a width would either
+ *  letterbox an ultrawide clip or promise dimensions no session has.
+ *  The cap only ever shrinks — a region shorter than the chosen height
+ *  is left alone rather than upscaled. */
+export const RESOLUTION_OPTIONS: readonly { value: number; label: string }[] = [
+  { value: RESOLUTION_SOURCE, label: "Same as source" },
+  { value: 2160, label: "2160p (4K)" },
+  { value: 1440, label: "1440p (QHD)" },
+  { value: 1080, label: "1080p (Full HD)" },
+  { value: 720, label: "720p (HD)" },
+  { value: 480, label: "480p" },
+];
+
+// ---------- Developer & diagnostics (Settings → Advanced) ----------
+
+/** Log-level choices, least to most verbose. `value` mirrors the
+ *  kebab-case wire shape of `LogLevel`; the hint says what each level
+ *  costs, because "trace" on a recording session is a real decision. */
+export interface LogLevelOption {
+  value: LogLevel;
+  label: string;
+  hint: string;
+}
+
+export const LOG_LEVEL_OPTIONS: readonly LogLevelOption[] = [
+  { value: "off", label: "Off", hint: "Record nothing" },
+  { value: "error", label: "Error", hint: "Failures only" },
+  { value: "warn", label: "Warning", hint: "Failures + suspicions" },
+  { value: "info", label: "Info", hint: "What the app did" },
+  { value: "debug", label: "Debug", hint: "Verbose — for reproducing a bug" },
+  { value: "trace", label: "Trace", hint: "Everything — very noisy" },
+] as const;
+
+/** How long an armed developer mode survives. `value` mirrors the
+ *  kebab-case wire shape of `DeveloperExpiry`. */
+export interface DeveloperExpiryOption {
+  value: DeveloperExpiry;
+  label: string;
+  hint: string;
+}
+
+export const DEVELOPER_EXPIRY_OPTIONS: readonly DeveloperExpiryOption[] = [
+  { value: "restart", label: "Until restart", hint: "The default" },
+  { value: "day", label: "For 24 hours", hint: "From when it was armed" },
+  { value: "never", label: "Until turned off", hint: "Stays armed" },
+] as const;
+
+/** Log-file size envelope, in MiB. Mirrors the Rust
+ *  `domain::settings::{MIN,MAX}_LOG_FILE_MB` clamp. */
+export const LOG_FILE_MB_MIN = 1;
+export const LOG_FILE_MB_MAX = 64;
+
+/** Retained rotated files. Mirrors `{MIN,MAX}_LOG_FILES`. */
+export const LOG_FILES_MIN = 1;
+export const LOG_FILES_MAX = 20;
+
+/** Slow-command threshold choices, in ms. 16 ms is one frame at 60 Hz —
+ *  the point past which a command can cost a dropped frame. Mirrors the
+ *  Rust `{MIN,MAX}_SLOW_COMMAND_MS` envelope. */
+export const SLOW_COMMAND_OPTIONS: readonly { value: number; label: string }[] =
+  [
+    { value: 16, label: "16 ms — one frame" },
+    { value: 50, label: "50 ms" },
+    { value: 100, label: "100 ms (default)" },
+    { value: 500, label: "500 ms" },
+    { value: 1000, label: "1 s" },
+  ];
+
+/** How many log lines the live viewer holds. Past a couple of thousand
+ *  the webview is the bottleneck, not the disk — and the backend caps
+ *  the request at the same number. */
+export const LOG_VIEW_LINES = 400;
+
+/** How often the live log viewer re-reads the tail, in ms. Slow enough
+ *  that watching the log doesn't itself become the load being watched. */
+export const LOG_POLL_MS = 1500;
+
+/** How often the live performance overlay samples, in ms. */
+export const PERF_SAMPLE_MS = 500;
 
 /** Detection-confidence slider envelope, in percent. Mirrors the Rust
  *  `domain::settings::{MIN,MAX}_CONFIDENCE_PCT` clamp — coordinate in

@@ -215,7 +215,11 @@ describe("sealing the page (the export-region trap)", () => {
 
   it("a non-empty backdrop seals the page too", () => {
     const s = withStray();
-    const next = setPageBackdrop(s, s.pageId, backdropPreset("violet")!.build());
+    const next = setPageBackdrop(
+      s,
+      s.pageId,
+      backdropPreset("violet")!.build()
+    );
     expect(next.rootIds).toEqual([s.pageId]);
   });
 

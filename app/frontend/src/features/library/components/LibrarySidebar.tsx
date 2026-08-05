@@ -216,7 +216,8 @@ export function LibrarySidebar({
           <SectionLabel>Tags</SectionLabel>
           {facets.tags.map(({ tag, count }) => {
             const active =
-              tagFilter !== null && tagFilter.toLowerCase() === tag.toLowerCase();
+              tagFilter !== null &&
+              tagFilter.toLowerCase() === tag.toLowerCase();
             return (
               <Row
                 key={tag}
@@ -306,7 +307,8 @@ function CollectionsSection({
   const remove = async (id: string) => {
     try {
       await collectionsRemove(id);
-      if (sameScope(scope, { kind: "collection", id })) onScope({ kind: "all" });
+      if (sameScope(scope, { kind: "collection", id }))
+        onScope({ kind: "all" });
     } catch (err) {
       void emitErrorToast(
         err instanceof Error ? err.message : "Failed to delete the collection."

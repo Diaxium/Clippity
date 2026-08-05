@@ -65,6 +65,26 @@ describe("visibleRecordOptionKeys", () => {
     expect(keys.has("systemAudio")).toBe(true);
   });
 
+  it("keeps sources on both formats", () => {
+    // A GIF is still a picture of the screen — a webcam in the corner
+    // is as meaningful there as in a video.
+    expect(visibleRecordOptionKeys("mp4").has("sources")).toBe(true);
+    expect(visibleRecordOptionKeys("gif").has("sources")).toBe(true);
+  });
+
+  it("offers an encoder quality step for video only", () => {
+    // Quality scales an H.264 bitrate; GIF has none.
+    expect(visibleRecordOptionKeys("mp4").has("quality")).toBe(true);
+    expect(visibleRecordOptionKeys("gif").has("quality")).toBe(false);
+  });
+
+  it("offers a resolution cap for video only", () => {
+    // GIF's own pixel budget is under every height the menu offers, so
+    // the control would never change the file.
+    expect(visibleRecordOptionKeys("mp4").has("resolution")).toBe(true);
+    expect(visibleRecordOptionKeys("gif").has("resolution")).toBe(false);
+  });
+
   it("hides audio entirely for GIF", () => {
     // GIF has no audio track — a toggle here would promise something
     // nothing keeps.

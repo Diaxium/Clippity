@@ -74,6 +74,55 @@
       "note": "P5 rail aggregates over 50k rows: counts by kind/favorite/trash, the four smart-collection sizes, and the tag vocabulary. Unlike page_50 this is inherently a full-table pass (conditional sums, plus a GROUP BY over json_each for tags), so it is the dominant native cost of opening a large library: 46.4ms + 2.1ms per page, against the 126ms full listing it replaces. It is not on the typing path — it re-runs on library/updated, not per keystroke — and the rail renders zeros until it lands, so it never blocks the grid. If this needs to come down, the tag GROUP BY is the piece to attack (a tags side-table instead of json_each)."
     },
 
+    "recorder_frame/readback_1080p": {
+      "automated": true,
+      "unit": "ms",
+      "baseline_ms": 0.38,
+      "warn_ms": 1.0,
+      "fail_ms": 2.0,
+      "note": "Copy one 1080p frame out of a mapped staging surface at a 256-byte-aligned row pitch — what a held Desktop Duplication costs per frame."
+    },
+    "recorder_frame/nv12_1080p": {
+      "automated": true,
+      "unit": "ms",
+      "baseline_ms": 0.39,
+      "warn_ms": 1.2,
+      "fail_ms": 2.5,
+      "note": "BGRA->NV12 for one 1080p frame, fanned out over the shared band pool."
+    },
+    "recorder_frame/readback_4k": {
+      "automated": true,
+      "unit": "ms",
+      "baseline_ms": 2.33,
+      "warn_ms": 4.0,
+      "fail_ms": 8.0,
+      "note": "The same read-back at 4K. Was 5.44ms when it appended pixel-by-pixel with a BGRA->RGBA swap folded in; the swap now travels with the frame instead (domain::pixels::PixelOrder) and each row is one memcpy."
+    },
+    "recorder_frame/nv12_4k": {
+      "automated": true,
+      "unit": "ms",
+      "baseline_ms": 1.57,
+      "warn_ms": 3.0,
+      "fail_ms": 5.5,
+      "note": "BGRA->NV12 at 4K. Read-back plus conversion is 3.9ms against a 16.7ms budget at 60fps."
+    },
+    "recorder_frame/readback_ultrawide": {
+      "automated": true,
+      "unit": "ms",
+      "baseline_ms": 1.97,
+      "warn_ms": 3.5,
+      "fail_ms": 7.0,
+      "note": "5120x1440 — the size this pipeline first failed to keep up at, and the one worth watching. Was 4.83ms."
+    },
+    "recorder_frame/nv12_ultrawide": {
+      "automated": true,
+      "unit": "ms",
+      "baseline_ms": 1.38,
+      "warn_ms": 2.8,
+      "fail_ms": 5.0,
+      "note": "BGRA->NV12 at 5120x1440 (7.4Mpx). Read-back plus conversion is 3.3ms, a fifth of the 16.7ms budget at 60fps — the headroom the encoder needs. Fail is set at the point where the two stages together would eat half a 60fps frame."
+    },
+
     "startup_cold": {
       "automated": false,
       "unit": "ms",

@@ -13,29 +13,29 @@ import { ROUTES } from "@config/constants";
  * `{ default }` shape `lazy()` expects.
  */
 const CaptureWindow = lazy(() =>
-  import("@windows/CaptureWindow").then((m) => ({ default: m.CaptureWindow })),
+  import("@windows/CaptureWindow").then((m) => ({ default: m.CaptureWindow }))
 );
 const CountdownWindow = lazy(() =>
   import("@windows/CountdownWindow").then((m) => ({
     default: m.CountdownWindow,
-  })),
+  }))
 );
 const MainWindow = lazy(() =>
-  import("@windows/MainWindow").then((m) => ({ default: m.MainWindow })),
+  import("@windows/MainWindow").then((m) => ({ default: m.MainWindow }))
 );
 const OverlayWindow = lazy(() =>
-  import("@windows/OverlayWindow").then((m) => ({ default: m.OverlayWindow })),
+  import("@windows/OverlayWindow").then((m) => ({ default: m.OverlayWindow }))
 );
 const ToastWindow = lazy(() =>
-  import("@windows/ToastWindow").then((m) => ({ default: m.ToastWindow })),
+  import("@windows/ToastWindow").then((m) => ({ default: m.ToastWindow }))
 );
 const TrayWindow = lazy(() =>
-  import("@windows/TrayWindow").then((m) => ({ default: m.TrayWindow })),
+  import("@windows/TrayWindow").then((m) => ({ default: m.TrayWindow }))
 );
 const RecorderFrameWindow = lazy(() =>
   import("@windows/RecorderFrameWindow").then((m) => ({
     default: m.RecorderFrameWindow,
-  })),
+  }))
 );
 
 /**

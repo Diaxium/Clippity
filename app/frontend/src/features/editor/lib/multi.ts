@@ -49,7 +49,8 @@ export function shared<I, T>(
   const value = pick(first);
   const id = identity(value);
   for (let i = 1; i < items.length; i++) {
-    if (!Object.is(identity(pick(items[i]!)), id)) return { value, mixed: true };
+    if (!Object.is(identity(pick(items[i]!)), id))
+      return { value, mixed: true };
   }
   return { value, mixed: false };
 }

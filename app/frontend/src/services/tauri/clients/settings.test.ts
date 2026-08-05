@@ -11,6 +11,9 @@ vi.mock("@services/tauri", () => ({
   },
 }));
 
+import { DEFAULT_BACKDROP_TUNING_SET } from "@features/settings/lib/backdrop";
+import { DEFAULT_DEVELOPER_SETTINGS } from "@clippity/shared";
+
 import {
   getSettings,
   onSettingsChanged,
@@ -32,6 +35,8 @@ const sample: Settings = {
     theme: "system",
     accent: "#FF6E4A",
     windowOpacity: 100,
+    windowBackdrop: "mica",
+    backdropTuning: DEFAULT_BACKDROP_TUNING_SET,
     uiScale: 100,
     cornerRadius: "default",
     density: "comfortable",
@@ -69,8 +74,13 @@ const sample: Settings = {
     systemAudio: false,
     microphoneDevice: null,
     systemDevice: null,
+    microphoneGainPct: 100,
+    systemGainPct: 100,
     videoFps: 30,
     gifFps: 15,
+    maxHeight: 0,
+    encoding: {},
+    sources: [],
     cursor: false,
     outline: true,
     clipboard: false,
@@ -85,6 +95,7 @@ const sample: Settings = {
     globalCapture: "Mod+Shift+2",
     globalCaptureEnabled: true,
   },
+  developer: DEFAULT_DEVELOPER_SETTINGS,
 };
 
 describe("getSettings", () => {

@@ -161,7 +161,13 @@ describe("useToastContent", () => {
     // (e.g. `stop_recording`) — the next empty stretch must be able to
     // ask again rather than staying latched from the first.
     act(() =>
-      showHandler!({ kind: "recorder", format: "mp4", audio: false, durationMs: 0 })
+      showHandler!({
+        kind: "recorder",
+        format: "mp4",
+        microphone: false,
+        system: false,
+        durationMs: 0,
+      })
     );
     act(() => hideHandler!());
     expect(result.current.event).toBeNull();

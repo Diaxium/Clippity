@@ -565,12 +565,28 @@ export function calloutOutline(node: SceneNode): Vec2[] {
   if (edge === "right") {
     const by = clamp(base.y, y + half, y + h - half);
     const r = x + w;
-    return [TL, TR, { x: r, y: by - half }, tip, { x: r, y: by + half }, BR, BL];
+    return [
+      TL,
+      TR,
+      { x: r, y: by - half },
+      tip,
+      { x: r, y: by + half },
+      BR,
+      BL,
+    ];
   }
   if (edge === "bottom") {
     const bx = clamp(base.x, x + half, x + w - half);
     const b = y + h;
-    return [TL, TR, BR, { x: bx + half, y: b }, tip, { x: bx - half, y: b }, BL];
+    return [
+      TL,
+      TR,
+      BR,
+      { x: bx + half, y: b },
+      tip,
+      { x: bx - half, y: b },
+      BL,
+    ];
   }
   const by = clamp(base.y, y + half, y + h - half); // left
   return [TL, TR, BR, BL, { x, y: by + half }, tip, { x, y: by - half }];

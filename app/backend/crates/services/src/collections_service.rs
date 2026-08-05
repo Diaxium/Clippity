@@ -26,9 +26,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use crate::settings_service::CapturesDirSource;
 use clippity_domain::collections::{self, Collection, CollectionCatalog};
 use clippity_infra::error::{AppError, AppResult};
-use crate::settings_service::CapturesDirSource;
 
 /// File name of the collections document under the captures dir. The
 /// library scan skips it by name — it is a catalog, not a capture.

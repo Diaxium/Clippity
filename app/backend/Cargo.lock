@@ -802,6 +802,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "clippity-domain",
+ "clippity-platform",
  "clippity-services",
  "criterion",
  "image",

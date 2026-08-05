@@ -68,7 +68,9 @@ export function GeneralPanel({ value, onChange }: GeneralPanelProps) {
             control={
               <ToggleSwitch
                 checked={value.startOnStartup}
-                onChange={(next) => onChange({ ...value, startOnStartup: next })}
+                onChange={(next) =>
+                  onChange({ ...value, startOnStartup: next })
+                }
                 label="Start on startup"
               />
             }

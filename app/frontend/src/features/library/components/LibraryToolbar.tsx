@@ -71,7 +71,11 @@ export function LibraryToolbar({
       </span>
 
       {tagFilter && (
-        <Chip label={tagFilter} onClear={onClearTag} clearLabel="Clear tag filter" />
+        <Chip
+          label={tagFilter}
+          onClear={onClearTag}
+          clearLabel="Clear tag filter"
+        />
       )}
       {search.trim() && (
         <Chip

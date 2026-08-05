@@ -11,7 +11,11 @@ import type {
 } from "@clippity/shared";
 
 // ---------- Wire-format types (mirror Rust `domain::scroll`) ----------
-export type { ScrollDirection, RecordingTick, RecordingPreview } from "@clippity/shared";
+export type {
+  ScrollDirection,
+  RecordingTick,
+  RecordingPreview,
+} from "@clippity/shared";
 
 /**
  * Scrolling-Window recording (ADR 0008). `start` hides the overlay and
@@ -28,7 +32,12 @@ export function startScrollCapture(
 ): Promise<void> {
   return invoke<
     void,
-    { rect: Region; direction: ScrollDirection; clipboard: boolean; preview: boolean }
+    {
+      rect: Region;
+      direction: ScrollDirection;
+      clipboard: boolean;
+      preview: boolean;
+    }
   >("start_scroll_capture", { rect, direction, clipboard, preview });
 }
 
@@ -48,7 +57,12 @@ export function startPanoramicCapture(
 ): Promise<void> {
   return invoke<
     void,
-    { rect: Region; direction: ScrollDirection; clipboard: boolean; preview: boolean }
+    {
+      rect: Region;
+      direction: ScrollDirection;
+      clipboard: boolean;
+      preview: boolean;
+    }
   >("start_panoramic_capture", { rect, direction, clipboard, preview });
 }
 

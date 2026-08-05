@@ -9,10 +9,15 @@
 export type {
   AppearanceSettings,
   AppIconStyle,
+  BackdropTuning,
+  BackdropTuningSet,
   CaptureCompression,
   CaptureSettings,
   Density,
+  DeveloperExpiry,
+  DeveloperSettings,
   GeneralSettings,
+  LogLevel,
   ModelsSettings,
   NotificationSettings,
   PerformanceSettings,
@@ -22,6 +27,7 @@ export type {
   SettingsPatch,
   ShortcutsSettings,
   ThemePref,
+  WindowBackdrop,
 } from "@services/tauri/clients/settings";
 export type {
   ToastCorner,

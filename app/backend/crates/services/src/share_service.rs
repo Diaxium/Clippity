@@ -10,9 +10,9 @@
 
 use std::path::Path;
 
+use crate::capture_io::copy_text_to_clipboard;
 use clippity_domain::share::ShareTarget;
 use clippity_infra::error::{AppError, AppResult};
-use crate::capture_io::copy_text_to_clipboard;
 
 /// Hand `path` to `target`.
 ///

@@ -20,12 +20,12 @@ use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 
 use image::codecs::gif::{GifEncoder, Repeat};
-use image::{Delay, Frame, RgbaImage};
+use image::{Delay, Frame};
 
-use clippity_domain::recorder::{self, ValidatedRecorderRequest};
+use clippity_domain::recorder;
 use clippity_infra::error::{AppError, AppResult};
 
-use super::sink::{file_size, RecordingSink};
+use super::sink::{file_size, RecordingSink, SinkConfig, SinkFrame};
 
 /// Encoder speed, on the `image` crate's 1..=30 scale (higher is
 /// faster, lower compresses better).
@@ -37,7 +37,7 @@ use super::sink::{file_size, RecordingSink};
 /// slightly larger one.
 const ENCODER_SPEED: i32 = 10;
 
-pub fn open(path: &Path, request: &ValidatedRecorderRequest) -> AppResult<Box<dyn RecordingSink>> {
+pub fn open(path: &Path, config: SinkConfig) -> AppResult<Box<dyn RecordingSink>> {
     let file = File::create(path)?;
     let mut encoder = GifEncoder::new_with_speed(BufWriter::new(file), ENCODER_SPEED);
     // A screen-recorded GIF is a loop by convention — a one-shot GIF
@@ -46,13 +46,15 @@ pub fn open(path: &Path, request: &ValidatedRecorderRequest) -> AppResult<Box<dy
         .set_repeat(Repeat::Infinite)
         .map_err(|e| AppError::Recorder(format!("gif header: {e}")))?;
 
-    let (width, height) = recorder::gif_target_size(request.region.width, request.region.height);
+    // Both bounds at once: the user's resolution cap and GIF's own pixel
+    // budget, tighter one winning.
+    let (width, height) = config.output_size(recorder::RecorderFormat::Gif);
     Ok(Box::new(GifSink {
         encoder: Some(encoder),
         path: path.to_path_buf(),
-        delay: recorder::gif_frame_delay_cs(request.fps),
+        delay: recorder::gif_frame_delay_cs(config.fps),
         target: (width, height),
-        source: (request.region.width, request.region.height),
+        source: (config.width, config.height),
     }))
 }
 
@@ -69,7 +71,7 @@ struct GifSink {
 impl RecordingSink for GifSink {
     fn write_frame(
         &mut self,
-        frame: &RgbaImage,
+        frame: SinkFrame<'_>,
         _timestamp_hns: i64,
         _duration_hns: i64,
     ) -> AppResult<()> {
@@ -77,14 +79,23 @@ impl RecordingSink for GifSink {
             return Ok(());
         };
 
+        // The one sink that materialises. `image`'s quantizer is built
+        // on its RGBA types, so a capture in the surface's own order has
+        // to be swapped here — see `SinkFrame`. GIF is where that costs
+        // least: its pixel budget has already pulled the frame far below
+        // the captured size, and the quantizer that follows dwarfs it.
+        let source = frame
+            .to_rgba_image()
+            .ok_or_else(|| AppError::Recorder("a captured frame had the wrong size".into()))?;
+
         // Downscale before quantizing, not after: quantizing 4K and
         // then shrinking would spend the whole frame budget on pixels
         // about to be thrown away, and blend palette entries into
         // colours that were never in the palette.
         let scaled = if self.target == self.source {
-            frame.clone()
+            source
         } else {
-            image::imageops::thumbnail(frame, self.target.0, self.target.1)
+            image::imageops::thumbnail(&source, self.target.0, self.target.1)
         };
 
         // GIF stores delay in centiseconds; `Delay` takes milliseconds
@@ -126,43 +137,33 @@ impl RecordingSink for GifSink {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clippity_domain::overlay::Region;
-    use clippity_domain::recorder::{RecorderFormat, RecorderTarget, RecorderToggles};
-
-    fn request(width: u32, height: u32, fps: u32) -> ValidatedRecorderRequest {
-        ValidatedRecorderRequest {
-            target: RecorderTarget::Region,
-            region: Region {
-                x: 0,
-                y: 0,
-                width,
-                height,
-            },
-            window_id: None,
-            format: RecorderFormat::Gif,
+    fn config(width: u32, height: u32, fps: u32) -> SinkConfig {
+        SinkConfig {
+            width,
+            height,
             fps,
-            audio: Default::default(),
-            toggles: RecorderToggles::default(),
-            output_dir: None,
-            preset: None,
+            max_height: recorder::RESOLUTION_SOURCE,
+            encoding: recorder::RecorderEncoding::default(),
+            with_audio: false,
         }
     }
 
-    fn frame(width: u32, height: u32, shade: u8) -> RgbaImage {
-        RgbaImage::from_fn(width, height, |x, _| {
+    fn frame(width: u32, height: u32, shade: u8) -> image::RgbaImage {
+        image::RgbaImage::from_fn(width, height, |x, _| {
             image::Rgba([shade, (x % 256) as u8, 128, 255])
         })
     }
 
     #[test]
     fn writes_a_real_animated_gif() {
-        let dir = std::env::temp_dir().join(format!("clippity-gif-{}", crate::capture_io::next_id()));
+        let dir =
+            std::env::temp_dir().join(format!("clippity-gif-{}", crate::capture_io::next_id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("out.gif");
 
-        let mut sink = open(&path, &request(64, 48, 10)).expect("gif sink opens");
+        let mut sink = open(&path, config(64, 48, 10)).expect("gif sink opens");
         for i in 0..5u8 {
-            sink.write_frame(&frame(64, 48, i * 40), 0, 0)
+            sink.write_frame(SinkFrame::rgba(&frame(64, 48, i * 40)), 0, 0)
                 .expect("frame encodes");
         }
         sink.finish().expect("trailer written");
@@ -190,8 +191,9 @@ mod tests {
 
         // 1600×900 is past GIF's pixel budget, so the written frames
         // must be smaller than the captured region.
-        let mut sink = open(&path, &request(1_600, 900, 10)).expect("opens");
-        sink.write_frame(&frame(1_600, 900, 200), 0, 0).unwrap();
+        let mut sink = open(&path, config(1_600, 900, 10)).expect("opens");
+        sink.write_frame(SinkFrame::rgba(&frame(1_600, 900, 200)), 0, 0)
+            .unwrap();
         sink.finish().unwrap();
 
         let file = std::fs::File::open(&path).unwrap();
@@ -218,9 +220,11 @@ mod tests {
         let path = dir.join("fps.gif");
 
         // 10 fps => 10 cs => 100 ms per frame.
-        let mut sink = open(&path, &request(32, 32, 10)).expect("opens");
-        sink.write_frame(&frame(32, 32, 10), 0, 0).unwrap();
-        sink.write_frame(&frame(32, 32, 90), 0, 0).unwrap();
+        let mut sink = open(&path, config(32, 32, 10)).expect("opens");
+        sink.write_frame(SinkFrame::rgba(&frame(32, 32, 10)), 0, 0)
+            .unwrap();
+        sink.write_frame(SinkFrame::rgba(&frame(32, 32, 90)), 0, 0)
+            .unwrap();
         sink.finish().unwrap();
 
         let file = std::fs::File::open(&path).unwrap();
@@ -240,11 +244,12 @@ mod tests {
             std::env::temp_dir().join(format!("clippity-gif-aud-{}", crate::capture_io::next_id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("a.gif");
-        let mut sink = open(&path, &request(32, 32, 10)).unwrap();
+        let mut sink = open(&path, config(32, 32, 10)).unwrap();
         assert!(!sink.wants_audio());
         // Must not error — the session loop is format-agnostic.
         sink.write_audio(&[0u8; 64], 0, 0).unwrap();
-        sink.write_frame(&frame(32, 32, 1), 0, 0).unwrap();
+        sink.write_frame(SinkFrame::rgba(&frame(32, 32, 1)), 0, 0)
+            .unwrap();
         sink.finish().unwrap();
         let _ = std::fs::remove_dir_all(&dir);
     }

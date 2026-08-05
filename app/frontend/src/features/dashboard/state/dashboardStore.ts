@@ -12,6 +12,11 @@ interface DashboardStoreState {
   view: DashboardView;
   /** Only meaningful for view === "editor". Null otherwise. */
   editorCaptureId: string | null;
+  /** The recording id for view === "studio". Null otherwise. Kept apart
+   *  from `editorCaptureId` because the two surfaces hold different
+   *  kinds of file: bouncing editor → studio → editor must not leave
+   *  the editor pointed at an MP4 it cannot open. */
+  studioCaptureId: string | null;
   /** The palette aux id for view === "palette". Null otherwise. The
    *  cross-window handoff reuses `DashboardRequest.captureId` to carry it. */
   paletteId: string | null;
@@ -25,6 +30,7 @@ export const useDashboardStore = create<DashboardStoreState>((set) => ({
   // Default landing view — the Home overview.
   view: "home",
   editorCaptureId: null,
+  studioCaptureId: null,
   paletteId: null,
   sidebarCollapsed: false,
 
@@ -37,8 +43,11 @@ export const useDashboardStore = create<DashboardStoreState>((set) => ({
         view === "editor"
           ? (captureId ?? s.editorCaptureId)
           : s.editorCaptureId,
-      paletteId:
-        view === "palette" ? (captureId ?? s.paletteId) : s.paletteId,
+      studioCaptureId:
+        view === "studio"
+          ? (captureId ?? s.studioCaptureId)
+          : s.studioCaptureId,
+      paletteId: view === "palette" ? (captureId ?? s.paletteId) : s.paletteId,
     })),
   setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
 }));

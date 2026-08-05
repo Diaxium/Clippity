@@ -123,8 +123,7 @@ export const useLibraryStore = create<LibraryStoreState>((set) => ({
   setMode: (mode) => set({ mode, ...CLEARED }),
   setKindFilter: (kindFilter) => set({ kindFilter }),
   setView: (view) => set({ view }),
-  toggleFavoritesOnly: () =>
-    set((s) => ({ favoritesOnly: !s.favoritesOnly })),
+  toggleFavoritesOnly: () => set((s) => ({ favoritesOnly: !s.favoritesOnly })),
   setTagFilter: (tagFilter) => set({ tagFilter }),
   // Opening a collection changes which captures are on screen, so a
   // selection made against the previous list would act on rows the user

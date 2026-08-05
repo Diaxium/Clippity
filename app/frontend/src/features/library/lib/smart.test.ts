@@ -59,7 +59,8 @@ describe("smartThresholds", () => {
     const t = smartThresholds(NOON);
 
     const byThreshold = {
-      "this-week": rows.filter((m) => m.createdAtMs >= t.thisWeekSinceMs).length,
+      "this-week": rows.filter((m) => m.createdAtMs >= t.thisWeekSinceMs)
+        .length,
       "last-30-days": rows.filter((m) => m.createdAtMs >= t.last30DaysSinceMs)
         .length,
       large: rows.filter((m) => m.sizeBytes >= t.largeMinBytes).length,

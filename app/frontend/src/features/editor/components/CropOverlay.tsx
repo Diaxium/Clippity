@@ -133,10 +133,7 @@ export function CropOverlay({ viewport }: { viewport: Viewport }) {
 }
 
 /** Outer canvas rect + the crop window as a hole, for an even-odd dim fill. */
-function dimPath(
-  canvas: { width: number; height: number },
-  r: Rect
-): string {
+function dimPath(canvas: { width: number; height: number }, r: Rect): string {
   const outer = `M0 0H${canvas.width}V${canvas.height}H0Z`;
   const inner = `M${r.x} ${r.y}H${r.x + r.width}V${r.y + r.height}H${r.x}Z`;
   return `${outer} ${inner}`;

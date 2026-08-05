@@ -178,7 +178,10 @@ export function ColorPopover() {
     setPos({
       left: Math.max(
         MARGIN,
-        Math.min(e.clientX - drag.current.dx, window.innerWidth - WIDTH - MARGIN)
+        Math.min(
+          e.clientX - drag.current.dx,
+          window.innerWidth - WIDTH - MARGIN
+        )
       ),
       top: Math.max(MARGIN, e.clientY - drag.current.dy),
     });

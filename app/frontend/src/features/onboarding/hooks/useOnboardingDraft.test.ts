@@ -1,6 +1,8 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DEFAULT_BACKDROP_TUNING_SET } from "@features/settings/lib/backdrop";
+
 const patchMock = vi.fn();
 const getDefaultCapturesDirMock = vi.fn();
 const openDialogMock = vi.fn();
@@ -19,6 +21,8 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
 }));
 
 import { useOnboardingDraft } from "./useOnboardingDraft";
+import { DEFAULT_DEVELOPER_SETTINGS } from "@clippity/shared";
+
 import type { Settings } from "@services/tauri/clients/settings";
 
 const settings: Settings = {
@@ -34,6 +38,8 @@ const settings: Settings = {
     theme: "system",
     accent: "#FF6E4A",
     windowOpacity: 100,
+    windowBackdrop: "mica",
+    backdropTuning: DEFAULT_BACKDROP_TUNING_SET,
     uiScale: 100,
     cornerRadius: "default",
     density: "comfortable",
@@ -71,8 +77,13 @@ const settings: Settings = {
     systemAudio: false,
     microphoneDevice: null,
     systemDevice: null,
+    microphoneGainPct: 100,
+    systemGainPct: 100,
     videoFps: 30,
     gifFps: 15,
+    maxHeight: 0,
+    encoding: {},
+    sources: [],
     cursor: false,
     outline: true,
     clipboard: false,
@@ -87,6 +98,7 @@ const settings: Settings = {
     globalCapture: "Mod+Shift+2",
     globalCaptureEnabled: true,
   },
+  developer: DEFAULT_DEVELOPER_SETTINGS,
 };
 
 describe("useOnboardingDraft", () => {

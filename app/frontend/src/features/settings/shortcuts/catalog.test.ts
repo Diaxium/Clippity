@@ -22,7 +22,7 @@ describe("SHORTCUT_GROUPS / SHORTCUT_ENTRIES", () => {
 
   it("excludes hidden and paletteHidden editor bindings", () => {
     const excluded = EDITOR_KEYBINDS.filter(
-      (kb) => kb.hidden || kb.paletteHidden,
+      (kb) => kb.hidden || kb.paletteHidden
     ).map((kb) => `editor:${kb.id}`);
     const present = new Set(SHORTCUT_ENTRIES.map((e) => e.fqid));
     for (const fqid of excluded) {
@@ -41,10 +41,10 @@ describe("SHORTCUT_GROUPS / SHORTCUT_ENTRIES", () => {
     // filter, not today's answer. A rebindable shortcut for an action
     // with no backend would be a customizable no-op.
     const captureIds = SHORTCUT_ENTRIES.filter(
-      (e) => e.scope === "quickCapture",
+      (e) => e.scope === "quickCapture"
     ).map((e) => e.id);
     const expected = QUICK_CAPTURE_ACTIONS.filter((a) => a.available).map(
-      (a) => a.id,
+      (a) => a.id
     );
     expect(new Set(captureIds)).toEqual(new Set(expected));
     expect(captureIds).toContain("screenshot");

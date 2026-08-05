@@ -12,10 +12,7 @@
  */
 
 import { formatCombo } from "@features/editor/keybinds/keybindUtils";
-import {
-  effectiveKeys,
-  getKeybindOverrides,
-} from "@shared/keybinds/overrides";
+import { effectiveKeys, getKeybindOverrides } from "@shared/keybinds/overrides";
 import { useKeybindOverridesVersion } from "@shared/keybinds/useKeybindOverrides";
 import { cn } from "@shared/lib/cn";
 import { useCapabilities } from "@state/useCapabilities";
@@ -62,15 +59,17 @@ export function QuickCapture({ onLaunch }: QuickCaptureProps) {
 }
 
 /** Pill text + hover explanation per reason a card is disabled. */
-const UNAVAILABLE_COPY: Record<Unavailability, { pill: string; title: string }> =
-  {
-    soon: { pill: "Soon", title: "Coming in a later release." },
-    "not-installed": {
-      pill: "Not installed",
-      title:
-        "This component wasn't selected when Clippity was installed. Re-run the installer and choose Modify to add it.",
-    },
-  };
+const UNAVAILABLE_COPY: Record<
+  Unavailability,
+  { pill: string; title: string }
+> = {
+  soon: { pill: "Soon", title: "Coming in a later release." },
+  "not-installed": {
+    pill: "Not installed",
+    title:
+      "This component wasn't selected when Clippity was installed. Re-run the installer and choose Modify to add it.",
+  },
+};
 
 function QuickCaptureCard({
   action,
@@ -90,7 +89,7 @@ function QuickCaptureCard({
         "quickCapture",
         action.id,
         action.combo ? [action.combo] : [],
-        getKeybindOverrides(),
+        getKeybindOverrides()
       );
   const primaryCombo = combos[0];
   const keys = primaryCombo ? formatCombo(primaryCombo) : [];
@@ -133,7 +132,9 @@ function QuickCaptureCard({
             keys.map((key, i) => (
               <span key={i} className="flex items-center gap-1">
                 {i > 0 && (
-                  <span className="text-[11px] text-[var(--color-hint)]">+</span>
+                  <span className="text-[11px] text-[var(--color-hint)]">
+                    +
+                  </span>
                 )}
                 <kbd className="rounded-[6px] border border-[color:var(--hairline-strong)] bg-[var(--color-overlay-1)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--color-slate)]">
                   {key}

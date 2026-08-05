@@ -15,8 +15,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { SettingsLayout, useSettingsStore } from "@features/settings";
+import { DEFAULT_BACKDROP_TUNING_SET } from "@features/settings/lib/backdrop";
 import { useCapabilitiesStore } from "@state/capabilitiesStore";
-import { UNMANAGED_PROFILE, type Settings } from "@clippity/shared";
+import {
+  DEFAULT_DEVELOPER_SETTINGS,
+  UNMANAGED_PROFILE,
+  type Settings,
+} from "@clippity/shared";
 
 import "@styles/theme.css";
 import "@styles/globals.css";
@@ -41,6 +46,8 @@ const snapshot: Settings = {
     theme: "dark",
     accent: "#FF6E4A",
     windowOpacity: 100,
+    windowBackdrop: "mica",
+    backdropTuning: DEFAULT_BACKDROP_TUNING_SET,
     uiScale: 100,
     cornerRadius: "default",
     density: "comfortable",
@@ -78,8 +85,13 @@ const snapshot: Settings = {
     systemAudio: false,
     microphoneDevice: null,
     systemDevice: null,
+    microphoneGainPct: 100,
+    systemGainPct: 100,
     videoFps: 30,
     gifFps: 15,
+    maxHeight: 0,
+    encoding: {},
+    sources: [],
     cursor: false,
     outline: true,
     clipboard: false,
@@ -94,6 +106,7 @@ const snapshot: Settings = {
     globalCapture: "Mod+Shift+2",
     globalCaptureEnabled: true,
   },
+  developer: DEFAULT_DEVELOPER_SETTINGS,
 };
 
 useSettingsStore.getState().setSettings(snapshot);

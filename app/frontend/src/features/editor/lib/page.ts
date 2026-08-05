@@ -244,7 +244,9 @@ function fillsKey(fills: readonly Paint[]): string {
     .filter((f) => f.visible)
     .map((f) => {
       const g = f.gradient;
-      const stops = g?.stops.map((s) => `${s.position}:${s.color}:${s.opacity}`);
+      const stops = g?.stops.map(
+        (s) => `${s.position}:${s.color}:${s.opacity}`
+      );
       return [
         f.type,
         f.color.toLowerCase(),

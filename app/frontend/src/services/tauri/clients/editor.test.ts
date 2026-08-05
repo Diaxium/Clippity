@@ -54,7 +54,9 @@ describe("editorSave", () => {
 
 describe("editorSaveScene", () => {
   it("invokes editor_save_scene with the id + scene JSON and returns the sidecar path", async () => {
-    invokeMock.mockResolvedValueOnce("/tmp/captures/.scenes/clippity-1.png.json");
+    invokeMock.mockResolvedValueOnce(
+      "/tmp/captures/.scenes/clippity-1.png.json"
+    );
     const json = '{"version":1,"docName":"X","rootIds":[],"nodes":{}}';
     const path = await editorSaveScene(sample.id, json);
     expect(invokeMock).toHaveBeenCalledWith("editor_save_scene", {

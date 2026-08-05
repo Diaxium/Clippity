@@ -36,7 +36,9 @@ export function ShapeSection() {
           min={3}
           value={sides.value}
           mixed={sides.mixed}
-          onChange={(v) => updateNodes(ids, { sides: Math.max(3, Math.round(v)) })}
+          onChange={(v) =>
+            updateNodes(ids, { sides: Math.max(3, Math.round(v)) })
+          }
         />
       </Wrap>
     );

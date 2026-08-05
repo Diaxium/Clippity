@@ -8,6 +8,8 @@
  * forward-compatible.
  */
 
+import type { Source } from "./composition";
+import type { RecorderEncoding } from "./recorder";
 import type { ScrollDirection } from "./scroll";
 import type { ToastCorner, ToastDurations } from "./toast";
 
@@ -24,6 +26,50 @@ export type Density = "comfortable" | "compact";
 /** Application-icon style — which bundled mark drives the tray / taskbar
  *  / in-app icon. Mirrors the Rust `domain::settings::AppIconStyle`. */
 export type AppIconStyle = "color" | "monochrome";
+
+/** Native window backdrop material for transparent app chrome. Mirrors
+ *  Rust `domain::settings::WindowBackdrop` (kebab-case on the wire).
+ *
+ *  `mica` / `tabbed` are wallpaper-derived — DWM blurs the desktop
+ *  wallpaper, so live content behind the window never shows through
+ *  however transparent the chrome is made. `acrylic` / `blur` sample
+ *  live content. `clear` removes the material entirely, leaving the
+ *  transparent window as a plain hole onto whatever is behind it. */
+export type WindowBackdrop =
+  | "mica"
+  | "acrylic"
+  | "blur"
+  | "tabbed"
+  | "clear";
+
+/**
+ * Per-material fine-tuning. Mirrors Rust `domain::settings::BackdropTuning`.
+ * Every field is a percent; the backend clamps each into its envelope on
+ * save (see `settings/constants.ts` for the mirrored bounds).
+ *
+ * - `tintStrength` (0–100) — alpha of the colour blended into the
+ *   *native* material. Only Acrylic and Blur take one; on Windows 11
+ *   22H2+ acrylic is a DWM system backdrop that tints itself, so this
+ *   lands on Windows 10 / older builds only.
+ * - `glassStrength` (0–150) — multiplier on the stacked in-app glass
+ *   layers. The knob that decides how much of the native material is
+ *   visible through the app's own panels; 0 stops them painting.
+ * - `blurStrength` (0–200) — multiplier on the CSS `backdrop-filter`
+ *   blur radii. Lower reads sharper through the chrome.
+ * - `saturation` (50–200) — CSS `backdrop-filter: saturate()`. Pushes
+ *   colour back into materials that wash out under transparent chrome.
+ */
+export interface BackdropTuning {
+  tintStrength: number;
+  glassStrength: number;
+  blurStrength: number;
+  saturation: number;
+}
+
+/** One `BackdropTuning` per material, so switching backdrops restores
+ *  that material's own numbers. Mirrors Rust
+ *  `domain::settings::BackdropTuningSet`. */
+export type BackdropTuningSet = Record<WindowBackdrop, BackdropTuning>;
 
 /** PNG encoding effort for the capture-save pipeline. Mirrors the Rust
  *  `domain::settings::CaptureCompression` (kebab-case on the wire). */
@@ -63,11 +109,15 @@ export interface AppearanceSettings {
   /** Accent color hex (`#RRGGBB`, 6-digit uppercase or lowercase). */
   accent: string;
   /**
-   * Chrome opacity, percent (60–100). Drives `--window-opacity` in
-   * `theme.css` so the Mica backdrop / desktop bleeds through the window
-   * shell. Backend clamps into `[MIN,MAX]_WINDOW_OPACITY_PCT` on save.
+   * Chrome opacity, percent (10–100). Drives transparency paint tokens in
+   * `theme.css` so the native backdrop / desktop bleeds through the
+   * window shell. Backend clamps into `[MIN,MAX]_WINDOW_OPACITY_PCT` on save.
    */
   windowOpacity: number;
+  /** Native material behind the translucent app chrome. */
+  windowBackdrop: WindowBackdrop;
+  /** Per-material fine-tuning for `windowBackdrop`. */
+  backdropTuning: BackdropTuningSet;
   /**
    * UI zoom, percent (80–120). Applied as a CSS `zoom` on the full-window
    * chrome (main / capture) so px type + layout scale together — kept off
@@ -148,8 +198,23 @@ export interface CaptureSettings {
  * - `microphoneDevice` / `systemDevice`: pinned endpoint ids, or null to
  *   follow the OS default (which is what survives plugging in a headset
  *   mid-session).
+ * - `microphoneGainPct` / `systemGainPct`: the level each input *starts*
+ *   a session at, as a percentage of unity (100 = unchanged, 0 = silent,
+ *   200 = the ceiling). The HUD's live sliders move the running session
+ *   and deliberately do not write back here — a level nudged for one
+ *   recording shouldn't become the level every future one begins at.
  * - `videoFps` / `gifFps`: separate because GIF's usable frame-rate
  *   range is far lower. The backend clamps both on save.
+ * - `maxHeight`: cap on the encoded frame's height. `0` records at the
+ *   captured size and is the default. One value across both formats,
+ *   unlike the frame rates — GIF's own pixel budget is tighter than any
+ *   offered height and simply wins, so a shared setting can't produce a
+ *   value either format refuses.
+ * - `encoding`: H.264 encoder settings a session starts from — quality
+ *   step, optional fixed bitrate, keyframe interval, rate control, and
+ *   the hardware-encoder preference. Nested rather than five flat fields
+ *   because they are read together and mean nothing individually. GIF
+ *   ignores all of it.
  * - `cursor`: composite the pointer into recorded frames.
  * - `outline`: draw a border around the recorded area for the length of
  *   the session. **Ships on** — between choosing a region and stopping,
@@ -164,8 +229,13 @@ export interface RecordingSettings {
   systemAudio: boolean;
   microphoneDevice?: string | null;
   systemDevice?: string | null;
+  microphoneGainPct: number;
+  systemGainPct: number;
   videoFps: number;
   gifFps: number;
+  maxHeight: number;
+  encoding: RecorderEncoding;
+  sources: Source[];
   cursor: boolean;
   outline: boolean;
   clipboard: boolean;
@@ -210,6 +280,111 @@ export interface ShortcutsSettings {
   globalCaptureEnabled: boolean;
 }
 
+/**
+ * Severity floor for one half of the app's logging. Mirrors the Rust
+ * `domain::settings::LogLevel` (kebab-case on the wire) — the backend
+ * maps it onto a `tracing` `EnvFilter` directive, the frontend onto its
+ * console logger's threshold, so both halves of a log file agree on
+ * what "debug" means.
+ */
+export type LogLevel = "off" | "error" | "warn" | "info" | "debug" | "trace";
+
+/**
+ * How long an armed developer mode survives. Mirrors the Rust
+ * `domain::settings::DeveloperExpiry`. `restart` is the default —
+ * developer mode reveals destructive actions and can record IPC
+ * payloads, so leaving it armed after one debugging session is the
+ * failure mode this guards against.
+ */
+export type DeveloperExpiry = "never" | "restart" | "day";
+
+/**
+ * Developer + diagnostics preferences — Settings → Advanced. Mirrors
+ * Rust `domain::settings::DeveloperSettings`.
+ *
+ * Two kinds of field, and the difference matters:
+ *
+ * - **Presentation gates** (`enabled`, `showActions`, `performanceOverlay`,
+ *   the per-area diagnostics toggles) decide what the UI reveals; they
+ *   are inert while developer mode is off.
+ * - **Machinery** (`backendLog`, `frontendLog`, `logToDisk`,
+ *   `logMaxFileMb`, `logRetainFiles`) configures logging on **every**
+ *   launch, developer mode or not — which is what makes an exported
+ *   diagnostics bundle worth anything for a user who never opened this
+ *   page.
+ */
+export interface DeveloperSettings {
+  /** Master switch. Ships off. */
+  enabled: boolean;
+  /** Epoch ms at which developer mode was last armed; `0` = unknown,
+   *  which the `day` policy treats as expired rather than as forever. */
+  enabledAtMs: number;
+  expiry: DeveloperExpiry;
+  /** Surface developer actions in ordinary context menus too. */
+  showActions: boolean;
+  /** Ask before a destructive developer action runs. Ships on. */
+  confirmDestructive: boolean;
+  devtoolsOnStartup: boolean;
+  /** Severity floor for the Rust `tracing` subscriber. */
+  backendLog: LogLevel;
+  /** Severity floor for the frontend logger, and for what it forwards
+   *  into the backend's log file. */
+  frontendLog: LogLevel;
+  /** Write the log to rotating files under `<data>/logs`. Ships on. */
+  logToDisk: boolean;
+  /** Size at which the live log file rotates, in MiB (1–64). */
+  logMaxFileMb: number;
+  /** Rotated files kept beside the live one (1–20). */
+  logRetainFiles: number;
+  performanceOverlay: boolean;
+  /** Record duration / payload size / outcome of every IPC call so the
+   *  command inspector has something to show. Off by default. */
+  commandTiming: boolean;
+  /** Flag any command slower than this, in ms (1–5000). */
+  slowCommandMs: number;
+  /** Show capture timing + monitor/DPI/HDR diagnostics. */
+  captureDiagnostics: boolean;
+  /** Show recorder statistics (frames, drops, encoder, file growth). */
+  recordingDiagnostics: boolean;
+  /** Strip user names, paths and capture names from an exported
+   *  bundle. Ships on — a bundle is made to be sent to someone else. */
+  redactDiagnostics: boolean;
+  /** Per-flag overrides for the frontend's experiment registry. A
+   *  missing id = "use the build default". */
+  featureFlags: Record<string, boolean>;
+}
+
+/**
+ * The shipped developer defaults, mirroring Rust
+ * `DeveloperSettings::default()`.
+ *
+ * A value rather than a type because three surfaces need one: test
+ * fixtures, the settings smoke page, and any future code that has to
+ * construct a full `Settings` without a backend. Keep it in lock-step
+ * with the Rust `Default` impl — the Rust side is authoritative, and
+ * this exists so nothing has to guess at what it says.
+ */
+export const DEFAULT_DEVELOPER_SETTINGS: DeveloperSettings = {
+  enabled: false,
+  enabledAtMs: 0,
+  expiry: "restart",
+  showActions: false,
+  confirmDestructive: true,
+  devtoolsOnStartup: false,
+  backendLog: "info",
+  frontendLog: "warn",
+  logToDisk: true,
+  logMaxFileMb: 8,
+  logRetainFiles: 5,
+  performanceOverlay: false,
+  commandTiming: false,
+  slowCommandMs: 100,
+  captureDiagnostics: false,
+  recordingDiagnostics: false,
+  redactDiagnostics: true,
+  featureFlags: {},
+};
+
 export interface Settings {
   general: GeneralSettings;
   appearance: AppearanceSettings;
@@ -219,6 +394,7 @@ export interface Settings {
   recording: RecordingSettings;
   models: ModelsSettings;
   shortcuts: ShortcutsSettings;
+  developer: DeveloperSettings;
 }
 
 /**
@@ -235,4 +411,5 @@ export interface SettingsPatch {
   recording?: RecordingSettings;
   models?: ModelsSettings;
   shortcuts?: ShortcutsSettings;
+  developer?: DeveloperSettings;
 }

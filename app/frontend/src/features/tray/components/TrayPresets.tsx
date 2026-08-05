@@ -1,7 +1,10 @@
 import { ChevronRight } from "lucide-react";
 
 import { openDashboard } from "@services/tauri/clients/dashboard";
-import type { CapturePreset } from "@services/tauri/clients/presets";
+import {
+  presetTarget,
+  type CapturePreset,
+} from "@services/tauri/clients/presets";
 import { usePresets } from "@shared/hooks/usePresets";
 import { captureTypeMeta } from "@shared/lib/captureTypeMeta";
 
@@ -49,7 +52,7 @@ export function TrayPresets({ onRun }: TrayPresetsProps) {
       ) : (
         <div className="flex flex-col gap-1">
           {presets.slice(0, TRAY_PRESET_LIMIT).map((p) => {
-            const Icon = captureTypeMeta(p.request.type).icon;
+            const Icon = captureTypeMeta(presetTarget(p.request)).icon;
             return (
               <button
                 key={p.id}

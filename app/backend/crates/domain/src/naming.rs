@@ -83,7 +83,10 @@ pub fn render(template: &str, source: &CaptureSource, time_of: LocalTime) -> Str
     // Sanitise token values once. An empty window collapses the `{window}`
     // token; an empty type can't happen in practice but we guard it so
     // `{label}` always has *something*.
-    let window = source.window.map(sanitize_segment).filter(|s| !s.is_empty());
+    let window = source
+        .window
+        .map(sanitize_segment)
+        .filter(|s| !s.is_empty());
     let app = source.app.map(sanitize_segment).filter(|s| !s.is_empty());
     let type_label = {
         let t = sanitize_segment(source.type_label);
@@ -300,7 +303,8 @@ mod tests {
     fn blank_template_uses_mode_and_window_default() {
         let s = render(
             "",
-            &src(Some("GitHub - PR #42 - Chrome"), "Fullscreen"), at(2026, 6, 13, 14, 34, 15),
+            &src(Some("GitHub - PR #42 - Chrome"), "Fullscreen"),
+            at(2026, 6, 13, 14, 34, 15),
         );
         assert_eq!(
             s,
@@ -312,7 +316,9 @@ mod tests {
     fn label_falls_back_to_type_when_no_window() {
         let s = render(
             "{label} - {date} {time}",
-            &src(None, "Region"), at(2026, 6, 12, 16, 18, 55));
+            &src(None, "Region"),
+            at(2026, 6, 12, 16, 18, 55),
+        );
         assert_eq!(s, "Region - 2026-06-12 4.18.55 PM");
     }
 
@@ -328,7 +334,8 @@ mod tests {
     fn every_token_expands() {
         let s = render(
             "{type}_{window}_{label}_{date}_{time}",
-            &src(Some("Figma"), "Region"), at(2026, 12, 1, 0, 5, 9),
+            &src(Some("Figma"), "Region"),
+            at(2026, 12, 1, 0, 5, 9),
         );
         // window present => label == type + window; midnight => 12.05.09 AM
         assert_eq!(s, "Region_Figma_Region - Figma_2026-12-01_12.05.09 AM");
@@ -340,7 +347,8 @@ mod tests {
         // spaces collapse and the leading separator is stripped.
         let s = render(
             "{window} {date}",
-            &src(None, "Region"), at(2026, 6, 13, 13, 0, 0),
+            &src(None, "Region"),
+            at(2026, 6, 13, 13, 0, 0),
         );
         assert_eq!(s, "2026-06-13");
     }
@@ -349,7 +357,8 @@ mod tests {
     fn unknown_token_is_stripped_not_leaked() {
         let s = render(
             "{bogus}{date}",
-            &src(None, "Region"), at(2026, 6, 13, 13, 0, 0),
+            &src(None, "Region"),
+            at(2026, 6, 13, 13, 0, 0),
         );
         assert_eq!(s, "2026-06-13");
     }
@@ -378,8 +387,8 @@ mod tests {
         // or break the filename.
         let s = render(
             "{window}",
-            &src(
-                Some("a/b\\c:d*e?f\"g<h>i|j"), "Region"), at(2026, 6, 13, 13, 0, 0),
+            &src(Some("a/b\\c:d*e?f\"g<h>i|j"), "Region"),
+            at(2026, 6, 13, 13, 0, 0),
         );
         assert_eq!(s, "a b c d e f g h i j");
         assert!(!s.contains('/') && !s.contains('\\') && !s.contains(':'));
@@ -389,8 +398,8 @@ mod tests {
     fn control_chars_and_runs_collapse() {
         let s = render(
             "{window}",
-            &src(Some("  hello\t\n  world  "),
-                "Region"), at(2026, 6, 13, 13, 0, 0),
+            &src(Some("  hello\t\n  world  "), "Region"),
+            at(2026, 6, 13, 13, 0, 0),
         );
         assert_eq!(s, "hello world");
     }
@@ -401,7 +410,9 @@ mod tests {
         // on-disk name matches what we computed.
         let s = render(
             "{window}",
-            &src(Some("report..."), "Region"), at(2026, 6, 13, 13, 0, 0));
+            &src(Some("report..."), "Region"),
+            at(2026, 6, 13, 13, 0, 0),
+        );
         assert_eq!(s, "report");
     }
 
@@ -410,7 +421,8 @@ mod tests {
         // A leading dot would make a hidden file the library scanner skips.
         let s = render(
             "{window} {date}",
-            &src(Some(".env secrets"), "Region"), at(2026, 6, 13, 13, 0, 0),
+            &src(Some(".env secrets"), "Region"),
+            at(2026, 6, 13, 13, 0, 0),
         );
         assert!(!s.starts_with('.'), "got {s}");
         assert_eq!(s, "env secrets 2026-06-13");
@@ -421,14 +433,16 @@ mod tests {
         assert_eq!(
             render(
                 "{window}",
-                &src(Some("CON"), "Region"), at(2026, 6, 13, 1, 0, 0)
+                &src(Some("CON"), "Region"),
+                at(2026, 6, 13, 1, 0, 0)
             ),
             "_CON"
         );
         assert_eq!(
             render(
                 "{window}",
-                &src(Some("com1"), "Region"), at(2026, 6, 13, 1, 0, 0)
+                &src(Some("com1"), "Region"),
+                at(2026, 6, 13, 1, 0, 0)
             ),
             "_com1"
         );
@@ -436,14 +450,16 @@ mod tests {
         assert_eq!(
             render(
                 "{window}",
-                &src(Some("COM0"), "Region"), at(2026, 6, 13, 1, 0, 0)
+                &src(Some("COM0"), "Region"),
+                at(2026, 6, 13, 1, 0, 0)
             ),
             "COM0"
         );
         assert_eq!(
             render(
                 "{window}",
-                &src(Some("CONSOLE"), "Region"), at(2026, 6, 13, 1, 0, 0)
+                &src(Some("CONSOLE"), "Region"),
+                at(2026, 6, 13, 1, 0, 0)
             ),
             "CONSOLE"
         );
@@ -471,7 +487,11 @@ mod tests {
     fn app_token_is_empty_when_the_process_is_unresolved() {
         // `src` never sets an app — the template must collapse cleanly
         // rather than leaving a stray separator or a literal brace.
-        let s = render("{app}-{type}", &src(Some("Notepad"), "Region"), at(2026, 6, 13, 1, 0, 0));
+        let s = render(
+            "{app}-{type}",
+            &src(Some("Notepad"), "Region"),
+            at(2026, 6, 13, 1, 0, 0),
+        );
         assert_eq!(s, "-Region");
     }
 
@@ -496,7 +516,8 @@ mod tests {
         let long = "x".repeat(500);
         let s = render(
             "{window}",
-            &src(Some(&long), "Region"), at(2026, 6, 13, 1, 0, 0),
+            &src(Some(&long), "Region"),
+            at(2026, 6, 13, 1, 0, 0),
         );
         assert!(s.chars().count() <= STEM_MAX_CHARS);
         assert!(s.chars().count() <= SEGMENT_MAX_CHARS);

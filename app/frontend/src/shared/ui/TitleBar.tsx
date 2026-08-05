@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Minus, PanelLeftClose, PanelLeftOpen, Square, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -26,6 +27,75 @@ interface TitleBarProps {
   children?: ReactNode;
   className?: string;
 }
+
+type WindowAction = "minimize" | "maximize" | "close";
+
+interface WindowActionButtonProps {
+  action: WindowAction;
+  icon: LucideIcon;
+  iconSize: number;
+  label: string;
+  onClick: () => void;
+}
+
+const WINDOW_ACTION_MOTION = {
+  minimize: {
+    button: {
+      rest: { y: 0, scale: 1 },
+      hover: { y: 1, scale: 1.02 },
+    },
+    icon: {
+      rest: {
+        y: 0,
+        scaleX: 1,
+        opacity: 1,
+        transition: { duration: 0.18, ease: "easeOut" },
+      },
+      hover: {
+        y: 3,
+        scaleX: 1.28,
+        opacity: 0.92,
+        transition: { type: "spring", stiffness: 520, damping: 20, mass: 0.45 },
+      },
+    },
+  },
+  maximize: {
+    button: {
+      rest: { scale: 1, rotate: 0 },
+      hover: { scale: 1.04, rotate: -2 },
+    },
+    icon: {
+      rest: {
+        scale: 1,
+        rotate: 0,
+        transition: { type: "spring", stiffness: 420, damping: 28, mass: 0.5 },
+      },
+      hover: {
+        scale: 1.18,
+        rotate: 90,
+        transition: { type: "spring", stiffness: 470, damping: 24, mass: 0.55 },
+      },
+    },
+  },
+  close: {
+    button: {
+      rest: { scale: 1, rotate: 0 },
+      hover: { scale: 1.06, rotate: 1.5 },
+    },
+    icon: {
+      rest: {
+        scale: 1,
+        rotate: 0,
+        transition: { type: "spring", stiffness: 500, damping: 30, mass: 0.45 },
+      },
+      hover: {
+        scale: 1.15,
+        rotate: 90,
+        transition: { type: "spring", stiffness: 560, damping: 21, mass: 0.5 },
+      },
+    },
+  },
+} as const;
 
 /**
  * Custom title bar for the app's borderless Tauri windows.
@@ -112,36 +182,70 @@ export function TitleBar({
 
       <span className="flex-1" data-tauri-drag-region />
 
-      <button
-        type="button"
+      <WindowActionButton
+        action="minimize"
+        icon={Minus}
+        iconSize={14}
+        label="Minimize"
         onClick={() => {
           void getCurrentWindow().minimize();
         }}
-        aria-label="Minimize"
-        className="no-drag focus-ring grid h-8 w-8 place-items-center rounded-md text-[var(--color-slate)] transition-colors hover:bg-[color:var(--color-overlay-1)] hover:text-[var(--color-ink)]"
-      >
-        <Minus size={14} strokeWidth={1.85} />
-      </button>
-      <button
-        type="button"
+      />
+      <WindowActionButton
+        action="maximize"
+        icon={Square}
+        iconSize={12}
+        label="Maximize"
         onClick={() => {
           void getCurrentWindow().toggleMaximize();
         }}
-        aria-label="Maximize"
-        className="no-drag focus-ring grid h-8 w-8 place-items-center rounded-md text-[var(--color-slate)] transition-colors hover:bg-[color:var(--color-overlay-1)] hover:text-[var(--color-ink)]"
-      >
-        <Square size={12} strokeWidth={1.85} />
-      </button>
-      <button
-        type="button"
+      />
+      <WindowActionButton
+        action="close"
+        icon={X}
+        iconSize={14}
+        label="Close"
         onClick={() => {
           void getCurrentWindow().close();
         }}
-        aria-label="Close"
-        className="no-drag focus-ring grid h-8 w-8 place-items-center rounded-md text-[var(--color-slate)] transition-colors hover:bg-[var(--color-accent)] hover:text-[var(--color-accent-ink)]"
-      >
-        <X size={14} strokeWidth={1.85} />
-      </button>
+      />
     </header>
+  );
+}
+
+function WindowActionButton({
+  action,
+  icon: Icon,
+  iconSize,
+  label,
+  onClick,
+}: WindowActionButtonProps) {
+  const motionSpec = WINDOW_ACTION_MOTION[action];
+
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      initial="rest"
+      animate="rest"
+      whileHover="hover"
+      whileTap={{ scale: 0.92 }}
+      variants={motionSpec.button}
+      transition={{ type: "spring", stiffness: 520, damping: 28, mass: 0.5 }}
+      className={cn(
+        "no-drag focus-ring grid h-8 w-8 place-items-center rounded-md text-[var(--color-slate)] transition-colors",
+        action === "close"
+          ? "hover:bg-[var(--color-accent)] hover:text-[var(--color-accent-ink)]"
+          : "hover:bg-[color:var(--color-overlay-1)] hover:text-[var(--color-ink)]"
+      )}
+    >
+      <motion.span
+        className="grid origin-center place-items-center"
+        variants={motionSpec.icon}
+      >
+        <Icon size={iconSize} strokeWidth={1.85} />
+      </motion.span>
+    </motion.button>
   );
 }

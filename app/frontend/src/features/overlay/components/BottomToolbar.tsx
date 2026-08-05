@@ -87,18 +87,22 @@ export function BottomToolbar() {
   const showModeTabs = inRegionMethod || mode === "window";
   const modeLabel =
     mode === "palette"
-        ? "Palette"
-        : mode === "grab-text"
-          ? "Grab Text"
-          : mode === "scrolling"
-            ? "Scrolling"
-            : mode === "panoramic"
-              ? "Panoramic"
-              : "Multi-Area";
+      ? "Palette"
+      : mode === "grab-text"
+        ? "Grab Text"
+        : mode === "scrolling"
+          ? "Scrolling"
+          : mode === "panoramic"
+            ? "Panoramic"
+            : "Multi-Area";
   // Scrolling records as the user scrolls; Panoramic auto-scrolls. Both
   // start a recording session rather than taking a one-shot capture.
   const ctaLabel =
-    mode === "scrolling" ? "Record" : mode === "panoramic" ? "Start" : "Capture";
+    mode === "scrolling"
+      ? "Record"
+      : mode === "panoramic"
+        ? "Start"
+        : "Capture";
 
   const onCancel = () => {
     reset();

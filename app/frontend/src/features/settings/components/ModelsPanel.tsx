@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { AlertTriangle, Check, Download, RefreshCw, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  Download,
+  RefreshCw,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import {
   modelsCancelDownload,
@@ -156,8 +163,8 @@ export function ModelsPanel({ value, onChange }: ModelsPanelProps) {
         ))}
         {models && (
           <p className="px-5 py-3 text-[12px] text-[var(--color-hint)]">
-            Models run entirely on this device — nothing you capture leaves
-            it. Installed: {formatMB(installedBytes)}.
+            Models run entirely on this device — nothing you capture leaves it.
+            Installed: {formatMB(installedBytes)}.
           </p>
         )}
       </SectionCard>
@@ -316,7 +323,11 @@ function ModelRow({
       )}
       {model.phase === "error" && model.message && (
         <p className="mt-2 flex items-start gap-1.5 text-[12px] text-[var(--color-danger,#d4533b)]">
-          <AlertTriangle size={13} strokeWidth={2} className="mt-0.5 shrink-0" />
+          <AlertTriangle
+            size={13}
+            strokeWidth={2}
+            className="mt-0.5 shrink-0"
+          />
           <span className="min-w-0 break-words">{model.message}</span>
         </p>
       )}

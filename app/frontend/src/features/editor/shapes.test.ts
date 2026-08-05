@@ -115,9 +115,7 @@ describe("nextStepNumber", () => {
     const b = createNodeForTool("step", RECT)!;
     b.step = { number: 3 };
     const plain = makeRectangle(RECT);
-    expect(
-      nextStepNumber({ [a.id]: a, [b.id]: b, [plain.id]: plain })
-    ).toBe(4);
+    expect(nextStepNumber({ [a.id]: a, [b.id]: b, [plain.id]: plain })).toBe(4);
   });
 });
 

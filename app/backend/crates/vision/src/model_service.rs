@@ -28,13 +28,13 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
-use clippity_infra::events;
 use clippity_domain::models::{
     self, ModelArtifact, ModelInfo, ModelPhase, ModelProgress, ModelSpec, ObjectModelReadiness,
     ReadinessStatus, ReleaseCheck, ReleaseSource,
 };
 use clippity_domain::settings::ModelsSettings;
 use clippity_infra::error::{AppError, AppResult};
+use clippity_infra::events;
 use clippity_infra::paths::AppPaths;
 
 /// Read-buffer size for the download stream. 64 KiB keeps syscall

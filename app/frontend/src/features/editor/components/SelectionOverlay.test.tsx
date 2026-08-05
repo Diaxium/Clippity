@@ -88,12 +88,9 @@ describe("SelectionOverlay gradient handles", () => {
     const dots = container.querySelectorAll('[data-grad="mesh"]');
     expect(dots.length).toBe(4);
     // Each carries its grid index so the drag knows which node to move.
-    expect([...dots].map((d) => d.getAttribute("data-grad-id")).sort()).toEqual([
-      "0",
-      "1",
-      "2",
-      "3",
-    ]);
+    expect([...dots].map((d) => d.getAttribute("data-grad-id")).sort()).toEqual(
+      ["0", "1", "2", "3"]
+    );
     // Lattice lines (2 rows + 2 cols) make the warp legible.
     expect(container.querySelectorAll("polyline").length).toBe(4);
   });

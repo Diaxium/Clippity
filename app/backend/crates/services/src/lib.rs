@@ -12,6 +12,8 @@
 //!   collections_service — named, ordered capture sets
 //!   library_index     — SQLite cache over the capture files + `.meta`
 //!   editor_service    — load a capture as data URI + save flattened PNG
+//!   media_service     — describe a saved recording + hand its bytes to
+//!                       the Studio player (the streaming counterpart)
 //!   presets_service   — user-defined capture presets (presets.json CRUD)
 //!   last_region_store — remembers the last rectangular selection
 //!   window_service    — shared show/hide/restore primitives
@@ -24,16 +26,20 @@
 //!   scroll_capture_service — scrolling / panoramic stitch recording
 //!   recorder_service  — video / GIF screen recording (ADR 0031)
 //!   countdown_service — the pre-capture countdown strip
+//!   diagnostics_service — what Settings → Advanced reads, and the
+//!                       redacted bundle it exports
 
 pub mod capture_io;
 pub mod capture_service;
 pub mod collections_service;
 pub mod countdown_service;
+pub mod diagnostics_service;
 pub mod editor_service;
 pub mod global_shortcut_service;
 pub mod last_region_store;
 pub mod library_index;
 pub mod library_service;
+pub mod media_service;
 pub mod ocr_service;
 pub mod overlay_service;
 pub mod presets_service;

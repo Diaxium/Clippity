@@ -12,6 +12,9 @@ interface TickedSliderProps {
   /** Commit handler — called once when the drag/keyboard interaction
    *  settles, NOT on every intermediate value. See the lag note below. */
   onChange: (next: number) => void;
+  /** Optional live draft handler. Use for cheap visual previews while
+   *  keeping the expensive/persisted `onChange` commit delayed. */
+  onPreview?: (next: number) => void;
   ariaLabel: string;
   /** Spacing (in value units) between interval tick lines. Ticks land on
    *  the multiples of this inside `(min, max)`, so they align with the
@@ -50,6 +53,7 @@ export function TickedSlider({
   max,
   step,
   onChange,
+  onPreview,
   ariaLabel,
   tickStep = 0,
   formatValue,
@@ -72,6 +76,7 @@ export function TickedSlider({
     dragging.current = true;
     latest.current = next;
     setDraft(next);
+    onPreview?.(next);
   };
 
   const commit = () => {

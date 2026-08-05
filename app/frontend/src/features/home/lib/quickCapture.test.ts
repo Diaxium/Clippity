@@ -131,7 +131,9 @@ describe("unavailabilityOf", () => {
     // The two have different remedies — telling a user to re-run the
     // installer for a port that hasn't landed would be false advice.
     const unshipped = { ...action("gif"), available: false };
-    expect(unavailabilityOf(unshipped, caps({ gifRecording: false }))).toBe("soon");
+    expect(unavailabilityOf(unshipped, caps({ gifRecording: false }))).toBe(
+      "soon"
+    );
     expect(unavailabilityOf(unshipped, caps())).toBe("soon");
   });
 });

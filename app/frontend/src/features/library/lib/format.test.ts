@@ -51,9 +51,9 @@ describe("captureDetail", () => {
 
   it("describes a color by its RGB, not the hex its title already is", () => {
     const color = { hex: "#ff6e4a", r: 255, g: 110, b: 74 };
-    expect(captureDetail(meta({ kind: "color", title: "#ff6e4a", color }))).toBe(
-      "rgb(255, 110, 74)"
-    );
+    expect(
+      captureDetail(meta({ kind: "color", title: "#ff6e4a", color }))
+    ).toBe("rgb(255, 110, 74)");
   });
 
   it("describes a palette by how many colors it holds", () => {

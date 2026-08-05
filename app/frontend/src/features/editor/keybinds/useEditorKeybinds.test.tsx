@@ -34,7 +34,8 @@ interface KeyInit {
 }
 
 const state = () => useEditorStore.getState();
-const press = (init: KeyInit) => act(() => void fireEvent.keyDown(window, init));
+const press = (init: KeyInit) =>
+  act(() => void fireEvent.keyDown(window, init));
 const release = (init: KeyInit) =>
   act(() => void fireEvent.keyUp(window, init));
 
@@ -44,13 +45,21 @@ interface Seed {
 }
 function seed(): Seed {
   __resetNodeIdForTests();
-  const a = makeRectangle({ x: 0, y: 0, width: 100, height: 100 }, { name: "A" });
+  const a = makeRectangle(
+    { x: 0, y: 0, width: 100, height: 100 },
+    { name: "A" }
+  );
   const b = makeRectangle(
     { x: 300, y: 0, width: 100, height: 100 },
     { name: "B" }
   );
   const nodes: Record<string, SceneNode> = { [a.id]: a, [b.id]: b };
-  state().loadScene({ rootIds: [a.id, b.id], nodes, docName: "T", sourceId: null });
+  state().loadScene({
+    rootIds: [a.id, b.id],
+    nodes,
+    docName: "T",
+    sourceId: null,
+  });
   return { a, b };
 }
 
@@ -84,7 +93,10 @@ describe("tool shortcuts", () => {
   it("does not switch tools while typing in an input", () => {
     const { getByTestId } = render(<Harness />);
     state().setTool("rectangle");
-    act(() => void fireEvent.keyDown(getByTestId("field"), { key: "v", code: "KeyV" }));
+    act(
+      () =>
+        void fireEvent.keyDown(getByTestId("field"), { key: "v", code: "KeyV" })
+    );
     expect(state().tool).toBe("rectangle");
   });
 

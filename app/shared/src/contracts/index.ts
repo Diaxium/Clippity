@@ -3,12 +3,16 @@
  * Rust `domain::*` and holds only framework-agnostic types.
  */
 
+export * from "./annotation";
 export * from "./capture";
+export * from "./composition";
 export * from "./collections";
 export * from "./countdown";
 export * from "./dashboard";
+export * from "./developer";
 export * from "./editor";
 export * from "./library";
+export * from "./media";
 export * from "./models";
 export * from "./overlay";
 export * from "./presets";

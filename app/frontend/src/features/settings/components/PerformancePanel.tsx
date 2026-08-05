@@ -70,7 +70,7 @@ export function PerformancePanel({ value, onChange }: PerformancePanelProps) {
         )}
         <Row
           label="Transparency & blur effects"
-          description="The Windows 11 Mica backdrop and frosted-glass surfaces. Turn off for a flat, opaque look that's lighter on the GPU and compositor."
+          description="Native window materials and frosted-glass surfaces. Turn off for a flat, opaque look that's lighter on the GPU and compositor."
           control={
             <ToggleSwitch
               checked={value.windowEffects}

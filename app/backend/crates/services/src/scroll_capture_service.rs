@@ -26,15 +26,15 @@ use base64::Engine;
 use image::{ImageFormat, RgbaImage};
 use tauri::{AppHandle, Manager};
 
-use clippity_infra::events;
-use clippity_domain::metadata::CaptureSource;
-use clippity_domain::overlay::{validate_region, OverlayResult, Region};
-use clippity_domain::scroll::{self, ScrollAxis, ScrollDirection};
-use clippity_infra::error::{AppError, AppResult};
 use crate::capture_io::{copy_png_to_clipboard, next_id, save_capture_png};
 use crate::overlay_service::{build_virtual_canvas, monitor_for_regions};
 use crate::settings_service::{CapturesDirSource, NameTemplateSource};
 use crate::window_service;
+use clippity_domain::metadata::CaptureSource;
+use clippity_domain::overlay::{validate_region, OverlayResult, Region};
+use clippity_domain::scroll::{self, ScrollAxis, ScrollDirection};
+use clippity_infra::error::{AppError, AppResult};
+use clippity_infra::events;
 
 /// Worker capture cadence. Capturing more often means consecutive kept
 /// frames overlap more, which both removes the risk of a fast scroll

@@ -86,10 +86,244 @@ pub enum AppIconStyle {
     Monochrome,
 }
 
-/// Chrome opacity envelope (percent). Below 60 % the window chrome
-/// starts to lose legibility against a busy desktop behind the Mica
-/// backdrop, so that's the floor; 100 % is fully opaque (the default).
-pub const MIN_WINDOW_OPACITY_PCT: u8 = 60;
+/// Native transparent-window material. The performance `window_effects`
+/// switch remains the master on/off gate; this chooses which backdrop is
+/// used when effects are enabled.
+///
+/// The materials differ in *what* they show, not just how strongly:
+/// Mica and Tabbed are wallpaper-derived — DWM samples the desktop
+/// wallpaper once and blurs it, so nothing behind the window (other
+/// apps, video, a moving window) ever shows through no matter how
+/// transparent the app chrome is made. Acrylic and Blur sample live
+/// content. `Clear` removes the material entirely so the transparent
+/// window is a plain hole onto whatever is behind it.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum WindowBackdrop {
+    /// Windows 11's default Mica material.
+    #[default]
+    Mica,
+    /// Stronger transient-window acrylic blur.
+    Acrylic,
+    /// Legacy blur-behind material.
+    Blur,
+    /// Windows 11 tabbed Mica variant.
+    Tabbed,
+    /// No native material at all — the transparent window shows the
+    /// desktop / other apps behind it directly, unblurred. The only
+    /// mode where lowering chrome opacity reveals *live* content on
+    /// every Windows build.
+    Clear,
+}
+
+impl WindowBackdrop {
+    /// Whether the material takes a tint colour. Mica / Tabbed are
+    /// wallpaper-derived system backdrops that DWM tints itself, and
+    /// `Clear` paints nothing — for those the `tint_strength` knob is a
+    /// no-op and the UI hides it.
+    pub fn accepts_tint(self) -> bool {
+        matches!(self, Self::Acrylic | Self::Blur)
+    }
+
+    /// Whether the material samples live content behind the window
+    /// (rather than the wallpaper). Drives the "this is why lowering
+    /// transparency doesn't reveal your desktop" hint in the UI.
+    pub fn samples_live_content(self) -> bool {
+        matches!(self, Self::Acrylic | Self::Blur | Self::Clear)
+    }
+}
+
+/// Per-material tuning envelopes (percent). Every knob is stored
+/// loosely and clamped on the way in, mirroring `window_opacity`.
+pub const MIN_BACKDROP_TINT_PCT: u8 = 0;
+pub const MAX_BACKDROP_TINT_PCT: u8 = 100;
+pub const MIN_BACKDROP_GLASS_PCT: u8 = 0;
+pub const MAX_BACKDROP_GLASS_PCT: u8 = 150;
+pub const MIN_BACKDROP_BLUR_PCT: u8 = 0;
+pub const MAX_BACKDROP_BLUR_PCT: u8 = 200;
+pub const MIN_BACKDROP_SATURATION_PCT: u8 = 50;
+pub const MAX_BACKDROP_SATURATION_PCT: u8 = 200;
+
+/// Neutral value for the three "scale the shipped look" knobs — 100 %
+/// reproduces exactly what the app rendered before tuning existed.
+const NEUTRAL_PCT: u8 = 100;
+/// Shipped tint for the two tintable materials — 70 % ≈ the alpha 178
+/// the acrylic tint was hardcoded to before this was user-facing.
+const DEFAULT_TINT_PCT: u8 = 70;
+
+fn default_neutral_pct() -> u8 {
+    NEUTRAL_PCT
+}
+
+fn default_tint_pct() -> u8 {
+    DEFAULT_TINT_PCT
+}
+
+/// Fine-tuning for one backdrop material.
+///
+/// The backdrop picker is coarse — it chooses *which* DWM material to
+/// ask for — and the materials behave differently enough that one set
+/// of numbers can't flatter all of them. These four knobs are stored
+/// per material so switching between them restores that material's own
+/// tuning rather than dragging one compromise across all of them.
+///
+/// - `tint_strength` — alpha of the colour blended into the *native*
+///   material. Only Acrylic and Blur take one (see
+///   [`WindowBackdrop::accepts_tint`]); on Windows 11 22H2+ acrylic is
+///   a DWM system backdrop that tints itself, so it lands only on
+///   Windows 10 / older builds where the legacy composition attribute
+///   is used.
+/// - `glass_strength` — multiplier on the stacked in-app glass layers.
+///   This is the knob that decides how much of the native material is
+///   actually visible through the app's own panels; at 0 the panels
+///   stop painting entirely.
+/// - `blur_strength` — multiplier on the CSS `backdrop-filter` blur
+///   radii. Lower = the material reads sharper through the chrome.
+/// - `saturation` — CSS `backdrop-filter: saturate()`. Pushes colour
+///   back into materials (Mica especially) that wash out when the
+///   chrome above them goes transparent.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct BackdropTuning {
+    #[serde(default = "default_tint_pct")]
+    pub tint_strength: u8,
+    #[serde(default = "default_neutral_pct")]
+    pub glass_strength: u8,
+    #[serde(default = "default_neutral_pct")]
+    pub blur_strength: u8,
+    #[serde(default = "default_neutral_pct")]
+    pub saturation: u8,
+}
+
+impl BackdropTuning {
+    pub const fn new(
+        tint_strength: u8,
+        glass_strength: u8,
+        blur_strength: u8,
+        saturation: u8,
+    ) -> Self {
+        Self {
+            tint_strength,
+            glass_strength,
+            blur_strength,
+            saturation,
+        }
+    }
+
+    /// Pure: clamp every knob into its envelope.
+    pub fn clamped(self) -> Self {
+        Self {
+            tint_strength: self
+                .tint_strength
+                .clamp(MIN_BACKDROP_TINT_PCT, MAX_BACKDROP_TINT_PCT),
+            glass_strength: self
+                .glass_strength
+                .clamp(MIN_BACKDROP_GLASS_PCT, MAX_BACKDROP_GLASS_PCT),
+            blur_strength: self
+                .blur_strength
+                .clamp(MIN_BACKDROP_BLUR_PCT, MAX_BACKDROP_BLUR_PCT),
+            saturation: self
+                .saturation
+                .clamp(MIN_BACKDROP_SATURATION_PCT, MAX_BACKDROP_SATURATION_PCT),
+        }
+    }
+
+    /// 0–255 alpha for the native material tint, from the clamped
+    /// percent. The platform layer feeds this straight into
+    /// `window_vibrancy`'s tint colour.
+    pub fn tint_alpha(self) -> u8 {
+        ((self.clamped().tint_strength as u16 * 255) / 100) as u8
+    }
+}
+
+impl Default for BackdropTuning {
+    fn default() -> Self {
+        Self::new(DEFAULT_TINT_PCT, NEUTRAL_PCT, NEUTRAL_PCT, NEUTRAL_PCT)
+    }
+}
+
+/// Shipped tuning for every material that doesn't read a tint. Blur's
+/// tint used to be hardcoded to alpha 1 (visually none), `Clear` paints
+/// no material at all, and Mica / Tabbed are DWM system backdrops that
+/// tint themselves — storing 70 for those would look meaningful and
+/// never do anything.
+fn default_untinted_tuning() -> BackdropTuning {
+    BackdropTuning::new(0, NEUTRAL_PCT, NEUTRAL_PCT, NEUTRAL_PCT)
+}
+
+/// One [`BackdropTuning`] per material. A named struct rather than a map
+/// so a settings file written before a material existed still parses
+/// into that material's shipped default (`#[serde(default)]` per field)
+/// and every lookup is total.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct BackdropTuningSet {
+    #[serde(default = "default_untinted_tuning")]
+    pub mica: BackdropTuning,
+    #[serde(default)]
+    pub acrylic: BackdropTuning,
+    #[serde(default = "default_untinted_tuning")]
+    pub blur: BackdropTuning,
+    #[serde(default = "default_untinted_tuning")]
+    pub tabbed: BackdropTuning,
+    #[serde(default = "default_untinted_tuning")]
+    pub clear: BackdropTuning,
+}
+
+impl BackdropTuningSet {
+    /// The tuning for one material. Total — every variant has an entry.
+    pub fn get(&self, backdrop: WindowBackdrop) -> BackdropTuning {
+        match backdrop {
+            WindowBackdrop::Mica => self.mica,
+            WindowBackdrop::Acrylic => self.acrylic,
+            WindowBackdrop::Blur => self.blur,
+            WindowBackdrop::Tabbed => self.tabbed,
+            WindowBackdrop::Clear => self.clear,
+        }
+    }
+
+    /// Replace the tuning for one material, leaving the others alone.
+    pub fn set(&mut self, backdrop: WindowBackdrop, tuning: BackdropTuning) {
+        let slot = match backdrop {
+            WindowBackdrop::Mica => &mut self.mica,
+            WindowBackdrop::Acrylic => &mut self.acrylic,
+            WindowBackdrop::Blur => &mut self.blur,
+            WindowBackdrop::Tabbed => &mut self.tabbed,
+            WindowBackdrop::Clear => &mut self.clear,
+        };
+        *slot = tuning;
+    }
+
+    /// Pure: clamp every material's knobs into their envelopes.
+    pub fn clamped(self) -> Self {
+        Self {
+            mica: self.mica.clamped(),
+            acrylic: self.acrylic.clamped(),
+            blur: self.blur.clamped(),
+            tabbed: self.tabbed.clamped(),
+            clear: self.clear.clamped(),
+        }
+    }
+}
+
+impl Default for BackdropTuningSet {
+    fn default() -> Self {
+        Self {
+            mica: default_untinted_tuning(),
+            // The one material whose tint the platform layer actually
+            // forwards on a build where it still lands.
+            acrylic: BackdropTuning::default(),
+            blur: default_untinted_tuning(),
+            tabbed: default_untinted_tuning(),
+            clear: default_untinted_tuning(),
+        }
+    }
+}
+
+/// Chrome opacity envelope (percent). 10 % is intentionally very
+/// transparent for users who want the native backdrop / desktop to show
+/// strongly; 100 % is fully opaque (the default).
+pub const MIN_WINDOW_OPACITY_PCT: u8 = 10;
 pub const MAX_WINDOW_OPACITY_PCT: u8 = 100;
 
 /// UI-scale envelope (percent). Applied as a CSS `zoom` on the
@@ -191,12 +425,21 @@ pub struct AppearanceSettings {
     pub theme: ThemePref,
     #[serde(default = "default_accent")]
     pub accent: String,
-    /// Chrome opacity, percent. Drives `--window-opacity` in `theme.css`
-    /// (0.6–1.0), letting the Mica backdrop / desktop bleed through the
-    /// window shell. Stored loosely; readers clamp into
+    /// Chrome opacity, percent. Drives transparency paint tokens in
+    /// `theme.css`, letting the native backdrop / desktop bleed through
+    /// the window shell. Stored loosely; readers clamp into
     /// `MIN_WINDOW_OPACITY_PCT..=MAX_WINDOW_OPACITY_PCT`.
     #[serde(default = "default_window_opacity")]
     pub window_opacity: u8,
+    /// Native backdrop material used behind the translucent app chrome
+    /// when `performance.window_effects` is enabled.
+    #[serde(default)]
+    pub window_backdrop: WindowBackdrop,
+    /// Per-material fine-tuning for `window_backdrop`. Kept per material
+    /// so switching backdrops restores that material's own numbers.
+    /// Stored loosely; readers clamp via `BackdropTuningSet::clamped`.
+    #[serde(default)]
+    pub backdrop_tuning: BackdropTuningSet,
     /// UI zoom, percent. Applied as a CSS `zoom` on the full-window
     /// chrome so px type + layout scale together. Stored loosely;
     /// readers clamp into `MIN_UI_SCALE_PCT..=MAX_UI_SCALE_PCT`.
@@ -219,6 +462,8 @@ impl Default for AppearanceSettings {
             theme: ThemePref::default(),
             accent: default_accent(),
             window_opacity: default_window_opacity(),
+            window_backdrop: WindowBackdrop::default(),
+            backdrop_tuning: BackdropTuningSet::default(),
             ui_scale: default_ui_scale(),
             corner_radius: RadiusScale::default(),
             density: Density::default(),
@@ -521,7 +766,323 @@ impl Default for ShortcutsSettings {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
+/// Severity floor for one half of the app's logging. Mirrors the
+/// `tracing` levels, plus an `Off` that silences the target entirely.
+///
+/// Kept in the domain (rather than reusing `tracing::Level`) because
+/// this is a *persisted user choice* that both halves of the app read:
+/// the backend maps it onto an `EnvFilter` directive, the frontend onto
+/// its console logger's threshold. Neither mapping belongs in a type the
+/// settings file is serialized from.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum LogLevel {
+    /// Emit nothing at all.
+    Off,
+    Error,
+    Warn,
+    /// The shipped backend level — enough to explain a session without
+    /// narrating every frame.
+    #[default]
+    Info,
+    Debug,
+    Trace,
+}
+
+impl LogLevel {
+    /// The `tracing`/`EnvFilter` spelling of this level. Also what the
+    /// frontend logger keys its threshold off, so the two halves of a
+    /// log file agree on what "debug" means.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            LogLevel::Off => "off",
+            LogLevel::Error => "error",
+            LogLevel::Warn => "warn",
+            LogLevel::Info => "info",
+            LogLevel::Debug => "debug",
+            LogLevel::Trace => "trace",
+        }
+    }
+
+    /// Parse a wire/filter spelling back into a level. Unknown input —
+    /// a hand-edited settings file, a frontend that sent something odd
+    /// — falls back to `Info` rather than erroring: a log level is never
+    /// worth failing a command over.
+    pub fn parse(s: &str) -> Self {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "off" | "none" | "silent" => LogLevel::Off,
+            "error" => LogLevel::Error,
+            "warn" | "warning" => LogLevel::Warn,
+            "debug" => LogLevel::Debug,
+            "trace" => LogLevel::Trace,
+            _ => LogLevel::Info,
+        }
+    }
+
+    /// Whether a record at `self` passes a threshold of `min`. `Off`
+    /// never passes and never admits anything.
+    pub fn allows(self, min: LogLevel) -> bool {
+        if min == LogLevel::Off || self == LogLevel::Off {
+            return false;
+        }
+        self.rank() >= min.rank()
+    }
+
+    /// Ordering rank — higher is more severe. Private because the
+    /// numbers themselves mean nothing outside this comparison.
+    fn rank(self) -> u8 {
+        match self {
+            LogLevel::Off => 0,
+            LogLevel::Trace => 1,
+            LogLevel::Debug => 2,
+            LogLevel::Info => 3,
+            LogLevel::Warn => 4,
+            LogLevel::Error => 5,
+        }
+    }
+}
+
+/// How long an armed developer mode survives.
+///
+/// Developer mode reveals destructive actions and can turn on logging
+/// that records IPC payloads, so leaving it armed forever after one
+/// debugging session is the failure mode this guards against.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum DeveloperExpiry {
+    /// Stays on until the user turns it off.
+    Never,
+    /// Off again on the next launch — the shipped default.
+    #[default]
+    Restart,
+    /// Off again 24 hours after it was armed.
+    Day,
+}
+
+/// Milliseconds in the [`DeveloperExpiry::Day`] window.
+pub const DEVELOPER_DAY_MS: u64 = 24 * 60 * 60 * 1_000;
+
+/// Log-file size envelope, in mebibytes. Below 1 MiB a file rotates
+/// before a single session's startup banner is complete; above 64 MiB
+/// the retained set stops being something a user can attach to a bug
+/// report.
+pub const MIN_LOG_FILE_MB: u32 = 1;
+pub const MAX_LOG_FILE_MB: u32 = 64;
+pub const DEFAULT_LOG_FILE_MB: u32 = 8;
+
+/// Retained rotated files (not counting the live one).
+pub const MIN_LOG_FILES: u32 = 1;
+pub const MAX_LOG_FILES: u32 = 20;
+pub const DEFAULT_LOG_FILES: u32 = 5;
+
+/// Slow-command threshold envelope, in milliseconds. 1 ms flags
+/// everything (which is what the IPC inspector's "show all" case wants);
+/// 5 s is longer than any command the app makes on purpose.
+pub const MIN_SLOW_COMMAND_MS: u32 = 1;
+pub const MAX_SLOW_COMMAND_MS: u32 = 5_000;
+pub const DEFAULT_SLOW_COMMAND_MS: u32 = 100;
+
+fn default_log_file_mb() -> u32 {
+    DEFAULT_LOG_FILE_MB
+}
+
+fn default_log_files() -> u32 {
+    DEFAULT_LOG_FILES
+}
+
+fn default_slow_command_ms() -> u32 {
+    DEFAULT_SLOW_COMMAND_MS
+}
+
+fn default_backend_log() -> LogLevel {
+    LogLevel::Info
+}
+
+/// The frontend ships quieter than the backend: its `debug`/`info` are
+/// developer flow narration, and every line of it crosses IPC to reach
+/// the log file. Problems still get through.
+fn default_frontend_log() -> LogLevel {
+    LogLevel::Warn
+}
+
+/// Pure: clamp a stored log-file size into the valid envelope.
+pub fn clamp_log_file_mb(mb: u32) -> u32 {
+    mb.clamp(MIN_LOG_FILE_MB, MAX_LOG_FILE_MB)
+}
+
+/// Pure: clamp a stored retained-file count into the valid envelope.
+pub fn clamp_log_files(count: u32) -> u32 {
+    count.clamp(MIN_LOG_FILES, MAX_LOG_FILES)
+}
+
+/// Pure: clamp a stored slow-command threshold into the valid envelope.
+pub fn clamp_slow_command_ms(ms: u32) -> u32 {
+    ms.clamp(MIN_SLOW_COMMAND_MS, MAX_SLOW_COMMAND_MS)
+}
+
+/// Developer + diagnostics preferences — Settings → Advanced.
+///
+/// Two kinds of field live here, and the difference matters:
+///
+/// - **Presentation gates** (`enabled`, `show_actions`, `performance_overlay`,
+///   the per-area diagnostics toggles) decide what the UI reveals. They
+///   are inert when developer mode is off.
+/// - **Machinery** (`backend_log`, `frontend_log`, `log_to_disk`,
+///   `log_max_file_mb`, `log_retain_files`) configures logging for
+///   **every** launch, developer mode or not. A user who never opens
+///   this page still gets a rotating log file, which is the whole reason
+///   a diagnostics bundle is worth exporting.
+///
+/// Every field is independently `#[serde(default)]`, so a settings.json
+/// that predates the section — or a build that knew only some of it —
+/// upgrades cleanly.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct DeveloperSettings {
+    /// Master switch. Ships **off**: the actions it reveals delete
+    /// caches, simulate failures, and can record IPC payloads.
+    #[serde(default)]
+    pub enabled: bool,
+    /// Unix-epoch milliseconds at which developer mode was last armed.
+    /// `0` = unknown (an older file, or armed by a build that predates
+    /// the stamp), which [`developer_mode_expired`] treats as "expired"
+    /// under the Day policy rather than as "forever".
+    #[serde(default)]
+    pub enabled_at_ms: u64,
+    /// How long an armed developer mode survives.
+    #[serde(default)]
+    pub expiry: DeveloperExpiry,
+    /// Surface developer actions (copy debug info, open logs, inspect)
+    /// in ordinary context menus, not just on this page.
+    #[serde(default)]
+    pub show_actions: bool,
+    /// Ask before a destructive developer action runs. Ships **on** —
+    /// the actions behind it clear caches and rebuild indexes.
+    #[serde(default = "default_true")]
+    pub confirm_destructive: bool,
+    /// Open the developer tools automatically when a window is created.
+    #[serde(default)]
+    pub devtools_on_startup: bool,
+    /// Severity floor for the Rust `tracing` subscriber.
+    #[serde(default = "default_backend_log")]
+    pub backend_log: LogLevel,
+    /// Severity floor for the frontend logger, and for what it forwards
+    /// into the backend's log file so both halves share one timeline.
+    #[serde(default = "default_frontend_log")]
+    pub frontend_log: LogLevel,
+    /// Write the log to disk (rotating files under `<data>/logs`).
+    /// Ships **on**: a bug report is worth far more with the session
+    /// that produced it attached, and the files are capped + local.
+    #[serde(default = "default_true")]
+    pub log_to_disk: bool,
+    /// Size at which the live log file rotates, in MiB. Read-clamped
+    /// into `MIN_LOG_FILE_MB..=MAX_LOG_FILE_MB`.
+    #[serde(default = "default_log_file_mb")]
+    pub log_max_file_mb: u32,
+    /// How many rotated files to keep beside the live one. Read-clamped
+    /// into `MIN_LOG_FILES..=MAX_LOG_FILES`.
+    #[serde(default = "default_log_files")]
+    pub log_retain_files: u32,
+    /// Show the live performance overlay in the app windows.
+    #[serde(default)]
+    pub performance_overlay: bool,
+    /// Record the duration, payload size and outcome of every IPC call
+    /// so the command inspector has something to show. Off by default —
+    /// it retains a rolling window of command metadata.
+    #[serde(default)]
+    pub command_timing: bool,
+    /// Flag any command slower than this, in ms. Read-clamped into
+    /// `MIN_SLOW_COMMAND_MS..=MAX_SLOW_COMMAND_MS`.
+    #[serde(default = "default_slow_command_ms")]
+    pub slow_command_ms: u32,
+    /// Show capture timing + monitor/DPI/HDR diagnostics.
+    #[serde(default)]
+    pub capture_diagnostics: bool,
+    /// Show recorder statistics (frames, drops, encoder, file growth).
+    #[serde(default)]
+    pub recording_diagnostics: bool,
+    /// Strip user names, absolute paths and capture file names from an
+    /// exported diagnostics bundle. Ships **on** — a bundle is made to
+    /// be sent to someone else.
+    #[serde(default = "default_true")]
+    pub redact_diagnostics: bool,
+    /// Per-flag overrides for the frontend's experiment registry. A
+    /// missing id means "use the build default"; `true`/`false` force
+    /// the flag on or off. A `BTreeMap` so the persisted JSON is
+    /// stable-ordered, matching `ShortcutsSettings::overrides`.
+    #[serde(default)]
+    pub feature_flags: BTreeMap<String, bool>,
+}
+
+impl Default for DeveloperSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            enabled_at_ms: 0,
+            expiry: DeveloperExpiry::default(),
+            show_actions: false,
+            confirm_destructive: true,
+            devtools_on_startup: false,
+            backend_log: default_backend_log(),
+            frontend_log: default_frontend_log(),
+            log_to_disk: true,
+            log_max_file_mb: default_log_file_mb(),
+            log_retain_files: default_log_files(),
+            performance_overlay: false,
+            command_timing: false,
+            slow_command_ms: default_slow_command_ms(),
+            capture_diagnostics: false,
+            recording_diagnostics: false,
+            redact_diagnostics: true,
+            feature_flags: BTreeMap::new(),
+        }
+    }
+}
+
+impl DeveloperSettings {
+    /// The log-file cap these settings describe, in **bytes**, clamped.
+    pub fn log_max_bytes(&self) -> u64 {
+        clamp_log_file_mb(self.log_max_file_mb) as u64 * 1024 * 1024
+    }
+
+    /// Retained rotated files, clamped.
+    pub fn retained_files(&self) -> u32 {
+        clamp_log_files(self.log_retain_files)
+    }
+
+    /// The slow-command threshold, clamped.
+    pub fn slow_command_ms(&self) -> u32 {
+        clamp_slow_command_ms(self.slow_command_ms)
+    }
+}
+
+/// Pure: has an armed developer mode outlived its expiry policy?
+///
+/// Evaluated **once at load**, against a fresh process — which is what
+/// makes [`DeveloperExpiry::Restart`] mean what it says. `now_ms` is
+/// injected rather than read so the rule is testable without a clock.
+///
+/// A `Day` policy with no arming stamp (`enabled_at_ms == 0`) counts as
+/// expired: the safe reading of "we don't know when this was turned on"
+/// is not "leave it on indefinitely".
+pub fn developer_mode_expired(dev: &DeveloperSettings, now_ms: u64) -> bool {
+    if !dev.enabled {
+        return false;
+    }
+    match dev.expiry {
+        DeveloperExpiry::Never => false,
+        DeveloperExpiry::Restart => true,
+        DeveloperExpiry::Day => {
+            dev.enabled_at_ms == 0 || now_ms.saturating_sub(dev.enabled_at_ms) >= DEVELOPER_DAY_MS
+        }
+    }
+}
+
+/// `PartialEq` but not `Eq`, since `RecordingSettings` carries a source
+/// list positioned with `f32` rectangles (ADR 0033). Nothing needs total
+/// equality — the comparisons here are `assert_eq!` and change
+/// detection, both of which are satisfied by partial equality.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     #[serde(default)]
@@ -540,6 +1101,8 @@ pub struct Settings {
     pub models: ModelsSettings,
     #[serde(default)]
     pub shortcuts: ShortcutsSettings,
+    #[serde(default)]
+    pub developer: DeveloperSettings,
 }
 
 /// Screen-recording defaults (ADR 0031) — what a fresh session starts
@@ -555,7 +1118,9 @@ pub struct Settings {
 /// survives plugging in a headset mid-session. A pinned id that no
 /// longer resolves falls back to the default with a warning rather than
 /// failing the recording — see `platform::windows::audio`.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+/// `PartialEq` but not `Eq`: a source's position is a `NormRect` of
+/// `f32`s, and float equality is partial by definition.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct RecordingSettings {
     /// Mix the microphone into recordings. Ships **off**: a recorder
@@ -574,6 +1139,18 @@ pub struct RecordingSettings {
     /// Pinned render endpoint id for loopback. `None` = the OS default.
     #[serde(default)]
     pub system_device: Option<String>,
+    /// Level each input starts a session at, as a percentage of unity
+    /// (`recorder::GAIN_PCT_DEFAULT`). Read-clamped by
+    /// [`RecordingSettings::audio`], the same way the frame rates are.
+    ///
+    /// A *starting* level, not a live one: the HUD's slider moves the
+    /// running session and deliberately does not write back here, so a
+    /// level nudged for one awkward recording doesn't become the level
+    /// every future recording begins at.
+    #[serde(default = "default_gain_pct")]
+    pub microphone_gain_pct: u16,
+    #[serde(default = "default_gain_pct")]
+    pub system_gain_pct: u16,
     /// Frame rate for MP4 recordings. Stored loosely; readers clamp it
     /// through `recorder::clamp_fps`, which is also what makes a value
     /// left over from a GIF preset harmless.
@@ -583,6 +1160,36 @@ pub struct RecordingSettings {
     /// GIF's usable range is much lower — see `domain::recorder`.
     #[serde(default = "default_gif_fps")]
     pub gif_fps: u32,
+    /// Cap on the encoded frame's height. `0` (`recorder::RESOLUTION_SOURCE`)
+    /// records at whatever was captured, which is the default: a
+    /// recorder that quietly halves the resolution of a 4K demo would be
+    /// making a quality decision the user never asked for.
+    ///
+    /// **One value across both formats**, unlike the frame rates. The
+    /// rates are split because a number legal for MP4 is illegal for
+    /// GIF; a height cap has no such problem — GIF's own pixel budget is
+    /// tighter than any of these and simply wins (see
+    /// `recorder::output_size`), so a shared setting cannot produce a
+    /// value either format refuses.
+    #[serde(default = "default_max_height")]
+    pub max_height: u32,
+    /// Sources composited over the recording — a webcam, a logo
+    /// (ADR 0033). The list a session *starts* from; a recording preset
+    /// can carry its own instead.
+    ///
+    /// Empty by default, which is every recording made before sources
+    /// existed. A camera that only turns on when the user says so is
+    /// the same privacy rule the microphone follows.
+    #[serde(default)]
+    pub sources: Vec<crate::composition::Source>,
+    /// H.264 encoder settings a session starts from. Read-clamped by
+    /// [`RecordingSettings::encoding`].
+    ///
+    /// A nested struct rather than five more flat fields, mirroring how
+    /// `recorder::RecorderEncoding` groups them: they are read together
+    /// and mean nothing individually. GIF ignores all of it.
+    #[serde(default)]
+    pub encoding: crate::recorder::RecorderEncoding,
     /// Composite the cursor into recorded frames. Ships off, matching
     /// the still-capture default.
     #[serde(default)]
@@ -622,6 +1229,14 @@ fn default_gif_fps() -> u32 {
     crate::recorder::GIF_FPS_DEFAULT
 }
 
+fn default_max_height() -> u32 {
+    crate::recorder::RESOLUTION_SOURCE
+}
+
+fn default_gain_pct() -> u16 {
+    crate::recorder::GAIN_PCT_DEFAULT
+}
+
 impl Default for RecordingSettings {
     fn default() -> Self {
         Self {
@@ -629,8 +1244,13 @@ impl Default for RecordingSettings {
             system_audio: false,
             microphone_device: None,
             system_device: None,
+            microphone_gain_pct: default_gain_pct(),
+            system_gain_pct: default_gain_pct(),
             video_fps: default_video_fps(),
             gif_fps: default_gif_fps(),
+            max_height: default_max_height(),
+            sources: Vec::new(),
+            encoding: crate::recorder::RecorderEncoding::default(),
             cursor: false,
             outline: default_outline(),
             clipboard: false,
@@ -653,13 +1273,32 @@ impl RecordingSettings {
         crate::recorder::clamp_fps(Some(requested), format)
     }
 
-    /// The audio selection these settings describe.
+    /// The output-height cap these settings describe, clamped. Same
+    /// reasoning as [`Self::fps_for`]: read-clamping is what makes a
+    /// hand-edited or older settings file harmless.
+    pub fn max_height(&self) -> u32 {
+        crate::recorder::clamp_max_height(self.max_height)
+    }
+
+    /// The encoder settings these settings describe, clamped.
+    pub fn encoding(&self) -> crate::recorder::RecorderEncoding {
+        self.encoding.clamped()
+    }
+
+    /// The source list these settings describe, capped and clamped.
+    pub fn sources(&self) -> Vec<crate::composition::Source> {
+        crate::composition::clamp_sources(self.sources.clone())
+    }
+
+    /// The audio selection these settings describe, gains clamped.
     pub fn audio(&self) -> crate::recorder::AudioSelection {
         crate::recorder::AudioSelection {
             microphone: self.microphone,
             system: self.system_audio,
             microphone_device: self.microphone_device.clone(),
             system_device: self.system_device.clone(),
+            microphone_gain_pct: crate::recorder::clamp_gain_pct(self.microphone_gain_pct),
+            system_gain_pct: crate::recorder::clamp_gain_pct(self.system_gain_pct),
         }
     }
 }
@@ -677,6 +1316,70 @@ mod recording_tests {
         assert!(!d.microphone);
         assert!(!d.system_audio);
         assert!(!d.audio().any());
+    }
+
+    #[test]
+    fn both_inputs_ship_at_unity_gain() {
+        let a = RecordingSettings::default().audio();
+        assert_eq!(a.microphone_gain_pct, crate::recorder::GAIN_PCT_DEFAULT);
+        assert_eq!(a.system_gain_pct, crate::recorder::GAIN_PCT_DEFAULT);
+    }
+
+    #[test]
+    fn encoder_settings_ship_at_the_shipped_defaults() {
+        let e = RecordingSettings::default().encoding();
+        assert_eq!(e.quality, crate::recorder::RecorderQuality::Balanced);
+        assert_eq!(e.bitrate_bps, None);
+        assert!(e.prefer_hardware);
+    }
+
+    #[test]
+    fn a_nonsense_encoding_is_read_clamped() {
+        let s = RecordingSettings {
+            encoding: crate::recorder::RecorderEncoding {
+                keyframe_seconds: 0,
+                bitrate_bps: Some(u32::MAX),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let e = s.encoding();
+        assert_eq!(
+            e.keyframe_seconds,
+            crate::recorder::KEYFRAME_SECONDS_DEFAULT
+        );
+        assert_eq!(e.bitrate_bps, Some(crate::recorder::BITRATE_MAX_BPS));
+    }
+
+    #[test]
+    fn a_nonsense_gain_is_read_clamped() {
+        let s = RecordingSettings {
+            microphone_gain_pct: 5_000,
+            system_gain_pct: 60,
+            ..Default::default()
+        };
+        let a = s.audio();
+        assert_eq!(a.microphone_gain_pct, crate::recorder::GAIN_PCT_MAX);
+        assert_eq!(a.system_gain_pct, 60);
+    }
+
+    #[test]
+    fn resolution_ships_at_the_captured_size() {
+        // Silently halving the resolution of a 4K demo would be a
+        // quality decision the user never made.
+        assert_eq!(
+            RecordingSettings::default().max_height(),
+            crate::recorder::RESOLUTION_SOURCE
+        );
+    }
+
+    #[test]
+    fn a_nonsense_resolution_is_read_clamped() {
+        let s = RecordingSettings {
+            max_height: 99_999,
+            ..Default::default()
+        };
+        assert_eq!(s.max_height(), crate::recorder::MAX_RESOLUTION_HEIGHT);
     }
 
     #[test]
@@ -766,6 +1469,8 @@ pub struct SettingsPatch {
     pub models: Option<ModelsSettings>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shortcuts: Option<ShortcutsSettings>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub developer: Option<DeveloperSettings>,
 }
 
 /// Hard upper bound for any per-kind toast duration. 60 s is the same
@@ -825,6 +1530,7 @@ mod tests {
     fn default_appearance_extras_are_shipped_neutral() {
         let a = AppearanceSettings::default();
         assert_eq!(a.window_opacity, 100);
+        assert_eq!(a.window_backdrop, WindowBackdrop::Mica);
         assert_eq!(a.ui_scale, 100);
         assert_eq!(a.corner_radius, RadiusScale::Default);
         assert_eq!(a.density, Density::Comfortable);
@@ -835,6 +1541,7 @@ mod tests {
     fn appearance_extras_serialize_camel_and_kebab_case() {
         let s = serde_json::to_string(&Settings::default()).unwrap();
         assert!(s.contains("\"windowOpacity\""), "{s}");
+        assert!(s.contains("\"windowBackdrop\""), "{s}");
         assert!(s.contains("\"uiScale\""), "{s}");
         assert!(s.contains("\"cornerRadius\""), "{s}");
         assert!(s.contains("\"density\""), "{s}");
@@ -852,6 +1559,10 @@ mod tests {
             serde_json::to_string(&AppIconStyle::Monochrome).unwrap(),
             "\"monochrome\""
         );
+        assert_eq!(
+            serde_json::to_string(&WindowBackdrop::Acrylic).unwrap(),
+            "\"acrylic\""
+        );
     }
 
     #[test]
@@ -863,6 +1574,7 @@ mod tests {
         let parsed: Settings = serde_json::from_str(json).unwrap();
         assert_eq!(parsed.appearance.accent, "#123456");
         assert_eq!(parsed.appearance.window_opacity, 100);
+        assert_eq!(parsed.appearance.window_backdrop, WindowBackdrop::Mica);
         assert_eq!(parsed.appearance.ui_scale, 100);
         assert_eq!(parsed.appearance.corner_radius, RadiusScale::Default);
         assert_eq!(parsed.appearance.density, Density::Comfortable);
@@ -873,6 +1585,7 @@ mod tests {
     fn appearance_extras_round_trip_through_json() {
         let mut s = Settings::default();
         s.appearance.window_opacity = 72;
+        s.appearance.window_backdrop = WindowBackdrop::Tabbed;
         s.appearance.ui_scale = 115;
         s.appearance.corner_radius = RadiusScale::Sharp;
         s.appearance.density = Density::Compact;
@@ -887,6 +1600,116 @@ mod tests {
         assert_eq!(clamp_window_opacity(0), MIN_WINDOW_OPACITY_PCT);
         assert_eq!(clamp_window_opacity(80), 80);
         assert_eq!(clamp_window_opacity(200), MAX_WINDOW_OPACITY_PCT);
+    }
+
+    // ---------- backdrop tuning ----------
+
+    #[test]
+    fn default_backdrop_tuning_is_neutral_per_material() {
+        let t = BackdropTuningSet::default();
+        // Only Acrylic ships the alpha the tint used to be hardcoded
+        // to; every material that ignores the tint stores 0 rather than
+        // a number that looks meaningful and never does anything.
+        assert_eq!(t.acrylic.tint_strength, 70);
+        assert_eq!(t.mica.tint_strength, 0);
+        assert_eq!(t.tabbed.tint_strength, 0);
+        assert_eq!(t.blur.tint_strength, 0);
+        assert_eq!(t.clear.tint_strength, 0);
+        // Every scale knob is neutral so tuning changes nothing until
+        // the user moves a slider.
+        for tuning in [t.mica, t.acrylic, t.blur, t.tabbed, t.clear] {
+            assert_eq!(tuning.glass_strength, 100);
+            assert_eq!(tuning.blur_strength, 100);
+            assert_eq!(tuning.saturation, 100);
+        }
+    }
+
+    #[test]
+    fn backdrop_tuning_clamps_every_knob() {
+        let clamped = BackdropTuning::new(200, 250, 250, 5).clamped();
+        assert_eq!(clamped.tint_strength, MAX_BACKDROP_TINT_PCT);
+        assert_eq!(clamped.glass_strength, MAX_BACKDROP_GLASS_PCT);
+        assert_eq!(clamped.blur_strength, MAX_BACKDROP_BLUR_PCT);
+        assert_eq!(clamped.saturation, MIN_BACKDROP_SATURATION_PCT);
+    }
+
+    #[test]
+    fn backdrop_tint_alpha_spans_the_byte_range() {
+        assert_eq!(BackdropTuning::new(0, 100, 100, 100).tint_alpha(), 0);
+        assert_eq!(BackdropTuning::new(100, 100, 100, 100).tint_alpha(), 255);
+        // The shipped 70 % reproduces the alpha acrylic was pinned to.
+        assert_eq!(BackdropTuning::default().tint_alpha(), 178);
+        // Out-of-envelope input is clamped before the conversion, so it
+        // can never wrap around the byte.
+        assert_eq!(BackdropTuning::new(255, 100, 100, 100).tint_alpha(), 255);
+    }
+
+    #[test]
+    fn backdrop_tuning_set_get_and_set_round_trip_per_material() {
+        let mut set = BackdropTuningSet::default();
+        let tuned = BackdropTuning::new(10, 20, 30, 150);
+        set.set(WindowBackdrop::Blur, tuned);
+        assert_eq!(set.get(WindowBackdrop::Blur), tuned);
+        // Other materials untouched — the point of storing per material.
+        assert_eq!(set.get(WindowBackdrop::Mica), default_untinted_tuning());
+        assert_eq!(set.get(WindowBackdrop::Acrylic), BackdropTuning::default());
+    }
+
+    #[test]
+    fn only_acrylic_and_blur_accept_a_tint() {
+        assert!(WindowBackdrop::Acrylic.accepts_tint());
+        assert!(WindowBackdrop::Blur.accepts_tint());
+        assert!(!WindowBackdrop::Mica.accepts_tint());
+        assert!(!WindowBackdrop::Tabbed.accepts_tint());
+        assert!(!WindowBackdrop::Clear.accepts_tint());
+    }
+
+    #[test]
+    fn wallpaper_materials_do_not_sample_live_content() {
+        assert!(!WindowBackdrop::Mica.samples_live_content());
+        assert!(!WindowBackdrop::Tabbed.samples_live_content());
+        assert!(WindowBackdrop::Acrylic.samples_live_content());
+        assert!(WindowBackdrop::Blur.samples_live_content());
+        assert!(WindowBackdrop::Clear.samples_live_content());
+    }
+
+    #[test]
+    fn clear_backdrop_serializes_kebab_case() {
+        assert_eq!(
+            serde_json::to_string(&WindowBackdrop::Clear).unwrap(),
+            "\"clear\""
+        );
+    }
+
+    #[test]
+    fn partial_backdrop_tuning_fills_missing_materials_from_default() {
+        // A settings.json written before `clear` existed, and with only
+        // one knob set on `mica`, must still parse.
+        let json = r##"{ "appearance": { "backdropTuning": {
+            "mica": { "saturation": 140 }
+        } } }"##;
+        let parsed: Settings = serde_json::from_str(json).unwrap();
+        let t = parsed.appearance.backdrop_tuning;
+        assert_eq!(t.mica.saturation, 140);
+        assert_eq!(t.mica.glass_strength, 100);
+        // `tintStrength` was absent from the object, so the per-field
+        // serde default fills it — Mica ignores it either way.
+        assert_eq!(t.mica.tint_strength, 70);
+        assert_eq!(t.clear, default_untinted_tuning());
+    }
+
+    #[test]
+    fn backdrop_tuning_round_trips_through_json() {
+        let mut s = Settings::default();
+        s.appearance.window_backdrop = WindowBackdrop::Clear;
+        s.appearance
+            .backdrop_tuning
+            .set(WindowBackdrop::Clear, BackdropTuning::new(0, 35, 60, 130));
+        let json = serde_json::to_string(&s).unwrap();
+        assert!(json.contains("\"backdropTuning\""), "{json}");
+        assert!(json.contains("\"glassStrength\""), "{json}");
+        let back: Settings = serde_json::from_str(&json).unwrap();
+        assert_eq!(s, back);
     }
 
     #[test]
@@ -1168,13 +1991,192 @@ mod tests {
         // BTreeMap keeps the persisted JSON deterministic regardless of
         // insertion order — clean diffs, reproducible tests.
         let mut a = Settings::default();
-        a.shortcuts.overrides.insert("editor:z".into(), vec!["Z".into()]);
-        a.shortcuts.overrides.insert("editor:a".into(), vec!["A".into()]);
+        a.shortcuts
+            .overrides
+            .insert("editor:z".into(), vec!["Z".into()]);
+        a.shortcuts
+            .overrides
+            .insert("editor:a".into(), vec!["A".into()]);
         let json = serde_json::to_string(&a.shortcuts.overrides).unwrap();
         assert!(
             json.find("editor:a").unwrap() < json.find("editor:z").unwrap(),
             "{json}"
         );
+    }
+
+    // ---------- developer ----------
+
+    #[test]
+    fn developer_mode_ships_off_behind_a_restart_expiry() {
+        // The switch reveals destructive actions and payload logging —
+        // it must not ship armed, and must not stay armed forever by
+        // default once a user does arm it.
+        let d = DeveloperSettings::default();
+        assert!(!d.enabled);
+        assert_eq!(d.expiry, DeveloperExpiry::Restart);
+        assert!(d.confirm_destructive, "destructive confirm ships on");
+        assert!(!d.command_timing, "payload timing is opt-in");
+        assert!(d.redact_diagnostics, "a bundle is redacted by default");
+    }
+
+    #[test]
+    fn disk_logging_ships_on_for_every_user_not_just_developers() {
+        // The whole point of an exportable bundle is that the session
+        // which produced the bug was recorded without anyone opting in.
+        let d = DeveloperSettings::default();
+        assert!(d.log_to_disk);
+        assert_eq!(d.backend_log, LogLevel::Info);
+        assert_eq!(d.frontend_log, LogLevel::Warn);
+        assert_eq!(d.log_max_file_mb, DEFAULT_LOG_FILE_MB);
+        assert_eq!(d.log_retain_files, DEFAULT_LOG_FILES);
+    }
+
+    #[test]
+    fn developer_section_uses_camel_case_and_kebab_case_keys() {
+        let s = serde_json::to_string(&Settings::default()).unwrap();
+        assert!(s.contains("\"developer\""), "{s}");
+        assert!(s.contains("\"backendLog\""), "{s}");
+        assert!(s.contains("\"logToDisk\""), "{s}");
+        assert!(s.contains("\"featureFlags\""), "{s}");
+        assert_eq!(serde_json::to_string(&LogLevel::Warn).unwrap(), "\"warn\"");
+        assert_eq!(
+            serde_json::to_string(&DeveloperExpiry::Day).unwrap(),
+            "\"day\""
+        );
+    }
+
+    #[test]
+    fn partial_developer_section_fills_missing_fields_from_default() {
+        // A settings.json written before this section existed, or by a
+        // build that knew only part of it, must not lose disk logging.
+        let json = r#"{ "developer": { "enabled": true } }"#;
+        let parsed: Settings = serde_json::from_str(json).unwrap();
+        assert!(parsed.developer.enabled);
+        assert!(parsed.developer.log_to_disk);
+        assert!(parsed.developer.confirm_destructive);
+        assert_eq!(parsed.developer.backend_log, LogLevel::Info);
+        assert_eq!(parsed.developer.expiry, DeveloperExpiry::Restart);
+    }
+
+    #[test]
+    fn developer_round_trips_through_json() {
+        let mut s = Settings::default();
+        s.developer.enabled = true;
+        s.developer.enabled_at_ms = 1_700_000_000_000;
+        s.developer.expiry = DeveloperExpiry::Day;
+        s.developer.backend_log = LogLevel::Trace;
+        s.developer.frontend_log = LogLevel::Debug;
+        s.developer.command_timing = true;
+        s.developer
+            .feature_flags
+            .insert("capture.duplication".into(), false);
+        let json = serde_json::to_string(&s).unwrap();
+        let back: Settings = serde_json::from_str(&json).unwrap();
+        assert_eq!(s, back);
+    }
+
+    #[test]
+    fn log_level_parses_loosely_and_falls_back_to_info() {
+        assert_eq!(LogLevel::parse("TRACE"), LogLevel::Trace);
+        assert_eq!(LogLevel::parse(" warning "), LogLevel::Warn);
+        assert_eq!(LogLevel::parse("none"), LogLevel::Off);
+        // A hand-edited file, or a frontend that sent something odd, is
+        // never worth failing over.
+        assert_eq!(LogLevel::parse("shout"), LogLevel::Info);
+    }
+
+    #[test]
+    fn log_level_thresholds_order_by_severity() {
+        assert!(LogLevel::Error.allows(LogLevel::Warn));
+        assert!(LogLevel::Warn.allows(LogLevel::Warn));
+        assert!(!LogLevel::Info.allows(LogLevel::Warn));
+        assert!(!LogLevel::Trace.allows(LogLevel::Debug));
+        assert!(LogLevel::Debug.allows(LogLevel::Trace));
+    }
+
+    #[test]
+    fn log_level_off_neither_emits_nor_admits() {
+        assert!(!LogLevel::Off.allows(LogLevel::Trace));
+        assert!(!LogLevel::Error.allows(LogLevel::Off));
+    }
+
+    #[test]
+    fn developer_read_clamps_its_loosely_stored_numbers() {
+        let d = DeveloperSettings {
+            log_max_file_mb: 0,
+            log_retain_files: 9_999,
+            slow_command_ms: 0,
+            ..Default::default()
+        };
+        assert_eq!(d.log_max_bytes(), MIN_LOG_FILE_MB as u64 * 1024 * 1024);
+        assert_eq!(d.retained_files(), MAX_LOG_FILES);
+        assert_eq!(d.slow_command_ms(), MIN_SLOW_COMMAND_MS);
+    }
+
+    #[test]
+    fn a_disabled_developer_mode_never_expires() {
+        let d = DeveloperSettings::default();
+        assert!(!developer_mode_expired(&d, 0));
+    }
+
+    #[test]
+    fn restart_expiry_disarms_on_every_launch() {
+        let d = DeveloperSettings {
+            enabled: true,
+            enabled_at_ms: 1_000,
+            expiry: DeveloperExpiry::Restart,
+            ..Default::default()
+        };
+        // Evaluated once per process, so "any time at all" means expired.
+        assert!(developer_mode_expired(&d, 1_001));
+    }
+
+    #[test]
+    fn never_expiry_survives_a_launch() {
+        let d = DeveloperSettings {
+            enabled: true,
+            expiry: DeveloperExpiry::Never,
+            ..Default::default()
+        };
+        assert!(!developer_mode_expired(&d, u64::MAX));
+    }
+
+    #[test]
+    fn day_expiry_measures_from_when_it_was_armed() {
+        let armed = 1_700_000_000_000;
+        let d = DeveloperSettings {
+            enabled: true,
+            enabled_at_ms: armed,
+            expiry: DeveloperExpiry::Day,
+            ..Default::default()
+        };
+        assert!(!developer_mode_expired(&d, armed + DEVELOPER_DAY_MS - 1));
+        assert!(developer_mode_expired(&d, armed + DEVELOPER_DAY_MS));
+    }
+
+    #[test]
+    fn day_expiry_without_a_stamp_counts_as_expired() {
+        // "We don't know when this was armed" must not read as "forever".
+        let d = DeveloperSettings {
+            enabled: true,
+            enabled_at_ms: 0,
+            expiry: DeveloperExpiry::Day,
+            ..Default::default()
+        };
+        assert!(developer_mode_expired(&d, 1_700_000_000_000));
+    }
+
+    #[test]
+    fn a_clock_that_went_backwards_does_not_expire_developer_mode() {
+        // System clocks move. Saturating arithmetic means "armed in the
+        // future" reads as 0 elapsed, not as a huge elapsed.
+        let d = DeveloperSettings {
+            enabled: true,
+            enabled_at_ms: 2_000,
+            expiry: DeveloperExpiry::Day,
+            ..Default::default()
+        };
+        assert!(!developer_mode_expired(&d, 1_000));
     }
 
     #[test]

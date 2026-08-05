@@ -1,4 +1,10 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { __resetNodeIdForTests, makeRectangle } from "../types";
@@ -36,7 +42,9 @@ describe("ColorPopover", () => {
       .openColorEditor({ kind: "fill", nodeId: r.id, fillId }, 100, 100);
     render(<ColorPopover />);
     expect(screen.getByText("Fill")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Gradient" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Gradient" })
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Close color editor"));
     expect(useEditorStore.getState().colorEditor).toBeNull();
   });
@@ -54,8 +62,9 @@ describe("ColorPopover", () => {
     // In a real browser capturing here retargets the click to the header and
     // the X looks dead, so the press must never reach setPointerCapture.
     const capture = vi.fn();
-    (header as unknown as { setPointerCapture: typeof capture }).setPointerCapture =
-      capture;
+    (
+      header as unknown as { setPointerCapture: typeof capture }
+    ).setPointerCapture = capture;
     fireEvent.pointerDown(x);
     expect(capture).not.toHaveBeenCalled();
     fireEvent.click(x);
@@ -165,12 +174,14 @@ describe("ColorPopover", () => {
 
     it("writes a fill edit to the peer as well as the primary", () => {
       const { a, b } = loadTwoRects();
-      useEditorStore.getState().openColorEditor(
-        { kind: "fill", nodeId: a.id, fillId: a.fills[0]!.id },
-        10,
-        10,
-        [{ kind: "fill", nodeId: b.id, fillId: b.fills[0]!.id }]
-      );
+      useEditorStore
+        .getState()
+        .openColorEditor(
+          { kind: "fill", nodeId: a.id, fillId: a.fills[0]!.id },
+          10,
+          10,
+          [{ kind: "fill", nodeId: b.id, fillId: b.fills[0]!.id }]
+        );
       render(<ColorPopover />);
 
       const hex = hexField();
@@ -185,12 +196,14 @@ describe("ColorPopover", () => {
     it("lands the batch as a single undo step", () => {
       const { a, b } = loadTwoRects();
       const before = a.fills[0]!.color;
-      useEditorStore.getState().openColorEditor(
-        { kind: "fill", nodeId: a.id, fillId: a.fills[0]!.id },
-        10,
-        10,
-        [{ kind: "fill", nodeId: b.id, fillId: b.fills[0]!.id }]
-      );
+      useEditorStore
+        .getState()
+        .openColorEditor(
+          { kind: "fill", nodeId: a.id, fillId: a.fills[0]!.id },
+          10,
+          10,
+          [{ kind: "fill", nodeId: b.id, fillId: b.fills[0]!.id }]
+        );
       render(<ColorPopover />);
 
       const hex = hexField();

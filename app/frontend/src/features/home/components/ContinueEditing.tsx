@@ -11,7 +11,12 @@ import { cn } from "@shared/lib/cn";
 
 import { formatDimensions, formatRelative } from "../lib/format";
 import { CaptureThumb } from "./CaptureThumb";
-import { CardEmpty, LinkAction, SectionCard, SectionHeading } from "./primitives";
+import {
+  CardEmpty,
+  LinkAction,
+  SectionCard,
+  SectionHeading,
+} from "./primitives";
 
 const KIND_LABEL: Record<CaptureKind, string> = {
   image: "Image",

@@ -1,4 +1,6 @@
 import { openDashboard } from "@services/tauri/clients/dashboard";
+import { LibraryLayout } from "@features/library";
+import { PresetsLayout } from "@features/presets";
 import { TitleBar, WindowFrame } from "@shared/ui";
 
 import { useCaptureStore } from "../state/captureStore";
@@ -13,7 +15,6 @@ import { CaptureOptionsPanel } from "./CaptureOptionsPanel";
 import { OutputControls } from "./OutputControls";
 import { CaptureFooter } from "./CaptureFooter";
 import { CompactCaptureRow } from "./CompactCaptureRow";
-import { ComingSoon } from "./ComingSoon";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { RecordFooter } from "./RecordFooter";
 import { RecordOptionsPanel } from "./RecordOptionsPanel";
@@ -57,22 +58,7 @@ export function CaptureLayout() {
     void (nav === "record" ? recordWorkflow.trigger() : workflow.trigger());
   });
 
-  // History + Settings live in the dashboard window now. A click on
-  // those sidebar items focuses the dashboard and switches its view;
-  // the capture window stays on `capture` so the user can come back
-  // to it without losing form state.
   const handleNavChange = (next: typeof nav) => {
-    if (next === "history") {
-      void openDashboard("library");
-      return;
-    }
-    // Presets are managed in the dashboard (like History/Settings); the
-    // capture tab is a launcher into that view rather than an in-window
-    // panel.
-    if (next === "presets") {
-      void openDashboard("presets");
-      return;
-    }
     setNav(next);
   };
 
@@ -95,7 +81,11 @@ export function CaptureLayout() {
 
           <div className="flex flex-1 flex-col overflow-hidden">
             <div className="content-canvas relative z-0 m-2.5 flex flex-1 flex-col overflow-hidden rounded-[16px]">
-              {nav === "record" ? (
+              {nav === "history" ? (
+                <LibraryLayout />
+              ) : nav === "presets" ? (
+                <PresetsLayout />
+              ) : nav === "record" ? (
                 <div className="-mr-2 flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-4 pr-4 pb-1">
                   <CollapsibleSection n={1} title="Recording Type">
                     <RecordTypeGrid />
@@ -110,8 +100,6 @@ export function CaptureLayout() {
                     onOpenSettings={() => void openDashboard("settings")}
                   />
                 </div>
-              ) : nav !== "capture" ? (
-                <ComingSoon section={nav} />
               ) : compact ? (
                 <CompactCaptureRow />
               ) : (

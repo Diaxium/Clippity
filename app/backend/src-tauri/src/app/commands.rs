@@ -4,16 +4,20 @@
 //! `tauri::generate_handler!`. Keep each handler thin — the
 //! convention is: parse → delegate to a service → return.
 
-use clippity_infra::events;
 use crate::app::state::AppState;
 use clippity_domain::capture::{CaptureRequest, CaptureResult, ClipboardIngest};
 use clippity_domain::collections::Collection;
 use clippity_domain::countdown::CountdownRequest;
 use clippity_domain::dashboard::{DashboardRequest, DashboardView};
+use clippity_domain::developer::{
+    self, BundleOptions, BundleResult, CacheTarget, FolderTarget, LogLine, RecorderDiagnostics,
+    RuntimeStatus, SystemInfo, WindowDiagnostics,
+};
 use clippity_domain::editor::EditorImage;
 use clippity_domain::labels::LabelEdit;
 use clippity_domain::library::{AuxColor, CaptureKind, CaptureMeta, StorageInfo};
-use clippity_domain::models::{ModelInfo, ObjectModelReadiness, ReleaseCheck};
+use clippity_domain::media::{MediaInfo, TrimRequest, TrimResult};
+use clippity_domain::models::{ModelInfo, ModelPhase, ObjectModelReadiness, ReleaseCheck};
 use clippity_domain::overlay::{
     BeginOverlayRequest, FinishBrushRequest, FinishFreehandRequest, FinishMultiAreaRequest,
     FinishRegionRequest, OverlayMode, OverlayResult, OverlayToggles, OverlayWindow, Region,
@@ -21,16 +25,17 @@ use clippity_domain::overlay::{
 use clippity_domain::preset::{CapturePreset, PresetInput};
 use clippity_domain::provisioning::Capabilities;
 use clippity_domain::recorder::{
-    RecorderFormat, RecorderRequest, RecorderResult, RecorderStatus,
+    AudioSource, RecorderFormat, RecorderRequest, RecorderResult, RecorderStatus,
 };
 use clippity_domain::scroll::ScrollDirection;
-use clippity_domain::settings::{Settings, SettingsPatch};
+use clippity_domain::settings::{BackdropTuning, Settings, SettingsPatch, WindowBackdrop};
 use clippity_domain::share::ShareTarget;
 use clippity_domain::toast::{
     PaletteSwatch, PickedColor, RecorderToastFormat, RecordingMode, ToastPayload,
 };
 use clippity_domain::vision::DetectedObject;
 use clippity_infra::error::{AppError, AppResult};
+use clippity_infra::events;
 use serde::Serialize;
 
 use clippity_services::capture_io::{self, ClipboardContent};
@@ -67,20 +72,31 @@ pub fn capture_fullscreen(
     state.capture_service.execute(&app, request)
 }
 
-/// Re-apply (or strip) the Mica backdrop with the frontend's persisted
+/// Re-apply (or strip) the native backdrop with the frontend's persisted
 /// theme + transparency preference. Each primary window mirrors the
 /// React palette, so this fires on mount + every theme flip to keep the
-/// Mica tint in sync; `effects` carries `performance.window_effects` so
-/// the same call clears Mica when the user has turned transparency off.
+/// material tint in sync; `effects` carries `performance.window_effects`
+/// so the same call clears the backdrop when the user has turned
+/// transparency off. `tuning` is the selected material's own
+/// fine-tuning — the frontend resolves it out of
+/// `appearance.backdropTuning` so this command stays one material wide.
 /// No-op on non-Windows targets.
 #[tauri::command]
 pub fn apply_window_theme(
     #[allow(unused_variables)] app: tauri::AppHandle,
     #[allow(unused_variables)] theme: String,
     #[allow(unused_variables)] effects: bool,
+    #[allow(unused_variables)] backdrop: WindowBackdrop,
+    #[allow(unused_variables)] tuning: BackdropTuning,
 ) -> AppResult<()> {
     #[cfg(target_os = "windows")]
-    clippity_platform::windows::chrome::refresh_backdrop(&app, theme == "dark", effects);
+    clippity_platform::windows::chrome::refresh_backdrop(
+        &app,
+        theme == "dark",
+        effects,
+        backdrop,
+        tuning.clamped(),
+    );
     Ok(())
 }
 
@@ -228,6 +244,7 @@ pub fn finish_fullscreen_capture(
 /// manager, open it with the registered default app, or copy its
 /// absolute path to the clipboard. Nothing leaves the machine — see
 /// `domain::share::ShareTarget`.
+///
 #[tauri::command]
 pub fn share_capture(path: String, target: ShareTarget) -> AppResult<()> {
     share_service::share(std::path::Path::new(&path), target)
@@ -550,7 +567,13 @@ pub fn start_recording(
         RecorderFormat::Mp4 => RecorderToastFormat::Mp4,
         RecorderFormat::Gif => RecorderToastFormat::Gif,
     };
-    let audio = request.audio.any();
+    // Gated on the format, not just on the request: `validate` empties
+    // the selection for a format that can't carry audio, so reading the
+    // raw request would put a microphone row on a GIF session's HUD for
+    // a track nothing is writing.
+    let carries_audio = request.format.supports_audio();
+    let microphone = carries_audio && request.audio.microphone;
+    let system = carries_audio && request.audio.system;
 
     // A region / window recording is started *from* the overlay, which
     // must come down the instant the session does — left up it keeps
@@ -567,9 +590,14 @@ pub fn start_recording(
     // Only raise the HUD once the session is genuinely running — a
     // failed start must not leave a stop-button toast on screen with no
     // session behind it.
-    state
-        .toast_service
-        .show(&app, ToastPayload::Recorder { format, audio })?;
+    state.toast_service.show(
+        &app,
+        ToastPayload::Recorder {
+            format,
+            microphone,
+            system,
+        },
+    )?;
     state.toast_service.set_capture_excluded(&app, true);
     Ok(status)
 }
@@ -591,6 +619,29 @@ pub fn resume_recording(state: tauri::State<'_, AppState>) -> AppResult<Recorder
 #[tauri::command]
 pub fn recording_status(state: tauri::State<'_, AppState>) -> AppResult<RecorderStatus> {
     Ok(state.recorder_service.status())
+}
+
+/// Set one input's level on the running session, as a percentage of
+/// unity (clamped backend-side by `recorder::clamp_gain_pct`).
+///
+/// Infallible by design, unlike `pause_recording`: this is a slider, and
+/// a drag that lands just after the session ended is a race, not a
+/// caller bug. Turning it into an error would put a toast on screen
+/// about a recording that is already finished.
+///
+/// Affects the live session only — the persisted default lives in
+/// Settings → Recording.
+#[tauri::command]
+pub fn set_recording_gain(state: tauri::State<'_, AppState>, source: AudioSource, pct: u16) {
+    state.recorder_service.set_gain(source, pct);
+}
+
+/// Mute or unmute one input on the running session, restoring its
+/// previous level on unmute. Same infallibility as
+/// [`set_recording_gain`].
+#[tauri::command]
+pub fn set_recording_mute(state: tauri::State<'_, AppState>, source: AudioSource, muted: bool) {
+    state.recorder_service.set_muted(source, muted);
 }
 
 /// Stop a recording. `discard` deletes the working file; otherwise it
@@ -646,6 +697,46 @@ pub fn list_audio_devices(system: bool) -> AppResult<Vec<AudioDeviceInfo>> {
         let _ = system;
         Ok(Vec::new())
     }
+}
+
+/// Cameras available as a recording source, for the sources UI
+/// (ADR 0033).
+///
+/// Empty rather than an error on a machine with no camera, for the same
+/// reason `list_audio_devices` is: it is a configuration, not a fault,
+/// and the UI renders it as "no cameras found".
+#[tauri::command]
+pub fn list_webcams() -> AppResult<Vec<WebcamDeviceInfo>> {
+    #[cfg(target_os = "windows")]
+    {
+        use clippity_platform::windows::media_foundation::ComThread;
+        use clippity_platform::windows::webcam::list_devices;
+
+        // Enumeration is COM; the command thread is not guaranteed to be
+        // on an apartment, so join one for the duration of the call.
+        let _com = ComThread::init()?;
+        Ok(list_devices()?
+            .into_iter()
+            .map(|d| WebcamDeviceInfo {
+                id: d.id,
+                name: d.name,
+            })
+            .collect())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Ok(Vec::new())
+    }
+}
+
+/// Wire shape for a camera. Declared beside [`AudioDeviceInfo`] and for
+/// the same reason: it describes a platform capability rather than a
+/// domain concept.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WebcamDeviceInfo {
+    pub id: String,
+    pub name: String,
 }
 
 /// Wire shape for an audio endpoint. Declared here rather than in
@@ -1023,10 +1114,7 @@ pub fn library_storage(state: tauri::State<'_, AppState>) -> AppResult<StorageIn
 /// case reconciliation can't see, a capture rewritten within the same
 /// millisecond and to the same byte count as the row it replaced.
 #[tauri::command]
-pub fn library_reindex(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
-) -> AppResult<u64> {
+pub fn library_reindex(app: tauri::AppHandle, state: tauri::State<'_, AppState>) -> AppResult<u64> {
     let rows = state.library_service.reindex()?;
     events::emit(&app, events::names::LIBRARY_UPDATED, ())?;
     Ok(rows)
@@ -1236,6 +1324,88 @@ pub fn editor_save_scene(
     state.editor_service.save_scene(&id, &scene)
 }
 
+/// Studio — describe the recording at `id` and mint the token its bytes
+/// are fetchable under.
+///
+/// Note what this deliberately does *not* return: the media itself. A
+/// recording is far too large to cross the IPC bridge, and a `<video>`
+/// element needs to seek into it rather than receive it — so the bytes
+/// travel over the `clippity-media` URI scheme instead, which resolves
+/// the returned token back to this file. See `media_scheme`.
+///
+/// Rejects ids outside the captures dir (`library::validate_id`) and
+/// anything that isn't a video.
+#[tauri::command]
+pub fn media_probe(state: tauri::State<'_, AppState>, id: String) -> AppResult<MediaInfo> {
+    state.media_service.probe(&id)
+}
+
+/// Studio — encode the requested range of a recording as a new capture.
+///
+/// Runs on a blocking thread, not the async runtime: the encode is a
+/// long, synchronous COM call chain (Media Foundation is `!Send` and
+/// has no async surface), and parking a runtime worker on it for the
+/// length of an export would stall every other command the app makes.
+///
+/// The result comes back as the return value rather than as an event —
+/// unlike a recording, which can end with nobody having called
+/// anything, an export always has a caller waiting. Progress travels as
+/// `media/trim-progress` because there is no other way to report it
+/// mid-call.
+#[tauri::command]
+pub async fn media_trim(app: tauri::AppHandle, request: TrimRequest) -> AppResult<TrimResult> {
+    use tauri::Manager;
+
+    let handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = handle.state::<AppState>();
+        let result = state.media_service.trim(&request, &|progress| {
+            // Best-effort: losing a progress tick must never fail an
+            // export that is otherwise succeeding.
+            let _ = events::emit(&handle, events::names::MEDIA_TRIM_PROGRESS, progress);
+        })?;
+        // A trimmed clip is a new capture; the library refreshes on it.
+        events::emit(&handle, events::names::LIBRARY_UPDATED, ())?;
+        Ok(result)
+    })
+    .await
+    .map_err(|e| AppError::Media(format!("the export did not finish: {e}")))?
+}
+
+/// Studio — stage one rendered annotation overlay for an export.
+///
+/// The webview draws its annotations to a canvas — the same code that
+/// draws them on screen, which is what stops the preview and the export
+/// from ever disagreeing — and hands the PNG here. `media_trim` then
+/// names the returned paths and the encoder composites them.
+///
+/// Staged as files rather than carried inline in the trim request for
+/// the reason ADR 0032 gave for the clip itself: IPC serialises a
+/// payload whole, and a handful of full-resolution bitmaps is megabytes.
+/// One call per interval between annotation boundaries — not per frame.
+///
+/// The service picks the path and verifies the bytes are a PNG; the
+/// caller supplies only base64. Staged files are deleted when the export
+/// that used them finishes, however it finishes.
+#[tauri::command]
+pub fn media_stage_overlay(
+    state: tauri::State<'_, AppState>,
+    png_base64: String,
+) -> AppResult<String> {
+    state.media_service.stage_overlay(&png_base64)
+}
+
+/// Studio — ask the running export to stop.
+///
+/// Cooperative and idempotent: a no-op when nothing is running, and the
+/// encode unwinds at a frame boundary, deleting its working file rather
+/// than leaving a half-written container in the captures directory.
+#[tauri::command]
+pub fn media_cancel_trim(state: tauri::State<'_, AppState>) -> AppResult<()> {
+    state.media_service.cancel_trim();
+    Ok(())
+}
+
 /// Dashboard — stash a "switch to this view" request, hide other
 /// primary windows, then show + focus the main window. Emits
 /// `clippity://dashboard/view` for the already-shown case. The
@@ -1356,9 +1526,7 @@ pub fn settings_update(
     // startup deliberately skipped, quietly undoing the user's install-time
     // choice on the first unrelated settings save.
     if touches_shortcuts && state.provisioning_service.capabilities().global_hotkeys {
-        state
-            .global_shortcut_service
-            .apply(&app, &next.shortcuts);
+        state.global_shortcut_service.apply(&app, &next.shortcuts);
     }
     Ok(next)
 }
@@ -1567,4 +1735,258 @@ pub fn detect_objects(state: tauri::State<'_, AppState>) -> AppResult<Vec<Detect
         typer_path.as_deref(),
         confidence,
     )
+}
+
+// ---------------------------------------------------------------------
+// Developer & diagnostics — Settings → Advanced.
+//
+// Every handler here is read-only except three: `developer_clear_cache`,
+// `developer_clear_logs`, and `developer_restart_safe_mode`. Those three
+// take a fixed enum or no argument at all, so the surface can never be
+// asked to delete an arbitrary path — see `domain::developer`.
+// ---------------------------------------------------------------------
+
+/// Developer — everything the system-information card shows, and the
+/// first file in an exported bundle.
+///
+/// The WebView2 version is asked for here rather than in the service
+/// because it is Tauri's to answer; the installed-model list likewise
+/// comes from the model service.
+#[tauri::command]
+pub fn developer_system_info(state: tauri::State<'_, AppState>) -> AppResult<SystemInfo> {
+    Ok(state
+        .diagnostics_service
+        .system_info(tauri::webview_version().ok(), installed_model_ids(&state)))
+}
+
+/// Registry ids of every model currently on disk, with the version the
+/// bytes are from when it is known.
+///
+/// `UpdateAvailable` counts as installed — a complete older release is
+/// on disk, and "which model files does this machine have?" is the
+/// question a diagnostics bundle is answering.
+fn installed_model_ids(state: &tauri::State<'_, AppState>) -> Vec<String> {
+    state
+        .model_service
+        .list()
+        .into_iter()
+        .filter(|m| {
+            matches!(
+                m.phase,
+                ModelPhase::Installed | ModelPhase::UpdateAvailable { .. }
+            )
+        })
+        .map(|m| match m.installed_version {
+            Some(version) => format!("{} ({version})", m.id),
+            None => m.id,
+        })
+        .collect()
+}
+
+/// Developer — live runtime state: windows, capture shielding, the
+/// global hotkey's real registration, the index and cache sizes.
+///
+/// Answers the class of complaint the app otherwise cannot: "the hotkey
+/// stopped working", "there is an invisible window", "my screenshots
+/// have Clippity in them".
+#[tauri::command]
+pub fn developer_runtime_status(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> AppResult<RuntimeStatus> {
+    use tauri::Manager;
+
+    let mut windows: Vec<WindowDiagnostics> = app
+        .webview_windows()
+        .iter()
+        .map(|(label, window)| {
+            let position = window.outer_position().ok();
+            let size = window.outer_size().ok();
+            WindowDiagnostics {
+                label: label.clone(),
+                visible: window.is_visible().unwrap_or(false),
+                focused: window.is_focused().unwrap_or(false),
+                x: position.map(|p| p.x).unwrap_or(0),
+                y: position.map(|p| p.y).unwrap_or(0),
+                width: size.map(|s| s.width).unwrap_or(0),
+                height: size.map(|s| s.height).unwrap_or(0),
+            }
+        })
+        .collect();
+    // `webview_windows` hands back a map, so the order is arbitrary —
+    // sorted here so the table does not reshuffle on every refresh.
+    windows.sort_by(|a, b| a.label.cmp(&b.label));
+
+    let shortcuts = state.settings_service.snapshot().shortcuts;
+    Ok(state.diagnostics_service.runtime_status(
+        windows,
+        state.overlay_service.capture_shielded(),
+        state.global_shortcut_service.status(&shortcuts),
+        state.provisioning_service.capabilities().global_hotkeys,
+    ))
+}
+
+/// Developer — open (or close) the WebView developer tools for the
+/// window that asked.
+///
+/// Per-window rather than app-wide: each Tauri window is its own
+/// webview, and the tools a user wants are the ones for the surface they
+/// are looking at. In a release build this needs the `devtools` Cargo
+/// feature, which the app enables — the alternative is a button that
+/// works only in development, which is where it is least needed.
+#[tauri::command]
+pub fn developer_open_devtools(window: tauri::WebviewWindow, open: bool) -> AppResult<()> {
+    #[cfg(any(debug_assertions, feature = "devtools"))]
+    {
+        if open {
+            window.open_devtools();
+        } else {
+            window.close_devtools();
+        }
+        Ok(())
+    }
+    #[cfg(not(any(debug_assertions, feature = "devtools")))]
+    {
+        let _ = (window, open);
+        Err(AppError::Unsupported(
+            "this build was compiled without the developer tools",
+        ))
+    }
+}
+
+/// Developer — record one log line forwarded from the frontend, so both
+/// halves of the app share a single ordered timeline in the log file.
+///
+/// Deliberately not gated on developer mode: the frontend's own level
+/// decides what it forwards, and dropping a frontend `error` because a
+/// preference is off would lose exactly the record a bug report needs.
+#[tauri::command]
+pub fn developer_log(
+    level: String,
+    module: String,
+    message: String,
+    context: Option<String>,
+) -> AppResult<()> {
+    clippity_infra::logging::log_frontend(&level, &module, &message, context.as_deref());
+    Ok(())
+}
+
+/// Developer — the last `limit` lines of the log, oldest first, parsed
+/// into timestamp / level / message for the viewer.
+///
+/// Polled by the live viewer, so it reads a bounded window from the end
+/// of the file rather than the whole file.
+#[tauri::command]
+pub fn developer_log_tail(limit: usize) -> AppResult<Vec<LogLine>> {
+    // A viewer window, not a log reader: past a couple of thousand lines
+    // the webview is the bottleneck, not the disk.
+    const MAX_LINES: usize = 2_000;
+    let lines = clippity_infra::logging::tail(limit.min(MAX_LINES));
+    Ok(lines
+        .into_iter()
+        .enumerate()
+        .map(|(i, line)| developer::parse_log_line(i as u64, &line))
+        .collect())
+}
+
+/// Developer — delete every rotated log file and empty the live one.
+/// Returns the bytes freed.
+#[tauri::command]
+pub fn developer_clear_logs(state: tauri::State<'_, AppState>) -> AppResult<u64> {
+    state.diagnostics_service.clear_cache(CacheTarget::Logs)
+}
+
+/// Developer — open one of the app's own folders in the file manager.
+#[tauri::command]
+pub fn developer_open_folder(
+    state: tauri::State<'_, AppState>,
+    target: FolderTarget,
+) -> AppResult<String> {
+    use clippity_services::settings_service::CapturesDirSource;
+
+    let captures = state.settings_service.captures_dir();
+    let opened = state.diagnostics_service.open_folder(target, &captures)?;
+    Ok(opened.display().to_string())
+}
+
+/// Developer — write a diagnostics bundle and return where it landed.
+///
+/// The settings snapshot is serialized here (rather than read off disk
+/// by the service) so the bundle records the state the app is actually
+/// running with — which, on a launch where developer mode expired, is
+/// not what the file says.
+#[tauri::command]
+pub fn developer_export_bundle(
+    state: tauri::State<'_, AppState>,
+    options: BundleOptions,
+) -> AppResult<BundleResult> {
+    let system = state
+        .diagnostics_service
+        .system_info(tauri::webview_version().ok(), installed_model_ids(&state));
+    let system_json = serde_json::to_string_pretty(&system)?;
+    let settings_json = serde_json::to_string_pretty(&state.settings_service.snapshot())?;
+    state
+        .diagnostics_service
+        .export_bundle(&options, &system_json, &settings_json)
+}
+
+/// Developer — clear one cache, returning the bytes freed.
+#[tauri::command]
+pub fn developer_clear_cache(
+    state: tauri::State<'_, AppState>,
+    target: CacheTarget,
+) -> AppResult<u64> {
+    state.diagnostics_service.clear_cache(target)
+}
+
+/// Developer — statistics from the last recording session, or `None`
+/// when nothing has been recorded since launch.
+#[tauri::command]
+pub fn developer_recorder_diagnostics(
+    state: tauri::State<'_, AppState>,
+) -> AppResult<Option<RecorderDiagnostics>> {
+    Ok(state.recorder_service.last_diagnostics())
+}
+
+/// Developer — arm safe mode and restart.
+///
+/// Safe mode is a marker file consumed by the next launch (see
+/// `infra::runtime`), because `restart` re-executes with this process's
+/// arguments and there is nothing to attach a flag to. The restart
+/// diverges, so nothing after it runs.
+#[tauri::command]
+pub fn developer_restart_safe_mode(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> AppResult<()> {
+    state.diagnostics_service.arm_safe_mode()?;
+    tracing::info!("restarting into safe mode");
+    app.restart()
+}
+
+/// Facts about the running process that override what settings say.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuntimeFlags {
+    /// GPU acceleration, window effects and the global hotkey are forced
+    /// off this session, whatever the settings hold.
+    pub safe_mode: bool,
+    /// `CLIPPITY_LOG` / `RUST_LOG` is driving the filter, so the
+    /// log-level control is inert for this process.
+    pub log_level_pinned: bool,
+    /// Whether this build can open the WebView developer tools.
+    pub devtools_available: bool,
+}
+
+/// Developer — the facts above.
+///
+/// Read by the settings page so it can say what is actually in force
+/// rather than showing controls that quietly do nothing.
+#[tauri::command]
+pub fn developer_runtime_flags() -> AppResult<RuntimeFlags> {
+    Ok(RuntimeFlags {
+        safe_mode: clippity_infra::runtime::is_safe_mode(),
+        log_level_pinned: clippity_infra::logging::env_pinned(),
+        devtools_available: cfg!(any(debug_assertions, feature = "devtools")),
+    })
 }

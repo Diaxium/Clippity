@@ -1,6 +1,7 @@
-import { Pencil, Play, Trash2 } from "lucide-react";
+import { Film, Pencil, Play, Repeat, Trash2 } from "lucide-react";
 
 import {
+  isRecordingPreset,
   presetsDelete,
   runPreset,
   type CapturePreset,
@@ -12,8 +13,28 @@ interface PresetCardProps {
   onEdit: () => void;
 }
 
+/**
+ * The chips under a preset's name: what it will do that isn't already
+ * said by the icon and the type line.
+ *
+ * A recording lists what changes the *file* (format, rate, resolution,
+ * audio); a screenshot lists its output steps. They barely overlap,
+ * which is why this branches rather than trying to describe both with
+ * one list.
+ */
 function summaryChips(p: CapturePreset): string[] {
   const chips: string[] = [];
+  if (isRecordingPreset(p.request)) {
+    const r = p.request;
+    if (r.fps) chips.push(`${r.fps} fps`);
+    if (r.maxHeight) chips.push(`${r.maxHeight}p`);
+    if (r.audio?.microphone) chips.push("Mic");
+    if (r.audio?.system) chips.push("System audio");
+    if (r.toggles?.cursor) chips.push("Cursor");
+    if (r.toggles?.clipboard) chips.push("Clipboard");
+    if (p.output.saveDir) chips.push("Custom folder");
+    return chips;
+  }
   if (p.request.toggles.clipboard) chips.push("Clipboard");
   if (p.request.toggles.cursor) chips.push("Cursor");
   if (p.output.openEditor) chips.push("Open editor");
@@ -22,14 +43,29 @@ function summaryChips(p: CapturePreset): string[] {
 }
 
 /**
- * One preset in the manager grid: type icon + name, a summary of its
- * output steps, and Run / Edit / Delete. Run reuses the shared
- * `runPreset` orchestrator (same path the tray uses).
+ * One preset in the manager grid: type icon + name, a summary of what it
+ * does, and Run / Edit / Delete. Run reuses the shared `runPreset`
+ * orchestrator (same path the tray uses), which branches on the request
+ * shape — so this component never has to know how a recording starts.
  */
 export function PresetCard({ preset, onEdit }: PresetCardProps) {
-  const meta = captureTypeMeta(preset.request.type);
-  const Icon = meta.icon;
+  const request = preset.request;
+  const recording = isRecordingPreset(request) ? request : null;
+  const meta = captureTypeMeta(
+    isRecordingPreset(request) ? request.target : request.type
+  );
+  // The format icon carries more information than the target icon for a
+  // recording: "this makes a GIF" is the thing that changes what you
+  // get, and the target is already spelled out on the line below.
+  const Icon = recording
+    ? recording.format === "gif"
+      ? Repeat
+      : Film
+    : meta.icon;
   const chips = summaryChips(preset);
+  const typeLine = recording
+    ? `${recording.format === "gif" ? "GIF" : "Video"} · ${meta.label}`
+    : meta.label;
 
   return (
     <div className="flex flex-col gap-3 rounded-[14px] border border-[color:var(--hairline)] bg-[var(--color-surface)] p-4">
@@ -42,7 +78,7 @@ export function PresetCard({ preset, onEdit }: PresetCardProps) {
             {preset.name}
           </div>
           <div className="text-[12px] text-[var(--color-slate)]">
-            {meta.label}
+            {typeLine}
           </div>
         </div>
       </div>

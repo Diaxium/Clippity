@@ -20,7 +20,13 @@ export type {
   RadiusScale,
   Density,
   AppIconStyle,
+  WindowBackdrop,
+  BackdropTuning,
+  BackdropTuningSet,
   CaptureCompression,
+  DeveloperExpiry,
+  DeveloperSettings,
+  LogLevel,
   GeneralSettings,
   AppearanceSettings,
   NotificationSettings,
@@ -49,9 +55,15 @@ export const NAME_TEMPLATE_TOKENS: ReadonlyArray<{
   token: string;
   description: string;
 }> = [
-  { token: "{label}", description: "Window title, or the capture type if unknown" },
+  {
+    token: "{label}",
+    description: "Window title, or the capture type if unknown",
+  },
   { token: "{window}", description: "Active window title (blank if unknown)" },
-  { token: "{type}", description: "Capture type (Fullscreen, Region, Window…)" },
+  {
+    token: "{type}",
+    description: "Capture type (Fullscreen, Region, Window…)",
+  },
   { token: "{date}", description: "Local date, e.g. 2026-06-13" },
   { token: "{time}", description: "Local time, e.g. 2.34.15 PM" },
 ];
