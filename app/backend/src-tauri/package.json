@@ -1,7 +1,7 @@
 {
   "name": "clippity-tauri",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Clippity Tauri shell — owns the Tauri CLI and the desktop app crate.",
   "scripts": {
     "tauri": "tauri",

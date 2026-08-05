@@ -136,7 +136,7 @@ A layered, non-destructive editor with more than twenty tools.
 
 ## Status
 
-Clippity is **0.1.0 and in active development**. The core is real and used daily;
+Clippity is **0.2.0 and in active development**. The core is real and used daily;
 some surfaces are still being finished.
 
 | Area | State |
@@ -160,7 +160,7 @@ performance, accessibility, and security.
 > **Not yet audited for release.** The binaries are unsigned, there is no
 > auto-update path yet, and the security-hardening items in
 > [docs/roadmaps/security-privacy.md](docs/roadmaps/security-privacy.md) are open.
-> Treat 0.1.0 as a developer preview.
+> Treat 0.2.0 as a developer preview.
 
 ## Install
 
@@ -175,7 +175,7 @@ Grab the latest build from
 Verify what you downloaded against `SHA256SUMS.txt`:
 
 ```bash
-certutil -hashfile Clippity-0.1.0-Setup.exe SHA256
+certutil -hashfile Clippity-0.2.0-Setup.exe SHA256
 ```
 
 Because the binaries are unsigned, SmartScreen will show "Windows protected your
