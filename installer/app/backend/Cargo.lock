@@ -1745,7 +1745,7 @@ name = "installer-infra"
 version = "1.5.0"
 dependencies = [
  "serde",
- "thiserror 1.0.69",
+ "thiserror 2.0.19",
  "tracing",
  "tracing-subscriber",
 ]
