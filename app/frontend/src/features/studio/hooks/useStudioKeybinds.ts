@@ -59,10 +59,12 @@ export function useStudioKeybinds(enabled: boolean): void {
         // arrows are discoverable, the comma/period pair is what a
         // video editor's muscle memory reaches for.
         case "ArrowLeft":
-          event.shiftKey ? nudge(-COARSE_STEP_MS) : step(-1);
+          if (event.shiftKey) nudge(-COARSE_STEP_MS);
+          else step(-1);
           break;
         case "ArrowRight":
-          event.shiftKey ? nudge(COARSE_STEP_MS) : step(1);
+          if (event.shiftKey) nudge(COARSE_STEP_MS);
+          else step(1);
           break;
         case ",":
           step(-1);

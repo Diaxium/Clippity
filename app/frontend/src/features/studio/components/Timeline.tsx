@@ -378,14 +378,14 @@ export function Timeline() {
         />
 
         {/* The grab bar for moving the selection.
-​
+
             A strip along the top of the band rather than the whole band,
             which is the compromise that lets both gestures exist: the
             band spans the entire track until something is trimmed, so
             making all of it grabbable is what broke scrubbing in the
             first place. Ten pixels of a forty-eight pixel track is an
             easy target and leaves the rest to the playhead.
-​
+
             Absent when the selection fills the clip, because then it has
             nowhere to go and a control that cannot do anything is worse
             than no control. */}
@@ -426,18 +426,18 @@ export function Timeline() {
 
         {/* Playhead — three siblings at one position, and the split is
             load-bearing in two ways.
-​
+
             The marker has to sit *above* the trim handles so it stays
             findable while one is dragged over it, but its hit area has
             to sit *below* them: a playhead parked on a handle would
             otherwise swallow that handle's drag. So the grabbable strip
             is its own element at `z-0` and the visible parts stay at
             `z-20`, `pointer-events-none`.
-​
+
             They are siblings rather than nested because `peer-hover`
             reaches siblings only — nesting the marker inside the strip
             would put it out of reach of the hover it is reacting to.
-​
+
             The strip itself has no handler: a press on it bubbles to the
             track, which begins an ordinary scrub. Grabbing the playhead
             and dragging is not a special gesture, it is the gesture. */}
