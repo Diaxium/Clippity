@@ -64,12 +64,31 @@ pub fn share(id: &str, captures_root: &Path, target: ShareTarget) -> AppResult<(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::capture_io::next_id;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    /// A temp path no other test can be holding.
+    ///
+    /// Deliberately not `next_id()`: that is a millisecond timestamp, and
+    /// these tests run in parallel, so two of them landing in the same
+    /// millisecond get the same path — and then one deletes it out from
+    /// under the other on its way out. That surfaces as a spurious
+    /// `AlreadyExists` or a vanished directory, neither of which has
+    /// anything to do with what the test is checking. Same pid + nonce
+    /// scheme the `clippity-media` scheme's tests use, for the same
+    /// reason.
+    fn unique(prefix: &str) -> std::path::PathBuf {
+        static NONCE: AtomicU64 = AtomicU64::new(0);
+        std::env::temp_dir().join(format!(
+            "{prefix}-{}-{}",
+            std::process::id(),
+            NONCE.fetch_add(1, Ordering::Relaxed)
+        ))
+    }
 
     /// A captures root that actually exists, so "outside the root" is the
     /// only reason a rejection can happen in the tests below.
     fn root() -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("clippity-share-root-{}", next_id()));
+        let dir = unique("clippity-share-root");
         std::fs::create_dir_all(&dir).expect("temp captures root");
         dir
     }
@@ -77,8 +96,7 @@ mod tests {
     #[test]
     fn share_rejects_a_path_that_is_not_a_file() {
         let root = root();
-        let missing = root.join(format!("clippity-share-missing-{}.png", next_id()));
-        let missing = missing.to_string_lossy().into_owned();
+        let missing = root.join("not-here.png").to_string_lossy().into_owned();
         // Every target refuses equally — the guard is before the match.
         for t in [
             ShareTarget::Reveal,
@@ -107,7 +125,7 @@ mod tests {
         // before the `is_file` check, not after — an attacker would point
         // at a file that certainly exists.
         let root = root();
-        let outside = std::env::temp_dir().join(format!("clippity-outside-{}.png", next_id()));
+        let outside = unique("clippity-outside").with_extension("png");
         std::fs::write(&outside, b"x").expect("write");
 
         for t in [
@@ -139,7 +157,7 @@ mod tests {
         if arboard::Clipboard::new().is_err() {
             return;
         }
-        let dir = std::env::temp_dir().join(format!("clippity-share-{}", next_id()));
+        let dir = unique("clippity-share");
         std::fs::create_dir_all(&dir).expect("temp dir");
         let file = dir.join("Shot.png");
         std::fs::write(&file, b"x").expect("write");
