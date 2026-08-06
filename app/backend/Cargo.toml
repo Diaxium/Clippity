@@ -38,17 +38,17 @@ serde_json = "1"
 # --- Capture / imaging ---
 xcap = "0.9.4"
 image = "0.25.10"
-base64 = "0.22.1"
+base64 = "0.23.0"
 arboard = "3"
 
 # --- Window effects ---
-window-vibrancy = "0.7.1"
+window-vibrancy = "0.8.0"
 
 # --- Vision (ONNX object detection) ---
 # ORT pulls matching DLLs at build time; copy-dylibs places them next to
 # the bundled Tauri exe so the runtime loader finds them at launch.
-ort = { version = "2.0.0-rc.10", features = ["copy-dylibs", "download-binaries"] }
-ndarray = "0.16"
+ort = { version = "2.0.0-rc.13", features = ["copy-dylibs", "download-binaries"] }
+ndarray = "0.17"
 
 # --- Library index ---
 # Bundled SQLite: no system dependency, compiled with the same MSVC
@@ -59,7 +59,7 @@ rusqlite = { version = "0.40", features = ["bundled"] }
 ureq = "3"
 
 # --- Diagnostics ---
-thiserror = "1"
+thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 
