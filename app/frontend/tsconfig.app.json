@@ -37,7 +37,12 @@
       "@assets/*": ["src/assets/*"]
     },
 
-    "types": ["vite/client", "@testing-library/jest-dom"]
+    // `node` is here for the tests, not the app. `redact.test.ts` reads a
+    // fixture off disk, and a handful of specs read `process.env`. Vitest 3
+    // pulled the Node types in transitively; Vitest 4 does not, so they have
+    // to be named. Nothing under `src` that ships imports a Node builtin —
+    // the bundle would fail to build if it did.
+    "types": ["node", "vite/client", "@testing-library/jest-dom"]
   },
   "include": ["src"]
 }
