@@ -784,6 +784,16 @@ mod tests {
         // encoder opens them — the same hole `validate_id` closes for
         // capture ids.
         let h = harness();
+
+        // The staging directory has to exist for this test to test
+        // anything. `validate_overlays` canonicalizes it first, so
+        // without it the call fails with "staging directory is
+        // unavailable" — a refusal, but the wrong one, and it would pass
+        // an assertion looking for the substring "stag". Whether the
+        // directory happens to be there depends on whether a staging
+        // test ran first, which is why this only failed on some runs.
+        fs::create_dir_all(overlay_staging_dir()).expect("staging dir");
+
         let elsewhere = h.captures.join("not-staged.png");
         image::RgbaImage::new(4, 4)
             .save(&elsewhere)
@@ -795,7 +805,11 @@ mod tests {
             end_ms: 1,
         }])
         .expect_err("an unstaged overlay must be refused");
-        assert!(format!("{err:?}").contains("staged"), "got {err:?}");
+        // Match the rejection this test is about, not any rejection.
+        assert!(
+            format!("{err:?}").contains("must be one this app staged"),
+            "got {err:?}"
+        );
     }
 
     #[test]
