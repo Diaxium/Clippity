@@ -152,10 +152,17 @@ function sentinel() {
   return observations.find((o) => o.el.classList.contains("h-px"));
 }
 
-/** Simulate the sentinel scrolling into view. */
-function scrollToSentinel() {
+/** Simulate the sentinel scrolling into view.
+ *
+ *  Waits for the sentinel rather than asserting it is already there. The
+ *  caller has only awaited the *last card* of the batch; the sentinel is
+ *  registered by an effect, and an effect is not guaranteed to have run
+ *  by the time that text query resolves. Asserting synchronously turned
+ *  that ordering into a coin flip — "expected undefined to be defined",
+ *  on a run where nothing about the component had changed. */
+async function scrollToSentinel() {
+  await waitFor(() => expect(sentinel()).toBeDefined());
   const found = sentinel();
-  expect(found).toBeDefined();
   act(() => {
     found?.cb(
       [{ isIntersecting: true } as IntersectionObserverEntry],
@@ -260,7 +267,7 @@ describe("LibraryLayout paged library", () => {
         screen.queryByText(`cap-${INITIAL_RENDERED}`)
       ).not.toBeInTheDocument();
 
-      scrollToSentinel();
+      await scrollToSentinel();
 
       await waitFor(() =>
         expect(screen.getByText(`cap-${INITIAL_RENDERED}`)).toBeInTheDocument()
@@ -291,7 +298,7 @@ describe("LibraryLayout paged library", () => {
           screen.getByText(`cap-${INITIAL_RENDERED - 1}`)
         ).toBeInTheDocument()
       );
-      scrollToSentinel();
+      await scrollToSentinel();
       await waitFor(() =>
         expect(screen.getByText(`cap-${INITIAL_RENDERED}`)).toBeInTheDocument()
       );
