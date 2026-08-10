@@ -28,7 +28,7 @@ base64 = { workspace = true }
 # Default features (plotters/rayon/html reports) are off: the budget
 # checker reads Criterion's `estimates.json`, which is written regardless,
 # and dropping the plotting stack keeps the harness quick to compile in CI.
-criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support"] }
+criterion = { version = "0.8", default-features = false, features = ["cargo_bench_support"] }
 
 [[bench]]
 name = "native"
