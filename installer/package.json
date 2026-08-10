@@ -23,6 +23,6 @@
     "cargo:fmt": "cargo fmt --manifest-path app/backend/Cargo.toml"
   },
   "devDependencies": {
-    "typescript": "~5.8.3"
+    "typescript": "~7.0.2"
   }
 }
