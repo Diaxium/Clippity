@@ -35,6 +35,7 @@ pub mod media_reader;
 pub mod monitor;
 pub mod nv12;
 pub mod os_info;
+pub mod p010;
 pub mod pcm;
 pub mod webcam;
 

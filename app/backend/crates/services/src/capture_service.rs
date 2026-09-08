@@ -14,6 +14,7 @@ use tauri::AppHandle;
 use xcap::Monitor;
 
 use crate::capture_io::{copy_rgba_to_clipboard, next_id, resolve_save_dir, save_capture_png};
+use crate::hdr_image::encode_hdr_png;
 use crate::settings_service::{CaptureEncodingSource, CapturesDirSource, NameTemplateSource};
 use crate::window_service;
 use clippity_domain::capture::{CaptureKind, CaptureRequest, CaptureResult, CustomMode};
@@ -72,6 +73,11 @@ impl CaptureService {
         app: &AppHandle,
         request: &CaptureRequest,
     ) -> AppResult<CaptureResult> {
+        if request.toggles.hdr && (request.toggles.cursor || request.toggles.enhance) {
+            return Err(AppError::Capture(
+                "Preserve HDR cannot be combined with Capture Cursor or Smart Enhance".into(),
+            ));
+        }
         // Fallback title captured before hiding our own windows. The
         // saved name prefers the visible majority window on the monitor,
         // but this keeps hotkey-triggered captures recognisable if live
@@ -114,7 +120,30 @@ impl CaptureService {
             enhance::smart_enhance(&mut image);
         }
 
-        let png = encode_png(&image, self.encoding.capture_compression())?;
+        let compression = self.encoding.capture_compression();
+        #[cfg(target_os = "windows")]
+        if request.toggles.hdr
+            && grab.hdr.is_none()
+            && clippity_platform::windows::hdr_capture::hdr_active_at(
+                monitor_x.saturating_add(1),
+                monitor_y.saturating_add(1),
+            )
+        {
+            return Err(AppError::Capture(
+                "the HDR desktop surface could not be captured; no SDR file was substituted".into(),
+            ));
+        }
+        let hdr_output = request.toggles.hdr && grab.hdr.is_some();
+        let png = if hdr_output {
+            let hdr = grab.hdr.as_ref().expect("checked above");
+            EncodedPng {
+                bytes: encode_hdr_png(&hdr.pixels, hdr.width, hdr.height, compression)?,
+                width: hdr.width,
+                height: hdr.height,
+            }
+        } else {
+            encode_png(&image, compression)?
+        };
         // Presets may pin a save dir via `request.output_dir`; otherwise
         // use the live captures dir from settings.
         let dir = resolve_save_dir(request.output_dir.as_deref(), self.captures.captures_dir());
@@ -335,19 +364,16 @@ fn cursor_position() -> Option<(i32, i32)> {
 /// top-left corner is shared with the monitor above/left of it on a
 /// multi-monitor desktop, and `MonitorFromPoint` would be free to
 /// resolve it to the neighbour.
-#[cfg(target_os = "windows")]
-fn hdr_grab_at(x: i32, y: i32) -> Option<RgbaImage> {
-    clippity_platform::windows::hdr_capture::rgba_monitor_at(x + 1, y + 1)
-}
-
-#[cfg(not(target_os = "windows"))]
-fn hdr_grab_at(_x: i32, _y: i32) -> Option<RgbaImage> {
-    None
-}
-
 /// One monitor's pixels plus what we know about the monitor itself.
 struct MonitorGrab {
     image: RgbaImage,
+    /// Original linear scRGB frame when this monitor is in HDR mode.
+    /// Kept beside the SDR rendering so clipboard/preview compatibility
+    /// never forces the saved file down to eight bits.
+    #[cfg(target_os = "windows")]
+    hdr: Option<clippity_platform::windows::hdr_capture::HdrGrab>,
+    #[cfg(not(target_os = "windows"))]
+    hdr: Option<()>,
     /// Virtual-screen origin, so the cursor compositor can convert the
     /// system cursor's screen position into image-local coordinates.
     x: i32,
@@ -394,14 +420,20 @@ fn grab_active_monitor_image() -> AppResult<MonitorGrab> {
     // saw the display's white level — the washed-out HDR screenshot.
     // `None` covers both "this display is SDR" and "the float path
     // wasn't available", and both mean the same thing here.
-    let image: RgbaImage = match hdr_grab_at(mx, my) {
-        Some(image) => image,
+    #[cfg(target_os = "windows")]
+    let hdr = clippity_platform::windows::hdr_capture::scrgb_monitor_at(mx + 1, my + 1);
+    #[cfg(not(target_os = "windows"))]
+    let hdr = None;
+    let image: RgbaImage = match hdr.as_ref() {
+        Some(grab) => RgbaImage::from_raw(grab.width, grab.height, grab.to_rgba8())
+            .ok_or_else(|| AppError::Capture("HDR frame had the wrong size".into()))?,
         None => monitor
             .capture_image()
             .map_err(|e| AppError::Capture(e.to_string()))?,
     };
     Ok(MonitorGrab {
         image,
+        hdr,
         x: mx,
         y: my,
         monitor: label,

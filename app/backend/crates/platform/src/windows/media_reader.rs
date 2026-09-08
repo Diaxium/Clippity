@@ -658,6 +658,7 @@ mod tests {
                 source_height: HEIGHT,
                 fps: FPS,
                 bitrate_bps: 2_000_000,
+                hdr: false,
                 keyframe_frames: FPS * 2,
                 variable_bitrate: true,
                 prefer_hardware: true,

@@ -128,7 +128,10 @@ impl LockingProcess {
             // …or its file name is a product executable, even from an
             // unexpected location (a stray copy is still ours to stop).
             if let Some(name) = file_name_of(path) {
-                if owned_exe_names.iter().any(|o| o.eq_ignore_ascii_case(&name)) {
+                if owned_exe_names
+                    .iter()
+                    .any(|o| o.eq_ignore_ascii_case(&name))
+                {
                     return ProcessOwnership::ClippityOwned;
                 }
             }
@@ -261,7 +264,13 @@ mod tests {
     const MAINT: &str = r"C:\ProgramData\Clippity\maintenance";
     const OWNED: &[&str] = &["Clippity.exe", "clippity-maintenance.exe"];
 
-    fn proc(pid: u32, name: &str, path: Option<&str>, kind: RmAppKind, is_self: bool) -> LockingProcess {
+    fn proc(
+        pid: u32,
+        name: &str,
+        path: Option<&str>,
+        kind: RmAppKind,
+        is_self: bool,
+    ) -> LockingProcess {
         LockingProcess {
             pid,
             app_name: name.to_string(),
@@ -273,14 +282,26 @@ mod tests {
 
     #[test]
     fn path_containment_uses_components_not_prefix() {
-        assert!(path_is_within(r"C:\Program Files\Clippity\Clippity.exe", INSTALL));
-        assert!(path_is_within(r"C:\Program Files\Clippity\sub\worker.exe", INSTALL));
+        assert!(path_is_within(
+            r"C:\Program Files\Clippity\Clippity.exe",
+            INSTALL
+        ));
+        assert!(path_is_within(
+            r"C:\Program Files\Clippity\sub\worker.exe",
+            INSTALL
+        ));
         assert!(path_is_within(INSTALL, INSTALL)); // the dir itself
-        // A sibling that merely shares the name prefix is NOT inside.
-        assert!(!path_is_within(r"C:\Program Files\Clippity Backup\x.exe", INSTALL));
+                                                   // A sibling that merely shares the name prefix is NOT inside.
+        assert!(!path_is_within(
+            r"C:\Program Files\Clippity Backup\x.exe",
+            INSTALL
+        ));
         assert!(!path_is_within(r"C:\Windows\explorer.exe", INSTALL));
         // Separator/case-insensitive and forward-slash tolerant.
-        assert!(path_is_within(r"c:/program files/clippity/clippity.exe", INSTALL));
+        assert!(path_is_within(
+            r"c:/program files/clippity/clippity.exe",
+            INSTALL
+        ));
         assert!(!path_is_within("", INSTALL));
         assert!(!path_is_within(r"C:\x.exe", ""));
     }
@@ -296,13 +317,25 @@ mod tests {
             RmAppKind::Explorer,
             false,
         );
-        assert_eq!(p.classify(INSTALL, MAINT, OWNED), ProcessOwnership::SystemCritical);
+        assert_eq!(
+            p.classify(INSTALL, MAINT, OWNED),
+            ProcessOwnership::SystemCritical
+        );
     }
 
     #[test]
     fn critical_is_never_owned() {
-        let p = proc(4, "csrss", Some(r"C:\Windows\System32\csrss.exe"), RmAppKind::Critical, false);
-        assert_eq!(p.classify(INSTALL, MAINT, OWNED), ProcessOwnership::SystemCritical);
+        let p = proc(
+            4,
+            "csrss",
+            Some(r"C:\Windows\System32\csrss.exe"),
+            RmAppKind::Critical,
+            false,
+        );
+        assert_eq!(
+            p.classify(INSTALL, MAINT, OWNED),
+            ProcessOwnership::SystemCritical
+        );
     }
 
     #[test]
@@ -314,7 +347,10 @@ mod tests {
             RmAppKind::MainWindow,
             true,
         );
-        assert_eq!(p.classify(INSTALL, MAINT, OWNED), ProcessOwnership::ClippityOwned);
+        assert_eq!(
+            p.classify(INSTALL, MAINT, OWNED),
+            ProcessOwnership::ClippityOwned
+        );
     }
 
     #[test]
@@ -326,7 +362,10 @@ mod tests {
             RmAppKind::MainWindow,
             false,
         );
-        assert_eq!(p.classify(INSTALL, MAINT, OWNED), ProcessOwnership::ClippityOwned);
+        assert_eq!(
+            p.classify(INSTALL, MAINT, OWNED),
+            ProcessOwnership::ClippityOwned
+        );
     }
 
     #[test]
@@ -339,17 +378,32 @@ mod tests {
             RmAppKind::MainWindow,
             false,
         );
-        assert_eq!(p.classify(INSTALL, MAINT, OWNED), ProcessOwnership::ClippityOwned);
+        assert_eq!(
+            p.classify(INSTALL, MAINT, OWNED),
+            ProcessOwnership::ClippityOwned
+        );
     }
 
     #[test]
     fn unknown_path_owned_only_on_exact_name() {
         // No path could be resolved; the exact product name licenses owned…
         let named = proc(400, "Clippity.exe", None, RmAppKind::MainWindow, false);
-        assert_eq!(named.classify(INSTALL, MAINT, OWNED), ProcessOwnership::ClippityOwned);
+        assert_eq!(
+            named.classify(INSTALL, MAINT, OWNED),
+            ProcessOwnership::ClippityOwned
+        );
         // …but a fuzzy title does not.
-        let titled = proc(401, "Clippity - editing capture.png", None, RmAppKind::MainWindow, false);
-        assert_eq!(titled.classify(INSTALL, MAINT, OWNED), ProcessOwnership::Unrelated);
+        let titled = proc(
+            401,
+            "Clippity - editing capture.png",
+            None,
+            RmAppKind::MainWindow,
+            false,
+        );
+        assert_eq!(
+            titled.classify(INSTALL, MAINT, OWNED),
+            ProcessOwnership::Unrelated
+        );
     }
 
     #[test]
@@ -361,16 +415,43 @@ mod tests {
             RmAppKind::MainWindow,
             false,
         );
-        assert_eq!(p.classify(INSTALL, MAINT, OWNED), ProcessOwnership::Unrelated);
+        assert_eq!(
+            p.classify(INSTALL, MAINT, OWNED),
+            ProcessOwnership::Unrelated
+        );
     }
 
     #[test]
     fn plan_buckets_and_gates_correctly() {
         let locks = vec![
-            proc(1, "Clippity", Some(r"C:\Program Files\Clippity\Clippity.exe"), RmAppKind::MainWindow, false),
-            proc(2, "clippity-maintenance", Some(r"C:\ProgramData\Clippity\maintenance\clippity-maintenance.exe"), RmAppKind::MainWindow, true),
-            proc(3, "Notepad", Some(r"C:\Windows\System32\notepad.exe"), RmAppKind::MainWindow, false),
-            proc(4, "Windows Explorer", Some(r"C:\Windows\explorer.exe"), RmAppKind::Explorer, false),
+            proc(
+                1,
+                "Clippity",
+                Some(r"C:\Program Files\Clippity\Clippity.exe"),
+                RmAppKind::MainWindow,
+                false,
+            ),
+            proc(
+                2,
+                "clippity-maintenance",
+                Some(r"C:\ProgramData\Clippity\maintenance\clippity-maintenance.exe"),
+                RmAppKind::MainWindow,
+                true,
+            ),
+            proc(
+                3,
+                "Notepad",
+                Some(r"C:\Windows\System32\notepad.exe"),
+                RmAppKind::MainWindow,
+                false,
+            ),
+            proc(
+                4,
+                "Windows Explorer",
+                Some(r"C:\Windows\explorer.exe"),
+                RmAppKind::Explorer,
+                false,
+            ),
         ];
         let plan = ShutdownPlan::from_locks(&locks, INSTALL, MAINT, OWNED);
 
@@ -381,13 +462,22 @@ mod tests {
         assert_eq!(plan.system_critical.len(), 1);
         assert!(plan.requires_user_action());
         assert!(!plan.can_proceed_automatically());
-        assert_eq!(plan.blocking_app_names(), vec!["Notepad".to_string(), "Windows Explorer".to_string()]);
+        assert_eq!(
+            plan.blocking_app_names(),
+            vec!["Notepad".to_string(), "Windows Explorer".to_string()]
+        );
     }
 
     #[test]
     fn plan_with_only_owned_can_proceed() {
         let locks = vec![
-            proc(1, "Clippity", Some(r"C:\Program Files\Clippity\Clippity.exe"), RmAppKind::MainWindow, false),
+            proc(
+                1,
+                "Clippity",
+                Some(r"C:\Program Files\Clippity\Clippity.exe"),
+                RmAppKind::MainWindow,
+                false,
+            ),
             proc(2, "clippity-maintenance", None, RmAppKind::MainWindow, true),
         ];
         let plan = ShutdownPlan::from_locks(&locks, INSTALL, MAINT, OWNED);

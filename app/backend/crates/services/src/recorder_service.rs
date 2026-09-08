@@ -66,6 +66,7 @@ use sink::{RecordingSink, SinkFrame};
 struct Captured {
     pixels: Vec<u8>,
     order: PixelOrder,
+    hdr: bool,
 }
 
 impl Captured {
@@ -78,6 +79,7 @@ impl Captured {
             width: region.width,
             height: region.height,
             order: self.order,
+            hdr: self.hdr,
         }
     }
 }
@@ -697,6 +699,15 @@ fn run_session_inner(
         request.format.extension()
     ));
 
+    // Validate/open the capture surface before creating an output file.
+    // HDR can be refused because the selected display is SDR, the region
+    // crosses displays, or the driver lacks DuplicateOutput1; none of
+    // those should leave an empty working file behind.
+    #[cfg(target_os = "windows")]
+    let mut source = FrameSource::open(request.region, request.hdr)?;
+    #[cfg(not(target_os = "windows"))]
+    let mut source = FrameSource::OneShot;
+
     let mut sink = sink::open(
         &working,
         request.format,
@@ -722,11 +733,6 @@ fn run_session_inner(
     let mut pending: Option<(Captured, u64)> = None;
     // A written frame's buffer, on its way back to be filled again.
     let mut recycle: Option<Vec<u8>> = None;
-    // The frame source stays open for the session — see `FrameSource`.
-    #[cfg(target_os = "windows")]
-    let mut source = FrameSource::open(request.region);
-    #[cfg(not(target_os = "windows"))]
-    let mut source = FrameSource::OneShot;
     // Samples actually handed to the sink. Distinct from `frames`, which
     // counts *captures* for the HUD and runs one ahead of this while a
     // frame is held. Only the first write needs to know it is first.
@@ -866,7 +872,7 @@ fn run_session_inner(
                 // library's thumbnail shows the same picture the file
                 // does.
                 let mut frame = frame;
-                if !request.sources.is_empty() {
+                if !frame.hdr && !request.sources.is_empty() {
                     let compositor = sources.get_or_insert_with(|| {
                         compositor::Compositor::open(
                             &request.sources,
@@ -898,6 +904,11 @@ fn run_session_inner(
                 frames += 1;
             }
             Err(e) => {
+                if request.hdr {
+                    failure = Some(format!("HDR capture stopped: {e}"));
+                    reason = RecorderStopReason::Failed;
+                    break;
+                }
                 // A single failed grab (a mode switch, a UAC prompt
                 // taking the desktop) must not end the recording — the
                 // user is still recording something. Count it and carry
@@ -1189,6 +1200,7 @@ enum FrameSource {
         /// nothing: a 5120x1440 frame is 28 MiB, and asking the
         /// allocator for that thirty times a second is its own cost.
         scratch: Vec<u8>,
+        hdr: bool,
     },
     /// Per-call grabs, for when duplication is unavailable.
     OneShot,
@@ -1197,16 +1209,27 @@ enum FrameSource {
 #[cfg(target_os = "windows")]
 impl FrameSource {
     /// Open the best source available for `region`.
-    fn open(region: Region) -> Self {
+    fn open(region: Region, hdr: bool) -> AppResult<Self> {
         use clippity_platform::windows::duplication_capture::MonitorDuplicator;
 
         let Ok((min_x, min_y, _, _)) = virtual_bounds() else {
-            return Self::OneShot;
+            return if hdr {
+                Err(AppError::Recorder(
+                    "could not resolve the HDR display".into(),
+                ))
+            } else {
+                Ok(Self::OneShot)
+            };
         };
         let absolute_x = min_x + region.x as i32;
         let absolute_y = min_y + region.y as i32;
 
-        match MonitorDuplicator::open_at(absolute_x, absolute_y) {
+        let opened = if hdr {
+            MonitorDuplicator::open_hdr_at(absolute_x, absolute_y)
+        } else {
+            MonitorDuplicator::open_at(absolute_x, absolute_y)
+        };
+        match opened {
             Ok(duplicator) => {
                 let (origin_x, origin_y) = duplicator.origin();
                 let (local_x, local_y) = (absolute_x - origin_x, absolute_y - origin_y);
@@ -1223,18 +1246,30 @@ impl FrameSource {
                     )
                 {
                     tracing::debug!("recording region spans outputs; using per-call grabs");
-                    return Self::OneShot;
+                    return if hdr {
+                        Err(AppError::Recorder(
+                            "HDR recording cannot span multiple displays".into(),
+                        ))
+                    } else {
+                        Ok(Self::OneShot)
+                    };
                 }
-                Self::Held {
+                Ok(Self::Held {
                     duplicator,
                     local_x: local_x as u32,
                     local_y: local_y as u32,
                     scratch: Vec::new(),
-                }
+                    hdr,
+                })
             }
             Err(e) => {
+                if hdr {
+                    return Err(AppError::Recorder(format!(
+                        "HDR capture is unavailable on this display: {e}"
+                    )));
+                }
                 tracing::debug!("desktop duplication unavailable, using per-call grabs: {e}");
-                Self::OneShot
+                Ok(Self::OneShot)
             }
         }
     }
@@ -1258,20 +1293,33 @@ impl FrameSource {
                 local_x,
                 local_y,
                 scratch,
+                hdr,
             } => {
                 if let Some(buffer) = recycle {
                     if buffer.capacity() > scratch.capacity() {
                         *scratch = buffer;
                     }
                 }
-                match duplicator.grab_bgra(*local_x, *local_y, region.width, region.height, scratch)
-                {
+                let grab = if *hdr {
+                    duplicator.grab_scrgb_f16(
+                        *local_x,
+                        *local_y,
+                        region.width,
+                        region.height,
+                        scratch,
+                    )
+                } else {
+                    duplicator.grab_bgra(*local_x, *local_y, region.width, region.height, scratch)
+                };
+                match grab {
                     // Nothing moved. The caller keeps the frame it has,
                     // which — because a frame now lasts until the next
                     // one arrives — simply stays on screen for longer.
                     Ok(Grab::Unchanged) => Ok(None),
                     Ok(Grab::Fresh) => {
-                        let expected = region.width as usize * region.height as usize * 4;
+                        let expected = region.width as usize
+                            * region.height as usize
+                            * if *hdr { 8 } else { 4 };
                         if scratch.len() != expected {
                             return Err(AppError::Recorder(
                                 "a grabbed frame had the wrong size".into(),
@@ -1280,6 +1328,7 @@ impl FrameSource {
                         Ok(Some(Captured {
                             pixels: std::mem::take(scratch),
                             order: PixelOrder::Bgra,
+                            hdr: *hdr,
                         }))
                     }
                     // The duplication is finished — a resolution change,
@@ -1288,8 +1337,12 @@ impl FrameSource {
                     // than ending the recording.
                     Err(e) => {
                         tracing::warn!("desktop duplication ended, falling back: {e}");
-                        *self = Self::OneShot;
-                        one_shot(region).map(Some)
+                        if *hdr {
+                            Err(AppError::Recorder(e))
+                        } else {
+                            *self = Self::OneShot;
+                            one_shot(region).map(Some)
+                        }
                     }
                 }
             }
@@ -1307,6 +1360,7 @@ fn one_shot(region: Region) -> AppResult<Captured> {
     capture_frame(region).map(|frame| Captured {
         pixels: frame.into_raw(),
         order: PixelOrder::Rgba,
+        hdr: false,
     })
 }
 
@@ -1538,6 +1592,7 @@ mod tests {
             },
             window_id: None,
             format,
+            hdr: false,
             fps: 30,
             max_height: recorder::RESOLUTION_SOURCE,
             audio: Default::default(),
@@ -1629,7 +1684,7 @@ mod tests {
 
         // 4. The source the recorder actually uses — a duplication held
         //    open across frames, which is the whole point.
-        let mut source = FrameSource::open(region);
+        let mut source = FrameSource::open(region, false).expect("SDR source always falls back");
         match &source {
             FrameSource::Held { .. } => println!("\n  held duplication: available"),
             FrameSource::OneShot => println!("\n  held duplication: UNAVAILABLE (per-call grabs)"),

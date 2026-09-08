@@ -77,6 +77,12 @@ describe("useTrayPanel", () => {
       cb();
       return () => {};
     });
+    (startCountdown as Mock).mockImplementationOnce(() => {
+      // Both outcomes must be armed before the command can emit either one.
+      expect(onCountdownFinished).toHaveBeenCalledTimes(1);
+      expect(onCountdownCancelled).toHaveBeenCalledTimes(1);
+      return Promise.resolve();
+    });
     const { result } = renderHook(() => useTrayPanel());
     act(() => {
       result.current.setToggle("timed", true);
@@ -101,6 +107,26 @@ describe("useTrayPanel", () => {
       await result.current.actions.fullscreen();
     });
     expect(startCountdown).toHaveBeenCalledWith(3);
+    expect(captureFullscreen).not.toHaveBeenCalled();
+  });
+
+  it("removes the armed listeners when starting the countdown fails", async () => {
+    const unsubscribeFinished = vi.fn();
+    const unsubscribeCancelled = vi.fn();
+    (onCountdownFinished as Mock).mockReturnValueOnce(unsubscribeFinished);
+    (onCountdownCancelled as Mock).mockReturnValueOnce(unsubscribeCancelled);
+    (startCountdown as Mock).mockRejectedValueOnce(new Error("unavailable"));
+
+    const { result } = renderHook(() => useTrayPanel());
+    act(() => {
+      result.current.setToggle("timed", true);
+    });
+    await act(async () => {
+      await result.current.actions.fullscreen();
+    });
+
+    expect(unsubscribeFinished).toHaveBeenCalledTimes(1);
+    expect(unsubscribeCancelled).toHaveBeenCalledTimes(1);
     expect(captureFullscreen).not.toHaveBeenCalled();
   });
 

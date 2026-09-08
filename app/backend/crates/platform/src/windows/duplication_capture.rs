@@ -63,10 +63,13 @@ use windows::Win32::Graphics::Direct3D11::{
     D3D11_CREATE_DEVICE_BGRA_SUPPORT, D3D11_MAPPED_SUBRESOURCE, D3D11_MAP_READ, D3D11_SDK_VERSION,
     D3D11_TEXTURE2D_DESC, D3D11_USAGE_STAGING,
 };
+use windows::Win32::Graphics::Dxgi::Common::{
+    DXGI_FORMAT, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R16G16B16A16_FLOAT,
+};
 use windows::Win32::Graphics::Dxgi::{
-    CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory1, IDXGIOutput1, IDXGIOutputDuplication,
-    IDXGIResource, DXGI_ERROR_ACCESS_LOST, DXGI_ERROR_NOT_FOUND, DXGI_ERROR_WAIT_TIMEOUT,
-    DXGI_OUTDUPL_FRAME_INFO,
+    CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory1, IDXGIOutput1, IDXGIOutput5,
+    IDXGIOutputDuplication, IDXGIResource, DXGI_ERROR_ACCESS_LOST, DXGI_ERROR_NOT_FOUND,
+    DXGI_ERROR_WAIT_TIMEOUT, DXGI_OUTDUPL_FRAME_INFO,
 };
 use windows::Win32::Graphics::Gdi::HMONITOR;
 
@@ -105,6 +108,8 @@ pub struct MonitorDuplicator {
     /// The output's top-left in virtual-desktop coordinates, so a caller
     /// working in that space can convert to output-local.
     origin: (i32, i32),
+    format: DXGI_FORMAT,
+    bytes_per_pixel: usize,
 }
 
 /// Whether Desktop Duplication may be used at all.
@@ -146,7 +151,8 @@ impl MonitorDuplicator {
                 .output
                 .DuplicateOutput(&device)
                 .map_err(|e| format!("desktop duplication refused: {e}"))?;
-            let staging = create_staging(&device, found.width, found.height)?;
+            let format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            let staging = create_staging(&device, found.width, found.height, format)?;
             let (width, height, origin) = (found.width, found.height, found.origin);
             Ok(Self {
                 _device: device,
@@ -156,6 +162,44 @@ impl MonitorDuplicator {
                 width,
                 height,
                 origin,
+                format,
+                bytes_per_pixel: 4,
+            })
+        }
+    }
+
+    /// Open a persistent FP16 scRGB duplication for an HDR output.
+    /// Returns an error for an SDR output so callers can choose their
+    /// existing SDR path without ever mislabelling its bytes as HDR.
+    pub fn open_hdr(hmonitor: HMONITOR) -> Result<Self, String> {
+        if !enabled() {
+            return Err("desktop duplication is turned off by a feature flag".into());
+        }
+        if !super::hdr_display::describe(hmonitor).hdr_active {
+            return Err("the selected output is not presenting in HDR".into());
+        }
+        unsafe {
+            let found = find_output(hmonitor)?;
+            let (device, context) = create_device(&found.adapter)?;
+            let output: IDXGIOutput5 = found
+                .output
+                .cast()
+                .map_err(|e| format!("this driver has no DuplicateOutput1: {e}"))?;
+            let format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            let duplication = output
+                .DuplicateOutput1(&device, 0, &[format])
+                .map_err(|e| format!("HDR desktop duplication refused: {e}"))?;
+            let staging = create_staging(&device, found.width, found.height, format)?;
+            Ok(Self {
+                _device: device,
+                context,
+                duplication,
+                staging,
+                width: found.width,
+                height: found.height,
+                origin: found.origin,
+                format,
+                bytes_per_pixel: 8,
             })
         }
     }
@@ -171,6 +215,18 @@ impl MonitorDuplicator {
             return Err("no monitor at that point".into());
         }
         Self::open(hmonitor)
+    }
+
+    /// [`Self::open_hdr`] for the monitor under a screen point.
+    pub fn open_hdr_at(x: i32, y: i32) -> Result<Self, String> {
+        use windows::Win32::Foundation::POINT;
+        use windows::Win32::Graphics::Gdi::{MonitorFromPoint, MONITOR_DEFAULTTONULL};
+
+        let hmonitor = unsafe { MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONULL) };
+        if hmonitor.is_invalid() {
+            return Err("no monitor at that point".into());
+        }
+        Self::open_hdr(hmonitor)
     }
 
     /// The output's origin in virtual-desktop coordinates.
@@ -203,6 +259,35 @@ impl MonitorDuplicator {
     /// application taking over, or a session lock all produce. The
     /// caller's recovery is to open a new one, not to fail.
     pub fn grab_bgra(
+        &mut self,
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+        out: &mut Vec<u8>,
+    ) -> Result<Grab, String> {
+        if self.format != DXGI_FORMAT_B8G8R8A8_UNORM {
+            return Err("this duplication is not an 8-bit BGRA surface".into());
+        }
+        self.grab_raw(x, y, width, height, out)
+    }
+
+    /// Grab a rectangle as packed little-endian RGBA binary16 scRGB.
+    pub fn grab_scrgb_f16(
+        &mut self,
+        x: u32,
+        y: u32,
+        width: u32,
+        height: u32,
+        out: &mut Vec<u8>,
+    ) -> Result<Grab, String> {
+        if self.format != DXGI_FORMAT_R16G16B16A16_FLOAT {
+            return Err("this duplication is not an FP16 scRGB surface".into());
+        }
+        self.grab_raw(x, y, width, height, out)
+    }
+
+    fn grab_raw(
         &mut self,
         x: u32,
         y: u32,
@@ -274,7 +359,7 @@ impl MonitorDuplicator {
                 .Map(&self.staging, 0, D3D11_MAP_READ, 0, Some(&mut mapped))
                 .map_err(|e| format!("could not map the frame for reading: {e}"))?;
 
-            let result = copy_region(&mapped, x, y, width, height, out);
+            let result = copy_region(&mapped, x, y, width, height, self.bytes_per_pixel, out);
             self.context.Unmap(&self.staging, 0);
             result
         }
@@ -295,14 +380,15 @@ unsafe fn copy_region(
     y: u32,
     width: u32,
     height: u32,
+    bytes_per_pixel: usize,
     out: &mut Vec<u8>,
 ) -> Result<(), String> {
     if mapped.pData.is_null() {
         return Err("the mapped frame had no data".into());
     }
     let pitch = mapped.RowPitch as usize;
-    let row_bytes = width as usize * 4;
-    let x_bytes = x as usize * 4;
+    let row_bytes = width as usize * bytes_per_pixel;
+    let x_bytes = x as usize * bytes_per_pixel;
     if height == 0 || row_bytes == 0 {
         out.clear();
         return Ok(());
@@ -467,15 +553,16 @@ unsafe fn create_staging(
     device: &ID3D11Device,
     width: u32,
     height: u32,
+    format: DXGI_FORMAT,
 ) -> Result<ID3D11Texture2D, String> {
-    use windows::Win32::Graphics::Dxgi::Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC};
+    use windows::Win32::Graphics::Dxgi::Common::DXGI_SAMPLE_DESC;
 
     let desc = D3D11_TEXTURE2D_DESC {
         Width: width,
         Height: height,
         MipLevels: 1,
         ArraySize: 1,
-        Format: DXGI_FORMAT_B8G8R8A8_UNORM,
+        Format: format,
         SampleDesc: DXGI_SAMPLE_DESC {
             Count: 1,
             Quality: 0,
@@ -582,7 +669,7 @@ mod tests {
         let mut out = Vec::new();
         // SAFETY: `surface` outlives the call and is at least
         // `pitch * height` bytes, which is what the geometry describes.
-        unsafe { copy_region(&mapped, 0, 0, width, height, &mut out) }.expect("copy");
+        unsafe { copy_region(&mapped, 0, 0, width, height, 4, &mut out) }.expect("copy");
 
         assert_eq!(out.len(), row_bytes * height as usize);
         for row in 0..height as usize {
@@ -621,7 +708,7 @@ mod tests {
         };
         let mut out = Vec::new();
         // SAFETY: the 2x2 region at (3, 2) lies inside the 8x6 surface.
-        unsafe { copy_region(&mapped, 3, 2, 2, 2, &mut out) }.expect("copy");
+        unsafe { copy_region(&mapped, 3, 2, 2, 2, 4, &mut out) }.expect("copy");
 
         assert_eq!(out.len(), 2 * 2 * 4);
         assert_eq!(out[0], (2 * 16 + 3) as u8, "top-left of the region");
@@ -669,7 +756,7 @@ mod tests {
         let mut out = vec![0u8; 9_999];
         for _ in 0..3 {
             // SAFETY: a 4x4 region over a 4x4 surface.
-            unsafe { copy_region(&mapped, 0, 0, 4, 4, &mut out) }.expect("copy");
+            unsafe { copy_region(&mapped, 0, 0, 4, 4, 4, &mut out) }.expect("copy");
             assert_eq!(out.len(), 4 * 4 * 4);
         }
     }

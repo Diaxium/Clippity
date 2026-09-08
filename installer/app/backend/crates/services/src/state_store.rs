@@ -9,8 +9,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use sha2::{Digest, Sha256};
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 
 use installer_domain::state::InstallationManifest;
 use installer_infra::error::{other, InstallerResult};
@@ -75,7 +75,9 @@ pub fn peek_schema_version(maintenance_dir: &Path) -> Option<u32> {
         schema_version: u32,
     }
     let raw = fs::read_to_string(manifest_path(maintenance_dir)).ok()?;
-    serde_json::from_str::<Peek>(&raw).ok().map(|p| p.schema_version)
+    serde_json::from_str::<Peek>(&raw)
+        .ok()
+        .map(|p| p.schema_version)
 }
 
 /// Remove the manifest file (leaving the maintenance dir for the cleanup

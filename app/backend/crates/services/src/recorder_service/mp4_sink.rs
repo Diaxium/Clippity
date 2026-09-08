@@ -31,6 +31,7 @@ pub fn open(path: &Path, config: SinkConfig) -> AppResult<Box<dyn RecordingSink>
             source_height: config.height,
             fps: config.fps,
             bitrate_bps,
+            hdr: config.hdr,
             keyframe_frames: config.encoding.keyframe_frames(config.fps),
             variable_bitrate: matches!(
                 config.encoding.rate_control,
@@ -98,6 +99,17 @@ impl RecordingSink for Mp4Sink {
                 frame.height,
                 frame.pixels.len()
             )));
+        }
+
+        if frame.hdr {
+            if self.input != frame.dimensions() {
+                return Err(AppError::Recorder(
+                    "HDR resolution scaling was not negotiated by Media Foundation".into(),
+                ));
+            }
+            return self
+                .writer
+                .write_hdr_video(frame.pixels, timestamp_hns, duration_hns);
         }
 
         // The ordinary path: the encoder chain negotiated the captured

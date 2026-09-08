@@ -36,6 +36,7 @@ export const DEFAULT_TOGGLES: CaptureToggles & { delay: boolean } = {
   // Off by default: enhancement is a judgement call about the pixels,
   // and a screenshot tool's baseline promise is "what you saw".
   enhance: false,
+  hdr: false,
   delay: false,
 };
 
@@ -237,7 +238,7 @@ export function visibleOptionKeys(
   customMode: CustomMode | null
 ): ReadonlySet<string> {
   if (captureType !== "custom") {
-    return new Set(["preview", "clipboard", "cursor", "enhance", "delay"]);
+    return new Set(["preview", "clipboard", "cursor", "enhance", "hdr", "delay"]);
   }
   switch (customMode) {
     case "color-picker":
@@ -249,6 +250,8 @@ export function visibleOptionKeys(
     case "scrolling-window":
     case "panoramic":
       return new Set(["preview", "clipboard", "enhance", "delay"]);
+    case "object":
+      return new Set(["preview", "clipboard", "cursor", "enhance", "hdr", "delay"]);
     default:
       return new Set(["preview", "clipboard", "cursor", "enhance", "delay"]);
   }
@@ -258,6 +261,7 @@ export function visibleOptionKeys(
  *  aren't yet wired to backend behavior. Pointing at the responsible
  *  later port keeps the deferral visible. */
 export const OPTION_UNAVAILABLE_HINT: Record<string, string | undefined> = {
+  hdr: undefined,
   preview: undefined, // wired — opens the new capture in the editor (feature #5 landed)
   clipboard: undefined, // works in MVP
   cursor: undefined, // works in MVP — landed with the overlay port

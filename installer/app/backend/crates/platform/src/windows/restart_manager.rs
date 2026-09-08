@@ -66,7 +66,10 @@ pub fn enumerate_lockers(paths: &[&Path]) -> InstallerResult<Vec<LockingProcess>
     // is the documented default.
     let rc = unsafe { RmStartSession(&mut handle, None, PWSTR(key.as_mut_ptr())) };
     if rc != ERROR_SUCCESS {
-        return Err(other(format!("RmStartSession failed (WIN32_ERROR {})", rc.0)));
+        return Err(other(format!(
+            "RmStartSession failed (WIN32_ERROR {})",
+            rc.0
+        )));
     }
     let session = RmSession(handle);
 
@@ -116,7 +119,10 @@ fn get_list(handle: u32) -> InstallerResult<Vec<RM_PROCESS_INFO>> {
     // documented size-probe form.
     let rc = unsafe { RmGetList(handle, &mut needed, &mut have, None, &mut reasons) };
     if rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA {
-        return Err(other(format!("RmGetList (probe) failed (WIN32_ERROR {})", rc.0)));
+        return Err(other(format!(
+            "RmGetList (probe) failed (WIN32_ERROR {})",
+            rc.0
+        )));
     }
     if needed == 0 {
         return Ok(Vec::new());
@@ -155,14 +161,20 @@ fn get_list(handle: u32) -> InstallerResult<Vec<RM_PROCESS_INFO>> {
 fn resolve_exe_path(pid: u32) -> Option<String> {
     // SAFETY: OpenProcess returns a handle we close below; a failed open is
     // an Err we map to None.
-    let handle: HANDLE = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) }.ok()?;
+    let handle: HANDLE =
+        unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) }.ok()?;
 
     let mut buf = [0u16; 1024];
     let mut size = buf.len() as u32;
     // SAFETY: `handle` is valid; `buf`/`size` describe a live buffer;
     // on success `size` is set to the character count written.
     let result = unsafe {
-        QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buf.as_mut_ptr()), &mut size)
+        QueryFullProcessImageNameW(
+            handle,
+            PROCESS_NAME_WIN32,
+            PWSTR(buf.as_mut_ptr()),
+            &mut size,
+        )
     };
     // SAFETY: closing the handle we opened; ignore the (best-effort) result.
     unsafe {
@@ -177,8 +189,11 @@ fn resolve_exe_path(pid: u32) -> Option<String> {
 /// own image — never an unrelated or system-critical one.
 pub fn terminate(pid: u32) -> InstallerResult<()> {
     // SAFETY: open with terminate rights; a failed open is a mapped error.
-    let handle: HANDLE = unsafe { OpenProcess(PROCESS_TERMINATE, false, pid) }
-        .map_err(|e| other(format!("could not open Clippity process {pid} to stop it: {e}")))?;
+    let handle: HANDLE = unsafe { OpenProcess(PROCESS_TERMINATE, false, pid) }.map_err(|e| {
+        other(format!(
+            "could not open Clippity process {pid} to stop it: {e}"
+        ))
+    })?;
     // SAFETY: `handle` has PROCESS_TERMINATE; exit code 1 marks a forced stop.
     let result = unsafe { TerminateProcess(handle, 1) };
     // SAFETY: closing the handle we opened.

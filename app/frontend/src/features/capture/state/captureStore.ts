@@ -23,7 +23,7 @@ import type {
   CaptureType,
   CustomMode,
 } from "../types";
-import { DEFAULT_TOGGLES } from "../modes";
+import { DEFAULT_TOGGLES, visibleOptionKeys } from "../modes";
 
 interface CaptureStoreState {
   // ---- Nav + mode -----------------------------------------------------
@@ -37,6 +37,8 @@ interface CaptureStoreState {
   cursor: boolean;
   /** Backend Smart-enhance pass (auto-levels + light unsharp). */
   enhance: boolean;
+  /** Preserve HDR signal in the saved PNG. */
+  hdr: boolean;
   delayEnabled: boolean;
   /** 1..60 — clamped by setDelaySeconds. */
   delaySeconds: number;
@@ -75,7 +77,7 @@ interface CaptureStoreState {
   setCaptureType(type: CaptureType): void;
   setCustomMode(mode: CustomMode | null): void;
   setOption(
-    key: "preview" | "clipboard" | "cursor" | "enhance",
+    key: "preview" | "clipboard" | "cursor" | "enhance" | "hdr",
     on: boolean
   ): void;
   setDelayEnabled(on: boolean): void;
@@ -105,6 +107,7 @@ export const useCaptureStore = create<CaptureStoreState>((set) => ({
   clipboard: DEFAULT_TOGGLES.clipboard,
   cursor: DEFAULT_TOGGLES.cursor,
   enhance: DEFAULT_TOGGLES.enhance,
+  hdr: DEFAULT_TOGGLES.hdr ?? false,
   delayEnabled: DEFAULT_TOGGLES.delay,
   delaySeconds: 5,
   scrollDirection: "down",
@@ -131,7 +134,16 @@ export const useCaptureStore = create<CaptureStoreState>((set) => ({
       customMode: captureType === "custom" ? s.customMode : null,
     })),
   setCustomMode: (customMode) => set({ customMode }),
-  setOption: (key, on) => set({ [key]: on } as Partial<CaptureStoreState>),
+  setOption: (key, on) =>
+    set(() => {
+      if (key === "hdr" && on) {
+        return { hdr: true, cursor: false, enhance: false };
+      }
+      if ((key === "cursor" || key === "enhance") && on) {
+        return { [key]: true, hdr: false } as Partial<CaptureStoreState>;
+      }
+      return { [key]: on } as Partial<CaptureStoreState>;
+    }),
   setDelayEnabled: (delayEnabled) => set({ delayEnabled }),
   setDelaySeconds: (s) =>
     set({ delaySeconds: Math.max(MIN_DELAY, Math.min(MAX_DELAY, s)) }),
@@ -149,8 +161,9 @@ export const useCaptureStore = create<CaptureStoreState>((set) => ({
             defaultsHydrated: true,
             preview: d.preview,
             clipboard: d.clipboard,
-            cursor: d.cursor,
-            enhance: d.enhance,
+            cursor: (d.hdr ?? false) ? false : d.cursor,
+            enhance: (d.hdr ?? false) ? false : d.enhance,
+            hdr: d.hdr ?? false,
             delayEnabled: d.delay,
             delaySeconds: Math.max(
               MIN_DELAY,
@@ -167,6 +180,7 @@ export const useCaptureStore = create<CaptureStoreState>((set) => ({
  * tests can call it with a hand-rolled state value.
  */
 export function buildRequest(s: CaptureStoreState): CaptureRequest {
+  const hdrAvailable = visibleOptionKeys(s.captureType, s.customMode).has("hdr");
   return {
     type: s.captureType,
     customMode: s.captureType === "custom" ? s.customMode : null,
@@ -175,6 +189,7 @@ export function buildRequest(s: CaptureStoreState): CaptureRequest {
       clipboard: s.clipboard,
       cursor: s.cursor,
       enhance: s.enhance,
+      hdr: hdrAvailable && s.hdr && !s.cursor && !s.enhance,
     },
     delay: s.delayEnabled ? { seconds: s.delaySeconds } : null,
     effect: s.effect === "none" ? null : s.effect,

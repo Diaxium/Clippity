@@ -198,6 +198,16 @@ fn spin_until(timeout: std::time::Duration, mut done: impl FnMut() -> bool) -> b
     }
 }
 
+/// Convenience helper for the capture path: hide the capture window
+/// only if it's visible, sleep the capture-flavoured unpaint, then
+/// return. Mirrors the legacy `hide_capture_window_briefly` shape
+/// so the migration from inline helpers is a one-line replacement.
+pub fn hide_capture_briefly(app: &AppHandle) {
+    if hide_primary_windows(app, "overlay") > 0 {
+        sleep_compositor_unpaint(CompositorWait::Capture);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::spin_until;
@@ -233,15 +243,5 @@ mod tests {
         // sleeping, so a fast hide costs nothing.
         let ok = spin_until(Duration::from_secs(5), || true);
         assert!(ok);
-    }
-}
-
-/// Convenience helper for the capture path: hide the capture window
-/// only if it's visible, sleep the capture-flavoured unpaint, then
-/// return. Mirrors the legacy `hide_capture_window_briefly` shape
-/// so the migration from inline helpers is a one-line replacement.
-pub fn hide_capture_briefly(app: &AppHandle) {
-    if hide_primary_windows(app, "overlay") > 0 {
-        sleep_compositor_unpaint(CompositorWait::Capture);
     }
 }

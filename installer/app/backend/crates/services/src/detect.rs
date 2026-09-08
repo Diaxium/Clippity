@@ -111,24 +111,30 @@ pub fn detect(paths: &InstallerPaths, wizard_version: &str) -> Detection {
     let located = locate_manifest(paths);
     let schema_too_new = located.is_none() && any_schema_too_new(paths);
 
-    let (manifest_present, installed_version, install_directory, scope, installation_id, exe_present) =
-        match &located {
-            Some((_, m)) => {
-                let exe_present = m
-                    .primary_exe()
-                    .map(|p| Path::new(p).exists())
-                    .unwrap_or(false);
-                (
-                    true,
-                    Some(m.version.clone()),
-                    Some(m.install_directory.clone()),
-                    Some(m.scope),
-                    Some(m.installation_id.clone()),
-                    exe_present,
-                )
-            }
-            None => (false, None, None, None, None, false),
-        };
+    let (
+        manifest_present,
+        installed_version,
+        install_directory,
+        scope,
+        installation_id,
+        exe_present,
+    ) = match &located {
+        Some((_, m)) => {
+            let exe_present = m
+                .primary_exe()
+                .map(|p| Path::new(p).exists())
+                .unwrap_or(false);
+            (
+                true,
+                Some(m.version.clone()),
+                Some(m.install_directory.clone()),
+                Some(m.scope),
+                Some(m.installation_id.clone()),
+                exe_present,
+            )
+        }
+        None => (false, None, None, None, None, false),
+    };
 
     let inputs = DetectionInputs {
         manifest_present,

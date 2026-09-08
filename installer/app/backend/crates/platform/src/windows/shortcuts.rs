@@ -27,7 +27,9 @@ fn known_folder(id: &GUID) -> InstallerResult<PathBuf> {
     unsafe {
         let pw: PWSTR = SHGetKnownFolderPath(id, KNOWN_FOLDER_FLAG(0), None)
             .map_err(|e| other(format!("SHGetKnownFolderPath failed: {e}")))?;
-        let s = pw.to_string().map_err(|e| other(format!("known folder path unreadable: {e}")))?;
+        let s = pw
+            .to_string()
+            .map_err(|e| other(format!("known folder path unreadable: {e}")))?;
         CoTaskMemFree(Some(pw.0 as *const _));
         Ok(PathBuf::from(s))
     }
@@ -35,12 +37,20 @@ fn known_folder(id: &GUID) -> InstallerResult<PathBuf> {
 
 /// The current user's (or, for all-users, the common) Desktop directory.
 pub fn desktop_dir(all_users: bool) -> InstallerResult<PathBuf> {
-    known_folder(if all_users { &FOLDERID_PublicDesktop } else { &FOLDERID_Desktop })
+    known_folder(if all_users {
+        &FOLDERID_PublicDesktop
+    } else {
+        &FOLDERID_Desktop
+    })
 }
 
 /// The current user's (or common) Start-menu Programs directory.
 pub fn programs_dir(all_users: bool) -> InstallerResult<PathBuf> {
-    known_folder(if all_users { &FOLDERID_CommonPrograms } else { &FOLDERID_Programs })
+    known_folder(if all_users {
+        &FOLDERID_CommonPrograms
+    } else {
+        &FOLDERID_Programs
+    })
 }
 
 /// Write a `.lnk` at `link_path` pointing at `target_exe`.
@@ -75,7 +85,12 @@ fn write_lnk(link_path: &Path, target_exe: &str, description: &str) -> Installer
                 .map_err(|e| other(format!("QueryInterface(IPersistFile) failed: {e}")))?;
             persist
                 .Save(&HSTRING::from(link_path.as_os_str()), true)
-                .map_err(|e| other(format!("IPersistFile::Save({}) failed: {e}", link_path.display())))?;
+                .map_err(|e| {
+                    other(format!(
+                        "IPersistFile::Save({}) failed: {e}",
+                        link_path.display()
+                    ))
+                })?;
             Ok(())
         })();
 

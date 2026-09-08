@@ -9,11 +9,11 @@ use installer_domain::install::{
     build_plan, needs_elevation, Component, InstallOptions, InstallPlan,
 };
 use installer_domain::progress::ProgressKind;
+use installer_domain::repair::RepairAssessment;
 use installer_domain::uninstall::{DataCategory, RemovalSelection, RemovalSummary};
 use installer_domain::update::{InstallStatus, ReleaseChannel, UpdateInfo, VersionInfo};
 use installer_domain::wizard::{LaunchRoute, ProductInfo};
 use installer_infra::error::{InstallerError, InstallerResult};
-use installer_domain::repair::RepairAssessment;
 use installer_services::payload::Payload;
 use installer_services::recovery::RecoveryOutcome;
 use installer_services::{

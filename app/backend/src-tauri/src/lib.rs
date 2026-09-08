@@ -118,6 +118,7 @@ fn snapshot_response(
 }
 
 #[cfg(test)]
+#[allow(clippy::items_after_test_module)]
 mod snapshot_scheme_tests {
     use super::snapshot_response;
     use tauri::http::{header, StatusCode};

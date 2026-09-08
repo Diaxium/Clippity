@@ -7,6 +7,7 @@ import {
   Palette,
   Settings,
   Sparkles,
+  SunMedium,
 } from "lucide-react";
 
 import { useSettingsPatch, useSettingsStore } from "@features/settings";
@@ -26,7 +27,7 @@ import { SwatchCountStepper } from "./SwatchCountStepper";
 const DEFAULT_PALETTE_COUNT = 6;
 
 interface OptionDef {
-  key: "preview" | "clipboard" | "cursor" | "enhance" | "delay";
+  key: "preview" | "clipboard" | "cursor" | "enhance" | "hdr" | "delay";
   label: string;
   desc: string;
   icon: ModeIcon;
@@ -63,6 +64,13 @@ const OPTIONS: readonly OptionDef[] = [
     tint: "cool",
   },
   {
+    key: "hdr",
+    label: "Preserve HDR",
+    desc: "Keep highlights and wide color; disables Cursor and Smart Enhance",
+    icon: SunMedium,
+    tint: "warm",
+  },
+  {
     key: "delay",
     label: "5 Second Delay",
     desc: "Add a delay before capturing",
@@ -92,6 +100,7 @@ export function CaptureOptionsPanel({
   const clipboard = useCaptureStore((s) => s.clipboard);
   const cursor = useCaptureStore((s) => s.cursor);
   const enhance = useCaptureStore((s) => s.enhance);
+  const hdr = useCaptureStore((s) => s.hdr);
   const delayEnabled = useCaptureStore((s) => s.delayEnabled);
   const delaySeconds = useCaptureStore((s) => s.delaySeconds);
   const scrollDirection = useCaptureStore((s) => s.scrollDirection);
@@ -123,6 +132,7 @@ export function CaptureOptionsPanel({
     clipboard,
     cursor,
     enhance,
+    hdr,
     delay: delayEnabled,
   };
 
@@ -186,7 +196,7 @@ export function CaptureOptionsPanel({
                   isDelay
                     ? setDelayEnabled(v)
                     : setOption(
-                        o.key as "preview" | "clipboard" | "cursor" | "enhance",
+                        o.key as "preview" | "clipboard" | "cursor" | "enhance" | "hdr",
                         v
                       )
                 }

@@ -38,6 +38,7 @@ use crate::capture_io::{
     copy_rgba_to_clipboard, copy_text_to_clipboard, next_id, resolve_save_dir, save_capture_png,
     thumbnail_data_uri,
 };
+use crate::hdr_image::encode_hdr_png;
 use crate::last_region_store::LastRegionStore;
 use crate::settings_service::{CapturesDirSource, NameTemplateSource};
 use crate::window_service::{self, CompositorWait};
@@ -50,6 +51,7 @@ use clippity_domain::overlay::{
     OverlayMode, OverlayResult, OverlayToggles, OverlayWindow, Region, MULTI_AREA_GAP_PX,
 };
 use clippity_domain::palette;
+use clippity_domain::settings::CaptureCompression;
 use clippity_domain::toast::PickedColor;
 use clippity_domain::window_attribution::{self, MonitorRect, Rect as AttributionRect, WindowRect};
 use clippity_infra::error::{AppError, AppResult};
@@ -69,6 +71,16 @@ const PALETTE_PREVIEW_MAX_EDGE: u32 = 96;
 struct ProducedOverlayCapture {
     image: RgbaImage,
     attribution_regions: Vec<Region>,
+    /// The unmodified rectangular desktop area that may be re-grabbed
+    /// from the FP16 compositor surface for an HDR-preserving encode.
+    /// Masked and stitched captures intentionally leave this unset.
+    hdr_selection: Option<HdrSelection>,
+}
+
+#[derive(Clone, Copy)]
+struct HdrSelection {
+    region: Region,
+    origin: (i32, i32),
 }
 
 /// One display of the snapshotted desktop, rebased onto the canvas.
@@ -491,6 +503,7 @@ impl OverlayService {
         app: &AppHandle,
         request: FinishRegionRequest,
     ) -> AppResult<OverlayResult> {
+        validate_hdr_overlay(&request.toggles, true)?;
         self.finalize(app, request.toggles, None, |canvas, origin| {
             // Validate against the canvas we'll actually crop (frontend
             // clamps, but the backend never trusts client coords).
@@ -510,6 +523,7 @@ impl OverlayService {
             Ok(ProducedOverlayCapture {
                 image,
                 attribution_regions: vec![region],
+                hdr_selection: Some(HdrSelection { region, origin }),
             })
         })
     }
@@ -529,6 +543,7 @@ impl OverlayService {
         app: &AppHandle,
         toggles: OverlayToggles,
     ) -> AppResult<OverlayResult> {
+        validate_hdr_overlay(&toggles, true)?;
         // Resolve the target monitor BEFORE finalize hides the overlay:
         // once the overlay goes away the cursor may land on a different
         // window, and `finalize` has already consumed the session by the
@@ -543,6 +558,7 @@ impl OverlayService {
             Ok(ProducedOverlayCapture {
                 image,
                 attribution_regions: vec![region],
+                hdr_selection: Some(HdrSelection { region, origin }),
             })
         })
     }
@@ -555,6 +571,7 @@ impl OverlayService {
         app: &AppHandle,
         request: FinishFreehandRequest,
     ) -> AppResult<OverlayResult> {
+        validate_hdr_overlay(&request.toggles, false)?;
         self.finalize(app, request.toggles, None, |canvas, origin| {
             let attribution_region =
                 freehand_attribution_region(&request.points, canvas.width(), canvas.height())?;
@@ -568,6 +585,7 @@ impl OverlayService {
             Ok(ProducedOverlayCapture {
                 image,
                 attribution_regions: vec![attribution_region],
+                hdr_selection: None,
             })
         })
     }
@@ -581,6 +599,7 @@ impl OverlayService {
         app: &AppHandle,
         request: FinishBrushRequest,
     ) -> AppResult<OverlayResult> {
+        validate_hdr_overlay(&request.toggles, false)?;
         self.finalize(app, request.toggles, None, |canvas, origin| {
             let attribution_region =
                 brush_attribution_region(&request.mask, canvas.width(), canvas.height())?;
@@ -594,6 +613,7 @@ impl OverlayService {
             Ok(ProducedOverlayCapture {
                 image,
                 attribution_regions: vec![attribution_region],
+                hdr_selection: None,
             })
         })
     }
@@ -606,6 +626,7 @@ impl OverlayService {
         app: &AppHandle,
         request: FinishMultiAreaRequest,
     ) -> AppResult<OverlayResult> {
+        validate_hdr_overlay(&request.toggles, false)?;
         self.finalize(app, request.toggles, None, |canvas, origin| {
             let attribution_regions =
                 clipped_nonempty_regions(&request.rects, canvas.width(), canvas.height());
@@ -620,6 +641,7 @@ impl OverlayService {
             Ok(ProducedOverlayCapture {
                 image,
                 attribution_regions,
+                hdr_selection: None,
             })
         })
     }
@@ -768,7 +790,21 @@ impl OverlayService {
             enhance::smart_enhance(&mut image);
         }
         let (width, height) = (image.width(), image.height());
-        let png_bytes = encode_png(&image)?;
+        let hdr_pixels = if toggles.hdr {
+            produced
+                .hdr_selection
+                .map(|selection| capture_hdr_region(selection.region, selection.origin))
+                .transpose()?
+                .flatten()
+        } else {
+            None
+        };
+        let png_bytes = match hdr_pixels {
+            Some((pixels, hdr_width, hdr_height)) if hdr_width == width && hdr_height == height => {
+                encode_hdr_png(&pixels, hdr_width, hdr_height, CaptureCompression::Balanced)?
+            }
+            _ => encode_png(&image)?,
+        };
 
         // Persist (a preset may pin the dir via the session override) +
         // optional clipboard. `save_capture_png` also writes the
@@ -822,6 +858,7 @@ impl OverlayService {
         app: &AppHandle,
         toggles: OverlayToggles,
     ) -> AppResult<OverlayResult> {
+        validate_hdr_overlay(&toggles, true)?;
         let last = self
             .last_region
             .get()
@@ -882,6 +919,10 @@ impl OverlayService {
             ProducedOverlayCapture {
                 image,
                 attribution_regions: vec![region],
+                hdr_selection: Some(HdrSelection {
+                    region,
+                    origin: (min_x, min_y),
+                }),
             },
             None,
             CaptureSource::from_mode(type_label_for(Some(OverlayMode::Region)))
@@ -1746,6 +1787,159 @@ fn crop_with_optional_cursor(
         ));
     }
     Ok(cropped)
+}
+
+fn validate_hdr_overlay(toggles: &OverlayToggles, rectangular: bool) -> AppResult<()> {
+    if !toggles.hdr {
+        return Ok(());
+    }
+    if !rectangular {
+        return Err(AppError::Overlay(
+            "Preserve HDR is only available for rectangular captures".into(),
+        ));
+    }
+    if toggles.cursor || toggles.enhance {
+        return Err(AppError::Overlay(
+            "Preserve HDR cannot be combined with Capture Cursor or Smart Enhance".into(),
+        ));
+    }
+    Ok(())
+}
+
+/// Re-grab a simple rectangular selection from the Windows compositor's
+/// FP16 scRGB surface. HDR selections must fit on one display: desktop
+/// duplication is output-scoped, and stitching separately mastered HDR
+/// displays into one image would invent a single mastering context.
+#[cfg(target_os = "windows")]
+fn capture_hdr_region(
+    region: Region,
+    origin: (i32, i32),
+) -> AppResult<Option<(Vec<f32>, u32, u32)>> {
+    let geometry = || AppError::Overlay("HDR selection geometry overflowed".into());
+    let left = origin
+        .0
+        .checked_add(i32::try_from(region.x).map_err(|_| geometry())?)
+        .ok_or_else(geometry)?;
+    let top = origin
+        .1
+        .checked_add(i32::try_from(region.y).map_err(|_| geometry())?)
+        .ok_or_else(geometry)?;
+    let right = left
+        .checked_add(i32::try_from(region.width).map_err(|_| geometry())?)
+        .ok_or_else(geometry)?;
+    let bottom = top
+        .checked_add(i32::try_from(region.height).map_err(|_| geometry())?)
+        .ok_or_else(geometry)?;
+
+    let monitors = Monitor::all().map_err(|e| AppError::Overlay(e.to_string()))?;
+    let monitor = monitors.iter().find(|monitor| {
+        let Ok(mx) = monitor.x() else { return false };
+        let Ok(my) = monitor.y() else { return false };
+        let Ok(mw) = monitor.width() else {
+            return false;
+        };
+        let Ok(mh) = monitor.height() else {
+            return false;
+        };
+        let Some(mright) = mx.checked_add(mw as i32) else {
+            return false;
+        };
+        let Some(mbottom) = my.checked_add(mh as i32) else {
+            return false;
+        };
+        left >= mx && top >= my && right <= mright && bottom <= mbottom
+    });
+    let Some(monitor) = monitor else {
+        let spans_hdr = monitors.iter().any(|monitor| {
+            let (Ok(mx), Ok(my), Ok(mw), Ok(mh)) =
+                (monitor.x(), monitor.y(), monitor.width(), monitor.height())
+            else {
+                return false;
+            };
+            let intersects = left < mx.saturating_add(mw as i32)
+                && right > mx
+                && top < my.saturating_add(mh as i32)
+                && bottom > my;
+            intersects
+                && clippity_platform::windows::hdr_capture::hdr_active_at(
+                    mx.saturating_add(1),
+                    my.saturating_add(1),
+                )
+        });
+        return if spans_hdr {
+            Err(AppError::Overlay(
+                "an HDR capture cannot span multiple displays".into(),
+            ))
+        } else {
+            Ok(None)
+        };
+    };
+    let mx = monitor.x().map_err(|e| AppError::Overlay(e.to_string()))?;
+    let my = monitor.y().map_err(|e| AppError::Overlay(e.to_string()))?;
+    if !clippity_platform::windows::hdr_capture::hdr_active_at(
+        mx.saturating_add(1),
+        my.saturating_add(1),
+    ) {
+        return Ok(None);
+    }
+    let grab = clippity_platform::windows::hdr_capture::scrgb_monitor_at(
+        mx.saturating_add(1),
+        my.saturating_add(1),
+    )
+    .ok_or_else(|| {
+        AppError::Overlay(
+            "the HDR desktop surface could not be captured; no SDR file was substituted".into(),
+        )
+    })?;
+
+    let local_x =
+        u32::try_from(left.checked_sub(mx).ok_or_else(geometry)?).map_err(|_| geometry())?;
+    let local_y =
+        u32::try_from(top.checked_sub(my).ok_or_else(geometry)?).map_err(|_| geometry())?;
+    if local_x.checked_add(region.width).ok_or_else(geometry)? > grab.width
+        || local_y.checked_add(region.height).ok_or_else(geometry)? > grab.height
+    {
+        return Err(AppError::Overlay(
+            "HDR capture dimensions changed during selection".into(),
+        ));
+    }
+
+    let row_values = usize::try_from(region.width)
+        .map_err(|_| geometry())?
+        .checked_mul(4)
+        .ok_or_else(geometry)?;
+    let source_stride = usize::try_from(grab.width)
+        .map_err(|_| geometry())?
+        .checked_mul(4)
+        .ok_or_else(geometry)?;
+    let mut pixels = Vec::with_capacity(
+        row_values
+            .checked_mul(usize::try_from(region.height).map_err(|_| geometry())?)
+            .ok_or_else(geometry)?,
+    );
+    for row in local_y..local_y.checked_add(region.height).ok_or_else(geometry)? {
+        let start = usize::try_from(row)
+            .map_err(|_| geometry())?
+            .checked_mul(source_stride)
+            .and_then(|v| {
+                usize::try_from(local_x)
+                    .ok()
+                    .and_then(|x| x.checked_mul(4))
+                    .and_then(|x| v.checked_add(x))
+            })
+            .ok_or_else(geometry)?;
+        let end = start.checked_add(row_values).ok_or_else(geometry)?;
+        pixels.extend_from_slice(grab.pixels.get(start..end).ok_or_else(geometry)?);
+    }
+    Ok(Some((pixels, region.width, region.height)))
+}
+
+#[cfg(not(target_os = "windows"))]
+fn capture_hdr_region(
+    _region: Region,
+    _origin: (i32, i32),
+) -> AppResult<Option<(Vec<f32>, u32, u32)>> {
+    Ok(None)
 }
 
 /// PNG-encode a finished capture. Matches `DynamicImage::write_to(Png)`'s

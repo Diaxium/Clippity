@@ -13,8 +13,8 @@
 use std::fs;
 use std::path::Path;
 
-use installer_domain::state::{InstallState, InstallationManifest, RegistryHive};
 use installer_domain::progress::{self, ProgressKind};
+use installer_domain::state::{InstallState, InstallationManifest, RegistryHive};
 use installer_domain::uninstall::{summarize, RemovalSelection, RemovalSummary};
 use installer_infra::error::{InstallerError, InstallerResult};
 use installer_infra::paths::InstallerPaths;
@@ -59,7 +59,11 @@ pub fn run(
 
     let tasks = progress::checklist_for(ProgressKind::Uninstall);
     let total = tasks.len();
-    emit(progress::snapshot(ProgressKind::Uninstall, tasks.clone(), 0));
+    emit(progress::snapshot(
+        ProgressKind::Uninstall,
+        tasks.clone(),
+        0,
+    ));
 
     for step in 0..total {
         match tasks[step].id.as_str() {
@@ -229,12 +233,10 @@ fn finalize_maintenance_dir(maintenance_dir: &Path) -> InstallerResult<bool> {
 
     let mut reboot_required = false;
     let exe = maintenance_dir.join(MAINTENANCE_EXE);
-    if exe.exists() {
-        if fs::remove_file(&exe).is_err() {
-            // Locked (we are probably running from it) — schedule for reboot.
-            if windows_ops::schedule_delete_on_reboot(&exe).is_ok() {
-                reboot_required = true;
-            }
+    if exe.exists() && fs::remove_file(&exe).is_err() {
+        // Locked (we are probably running from it) — schedule for reboot.
+        if windows_ops::schedule_delete_on_reboot(&exe).is_ok() {
+            reboot_required = true;
         }
     }
 
@@ -343,7 +345,10 @@ mod tests {
 
         assert!(!owned.exists(), "owned file should be removed");
         assert!(unknown.exists(), "unknown file must be preserved");
-        assert!(dir.exists(), "directory with unknown files must be preserved");
+        assert!(
+            dir.exists(),
+            "directory with unknown files must be preserved"
+        );
 
         // Cleanup.
         let _ = fs::remove_dir_all(&dir);

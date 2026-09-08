@@ -42,14 +42,15 @@
 //! binary is exactly such a host, which is why the live tests here set
 //! the awareness themselves rather than inheriting it.
 //!
-//! # Failure is always recoverable
+//! # Failure handling depends on the requested output
 //!
-//! Every error here means "fall back to the ordinary 8-bit path", never
-//! "the capture failed". Duplication can be refused for reasons that
-//! have nothing to do with us — another process already holds the
-//! output, a full-screen exclusive game owns the swap chain, the
-//! session is remote — and a screenshot the user asked for must not be
-//! lost to any of them.
+//! The ordinary SDR path may fall back to its existing 8-bit grab when
+//! float duplication is unavailable. An explicit Preserve HDR request
+//! must instead surface the failure: silently substituting an SDR file
+//! would violate the requested output contract. Duplication can be
+//! refused for reasons outside the app — another process already holds
+//! the output, a full-screen exclusive game owns the swap chain, or the
+//! session is remote — so callers choose the appropriate policy.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -159,22 +160,41 @@ pub fn capture_if_hdr(hmonitor: HMONITOR) -> Result<Option<HdrGrab>, String> {
 /// Failures are logged here rather than returned, because no caller can
 /// act on them differently.
 pub fn rgba_monitor_at(x: i32, y: i32) -> Option<image::RgbaImage> {
+    let grab = scrgb_monitor_at(x, y)?;
+    let (w, h) = (grab.width, grab.height);
+    image::RgbaImage::from_raw(w, h, grab.to_rgba8())
+}
+
+/// Linear scRGB pixels for the HDR monitor containing `(x, y)`.
+///
+/// This is the preservation counterpart to [`rgba_monitor_at`]. It has
+/// the same fail-soft contract, but deliberately does not tone-map the
+/// grab. Callers that are producing an HDR-capable output can therefore
+/// carry the compositor's FP16 signal all the way to their encoder.
+pub fn scrgb_monitor_at(x: i32, y: i32) -> Option<HdrGrab> {
     if !enabled() {
         return None;
     }
     let hmonitor = monitor_at(x, y)?;
-    let grab = match capture_if_hdr(hmonitor) {
-        Ok(Some(grab)) => grab,
+    match capture_if_hdr(hmonitor) {
+        Ok(Some(grab)) => Some(grab),
         // Not an HDR display: overwhelmingly the common case, and not
         // worth a log line on every capture.
-        Ok(None) => return None,
+        Ok(None) => None,
         Err(e) => {
             tracing::debug!("HDR capture unavailable, using the ordinary path: {e}");
-            return None;
+            None
         }
-    };
-    let (w, h) = (grab.width, grab.height);
-    image::RgbaImage::from_raw(w, h, grab.to_rgba8())
+    }
+}
+
+/// Whether the monitor containing a desktop point is currently presenting
+/// in HDR. Kept separate from capture success so callers can distinguish an
+/// ordinary SDR fallback from a failed attempt to preserve active HDR.
+pub fn hdr_active_at(x: i32, y: i32) -> bool {
+    monitor_at(x, y)
+        .map(super::hdr_display::describe)
+        .is_some_and(|info| info.hdr_active)
 }
 
 /// Resolve the monitor under a screen point.

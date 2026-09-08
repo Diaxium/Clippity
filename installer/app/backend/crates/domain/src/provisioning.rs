@@ -195,7 +195,11 @@ mod tests {
                 target: r"C:\Program Files\Clippity\Clippity.exe".into(),
             },
         ];
-        assert!(AppProvisioning::from_manifest(&m).preferences.desktop_shortcut);
+        assert!(
+            AppProvisioning::from_manifest(&m)
+                .preferences
+                .desktop_shortcut
+        );
     }
 
     #[test]
@@ -207,7 +211,11 @@ mod tests {
             path: r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Clippity.lnk".into(),
             target: r"C:\Program Files\Clippity\Clippity.exe".into(),
         }];
-        assert!(!AppProvisioning::from_manifest(&m).preferences.desktop_shortcut);
+        assert!(
+            !AppProvisioning::from_manifest(&m)
+                .preferences
+                .desktop_shortcut
+        );
     }
 
     #[test]
@@ -233,7 +241,8 @@ mod tests {
     #[test]
     fn document_round_trips() {
         let doc = AppProvisioning::from_manifest(&manifest());
-        let back: AppProvisioning = serde_json::from_str(&serde_json::to_string(&doc).unwrap()).unwrap();
+        let back: AppProvisioning =
+            serde_json::from_str(&serde_json::to_string(&doc).unwrap()).unwrap();
         assert_eq!(doc, back);
     }
 }

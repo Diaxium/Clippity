@@ -155,6 +155,7 @@ describe("useCaptureWorkflow — fullscreen branch", () => {
         clipboard: true,
         cursor: false,
         enhance: false,
+        hdr: false,
       },
       delay: null,
       effect: null,
@@ -178,6 +179,7 @@ describe("useCaptureWorkflow — fullscreen branch", () => {
       clipboard: false,
       cursor: true,
       enhance: false,
+      hdr: false,
     });
   });
 
@@ -226,7 +228,11 @@ describe("useCaptureWorkflow — delay branch", () => {
 
   it("fires startCountdown(seconds) before the capture call", async () => {
     captureFullscreenMock.mockResolvedValueOnce({});
-    startCountdownMock.mockResolvedValueOnce(undefined);
+    startCountdownMock.mockImplementationOnce(() => {
+      expect(pendingFinishedHandler).not.toBeNull();
+      expect(pendingCancelledHandler).not.toBeNull();
+      return Promise.resolve();
+    });
 
     const { result } = renderHook(() => useCaptureWorkflow());
     const triggerPromise = result.current.trigger();
@@ -279,6 +285,8 @@ describe("useCaptureWorkflow — delay branch", () => {
     expect(emitErrorToastMock).toHaveBeenCalledWith(
       "countdown seconds above the supported maximum"
     );
+    expect(pendingFinishedHandler).toBeNull();
+    expect(pendingCancelledHandler).toBeNull();
     expect(captureFullscreenMock).not.toHaveBeenCalled();
   });
 });

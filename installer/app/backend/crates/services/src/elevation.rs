@@ -41,8 +41,8 @@ const UNINSTALL_HANDOFF_FILE: &str = "clippity-uninstall-handoff.json";
 /// because the two may resolve different `%TEMP%` locations.
 fn write_handoff_json<T: Serialize>(file: &str, value: &T, what: &str) -> InstallerResult<PathBuf> {
     let path = std::env::temp_dir().join(file);
-    let json =
-        serde_json::to_string(value).map_err(|e| other(format!("could not serialize {what}: {e}")))?;
+    let json = serde_json::to_string(value)
+        .map_err(|e| other(format!("could not serialize {what}: {e}")))?;
     fs::write(&path, json)?;
     tracing::info!(path = %path.display(), what, "wrote elevation handoff");
     Ok(path)

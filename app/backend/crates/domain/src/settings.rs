@@ -622,6 +622,10 @@ pub struct CaptureSettings {
     /// Ships off — enhancement is a judgement call about the pixels.
     #[serde(default)]
     pub enhance: bool,
+    /// Save HDR displays as 16-bit BT.2020/PQ PNG instead of the SDR
+    /// compatibility export. Off by default for existing workflows.
+    #[serde(default)]
+    pub hdr: bool,
     /// Default "Capture Delay" toggle — arm the pre-capture countdown.
     /// Ships off.
     #[serde(default)]
@@ -648,6 +652,7 @@ impl Default for CaptureSettings {
             clipboard: false,
             cursor: false,
             enhance: false,
+            hdr: false,
             delay: false,
             delay_seconds: default_delay_seconds(),
             scroll_direction: ScrollDirection::default(),
@@ -1173,6 +1178,10 @@ pub struct RecordingSettings {
     /// value either format refuses.
     #[serde(default = "default_max_height")]
     pub max_height: u32,
+    /// Preserve HDR desktop signal in MP4 using HEVC Main10. Off by
+    /// default because it requires a compatible hardware encoder.
+    #[serde(default)]
+    pub hdr: bool,
     /// Sources composited over the recording — a webcam, a logo
     /// (ADR 0033). The list a session *starts* from; a recording preset
     /// can carry its own instead.
@@ -1249,6 +1258,7 @@ impl Default for RecordingSettings {
             video_fps: default_video_fps(),
             gif_fps: default_gif_fps(),
             max_height: default_max_height(),
+            hdr: false,
             sources: Vec::new(),
             encoding: crate::recorder::RecorderEncoding::default(),
             cursor: false,

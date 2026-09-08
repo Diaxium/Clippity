@@ -185,7 +185,9 @@ fn is_protected_path(path: &str) -> bool {
         // Match the root itself or anything beneath it, never a sibling
         // that merely shares a prefix ("C:\Program Files Custom").
         normalized == *root
-            || normalized.strip_prefix(root).is_some_and(|rest| rest.starts_with('\\'))
+            || normalized
+                .strip_prefix(root)
+                .is_some_and(|rest| rest.starts_with('\\'))
     })
 }
 

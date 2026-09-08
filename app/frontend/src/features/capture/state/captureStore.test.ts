@@ -46,6 +46,20 @@ describe("useCaptureStore", () => {
     expect(useCaptureStore.getState().cursor).toBe(false);
   });
 
+  it("keeps HDR mutually exclusive with 8-bit cursor and enhance passes", () => {
+    useCaptureStore.getState().setOption("cursor", true);
+    useCaptureStore.getState().setOption("enhance", true);
+    useCaptureStore.getState().setOption("hdr", true);
+    expect(useCaptureStore.getState()).toMatchObject({
+      hdr: true,
+      cursor: false,
+      enhance: false,
+    });
+
+    useCaptureStore.getState().setOption("cursor", true);
+    expect(useCaptureStore.getState()).toMatchObject({ hdr: false, cursor: true });
+  });
+
   it("setDelaySeconds clamps to 1..60", () => {
     useCaptureStore.getState().setDelaySeconds(0);
     expect(useCaptureStore.getState().delaySeconds).toBe(1);
@@ -137,11 +151,21 @@ describe("buildRequest", () => {
         clipboard: false,
         cursor: false,
         enhance: false,
+        hdr: false,
       },
       delay: null,
       effect: null,
       share: null,
     });
+  });
+
+  it("does not send a stale HDR toggle to a masked custom mode", () => {
+    useCaptureStore.setState({
+      captureType: "custom",
+      customMode: "freehand",
+      hdr: true,
+    });
+    expect(buildRequest(useCaptureStore.getState()).toggles.hdr).toBe(false);
   });
 
   it("includes delay as an object when enabled", () => {

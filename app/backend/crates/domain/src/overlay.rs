@@ -122,6 +122,10 @@ pub struct OverlayToggles {
     /// gets.
     #[serde(default)]
     pub enhance: bool,
+    /// Preserve HDR signal when the selected pixels come from one HDR
+    /// output. Unsupported shapes fall back to the SDR export.
+    #[serde(default)]
+    pub hdr: bool,
 }
 
 /// Sent on `begin_region_capture`. The mode determines what the

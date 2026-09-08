@@ -127,6 +127,7 @@ export async function runPreset(preset: CapturePreset): Promise<void> {
           clipboard: request.toggles.clipboard,
           cursor: request.toggles.cursor,
           enhance: request.toggles.enhance,
+          hdr: request.toggles.hdr ?? false,
         });
         await beginRegionCapture(request.type, saveDir, preset.name);
         break;

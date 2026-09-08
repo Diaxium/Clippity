@@ -54,7 +54,11 @@ pub fn run(emit: &ProgressSink<'_>) -> InstallerResult<()> {
 
     for step in 0..total {
         pace();
-        emit(progress::snapshot(ProgressKind::Update, tasks.clone(), step + 1));
+        emit(progress::snapshot(
+            ProgressKind::Update,
+            tasks.clone(),
+            step + 1,
+        ));
     }
 
     tracing::info!("update complete");

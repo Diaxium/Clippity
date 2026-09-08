@@ -19,8 +19,8 @@ use installer_domain::journal::{
 use installer_domain::progress::{self, ProgressKind};
 use installer_domain::provisioning;
 use installer_domain::state::{
-    InstallationManifest, InstalledFile, RegistryHive, RegistryRecord, ShortcutRecord,
-    PRODUCT_ID, SCHEMA_VERSION,
+    InstallationManifest, InstalledFile, RegistryHive, RegistryRecord, ShortcutRecord, PRODUCT_ID,
+    SCHEMA_VERSION,
 };
 use installer_domain::wizard::ProductInfo;
 use installer_infra::error::{other, InstallerResult};
@@ -29,9 +29,7 @@ use installer_platform::entry::{UninstallEntry, RUN_SUBKEY, RUN_VALUE, UNINSTALL
 use installer_platform::windows_ops;
 
 use crate::payload::Payload;
-use crate::{
-    clock, journal_store, pace, provisioning_store, rollback, state_store, ProgressSink,
-};
+use crate::{clock, journal_store, pace, provisioning_store, rollback, state_store, ProgressSink};
 
 /// The wizard copy placed in the maintenance directory — the binary
 /// Windows runs for Uninstall / Modify / Repair. It embeds the payload, so
@@ -139,7 +137,11 @@ pub fn run(
                     let exe = payload.install_to(&destination)?;
                     let mut action = Action::planned(
                         0,
-                        if replaced { ActionKind::ReplaceFile } else { ActionKind::CreateFile },
+                        if replaced {
+                            ActionKind::ReplaceFile
+                        } else {
+                            ActionKind::CreateFile
+                        },
                         exe.to_string_lossy(),
                     );
                     if replaced {
@@ -154,7 +156,14 @@ pub fn run(
                         .clone()
                         .ok_or_else(|| other("internal: file step did not record the exe"))?;
                     apply_integrations(
-                        plan, product, &install_paths, payload, all_users, &exe, &clock, journal,
+                        plan,
+                        product,
+                        &install_paths,
+                        payload,
+                        all_users,
+                        &exe,
+                        &clock,
+                        journal,
                         &maintenance_dir,
                     )?;
                 }
@@ -243,7 +252,11 @@ fn apply_integrations(
     let maintenance_exe = maintenance_dir.join(MAINTENANCE_EXE);
     copy_self_to(&maintenance_exe)?;
     journal.record_applied(
-        Action::planned(0, ActionKind::PlaceMaintenanceExe, maintenance_exe.to_string_lossy()),
+        Action::planned(
+            0,
+            ActionKind::PlaceMaintenanceExe,
+            maintenance_exe.to_string_lossy(),
+        ),
         &clock.iso,
     );
     let _ = journal_store::write(maintenance_dir, journal);
@@ -301,7 +314,11 @@ fn apply_integrations(
     );
     windows_ops::write_uninstall_entry(&entry)?;
     journal.record_applied(
-        Action::planned(0, ActionKind::WriteRegistryKey, UNINSTALL_SUBKEY.to_string()),
+        Action::planned(
+            0,
+            ActionKind::WriteRegistryKey,
+            UNINSTALL_SUBKEY.to_string(),
+        ),
         &clock.iso,
     );
     let _ = journal_store::write(maintenance_dir, journal);

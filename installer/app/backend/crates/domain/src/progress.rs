@@ -110,7 +110,11 @@ pub fn checklist_for(kind: ProgressKind) -> Vec<ProgressTask> {
 /// one is in progress, and the rest are pending. `percent` is derived
 /// from the completed fraction. A convenience for services that advance
 /// one task at a time.
-pub fn snapshot(kind: ProgressKind, mut tasks: Vec<ProgressTask>, completed: usize) -> ProgressEvent {
+pub fn snapshot(
+    kind: ProgressKind,
+    mut tasks: Vec<ProgressTask>,
+    completed: usize,
+) -> ProgressEvent {
     let total = tasks.len();
     for (i, t) in tasks.iter_mut().enumerate() {
         t.state = if i < completed {

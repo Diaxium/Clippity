@@ -41,7 +41,7 @@ export const FEATURE_FLAGS: readonly FeatureFlagDef[] = [
     id: "capture.hdr",
     label: "HDR capture path",
     description:
-      "Grab HDR displays in scRGB and tone-map them. Off falls back to the ordinary 8-bit grab — the comparison to make when a shot off an HDR display looks wrong.",
+      "Grab HDR displays in scRGB for either preserved BT.2020/PQ output or the SDR tone-map export. Off falls back to the ordinary 8-bit grab.",
     defaultOn: true,
     consumer: "backend",
     restartRequired: false,

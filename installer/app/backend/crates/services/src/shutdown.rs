@@ -59,7 +59,11 @@ impl LockClearReport {
 /// and bound what counts as "ours". Enumeration failures degrade to an
 /// empty report and a warning — the operation then proceeds and relies on
 /// the locked-file reboot fallback, never a false success.
-pub fn clear_locks(targets: &[&Path], install_root: &str, maintenance_root: &str) -> LockClearReport {
+pub fn clear_locks(
+    targets: &[&Path],
+    install_root: &str,
+    maintenance_root: &str,
+) -> LockClearReport {
     let mut report = LockClearReport::default();
     if targets.is_empty() {
         return report;

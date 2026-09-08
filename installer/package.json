@@ -4,7 +4,7 @@
   "private": true,
   "description": "Clippity Setup — the install / modify / update / repair / uninstall wizard. Root workspace.",
   "license": "MIT",
-  "packageManager": "pnpm@11.13.0",
+  "packageManager": "pnpm@11.17.0",
   "engines": {
     "node": ">=18"
   },
@@ -23,6 +23,6 @@
     "cargo:fmt": "cargo fmt --manifest-path app/backend/Cargo.toml"
   },
   "devDependencies": {
-    "typescript": "~5.8.3"
+    "typescript": "~7.0.2"
   }
 }

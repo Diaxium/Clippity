@@ -89,7 +89,9 @@ impl RepairAssessment {
     /// Files that are missing (as opposed to corrupt) — the ones a restore
     /// re-creates from scratch.
     pub fn missing_files(&self) -> impl Iterator<Item = &FileIssue> {
-        self.issues.iter().filter(|i| i.health == FileHealth::Missing)
+        self.issues
+            .iter()
+            .filter(|i| i.health == FileHealth::Missing)
     }
 
     /// Whether the core application executable itself is broken — the one
@@ -116,21 +118,30 @@ mod tests {
     #[test]
     fn missing_immutable_file_is_missing() {
         let r = record(false, Some("abc"));
-        let p = FileProbe { present: false, actual_sha256: None };
+        let p = FileProbe {
+            present: false,
+            actual_sha256: None,
+        };
         assert_eq!(assess_file(&r, &p), FileHealth::Missing);
     }
 
     #[test]
     fn hash_mismatch_is_corrupt() {
         let r = record(false, Some("expected"));
-        let p = FileProbe { present: true, actual_sha256: Some("different".into()) };
+        let p = FileProbe {
+            present: true,
+            actual_sha256: Some("different".into()),
+        };
         assert_eq!(assess_file(&r, &p), FileHealth::Corrupt);
     }
 
     #[test]
     fn matching_hash_is_ok_case_insensitive() {
         let r = record(false, Some("ABCDEF"));
-        let p = FileProbe { present: true, actual_sha256: Some("abcdef".into()) };
+        let p = FileProbe {
+            present: true,
+            actual_sha256: Some("abcdef".into()),
+        };
         assert_eq!(assess_file(&r, &p), FileHealth::Ok);
     }
 
@@ -139,8 +150,14 @@ mod tests {
         // Missing and hash-mismatched, but mutable → still Ok, because the
         // app owns its runtime data and repair must not overwrite it.
         let r = record(true, Some("expected"));
-        let missing = FileProbe { present: false, actual_sha256: None };
-        let changed = FileProbe { present: true, actual_sha256: Some("changed".into()) };
+        let missing = FileProbe {
+            present: false,
+            actual_sha256: None,
+        };
+        let changed = FileProbe {
+            present: true,
+            actual_sha256: Some("changed".into()),
+        };
         assert_eq!(assess_file(&r, &missing), FileHealth::Ok);
         assert_eq!(assess_file(&r, &changed), FileHealth::Ok);
     }
@@ -148,7 +165,10 @@ mod tests {
     #[test]
     fn present_unhashed_immutable_is_ok() {
         let r = record(false, None);
-        let p = FileProbe { present: true, actual_sha256: None };
+        let p = FileProbe {
+            present: true,
+            actual_sha256: None,
+        };
         assert_eq!(assess_file(&r, &p), FileHealth::Ok);
     }
 
@@ -162,7 +182,8 @@ mod tests {
             component: "core".into(),
             health: FileHealth::Missing,
         });
-        a.missing_shortcuts.push(r"C:\Users\Sam\Desktop\Clippity.lnk".into());
+        a.missing_shortcuts
+            .push(r"C:\Users\Sam\Desktop\Clippity.lnk".into());
         a.registry_missing = true;
 
         assert!(a.needs_repair());

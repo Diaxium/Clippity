@@ -86,6 +86,10 @@ impl CountdownService {
         // reuse this same hide-and-stash without changes.
         window_service::hide_primary_windows(app, "countdown");
 
+        // Set the native topmost flag before showing so there is no visible
+        // frame in the normal z-order. Reassert it after `show`: on Windows,
+        // showing an already-created hidden window can otherwise leave it
+        // behind another topmost utility window in the topmost band.
         countdown.set_always_on_top(true).map_err(AppError::from)?;
         // Pure status overlay: never intercept pointer events so the
         // user can keep clicking the desktop / apps / taskbar behind
@@ -93,6 +97,7 @@ impl CountdownService {
         // can't go click-through is still preferable to no countdown.
         let _ = countdown.set_ignore_cursor_events(true);
         countdown.show().map_err(AppError::from)?;
+        countdown.set_always_on_top(true).map_err(AppError::from)?;
 
         // Register the global Escape accelerator so the unfocused,
         // click-through strip can still be cancelled from the keyboard.
@@ -119,6 +124,9 @@ impl CountdownService {
         unregister_escape(app);
         if let Some(countdown) = app.get_webview_window("countdown") {
             countdown.hide().map_err(AppError::from)?;
+            // Reset only after the window is hidden so the next start makes a
+            // real normal→topmost transition and rises to the front again.
+            let _ = countdown.set_always_on_top(false);
         }
         let previous = self
             .state
@@ -142,6 +150,7 @@ impl CountdownService {
         unregister_escape(app);
         if let Some(countdown) = app.get_webview_window("countdown") {
             countdown.hide().map_err(AppError::from)?;
+            let _ = countdown.set_always_on_top(false);
         }
         // Drop the stash without restoring — the next operation owns
         // the window pipeline. If the caller turns out to NOT run a

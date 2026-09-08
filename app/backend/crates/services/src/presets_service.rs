@@ -182,6 +182,7 @@ mod tests {
                     clipboard: true,
                     cursor: false,
                     enhance: false,
+                    hdr: false,
                 },
                 delay: None,
                 effect: None,

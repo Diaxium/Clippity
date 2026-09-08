@@ -356,8 +356,14 @@ mod tests {
 
     #[test]
     fn scope_aliases_resolve() {
-        assert_eq!(run(&["--install", "--scope", "user"]).scope, Some(InstallScope::CurrentUser));
-        assert_eq!(run(&["--install", "--scope", "all-users"]).scope, Some(InstallScope::AllUsers));
+        assert_eq!(
+            run(&["--install", "--scope", "user"]).scope,
+            Some(InstallScope::CurrentUser)
+        );
+        assert_eq!(
+            run(&["--install", "--scope", "all-users"]).scope,
+            Some(InstallScope::AllUsers)
+        );
     }
 
     #[test]
@@ -369,7 +375,10 @@ mod tests {
 
     #[test]
     fn unknown_flag_is_an_error() {
-        assert!(matches!(parse(&args(&["--frobnicate"])), ParsedCli::Error(_)));
+        assert!(matches!(
+            parse(&args(&["--frobnicate"])),
+            ParsedCli::Error(_)
+        ));
     }
 
     #[test]
@@ -394,8 +403,14 @@ mod tests {
 
     #[test]
     fn value_flag_missing_its_value_errors() {
-        assert!(matches!(parse(&args(&["--install", "--scope"])), ParsedCli::Error(_)));
-        assert!(matches!(parse(&args(&["--install-dir"])), ParsedCli::Error(_)));
+        assert!(matches!(
+            parse(&args(&["--install", "--scope"])),
+            ParsedCli::Error(_)
+        ));
+        assert!(matches!(
+            parse(&args(&["--install-dir"])),
+            ParsedCli::Error(_)
+        ));
     }
 
     #[test]
@@ -422,7 +437,12 @@ mod tests {
 
     #[test]
     fn uninstall_data_flags_parse() {
-        let c = run(&["--uninstall", "--silent", "--keep-user-data", "--remove-settings"]);
+        let c = run(&[
+            "--uninstall",
+            "--silent",
+            "--keep-user-data",
+            "--remove-settings",
+        ]);
         assert!(c.keep_user_data);
         assert!(c.remove_settings);
     }

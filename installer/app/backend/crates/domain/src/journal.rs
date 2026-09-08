@@ -403,7 +403,10 @@ mod tests {
     fn recorded_actions_get_sequential_ids_and_applied_status() {
         let mut j = journal();
         let a = j.record_applied(Action::planned(0, ActionKind::CreateFile, "a.exe"), "T1");
-        let b = j.record_applied(Action::planned(0, ActionKind::CreateShortcut, "a.lnk"), "T2");
+        let b = j.record_applied(
+            Action::planned(0, ActionKind::CreateShortcut, "a.lnk"),
+            "T2",
+        );
         assert_eq!((a, b), (0, 1));
         assert!(j.actions.iter().all(|x| x.status == ActionStatus::Applied));
     }
@@ -416,7 +419,11 @@ mod tests {
         j.record_applied(Action::planned(0, ActionKind::CreateFile, "third"), "T3");
         j.mark_reversed(1, "T4"); // reverse the middle one out of band
 
-        let order: Vec<&str> = j.pending_reversals().iter().map(|a| a.target.as_str()).collect();
+        let order: Vec<&str> = j
+            .pending_reversals()
+            .iter()
+            .map(|a| a.target.as_str())
+            .collect();
         assert_eq!(order, vec!["third", "first"]); // newest-first, middle skipped
     }
 
@@ -484,7 +491,8 @@ mod tests {
         j.to_version = Some("0.2.0".into());
         j.advance(Phase::Apply, "T1");
         j.record_applied(
-            Action::planned(0, ActionKind::ReplaceFile, "Clippity.exe").with_backup("Clippity.exe.old"),
+            Action::planned(0, ActionKind::ReplaceFile, "Clippity.exe")
+                .with_backup("Clippity.exe.old"),
             "T1",
         );
         let raw = serde_json::to_string(&j).unwrap();

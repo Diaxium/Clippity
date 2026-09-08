@@ -23,6 +23,8 @@ export interface CaptureToggles {
    *  unsharp mask) before encoding. Rust `domain::enhance`; mirrors
    *  `OverlayToggles.enhance`. */
   enhance: boolean;
+  /** Preserve HDR displays as 16-bit BT.2020/PQ PNG. */
+  hdr?: boolean;
 }
 
 export interface CaptureDelay {

@@ -36,6 +36,7 @@ pub mod countdown_service;
 pub mod diagnostics_service;
 pub mod editor_service;
 pub mod global_shortcut_service;
+mod hdr_image;
 pub mod last_region_store;
 pub mod library_index;
 pub mod library_service;

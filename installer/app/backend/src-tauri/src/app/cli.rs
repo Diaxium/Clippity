@@ -137,7 +137,14 @@ fn run_modify(cmd: &CliCommand, paths: &InstallerPaths) -> ExitCode {
 
     let reboot = AtomicBool::new(false);
     let sink = logging_sink(&reboot);
-    match install_service::run(ProgressKind::Modify, &plan, &product, paths, &payload, &sink) {
+    match install_service::run(
+        ProgressKind::Modify,
+        &plan,
+        &product,
+        paths,
+        &payload,
+        &sink,
+    ) {
         Ok(()) => success_code(reboot.load(Ordering::Relaxed)),
         Err(e) => map_error(&e),
     }

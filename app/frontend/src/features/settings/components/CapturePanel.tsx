@@ -55,7 +55,7 @@ export function CapturePanel({ value, onChange }: CapturePanelProps) {
           control={
             <ToggleSwitch
               checked={value.cursor}
-              onChange={(cursor) => onChange({ ...value, cursor })}
+              onChange={(cursor) => onChange({ ...value, cursor, hdr: cursor ? false : value.hdr })}
               label="Capture cursor"
             />
           }
@@ -66,8 +66,28 @@ export function CapturePanel({ value, onChange }: CapturePanelProps) {
           control={
             <ToggleSwitch
               checked={value.enhance}
-              onChange={(enhance) => onChange({ ...value, enhance })}
+              onChange={(enhance) =>
+                onChange({ ...value, enhance, hdr: enhance ? false : value.hdr })
+              }
               label="Smart enhance"
+            />
+          }
+        />
+        <Row
+          label="Preserve HDR"
+          description="Save HDR displays as 16-bit BT.2020/PQ PNG. Enabling this turns off cursor capture and Smart Enhance."
+          control={
+            <ToggleSwitch
+              checked={value.hdr ?? false}
+              onChange={(hdr) =>
+                onChange({
+                  ...value,
+                  hdr,
+                  cursor: hdr ? false : value.cursor,
+                  enhance: hdr ? false : value.enhance,
+                })
+              }
+              label="Preserve HDR"
             />
           }
         />

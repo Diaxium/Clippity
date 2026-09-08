@@ -22,7 +22,7 @@
 //!   developer — diagnostics wire shapes + the redaction rules an
 //!               exported bundle is run through
 //!   editor    — load/save data-URI envelope for the annotation editor
-//!   hdr       — scRGB → sRGB tone mapping for captures off an HDR display
+//!   hdr       — scRGB → SDR tone mapping and BT.2020/PQ HDR preservation
 //!   naming    — capture file-name template engine
 //!   provisioning — the installer's recorded choices + the feature
 //!                  availability they imply

@@ -44,11 +44,16 @@ export default defineConfig({
     target: "esnext",
     minify: "esbuild",
     sourcemap: true,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          motion: ["motion"],
-          react: ["react", "react-dom"],
+        codeSplitting: {
+          groups: [
+            { name: "motion", test: /node_modules[\\/]motion[\\/]/ },
+            {
+              name: "react",
+              test: /node_modules[\\/](?:react|react-dom)[\\/]/,
+            },
+          ],
         },
       },
     },

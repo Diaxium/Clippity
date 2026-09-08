@@ -15,7 +15,7 @@
       "cwd": "../../frontend",
       "script": "pnpm dev"
     },
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1421",
     "frontendDist": "../../frontend/dist"
   },
   "bundle": {
@@ -36,5 +36,5 @@
     }
   },
   "productName": "Clippity",
-  "version": "0.2.0"
+  "version": "0.3.0"
 }

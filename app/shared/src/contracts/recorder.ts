@@ -129,6 +129,8 @@ export interface RecorderRequest {
   /** Source window's HWND bits, for `window` targets. */
   windowId?: number | null;
   format: RecorderFormat;
+  /** Preserve HDR as BT.2020/PQ HEVC Main10. Ignored for GIF. */
+  hdr?: boolean;
   /** Omit for the format's default. Out-of-range values are clamped by
    *  the backend, not rejected. */
   fps?: number | null;

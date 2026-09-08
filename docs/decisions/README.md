@@ -49,3 +49,4 @@ memory, which captured each decision in full. Numbering continues from 0013.
 - 0032 — [Studio is a separate surface; it streams to play and re-encodes to trim](0032-studio-is-a-separate-surface-that-streams-and-re-encodes.md)
 - 0033 — [Diagnostics are a shipped surface; developer mode is a gate over it](0033-diagnostics-are-a-shipped-surface-developer-mode-is-a-gate.md)
 - 0034 — [Recorder sources composite over the captured frame, in place and rect-bounded](0034-recorder-sources-composite-over-the-captured-frame.md)
+- 0035 — [HDR preservation is an explicit output path](0035-hdr-preservation-is-an-explicit-output-path.md)

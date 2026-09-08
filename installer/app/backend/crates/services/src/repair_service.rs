@@ -142,12 +142,7 @@ pub fn run(
                     // re-enables a declined feature reads as perfectly
                     // healthy to the scan; repair is the thing that should
                     // put it back.
-                    restore_app_configuration(
-                        &manifest,
-                        &mut journal,
-                        &maintenance_dir,
-                        &clock,
-                    );
+                    restore_app_configuration(&manifest, &mut journal, &maintenance_dir, &clock);
                 }
                 "integrations" => {
                     restore_integrations(
@@ -165,7 +160,11 @@ pub fn run(
                 }
                 _ => pace(),
             }
-            emit(progress::snapshot(ProgressKind::Repair, tasks.clone(), step + 1));
+            emit(progress::snapshot(
+                ProgressKind::Repair,
+                tasks.clone(),
+                step + 1,
+            ));
         }
         Ok(())
     })();
@@ -225,7 +224,11 @@ fn restore_files(
         journal.record_applied(
             Action::planned(
                 0,
-                if existed { ActionKind::ReplaceFile } else { ActionKind::CreateFile },
+                if existed {
+                    ActionKind::ReplaceFile
+                } else {
+                    ActionKind::CreateFile
+                },
                 target,
             ),
             &clock.iso,
@@ -279,7 +282,11 @@ fn restore_app_configuration(
             journal.record_applied(
                 Action::planned(
                     0,
-                    if existed { ActionKind::ReplaceFile } else { ActionKind::CreateFile },
+                    if existed {
+                        ActionKind::ReplaceFile
+                    } else {
+                        ActionKind::CreateFile
+                    },
                     path.to_string_lossy(),
                 ),
                 &clock.iso,

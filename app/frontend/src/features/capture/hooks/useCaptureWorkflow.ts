@@ -84,6 +84,7 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
         clipboard: state.clipboard,
         cursor: state.cursor,
         enhance: state.enhance,
+        hdr: state.hdr,
       });
       // Mirror the scroll direction too, so the overlay's direction
       // control (Scrolling / Panoramic) starts from the user's pre-set
@@ -96,8 +97,16 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
       // deferred shot; cancel restores it, finish hands the window
       // pipeline off to the capture call below.
       if (state.delayEnabled && state.delaySeconds > 0) {
-        await startCountdown(state.delaySeconds);
-        const outcome = await waitForCountdownOutcome();
+        // Listen first so a fast finish/cancel cannot land between the start
+        // command and listener registration and strand this workflow.
+        const waiter = watchCountdownOutcome();
+        try {
+          await startCountdown(state.delaySeconds);
+        } catch (error) {
+          waiter.dispose();
+          throw error;
+        }
+        const outcome = await waiter.outcome;
         if (outcome === "cancelled") return null;
       }
 
@@ -178,16 +187,33 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
  * does — putting it in the client would invite copy-paste callers
  * that forget to unsubscribe.
  */
-function waitForCountdownOutcome(): Promise<"finished" | "cancelled"> {
-  return new Promise((resolve) => {
-    let unsubFinished: (() => void) | null = null;
-    let unsubCancelled: (() => void) | null = null;
-    const cleanup = (result: "finished" | "cancelled") => {
-      unsubFinished?.();
-      unsubCancelled?.();
-      resolve(result);
-    };
-    unsubFinished = onCountdownFinished(() => cleanup("finished"));
-    unsubCancelled = onCountdownCancelled(() => cleanup("cancelled"));
+function watchCountdownOutcome(): {
+  outcome: Promise<"finished" | "cancelled">;
+  dispose: () => void;
+} {
+  let active = true;
+  const unsubscribers: Array<() => void> = [];
+  let resolveOutcome!: (result: "finished" | "cancelled") => void;
+  const outcome = new Promise<"finished" | "cancelled">((resolve) => {
+    resolveOutcome = resolve;
   });
+
+  const dispose = () => {
+    if (!active) return;
+    active = false;
+    for (const unsubscribe of unsubscribers.splice(0)) unsubscribe();
+  };
+  const settle = (result: "finished" | "cancelled") => {
+    if (!active) return;
+    dispose();
+    resolveOutcome(result);
+  };
+  const track = (unsubscribe: () => void) => {
+    if (active) unsubscribers.push(unsubscribe);
+    else unsubscribe();
+  };
+
+  track(onCountdownFinished(() => settle("finished")));
+  track(onCountdownCancelled(() => settle("cancelled")));
+  return { outcome, dispose };
 }

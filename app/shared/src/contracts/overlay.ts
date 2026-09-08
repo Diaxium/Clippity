@@ -62,6 +62,8 @@ export interface OverlayToggles {
   /** Run the backend's Smart-enhance pass (auto-levels + a light
    *  unsharp mask) over the cropped pixels before they're encoded. */
   enhance: boolean;
+  /** Preserve HDR displays as 16-bit BT.2020/PQ PNG where possible. */
+  hdr?: boolean;
 }
 
 /** Sent on `begin_region_capture`. */

@@ -76,7 +76,11 @@ mod tests {
             Err(io::Error::new(io::ErrorKind::NotFound, "gone"))
         });
         assert!(out.is_err());
-        assert_eq!(attempts.get(), 1, "a non-transient error must not be retried");
+        assert_eq!(
+            attempts.get(),
+            1,
+            "a non-transient error must not be retried"
+        );
     }
 
     #[test]
@@ -87,6 +91,10 @@ mod tests {
             Err(io::Error::from_raw_os_error(32)) // sharing violation
         });
         assert!(out.is_err());
-        assert_eq!(attempts.get(), 5, "four backoffs then a final attempt = five tries");
+        assert_eq!(
+            attempts.get(),
+            5,
+            "four backoffs then a final attempt = five tries"
+        );
     }
 }

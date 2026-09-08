@@ -106,7 +106,7 @@ mod tests {
     use std::sync::atomic::{AtomicU32, Ordering};
 
     use installer_domain::journal::{
-        Action, ActionKind, JOURNAL_SCHEMA_VERSION, OperationJournal, OperationType, Phase,
+        Action, ActionKind, OperationJournal, OperationType, Phase, JOURNAL_SCHEMA_VERSION,
     };
 
     fn temp_dir(tag: &str) -> std::path::PathBuf {
@@ -136,13 +136,19 @@ mod tests {
         // A journal that died mid-Apply having created one file.
         let mut j = OperationJournal::begin("op", OperationType::Install, "pid", "T0");
         j.advance(Phase::Apply, "T0");
-        j.record_applied(Action::planned(0, ActionKind::CreateFile, created.to_string_lossy()), "T1");
+        j.record_applied(
+            Action::planned(0, ActionKind::CreateFile, created.to_string_lossy()),
+            "T1",
+        );
         journal_store::write(&dir, &j).unwrap();
 
         let outcome = resolve(pending(dir.clone(), j)).unwrap();
         assert_eq!(outcome, RecoveryOutcome::RolledBack { reversed: 1 });
         assert!(!created.exists(), "the partially-created file was reversed");
-        assert!(journal_store::read(&dir).unwrap().is_none(), "journal cleared");
+        assert!(
+            journal_store::read(&dir).unwrap().is_none(),
+            "journal cleared"
+        );
 
         let _ = fs::remove_dir_all(&dir);
     }

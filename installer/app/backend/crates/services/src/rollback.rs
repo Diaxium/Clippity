@@ -104,9 +104,7 @@ pub fn reverse_action(action: &Action) -> InstallerResult<()> {
         }
         // A registry value we wrote: restore the prior value, or delete ours
         // when there was none. (Whole-key creates use WriteRegistryKey.)
-        ActionKind::WriteRegistryValue | ActionKind::WriteRegistryKey => {
-            reverse_registry(action)
-        }
+        ActionKind::WriteRegistryValue | ActionKind::WriteRegistryKey => reverse_registry(action),
         // A shortcut we created.
         ActionKind::CreateShortcut => windows_ops::remove_shortcut_path(Path::new(&action.target)),
         // The maintenance/uninstaller copy — it may be the running exe, so
@@ -248,7 +246,10 @@ mod tests {
         fs::create_dir_all(&created).unwrap();
         fs::write(created.join("user.txt"), b"keep").unwrap();
         reverse_action(&action).unwrap();
-        assert!(created.exists(), "a dir with unknown files must survive rollback");
+        assert!(
+            created.exists(),
+            "a dir with unknown files must survive rollback"
+        );
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -260,11 +261,21 @@ mod tests {
         fs::write(&a, b"a").unwrap();
         fs::write(&b, b"b").unwrap();
 
-        let mut j =
-            OperationJournal::begin("op", installer_domain::journal::OperationType::Install, "pid", "T0");
+        let mut j = OperationJournal::begin(
+            "op",
+            installer_domain::journal::OperationType::Install,
+            "pid",
+            "T0",
+        );
         j.advance(installer_domain::journal::Phase::Apply, "T0");
-        j.record_applied(Action::planned(0, ActionKind::CreateFile, a.to_string_lossy()), "T1");
-        j.record_applied(Action::planned(0, ActionKind::CreateFile, b.to_string_lossy()), "T2");
+        j.record_applied(
+            Action::planned(0, ActionKind::CreateFile, a.to_string_lossy()),
+            "T1",
+        );
+        j.record_applied(
+            Action::planned(0, ActionKind::CreateFile, b.to_string_lossy()),
+            "T2",
+        );
 
         let reversed = roll_back(&dir, &mut j).unwrap();
         assert_eq!(reversed, 2);

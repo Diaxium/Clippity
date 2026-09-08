@@ -1,5 +1,7 @@
-//! HDR → SDR tone mapping. Pure math over pixel buffers; the capture
+//! HDR color conversion. Pure math over pixel buffers; the capture
 //! that produces the HDR pixels lives in `platform::windows::hdr_capture`.
+//! SDR exports use the tone map below, while preserved output converts
+//! to BT.2020/PQ.
 //!
 //! # Why a capture needs this at all
 //!
@@ -40,12 +42,12 @@
 //! highlight and a 10× one both quantise to 255 regardless — the
 //! roll-off stops doing anything before it stops costing anything.
 //!
-//! Given the choice, a screenshot tool wants the SDR range exact. Almost
-//! everything anyone captures — windows, text, UI — lives there, and a
-//! whole image being subtly wrong is far worse than the brightest few
-//! percent of a highlight being flat. Recovering that headroom means
-//! changing the output format, not the curve: an HDR-capable container
-//! (AVIF, JXR, HEVC HDR10) with more than 8 bits per channel to spend.
+//! Given the choice, an SDR screenshot wants its reference range exact.
+//! Almost everything anyone captures — windows, text, UI — lives there,
+//! and a whole image being subtly wrong is far worse than the brightest
+//! few percent of a highlight being flat. The opt-in preservation path
+//! below keeps that headroom by writing BT.2020/PQ with more than 8 bits
+//! per channel; this tone map remains the compatibility export.
 //!
 //! # What is deliberately *not* done
 //!
@@ -64,6 +66,27 @@ pub const SCRGB_REFERENCE_WHITE_NITS: f32 = 80.0;
 /// what Windows itself defaults an HDR desktop to, so a display that
 /// fails to report is overwhelmingly likely to be sitting here anyway.
 pub const DEFAULT_SDR_WHITE_NITS: f32 = 200.0;
+
+/// Absolute peak represented by the ST 2084 (PQ) transfer function.
+/// scRGB can mathematically exceed this, but HDR10 cannot, so values
+/// above it saturate at the container boundary rather than wrapping.
+pub const PQ_PEAK_NITS: f32 = 10_000.0;
+
+/// Static HDR information derived while packing a frame. Values are in
+/// nits; the PNG/video writers convert them to their wire units.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Hdr10Metadata {
+    pub max_cll: f32,
+    pub max_fall: f32,
+}
+
+/// One packed HDR10 RGB frame. Samples are big-endian because this is
+/// the byte order PNG requires for 16-bit channels.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Hdr10Rgb16 {
+    pub pixels: Vec<u8>,
+    pub metadata: Hdr10Metadata,
+}
 
 /// Scale factor taking scRGB values to SDR-relative ones, where `1.0`
 /// is the display's white.
@@ -92,6 +115,93 @@ pub fn linear_to_srgb(v: f32) -> f32 {
         v * 12.92
     } else {
         1.055 * v.powf(1.0 / 2.4) - 0.055
+    }
+}
+
+/// Linear-light sRGB/scRGB primaries to linear-light BT.2020.
+///
+/// scRGB and sRGB share primaries and D65 white. The matrix is the
+/// standard Bradford/D65 conversion, applied before PQ because transfer
+/// functions operate on the values *in* their destination primaries.
+pub fn linear_scrgb_to_bt2020(r: f32, g: f32, b: f32) -> [f32; 3] {
+    let finite = |v: f32| if v.is_finite() { v } else { 0.0 };
+    let (r, g, b) = (finite(r), finite(g), finite(b));
+    [
+        0.627_404 * r + 0.329_283 * g + 0.043_313 * b,
+        0.069_097 * r + 0.919_540 * g + 0.011_362 * b,
+        0.016_391 * r + 0.088_013 * g + 0.895_595 * b,
+    ]
+}
+
+/// Encode an absolute linear-light value with SMPTE ST 2084 (PQ).
+/// Input is in nits and output is the normalized code value `[0, 1]`.
+pub fn nits_to_pq(nits: f32) -> f32 {
+    const M1: f32 = 2610.0 / 16_384.0;
+    const M2: f32 = 2523.0 / 32.0;
+    const C1: f32 = 3424.0 / 4096.0;
+    const C2: f32 = 2413.0 / 128.0;
+    const C3: f32 = 2392.0 / 128.0;
+
+    let normalized = if nits.is_finite() {
+        nits.clamp(0.0, PQ_PEAK_NITS) / PQ_PEAK_NITS
+    } else {
+        0.0
+    };
+    let powered = normalized.powf(M1);
+    ((C1 + C2 * powered) / (1.0 + C3 * powered)).powf(M2)
+}
+
+/// Convert one linear scRGB pixel to full-range RGB BT.2020/PQ.
+pub fn scrgb_to_hdr10_pixel(r: f32, g: f32, b: f32) -> [u16; 3] {
+    let bt2020 = linear_scrgb_to_bt2020(r, g, b);
+    let encode = |linear: f32| {
+        let pq = nits_to_pq(linear * SCRGB_REFERENCE_WHITE_NITS);
+        (pq * u16::MAX as f32 + 0.5).clamp(0.0, u16::MAX as f32) as u16
+    };
+    [encode(bt2020[0]), encode(bt2020[1]), encode(bt2020[2])]
+}
+
+/// Pack a linear scRGB frame as 16-bit full-range RGB BT.2020/PQ and
+/// calculate the HDR10 content-light metadata from the same pixels.
+pub fn hdr10_rgb16_frame(pixels: &[f32], width: u32, height: u32) -> Hdr10Rgb16 {
+    let count = width as usize * height as usize;
+    let mut out = Vec::with_capacity(count * 6);
+    let mut peak = 0.0f32;
+    let mut sum = 0.0f64;
+
+    for px in pixels.chunks_exact(4).take(count) {
+        let rgb = linear_scrgb_to_bt2020(px[0], px[1], px[2]);
+        // BT.2020 luminance coefficients. Negative wide-gamut
+        // components are legal in scRGB but neither PQ nor HDR10 can
+        // represent them, so the container boundary clamps them.
+        let luminance =
+            (0.2627 * rgb[0].max(0.0) + 0.6780 * rgb[1].max(0.0) + 0.0593 * rgb[2].max(0.0))
+                * SCRGB_REFERENCE_WHITE_NITS;
+        let luminance = if luminance.is_finite() {
+            luminance.clamp(0.0, PQ_PEAK_NITS)
+        } else {
+            0.0
+        };
+        peak = peak.max(luminance);
+        sum += luminance as f64;
+
+        for sample in scrgb_to_hdr10_pixel(px[0], px[1], px[2]) {
+            out.extend_from_slice(&sample.to_be_bytes());
+        }
+    }
+    // Preserve the claimed geometry on a torn source, matching the SDR
+    // frame conversion's recovery contract.
+    out.resize(count * 6, 0);
+    Hdr10Rgb16 {
+        pixels: out,
+        metadata: Hdr10Metadata {
+            max_cll: peak,
+            max_fall: if count == 0 {
+                0.0
+            } else {
+                (sum / count as f64) as f32
+            },
+        },
     }
 }
 
@@ -313,5 +423,38 @@ mod tests {
         // A torn grab should cost the bottom rows, not the capture.
         let out = tone_map_frame(&[1.0, 1.0, 1.0, 1.0], 4, 4, 200.0);
         assert_eq!(out.len(), 4 * 4 * 4);
+    }
+
+    #[test]
+    fn pq_matches_standard_anchor_values() {
+        assert!(nits_to_pq(0.0) < 1e-5);
+        assert!((nits_to_pq(100.0) - 0.508_078).abs() < 1e-5);
+        assert!((nits_to_pq(1_000.0) - 0.751_827).abs() < 1e-5);
+        assert!((nits_to_pq(10_000.0) - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn neutral_scrgb_stays_neutral_in_bt2020() {
+        let rgb = linear_scrgb_to_bt2020(2.5, 2.5, 2.5);
+        assert!((rgb[0] - 2.5).abs() < 1e-5);
+        assert!((rgb[1] - 2.5).abs() < 1e-5);
+        assert!((rgb[2] - 2.5).abs() < 1e-5);
+        let encoded = scrgb_to_hdr10_pixel(2.5, 2.5, 2.5);
+        assert!(encoded[0].abs_diff(encoded[1]) <= 1);
+        assert!(encoded[1].abs_diff(encoded[2]) <= 1);
+    }
+
+    #[test]
+    fn hdr10_frame_keeps_highlights_and_reports_light_levels() {
+        // At a 200-nit SDR white, scRGB 2.5 is ordinary desktop white;
+        // scRGB 12.5 is a 1,000-nit highlight. They must remain distinct.
+        let pixels = [2.5, 2.5, 2.5, 1.0, 12.5, 12.5, 12.5, 1.0];
+        let frame = hdr10_rgb16_frame(&pixels, 2, 1);
+        assert_eq!(frame.pixels.len(), 12);
+        let white = u16::from_be_bytes([frame.pixels[0], frame.pixels[1]]);
+        let highlight = u16::from_be_bytes([frame.pixels[6], frame.pixels[7]]);
+        assert!(highlight > white);
+        assert!((frame.metadata.max_cll - 1_000.0).abs() < 0.1);
+        assert!((frame.metadata.max_fall - 600.0).abs() < 0.1);
     }
 }

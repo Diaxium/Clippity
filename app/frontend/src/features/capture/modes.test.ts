@@ -89,7 +89,8 @@ describe("CUSTOM_MODES_*", () => {
 });
 
 describe("visibleOptionKeys", () => {
-  const ALL = new Set(["preview", "clipboard", "cursor", "enhance", "delay"]);
+  const SDR_ALL = new Set(["preview", "clipboard", "cursor", "enhance", "delay"]);
+  const ALL = new Set(["preview", "clipboard", "cursor", "enhance", "hdr", "delay"]);
 
   it("returns every option for non-custom types", () => {
     expect(visibleOptionKeys("region", null)).toEqual(ALL);
@@ -137,10 +138,10 @@ describe("visibleOptionKeys", () => {
     expect(visibleOptionKeys("custom", "clipboard").has("enhance")).toBe(false);
   });
 
-  it("falls back to every option for unrecognized custom modes", () => {
-    expect(visibleOptionKeys("custom", null)).toEqual(ALL);
+  it("only exposes HDR for the unmodified rectangular custom mode", () => {
+    expect(visibleOptionKeys("custom", null)).toEqual(SDR_ALL);
     expect(visibleOptionKeys("custom", "object")).toEqual(ALL);
-    expect(visibleOptionKeys("custom", "freehand")).toEqual(ALL);
+    expect(visibleOptionKeys("custom", "freehand")).toEqual(SDR_ALL);
   });
 });
 
@@ -151,6 +152,7 @@ describe("DEFAULT_TOGGLES", () => {
       clipboard: false,
       cursor: false,
       enhance: false,
+      hdr: false,
       delay: false,
     });
   });

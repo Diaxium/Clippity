@@ -58,7 +58,11 @@ pub fn write_uninstall_entry(entry: &UninstallEntry) -> InstallerResult<()> {
 /// Delete the Add/Remove Programs entry during uninstall. Removing the
 /// whole subkey is correct: every value under it is ours.
 pub fn remove_uninstall_entry(hive: RegistryHive) -> InstallerResult<()> {
-    tracing::info!(?hive, subkey = UNINSTALL_SUBKEY, "removing Add/Remove Programs entry");
+    tracing::info!(
+        ?hive,
+        subkey = UNINSTALL_SUBKEY,
+        "removing Add/Remove Programs entry"
+    );
     regutil::delete_tree(hive, UNINSTALL_SUBKEY)
 }
 
@@ -81,12 +85,9 @@ pub fn set_start_at_login(target_exe: &str, enabled: bool) -> InstallerResult<()
 /// is checked first so an all-users install is preferred over a stray
 /// per-user one when both somehow exist.
 pub fn uninstall_hive_present() -> Option<RegistryHive> {
-    for hive in [RegistryHive::LocalMachine, RegistryHive::CurrentUser] {
-        if regutil::key_exists(hive, UNINSTALL_SUBKEY) {
-            return Some(hive);
-        }
-    }
-    None
+    [RegistryHive::LocalMachine, RegistryHive::CurrentUser]
+        .into_iter()
+        .find(|&hive| regutil::key_exists(hive, UNINSTALL_SUBKEY))
 }
 
 /// Whether the entry under `hive` carries our ownership marker.

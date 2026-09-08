@@ -19,7 +19,8 @@
 use std::io::Cursor;
 use std::time::Duration;
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
 
 use clippity_bench::{library_corpus, scroll_corpus, synthetic_frame};
 use clippity_domain::scroll;

@@ -76,7 +76,8 @@ mod tests {
     #[test]
     fn write_then_read_round_trips() {
         let dir = temp_dir("rt");
-        let mut j = OperationJournal::begin("op-1", OperationType::Repair, "com.clippity.app", "T0");
+        let mut j =
+            OperationJournal::begin("op-1", OperationType::Repair, "com.clippity.app", "T0");
         j.advance(Phase::Apply, "T1");
         write(&dir, &j).unwrap();
 

@@ -122,12 +122,17 @@ export function useTrayPanel() {
   // shot). When off, proceed immediately. Mirrors `useCaptureWorkflow`.
   const runTimedGate = useCallback(async (): Promise<boolean> => {
     if (!timedEnabled || timedSeconds <= 0) return true;
+    // Arm the outcome listeners before asking the backend to start. The
+    // countdown can finish/cancel independently of this hidden tray webview;
+    // subscribing afterwards can miss the event and wait forever.
+    const waiter = watchCountdownOutcome();
     try {
       await startCountdown(timedSeconds);
     } catch {
+      waiter.dispose();
       return false; // HUD never showed — don't wait on an event that won't fire.
     }
-    return (await waitForCountdownOutcome()) === "finished";
+    return (await waiter.outcome) === "finished";
   }, [timedEnabled, timedSeconds]);
 
   const dismiss = useCallback(() => {
@@ -280,16 +285,34 @@ export function useTrayPanel() {
  * forget to clean up. The tray's delay gate and the capture window now
  * share one timing model.
  */
-function waitForCountdownOutcome(): Promise<"finished" | "cancelled"> {
-  return new Promise((resolve) => {
-    let unsubFinished: (() => void) | null = null;
-    let unsubCancelled: (() => void) | null = null;
-    const cleanup = (result: "finished" | "cancelled") => {
-      unsubFinished?.();
-      unsubCancelled?.();
-      resolve(result);
-    };
-    unsubFinished = onCountdownFinished(() => cleanup("finished"));
-    unsubCancelled = onCountdownCancelled(() => cleanup("cancelled"));
+function watchCountdownOutcome(): {
+  outcome: Promise<"finished" | "cancelled">;
+  dispose: () => void;
+} {
+  let active = true;
+  const unsubscribers: Array<() => void> = [];
+  let resolveOutcome!: (result: "finished" | "cancelled") => void;
+  const outcome = new Promise<"finished" | "cancelled">((resolve) => {
+    resolveOutcome = resolve;
   });
+
+  const dispose = () => {
+    if (!active) return;
+    active = false;
+    for (const unsubscribe of unsubscribers.splice(0)) unsubscribe();
+  };
+  const settle = (result: "finished" | "cancelled") => {
+    if (!active) return;
+    dispose();
+    resolveOutcome(result);
+  };
+  const track = (unsubscribe: () => void) => {
+    // A mocked listener can settle synchronously while it is registered.
+    if (active) unsubscribers.push(unsubscribe);
+    else unsubscribe();
+  };
+
+  track(onCountdownFinished(() => settle("finished")));
+  track(onCountdownCancelled(() => settle("cancelled")));
+  return { outcome, dispose };
 }

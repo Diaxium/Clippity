@@ -62,7 +62,11 @@ impl InstallerPaths {
     /// can delete the install dir freely), or
     /// `%LOCALAPPDATA%\Clippity\maintenance` for a per-user install.
     pub fn maintenance_dir(&self, all_users: bool) -> PathBuf {
-        let root = if all_users { &self.program_data } else { &self.local_data };
+        let root = if all_users {
+            &self.program_data
+        } else {
+            &self.local_data
+        };
         root.join(MAINTENANCE_DIR_NAME)
     }
 }

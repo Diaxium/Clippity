@@ -45,6 +45,9 @@ pub struct SinkFrame<'a> {
     pub width: u32,
     pub height: u32,
     pub order: PixelOrder,
+    /// `true` means `pixels` is packed little-endian RGBA binary16
+    /// linear scRGB (8 bytes/pixel); `order` is then immaterial.
+    pub hdr: bool,
 }
 
 impl<'a> SinkFrame<'a> {
@@ -57,6 +60,7 @@ impl<'a> SinkFrame<'a> {
             width: image.width(),
             height: image.height(),
             order: PixelOrder::Rgba,
+            hdr: false,
         }
     }
 
@@ -70,7 +74,8 @@ impl<'a> SinkFrame<'a> {
     /// a capture and a negotiated size disagreed, and reading past the
     /// end would be the way that surfaces.
     pub fn is_well_formed(&self) -> bool {
-        self.pixels.len() == self.width as usize * self.height as usize * 4
+        let bytes_per_pixel = if self.hdr { 8 } else { 4 };
+        self.pixels.len() == self.width as usize * self.height as usize * bytes_per_pixel
     }
 
     /// Materialise as an `RgbaImage`, swapping channels if needed.
@@ -82,6 +87,32 @@ impl<'a> SinkFrame<'a> {
     /// it would come out with holes in the picture.
     pub fn to_rgba_image(&self) -> Option<RgbaImage> {
         if !self.is_well_formed() {
+            return None;
+        }
+        if self.hdr {
+            #[cfg(target_os = "windows")]
+            {
+                let floats: Vec<f32> = self
+                    .pixels
+                    .chunks_exact(2)
+                    .map(|v| {
+                        clippity_platform::windows::hdr_capture::f16_to_f32(u16::from_le_bytes([
+                            v[0], v[1],
+                        ]))
+                    })
+                    .collect();
+                return RgbaImage::from_raw(
+                    self.width,
+                    self.height,
+                    clippity_domain::hdr::tone_map_frame(
+                        &floats,
+                        self.width,
+                        self.height,
+                        clippity_domain::hdr::DEFAULT_SDR_WHITE_NITS,
+                    ),
+                );
+            }
+            #[cfg(not(target_os = "windows"))]
             return None;
         }
         let mut pixels = self.pixels.to_vec();
@@ -143,6 +174,8 @@ pub struct SinkConfig {
     pub width: u32,
     pub height: u32,
     pub fps: u32,
+    /// Encode BT.2020/PQ HEVC Main10 instead of SDR H.264.
+    pub hdr: bool,
     /// Cap on the encoded frame's height, or
     /// `recorder::RESOLUTION_SOURCE` for "encode what was captured".
     ///
@@ -169,6 +202,7 @@ impl SinkConfig {
             width: request.region.width,
             height: request.region.height,
             fps: request.fps,
+            hdr: request.hdr,
             max_height: request.max_height,
             encoding: request.encoding,
             with_audio: request.audio.any(),
@@ -190,6 +224,7 @@ impl SinkConfig {
             width: trim.width,
             height: trim.height,
             fps: trim.fps,
+            hdr: false,
             max_height: recorder::RESOLUTION_SOURCE,
             encoding: recorder::RecorderEncoding::default(),
             with_audio: trim.with_audio,
@@ -250,6 +285,7 @@ mod tests {
             width: 1,
             height: 1,
             order: PixelOrder::Bgra,
+            hdr: false,
         };
         let image = frame.to_rgba_image().expect("materialises");
         assert_eq!(image.get_pixel(0, 0).0, [255, 0, 0, 255]);
@@ -263,6 +299,7 @@ mod tests {
             width: 1,
             height: 1,
             order: PixelOrder::Rgba,
+            hdr: false,
         };
         let image = frame.to_rgba_image().expect("materialises");
         assert_eq!(image.get_pixel(0, 0).0, [255, 0, 0, 255]);
@@ -278,6 +315,7 @@ mod tests {
             width: 1,
             height: 1,
             order: PixelOrder::Bgra,
+            hdr: false,
         };
         let image = frame.to_rgba_image().expect("materialises");
         assert_eq!(image.get_pixel(0, 0).0[3], 255);
@@ -291,6 +329,7 @@ mod tests {
             width: 2,
             height: 1,
             order: PixelOrder::Rgba,
+            hdr: false,
         };
         assert!(!frame.is_well_formed());
         assert!(frame.to_rgba_image().is_none());

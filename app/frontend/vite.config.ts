@@ -1,12 +1,12 @@
-import { defineConfig } from "vite";
+import { defineConfig, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
 
 // Tauri's dev server hits this port (matches tauri.conf.json devUrl).
-const TAURI_DEV_PORT = 1420;
+const TAURI_DEV_PORT = 1421;
 
-export default defineConfig({
+export const appViteConfig: UserConfig = {
   plugins: [react(), tailwindcss()],
 
   resolve: {
@@ -45,13 +45,20 @@ export default defineConfig({
     target: "esnext",
     minify: "esbuild",
     sourcemap: true,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: {
-          motion: ["motion"],
-          react: ["react", "react-dom"],
+        codeSplitting: {
+          groups: [
+            { name: "motion", test: /node_modules[\\/]motion[\\/]/ },
+            {
+              name: "react",
+              test: /node_modules[\\/](?:react|react-dom)[\\/]/,
+            },
+          ],
         },
       },
     },
   },
-});
+};
+
+export default defineConfig(appViteConfig);

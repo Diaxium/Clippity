@@ -14,8 +14,7 @@ use installer_infra::paths::InstallerPaths;
 /// The uninstall key's subpath under the chosen root hive. The product
 /// name is the subkey — stable, and distinct from an MSI ProductCode GUID
 /// so the two never collide.
-pub const UNINSTALL_SUBKEY: &str =
-    r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Clippity";
+pub const UNINSTALL_SUBKEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Clippity";
 
 /// The `Run` key that drives start-at-login for the current user. Always
 /// per-user: start-at-login is a user preference, never machine policy.

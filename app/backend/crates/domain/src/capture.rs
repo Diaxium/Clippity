@@ -49,6 +49,10 @@ pub struct CaptureToggles {
     /// default so an older payload still deserializes.
     #[serde(default)]
     pub enhance: bool,
+    /// Preserve an HDR desktop as BT.2020/PQ 16-bit PNG instead of
+    /// tone-mapping it to the ordinary SDR PNG path.
+    #[serde(default)]
+    pub hdr: bool,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -158,6 +162,7 @@ mod tests {
                 clipboard: false,
                 cursor: false,
                 enhance: false,
+                hdr: false,
             },
             delay: None,
             effect: None,

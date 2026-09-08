@@ -226,6 +226,30 @@ export function RecordingPanel({ value, onChange }: RecordingPanelProps) {
           }
         />
         <Row
+          label="Preserve HDR"
+          description="Record HDR displays as 10-bit BT.2020/PQ HEVC. Requires a Main10 hardware encoder and no webcam/image overlays; turn off for H.264 SDR compatibility."
+          control={
+            <ToggleSwitch
+              checked={value.hdr ?? false}
+              disabled={!(value.hdr ?? false) && value.sources.length > 0}
+              onChange={(hdr) =>
+                onChange({
+                  ...value,
+                  hdr,
+                  cursor: hdr ? false : value.cursor,
+                  encoding: {
+                    ...encoding,
+                    preferHardware: hdr
+                      ? true
+                      : encoding.preferHardware,
+                  },
+                })
+              }
+              label="Preserve HDR"
+            />
+          }
+        />
+        <Row
           label="Video frame rate"
           description="Frames per second for video recordings. Higher is smoother and larger."
           control={
@@ -257,7 +281,13 @@ export function RecordingPanel({ value, onChange }: RecordingPanelProps) {
           control={
             <ToggleSwitch
               checked={value.cursor}
-              onChange={(cursor) => onChange({ ...value, cursor })}
+              onChange={(cursor) =>
+                onChange({
+                  ...value,
+                  cursor,
+                  hdr: cursor ? false : value.hdr,
+                })
+              }
               label="Show cursor"
             />
           }
@@ -288,7 +318,16 @@ export function RecordingPanel({ value, onChange }: RecordingPanelProps) {
 
       <SourcesCard
         value={value.sources}
-        onChange={(sources) => onChange({ ...value, sources })}
+        onChange={(sources) =>
+          onChange({
+            ...value,
+            sources,
+            // Source composition is still RGBA8. If a source is added
+            // after HDR was enabled, prefer the user's newest action and
+            // return recording to the compatible SDR path.
+            hdr: sources.length > 0 ? false : value.hdr,
+          })
+        }
       />
 
       <SectionCard title="Advanced encoding">
@@ -358,7 +397,13 @@ export function RecordingPanel({ value, onChange }: RecordingPanelProps) {
           control={
             <ToggleSwitch
               checked={encoding.preferHardware ?? true}
-              onChange={(preferHardware) => patchEncoding({ preferHardware })}
+              onChange={(preferHardware) =>
+                onChange({
+                  ...value,
+                  hdr: preferHardware ? value.hdr : false,
+                  encoding: { ...encoding, preferHardware },
+                })
+              }
               label="Use the GPU's encoder"
             />
           }

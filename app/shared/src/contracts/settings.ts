@@ -177,6 +177,8 @@ export interface CaptureSettings {
   clipboard: boolean;
   cursor: boolean;
   enhance: boolean;
+  /** Preserve HDR displays as 16-bit BT.2020/PQ PNG. */
+  hdr?: boolean;
   delay: boolean;
   delaySeconds: number;
   scrollDirection: ScrollDirection;
@@ -234,6 +236,8 @@ export interface RecordingSettings {
   videoFps: number;
   gifFps: number;
   maxHeight: number;
+  /** Preserve HDR in MP4 via BT.2020/PQ HEVC Main10. */
+  hdr?: boolean;
   encoding: RecorderEncoding;
   sources: Source[];
   cursor: boolean;

@@ -578,6 +578,10 @@ pub struct RecorderRequest {
     #[serde(default)]
     pub window_id: Option<u64>,
     pub format: RecorderFormat,
+    /// Preserve an HDR desktop as BT.2020/PQ HEVC Main10. Ignored for
+    /// GIF, whose palette cannot represent HDR.
+    #[serde(default)]
+    pub hdr: bool,
     /// Requested frame rate. `None` = the format's default; out-of-range
     /// values are clamped rather than rejected (see [`clamp_fps`]).
     #[serde(default)]
@@ -627,6 +631,7 @@ pub struct ValidatedRecorderRequest {
     pub region: Region,
     pub window_id: Option<u64>,
     pub format: RecorderFormat,
+    pub hdr: bool,
     pub fps: u32,
     /// Clamped output-height cap, or [`RESOLUTION_SOURCE`]. Resolve it
     /// against the region with [`ValidatedRecorderRequest::output_size`]
@@ -909,6 +914,18 @@ pub fn validate(
         AudioSelection::default()
     };
 
+    let hdr = request.hdr && request.format == RecorderFormat::Mp4;
+    if hdr && !request.sources.is_empty() {
+        return Err("HDR recording does not yet support composited sources");
+    }
+    if hdr && toggles.cursor {
+        return Err("HDR recording does not yet support cursor compositing");
+    }
+    let encoding = request.encoding.clamped();
+    if hdr && !encoding.prefer_hardware {
+        return Err("HDR recording requires hardware encoding");
+    }
+
     Ok(ValidatedRecorderRequest {
         target: request.target,
         region: Region {
@@ -919,10 +936,11 @@ pub fn validate(
         },
         window_id: request.window_id,
         format: request.format,
+        hdr,
         fps: clamp_fps(request.fps, request.format),
         max_height: clamp_max_height(request.max_height.unwrap_or(RESOLUTION_SOURCE)),
         audio,
-        encoding: request.encoding.clamped(),
+        encoding,
         sources: crate::composition::clamp_sources(request.sources),
         toggles,
         output_dir: request.output_dir,
@@ -1242,6 +1260,7 @@ mod tests {
             region: Some(region(0, 0, 640, 480)),
             window_id: None,
             format,
+            hdr: false,
             fps: None,
             max_height: None,
             audio: AudioSelection::default(),
@@ -1529,6 +1548,52 @@ mod tests {
         let v = validate(req, 1920, 1080, None).unwrap();
         assert_eq!(v.region, region(10, 20, 640, 480));
         assert_eq!(v.fps, MP4_FPS_MAX);
+    }
+
+    #[test]
+    fn validate_preserves_hdr_for_mp4_but_disables_it_for_gif() {
+        let mut mp4 = request(RecorderTarget::Region, RecorderFormat::Mp4);
+        mp4.hdr = true;
+        assert!(validate(mp4, 1920, 1080, None).unwrap().hdr);
+
+        let mut gif = request(RecorderTarget::Region, RecorderFormat::Gif);
+        gif.hdr = true;
+        assert!(!validate(gif, 1920, 1080, None).unwrap().hdr);
+    }
+
+    #[test]
+    fn validate_rejects_sources_that_cannot_be_composited_in_hdr() {
+        let mut req = request(RecorderTarget::Region, RecorderFormat::Mp4);
+        req.hdr = true;
+        req.sources.push(
+            serde_json::from_str(
+                r#"{"kind":"webcam","deviceId":null,"rect":{"x":0.7,"y":0.7,"w":0.25,"h":0.25}}"#,
+            )
+            .unwrap(),
+        );
+        assert_eq!(
+            validate(req, 1920, 1080, None).unwrap_err(),
+            "HDR recording does not yet support composited sources"
+        );
+    }
+
+    #[test]
+    fn validate_rejects_sdr_only_video_transforms_in_hdr() {
+        let mut cursor = request(RecorderTarget::Region, RecorderFormat::Mp4);
+        cursor.hdr = true;
+        cursor.toggles.cursor = true;
+        assert_eq!(
+            validate(cursor, 1920, 1080, None).unwrap_err(),
+            "HDR recording does not yet support cursor compositing"
+        );
+
+        let mut software = request(RecorderTarget::Region, RecorderFormat::Mp4);
+        software.hdr = true;
+        software.encoding.prefer_hardware = false;
+        assert_eq!(
+            validate(software, 1920, 1080, None).unwrap_err(),
+            "HDR recording requires hardware encoding"
+        );
     }
 
     #[test]

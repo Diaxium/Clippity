@@ -111,7 +111,10 @@ mod tests {
             install_date: "2026-07-25T10:00:00Z".into(),
             installed_components: vec!["core".into(), "ocr".into()],
             files: vec![InstalledFile {
-                path: install_dir.join("Clippity.exe").to_string_lossy().to_string(),
+                path: install_dir
+                    .join("Clippity.exe")
+                    .to_string_lossy()
+                    .to_string(),
                 sha256: None,
                 bytes: 1,
                 component: "core".into(),

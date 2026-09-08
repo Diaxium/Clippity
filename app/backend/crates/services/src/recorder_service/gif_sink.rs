@@ -145,6 +145,7 @@ mod tests {
             max_height: recorder::RESOLUTION_SOURCE,
             encoding: recorder::RecorderEncoding::default(),
             with_audio: false,
+            hdr: false,
         }
     }
 

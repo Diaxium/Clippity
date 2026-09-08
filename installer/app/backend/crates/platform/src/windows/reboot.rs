@@ -23,11 +23,17 @@ pub fn schedule_delete_on_reboot(path: &Path) -> InstallerResult<()> {
     let existing = HSTRING::from(path.as_os_str());
     // SAFETY: `existing` outlives the call; a null new-name is the
     // documented delete-on-reboot form.
-    unsafe { MoveFileExW(PCWSTR(existing.as_ptr()), PCWSTR::null(), MOVEFILE_DELAY_UNTIL_REBOOT) }
-        .map_err(|e| {
-            other(format!(
-                "MoveFileExW(delay-until-reboot) for {} failed: {e}",
-                path.display()
-            ))
-        })
+    unsafe {
+        MoveFileExW(
+            PCWSTR(existing.as_ptr()),
+            PCWSTR::null(),
+            MOVEFILE_DELAY_UNTIL_REBOOT,
+        )
+    }
+    .map_err(|e| {
+        other(format!(
+            "MoveFileExW(delay-until-reboot) for {} failed: {e}",
+            path.display()
+        ))
+    })
 }

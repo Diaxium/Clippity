@@ -69,6 +69,7 @@ export function buildRecorderRequest(
   return {
     target,
     format,
+    hdr: !gif && (settings.hdr ?? false),
     region,
     // The two rates are stored separately because their legal ranges
     // differ; carrying one across a format switch would land outside

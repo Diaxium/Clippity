@@ -29,17 +29,22 @@ use windows::core::{Interface, PCWSTR};
 use windows::Win32::Foundation::RPC_E_CHANGED_MODE;
 use windows::Win32::Media::MediaFoundation::{
     eAVEncCommonRateControlMode_CBR, eAVEncCommonRateControlMode_UnconstrainedVBR,
-    eAVEncH264VProfile_Main, CODECAPI_AVEncCommonRateControlMode, ICodecAPI, IMFAttributes,
-    IMFMediaType, IMFSinkWriter, MFAudioFormat_AAC, MFAudioFormat_PCM, MFCreateAttributes,
-    MFCreateMediaType, MFCreateMemoryBuffer, MFCreateSample, MFCreateSinkWriterFromURL,
-    MFMediaType_Audio, MFMediaType_Video, MFStartup, MFTranscodeContainerType_FMPEG4,
-    MFVideoFormat_H264, MFVideoFormat_NV12, MFVideoInterlace_Progressive, MFSTARTUP_FULL,
+    eAVEncH264VProfile_Main, eAVEncH265VProfile_Main_420_10, CODECAPI_AVEncCommonRateControlMode,
+    ICodecAPI, IMFAttributes, IMFMediaType, IMFSinkWriter, MFAudioFormat_AAC, MFAudioFormat_PCM,
+    MFCreateAttributes, MFCreateMediaType, MFCreateMemoryBuffer, MFCreateSample,
+    MFCreateSinkWriterFromURL, MFMediaType_Audio, MFMediaType_Video, MFNominalRange_16_235,
+    MFStartup, MFTranscodeContainerType_FMPEG4, MFVideoFormat_H264, MFVideoFormat_HEVC,
+    MFVideoFormat_NV12, MFVideoFormat_P010, MFVideoInterlace_Progressive, MFVideoPrimaries_BT2020,
+    MFVideoTransFunc_2084, MFVideoTransferMatrix_BT2020_10, MFSTARTUP_FULL,
     MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, MF_MT_AAC_PAYLOAD_TYPE,
     MF_MT_ALL_SAMPLES_INDEPENDENT, MF_MT_AUDIO_AVG_BYTES_PER_SECOND, MF_MT_AUDIO_BITS_PER_SAMPLE,
     MF_MT_AUDIO_BLOCK_ALIGNMENT, MF_MT_AUDIO_NUM_CHANNELS, MF_MT_AUDIO_SAMPLES_PER_SECOND,
     MF_MT_AVG_BITRATE, MF_MT_FRAME_RATE, MF_MT_FRAME_SIZE, MF_MT_INTERLACE_MODE, MF_MT_MAJOR_TYPE,
-    MF_MT_MAX_KEYFRAME_SPACING, MF_MT_MPEG2_LEVEL, MF_MT_MPEG2_PROFILE, MF_MT_PIXEL_ASPECT_RATIO,
-    MF_MT_SUBTYPE, MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, MF_SINK_WRITER_DISABLE_THROTTLING,
+    MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, MF_MT_MAX_KEYFRAME_SPACING, MF_MT_MAX_LUMINANCE_LEVEL,
+    MF_MT_MAX_MASTERING_LUMINANCE, MF_MT_MIN_MASTERING_LUMINANCE, MF_MT_MPEG2_LEVEL,
+    MF_MT_MPEG2_PROFILE, MF_MT_PIXEL_ASPECT_RATIO, MF_MT_SUBTYPE, MF_MT_TRANSFER_FUNCTION,
+    MF_MT_VIDEO_NOMINAL_RANGE, MF_MT_VIDEO_PRIMARIES, MF_MT_VIDEO_PROFILE, MF_MT_YUV_MATRIX,
+    MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, MF_SINK_WRITER_DISABLE_THROTTLING,
     MF_TRANSCODE_CONTAINERTYPE, MF_VERSION,
 };
 use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_MULTITHREADED};
@@ -47,7 +52,7 @@ use windows::Win32::System::Variant::{VARIANT, VT_UI4};
 
 use clippity_infra::error::{AppError, AppResult};
 
-use super::nv12;
+use super::{nv12, p010};
 
 /// Sample rate every audio path converges on before reaching the AAC
 /// encoder. Not a preference — Media Foundation's AAC encoder accepts
@@ -215,6 +220,8 @@ pub struct Mp4Config {
     pub source_height: u32,
     pub fps: u32,
     pub bitrate_bps: u32,
+    /// HEVC Main10 with BT.2020/PQ P010 input instead of H.264/NV12.
+    pub hdr: bool,
     /// Frames between keyframes, for `MF_MT_MAX_KEYFRAME_SPACING`.
     /// Resolved by `domain::recorder::keyframe_interval_frames` so the
     /// seconds-to-frames conversion stays testable without COM.
@@ -251,7 +258,8 @@ pub struct Mp4Writer {
     /// Size of one NV12 frame, computed once from the negotiated
     /// geometry. Not a buffer: frames are converted straight into the
     /// Media Foundation sample — see [`Mp4Writer::write_video`].
-    nv12_len: usize,
+    frame_len: usize,
+    hdr: bool,
     finalized: bool,
 }
 
@@ -301,8 +309,15 @@ impl Mp4Writer {
 
         // SAFETY: both streams are fully configured; BeginWriting is the
         // documented transition out of the configuration phase.
-        unsafe { writer.BeginWriting() }
-            .map_err(|e| AppError::Recorder(format!("encoder would not start: {e}")))?;
+        unsafe { writer.BeginWriting() }.map_err(|e| {
+            if config.hdr {
+                AppError::Recorder(format!(
+                    "HDR recording requires a Windows hardware encoder that accepts HEVC Main10/P010; no compatible encoder started: {e}"
+                ))
+            } else {
+                AppError::Recorder(format!("encoder would not start: {e}"))
+            }
+        })?;
 
         Ok(Self {
             writer,
@@ -310,7 +325,12 @@ impl Mp4Writer {
             audio_stream,
             width: input.0,
             height: input.1,
-            nv12_len: nv12::nv12_len(input.0, input.1),
+            frame_len: if config.hdr {
+                p010::p010_len(input.0, input.1)
+            } else {
+                nv12::nv12_len(input.0, input.1)
+            },
+            hdr: config.hdr,
             finalized: false,
         })
     }
@@ -371,7 +391,12 @@ impl Mp4Writer {
         }
 
         let (width, height) = (self.width, self.height);
-        let sample = build_sample(self.nv12_len, timestamp_hns, duration_hns, |dst| {
+        if self.hdr {
+            return Err(AppError::Recorder(
+                "an SDR frame was sent to an HDR encoder".into(),
+            ));
+        }
+        let sample = build_sample(self.frame_len, timestamp_hns, duration_hns, |dst| {
             nv12::to_nv12(pixels, dst, width, height, order)
                 .then_some(())
                 .ok_or_else(geometry)
@@ -380,6 +405,38 @@ impl Mp4Writer {
         // the sample holds a buffer of the negotiated NV12 size.
         unsafe { self.writer.WriteSample(self.video_stream, &sample) }
             .map_err(|e| AppError::Recorder(format!("video frame rejected: {e}")))
+    }
+
+    /// Encode one packed FP16 scRGB frame as BT.2020/PQ P010 into the
+    /// HEVC Main10 stream negotiated by an HDR writer.
+    pub fn write_hdr_video(
+        &mut self,
+        pixels: &[u8],
+        timestamp_hns: i64,
+        duration_hns: i64,
+    ) -> AppResult<()> {
+        if !self.hdr {
+            return Err(AppError::Recorder(
+                "an HDR frame was sent to an SDR encoder".into(),
+            ));
+        }
+        let geometry = || {
+            AppError::Recorder(format!(
+                "HDR frame does not match the recording geometry ({}Ã—{})",
+                self.width, self.height
+            ))
+        };
+        if pixels.len() < self.width as usize * self.height as usize * 8 {
+            return Err(geometry());
+        }
+        let (width, height) = (self.width, self.height);
+        let sample = build_sample(self.frame_len, timestamp_hns, duration_hns, |dst| {
+            p010::to_p010_scrgb_f16(pixels, dst, width, height)
+                .then_some(())
+                .ok_or_else(geometry)
+        })?;
+        unsafe { self.writer.WriteSample(self.video_stream, &sample) }
+            .map_err(|e| AppError::Recorder(format!("HDR video frame rejected: {e}")))
     }
 
     /// Encode a run of interleaved 16-bit PCM at [`AUDIO_SAMPLE_RATE`].
@@ -525,23 +582,37 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u3
         // SAFETY: standard H.264 output type keys and value types.
         unsafe {
             attrs.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video)?;
-            attrs.SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_H264)?;
+            attrs.SetGUID(
+                &MF_MT_SUBTYPE,
+                if config.hdr {
+                    &MFVideoFormat_HEVC
+                } else {
+                    &MFVideoFormat_H264
+                },
+            )?;
             attrs.SetUINT32(&MF_MT_AVG_BITRATE, config.bitrate_bps)?;
             attrs.SetUINT32(&MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive.0 as u32)?;
             // Main profile: the widest-compatibility choice that still
             // gets B-frames and CABAC. High would compress a little
             // better; Baseline would play on hardware nobody has.
-            attrs.SetUINT32(&MF_MT_MPEG2_PROFILE, eAVEncH264VProfile_Main.0 as u32)?;
-            // Stated, not inferred. Left unset, several hardware
+            if config.hdr {
+                attrs.SetUINT32(
+                    &MF_MT_VIDEO_PROFILE,
+                    eAVEncH265VProfile_Main_420_10.0 as u32,
+                )?;
+                set_hdr_color_attributes(attrs)?;
+            } else {
+                attrs.SetUINT32(&MF_MT_MPEG2_PROFILE, eAVEncH264VProfile_Main.0 as u32)?;
+            }
+            // Stated, not inferred. Left unset, several hardware H.264
             // encoders pick a level too small for an ultrawide frame
             // and then reject the media type — see
-            // `domain::recorder::h264_level`. The value is the level
-            // times ten, which is exactly how `eAVEncH264VLevel` is
-            // numbered, so the codes travel as plain integers rather
-            // than dragging that enum into the domain crate (which also
-            // stops at 5.2 in the `windows` bindings, below what a
-            // 5120×2160 panel needs).
-            attrs.SetUINT32(&MF_MT_MPEG2_LEVEL, config.level)?;
+            // `domain::recorder::h264_level`. HEVC uses a different
+            // level/tier value space, so the H.264 level must not leak
+            // into a Main10 output type.
+            if !config.hdr {
+                attrs.SetUINT32(&MF_MT_MPEG2_LEVEL, config.level)?;
+            }
             attrs.SetUINT64(&MF_MT_FRAME_SIZE, pack(config.width, config.height))?;
             attrs.SetUINT64(&MF_MT_FRAME_RATE, pack(config.fps, 1))?;
             attrs.SetUINT64(&MF_MT_PIXEL_ASPECT_RATIO, pack(1, 1))?;
@@ -550,13 +621,17 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u3
             // encoders pick wildly different values — some default to
             // several hundred frames, which makes a fresh recording feel
             // broken to scrub.
-            attrs.SetUINT32(&MF_MT_MAX_KEYFRAME_SPACING, config.keyframe_frames.max(1))?;
+            if !config.hdr {
+                attrs.SetUINT32(&MF_MT_MAX_KEYFRAME_SPACING, config.keyframe_frames.max(1))?;
+            }
         }
         Ok(())
     })?;
     // SAFETY: a fully-populated output media type.
-    let stream = unsafe { writer.AddStream(&out) }
-        .map_err(|e| AppError::Recorder(format!("no H.264 encoder available: {e}")))?;
+    let stream = unsafe { writer.AddStream(&out) }.map_err(|e| {
+        let codec = if config.hdr { "HEVC Main10" } else { "H.264" };
+        AppError::Recorder(format!("no {codec} encoder available: {e}"))
+    })?;
 
     // Try the capture size first. When it differs from the output size
     // the sink writer resolves the mismatch by loading its Video
@@ -574,6 +649,10 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u3
         // Declare the input at the output size and let the sink
         // downscale in Rust: slower, and still the setting the user
         // asked for.
+        // HDR frames are FP16 and cannot use the RGBA CPU resize
+        // fallback. Require the Media Foundation video processor to do
+        // the scaling, or ask the user to record at source resolution.
+        Err(e) if config.hdr => Err(e),
         Err(_) => set_video_input(writer, stream, config, out).map(|()| (stream, out)),
     }
 }
@@ -663,7 +742,17 @@ fn set_video_input(
         // mismatch is what asks for the scaler.
         unsafe {
             attrs.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video)?;
-            attrs.SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_NV12)?;
+            attrs.SetGUID(
+                &MF_MT_SUBTYPE,
+                if config.hdr {
+                    &MFVideoFormat_P010
+                } else {
+                    &MFVideoFormat_NV12
+                },
+            )?;
+            if config.hdr {
+                set_hdr_color_attributes(attrs)?;
+            }
             attrs.SetUINT32(&MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive.0 as u32)?;
             // Every uncompressed frame stands alone — lets the encoder
             // skip the "is this a delta frame?" question per sample.
@@ -677,6 +766,24 @@ fn set_video_input(
     // SAFETY: `stream` was returned by AddStream on this writer.
     unsafe { writer.SetInputMediaType(stream, &input, None) }
         .map_err(|e| AppError::Recorder(format!("encoder rejected the frame format: {e}")))
+}
+
+/// Color-volume and static-light metadata shared by the uncompressed
+/// P010 input and compressed HEVC output media types.
+unsafe fn set_hdr_color_attributes(attrs: &IMFAttributes) -> windows::core::Result<()> {
+    unsafe {
+        attrs.SetUINT32(&MF_MT_VIDEO_PRIMARIES, MFVideoPrimaries_BT2020.0 as u32)?;
+        attrs.SetUINT32(&MF_MT_TRANSFER_FUNCTION, MFVideoTransFunc_2084.0 as u32)?;
+        attrs.SetUINT32(&MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT2020_10.0 as u32)?;
+        attrs.SetUINT32(&MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_16_235.0 as u32)?;
+        // Conservative mastering-volume metadata. PQ's absolute coding
+        // range is 10,000 nits; per-frame content remains below it.
+        attrs.SetUINT32(&MF_MT_MAX_MASTERING_LUMINANCE, 10_000)?;
+        attrs.SetUINT32(&MF_MT_MIN_MASTERING_LUMINANCE, 0)?;
+        attrs.SetUINT32(&MF_MT_MAX_LUMINANCE_LEVEL, 10_000)?;
+        attrs.SetUINT32(&MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, 1_000)?;
+    }
+    Ok(())
 }
 
 /// Declare the AAC output type and its PCM input.
@@ -872,6 +979,7 @@ mod tests {
                 source_height: height,
                 fps,
                 bitrate_bps: 2_000_000,
+                hdr: false,
                 keyframe_frames: fps * 2,
                 variable_bitrate: true,
                 prefer_hardware: true,
@@ -932,6 +1040,60 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    /// Main10 negotiation and one real P010 frame against the installed
+    /// hardware encoder. The pure P010/color tests cover the bytes; this
+    /// catches a media type that compiles but no encoder will accept.
+    #[test]
+    #[ignore = "needs a Main10-capable Windows hardware encoder"]
+    fn encodes_a_bt2020_pq_main10_mp4() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let _com = ComThread::init().expect("COM + Media Foundation start");
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0);
+        let path = std::env::temp_dir().join(format!("clippity-mf-hdr-{stamp}.mp4"));
+        let (width, height, fps) = (320u32, 240u32, 30u32);
+        let mut writer = Mp4Writer::create(
+            &path,
+            Mp4Config {
+                width,
+                height,
+                source_width: width,
+                source_height: height,
+                fps,
+                bitrate_bps: 4_000_000,
+                hdr: true,
+                keyframe_frames: fps * 2,
+                variable_bitrate: true,
+                prefer_hardware: true,
+                level: 42,
+                audio: None,
+            },
+        )
+        .expect("Main10 sink writer accepts P010 BT.2020/PQ");
+
+        // Linear scRGB 4.0 is a 320-nit neutral highlight. Binary16 values
+        // are written directly because zero, one and four are exact anchors.
+        let mut fp16 = Vec::with_capacity((width * height * 8) as usize);
+        for _ in 0..width * height {
+            fp16.extend_from_slice(&0x4400u16.to_le_bytes());
+            fp16.extend_from_slice(&0x4400u16.to_le_bytes());
+            fp16.extend_from_slice(&0x4400u16.to_le_bytes());
+            fp16.extend_from_slice(&0x3c00u16.to_le_bytes());
+        }
+        writer
+            .write_hdr_video(&fp16, 0, 10_000_000 / fps as i64)
+            .expect("HDR frame accepted");
+        writer.finish().expect("finalize");
+
+        let bytes = std::fs::read(&path).expect("read encoded file");
+        assert!(bytes.len() > 1_024, "expected real encoded output");
+        assert_eq!(&bytes[4..8], b"ftyp", "not an MP4 container");
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Every encoder-settings combination, against the real encoders.
     ///
     /// The keyframe spacing and the hardware preference are media-type
@@ -980,6 +1142,7 @@ mod tests {
                     source_height: height,
                     fps,
                     bitrate_bps: 2_000_000,
+                    hdr: false,
                     keyframe_frames: keyframe_seconds * fps,
                     variable_bitrate: variable,
                     prefer_hardware: hardware,
@@ -1047,6 +1210,7 @@ mod tests {
                 source_height: height,
                 fps,
                 bitrate_bps: 46_000_000,
+                hdr: false,
                 keyframe_frames: fps * 2,
                 variable_bitrate: true,
                 prefer_hardware: true,
@@ -1131,6 +1295,7 @@ mod tests {
                     source_height: height,
                     fps,
                     bitrate_bps,
+                    hdr: false,
                     keyframe_frames: fps * 2,
                     variable_bitrate: true,
                     prefer_hardware: true,
@@ -1246,10 +1411,10 @@ mod tests {
             AUDIO_BLOCK_ALIGN,
             AUDIO_CHANNELS as u32 * (AUDIO_BITS_PER_SAMPLE / 8)
         );
-        // The AAC encoder only accepts 44.1 or 48 kHz.
-        assert!(AUDIO_SAMPLE_RATE == 48_000 || AUDIO_SAMPLE_RATE == 44_100);
-        // …and 1 or 2 channels.
-        assert!(AUDIO_CHANNELS == 1 || AUDIO_CHANNELS == 2);
+        // Keep the selected supported format explicit; changing either
+        // constant requires revisiting the media type and mixer contract.
+        assert_eq!(AUDIO_SAMPLE_RATE, 48_000);
+        assert_eq!(AUDIO_CHANNELS, 2);
         // …and only 16-bit input.
         assert_eq!(AUDIO_BITS_PER_SAMPLE, 16);
     }

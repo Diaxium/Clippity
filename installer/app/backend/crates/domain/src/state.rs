@@ -388,22 +388,35 @@ mod tests {
             ..inputs()
         };
         assert_eq!(
-            assess(&DetectionInputs { installed_version: Some("1.4.0".into()), ..base.clone() }),
+            assess(&DetectionInputs {
+                installed_version: Some("1.4.0".into()),
+                ..base.clone()
+            }),
             InstallState::OlderVersion
         );
         assert_eq!(
-            assess(&DetectionInputs { installed_version: Some("1.5.0".into()), ..base.clone() }),
+            assess(&DetectionInputs {
+                installed_version: Some("1.5.0".into()),
+                ..base.clone()
+            }),
             InstallState::SameVersion
         );
         assert_eq!(
-            assess(&DetectionInputs { installed_version: Some("2.0.0".into()), ..base }),
+            assess(&DetectionInputs {
+                installed_version: Some("2.0.0".into()),
+                ..base
+            }),
             InstallState::NewerVersion
         );
     }
 
     /// A minimal manifest for the elevation-to-remove checks: only the three
     /// fields the rule reads (scope + the two directories) need to be real.
-    fn manifest_at(scope: InstallScope, install_dir: &str, maintenance_dir: &str) -> InstallationManifest {
+    fn manifest_at(
+        scope: InstallScope,
+        install_dir: &str,
+        maintenance_dir: &str,
+    ) -> InstallationManifest {
         InstallationManifest {
             schema_version: SCHEMA_VERSION,
             product_id: PRODUCT_ID.to_string(),
