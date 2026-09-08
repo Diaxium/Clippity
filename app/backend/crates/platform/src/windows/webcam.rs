@@ -37,6 +37,66 @@ use windows::Win32::Media::MediaFoundation::{
 use clippity_domain::pixels::PixelOrder;
 use clippity_infra::error::{AppError, AppResult};
 
+/// Owns the COM activation objects and the CoTaskMem-allocated array that
+/// Media Foundation returns from `MFEnumDeviceSources`.
+struct ActivationArray {
+    slots: std::ptr::NonNull<Option<IMFActivate>>,
+    len: usize,
+}
+
+impl ActivationArray {
+    fn into_vec(self) -> Vec<IMFActivate> {
+        // SAFETY: construction requires a non-null pointer returned by a
+        // successful `MFEnumDeviceSources` call and records its exact length.
+        let slots = unsafe { std::slice::from_raw_parts_mut(self.slots.as_ptr(), self.len) };
+        slots.iter_mut().filter_map(Option::take).collect()
+    }
+}
+
+impl Drop for ActivationArray {
+    fn drop(&mut self) {
+        // SAFETY: the slice is the initialized array returned by Media
+        // Foundation. Dropping its remaining elements releases every COM
+        // reference that was not moved out by `into_vec`, after which the
+        // array allocation itself must be released with CoTaskMemFree.
+        unsafe {
+            std::ptr::drop_in_place(std::ptr::slice_from_raw_parts_mut(
+                self.slots.as_ptr(),
+                self.len,
+            ));
+            windows::Win32::System::Com::CoTaskMemFree(Some(self.slots.as_ptr().cast()));
+        }
+    }
+}
+
+fn enumerate_activations(
+    attributes: &IMFAttributes,
+    failure_context: &str,
+) -> AppResult<Vec<IMFActivate>> {
+    let mut raw: *mut Option<IMFActivate> = std::ptr::null_mut();
+    let mut count = 0u32;
+    // SAFETY: both out-parameters are initialized. A successful call returns
+    // `count` initialized activation slots in a CoTaskMem allocation.
+    unsafe { MFEnumDeviceSources(attributes, &mut raw, &mut count) }
+        .map_err(|e| AppError::Recorder(format!("{failure_context}: {e}")))?;
+
+    let Some(slots) = std::ptr::NonNull::new(raw) else {
+        return if count == 0 {
+            Ok(Vec::new())
+        } else {
+            Err(AppError::Recorder(format!(
+                "{failure_context}: Media Foundation returned {count} devices without an array"
+            )))
+        };
+    };
+
+    Ok(ActivationArray {
+        slots,
+        len: count as usize,
+    }
+    .into_vec())
+}
+
 /// A camera the user can pick, for the sources UI.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WebcamInfo {
@@ -53,42 +113,23 @@ pub struct WebcamInfo {
 /// "no cameras found" rather than as a failure.
 pub fn list_devices() -> AppResult<Vec<WebcamInfo>> {
     let attributes = vidcap_attributes()?;
+    let activations = enumerate_activations(&attributes, "could not list cameras")?;
 
-    let mut raw: *mut Option<IMFActivate> = std::ptr::null_mut();
-    let mut count = 0u32;
-    // SAFETY: `attributes` asks for video-capture devices; both
-    // out-params are initialised and the array is freed below.
-    unsafe { MFEnumDeviceSources(&attributes, &mut raw, &mut count) }
-        .map_err(|e| AppError::Recorder(format!("could not list cameras: {e}")))?;
-    if raw.is_null() {
-        return Ok(Vec::new());
-    }
-
-    let mut out = Vec::with_capacity(count as usize);
-    for index in 0..count as usize {
-        // SAFETY: `raw` points at `count` activation objects, and each
-        // slot is read exactly once.
-        let slot = unsafe { &*raw.add(index) };
-        if let Some(activate) = slot.as_ref() {
-            if let (Some(id), name) = (
-                attribute_string(
-                    activate,
-                    &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
-                ),
-                attribute_string(activate, &MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME),
-            ) {
-                out.push(WebcamInfo {
-                    name: name.unwrap_or_else(|| "Camera".to_string()),
-                    id,
-                });
-            }
+    let mut out = Vec::with_capacity(activations.len());
+    for activate in &activations {
+        if let (Some(id), name) = (
+            attribute_string(
+                activate,
+                &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
+            ),
+            attribute_string(activate, &MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME),
+        ) {
+            out.push(WebcamInfo {
+                name: name.unwrap_or_else(|| "Camera".to_string()),
+                id,
+            });
         }
     }
-
-    // SAFETY: the array itself was allocated by MFEnumDeviceSources with
-    // CoTaskMemAlloc; the IMFActivate references inside it are owned by
-    // the `Option<IMFActivate>` values, which drop with the read above.
-    unsafe { windows::Win32::System::Com::CoTaskMemFree(Some(raw as *const _)) };
     Ok(out)
 }
 
@@ -284,23 +325,10 @@ fn activate(symbolic_link: &str) -> AppResult<IMFMediaSource> {
     }
     .map_err(|e| AppError::Recorder(format!("could not pin the camera: {e}")))?;
 
-    let mut raw: *mut Option<IMFActivate> = std::ptr::null_mut();
-    let mut count = 0u32;
-    // SAFETY: as in `list_devices`.
-    unsafe { MFEnumDeviceSources(&attributes, &mut raw, &mut count) }
-        .map_err(|e| AppError::Recorder(format!("could not open the camera: {e}")))?;
-    if raw.is_null() || count == 0 {
-        return Err(AppError::Recorder(
-            "that camera is no longer attached".into(),
-        ));
-    }
-    // SAFETY: at least one activation object was returned.
-    let first = unsafe { (*raw).clone() };
-    // SAFETY: frees the array; the cloned reference above outlives it.
-    unsafe { windows::Win32::System::Com::CoTaskMemFree(Some(raw as *const _)) };
-
-    let activate =
-        first.ok_or_else(|| AppError::Recorder("the camera would not activate".into()))?;
+    let activate = enumerate_activations(&attributes, "could not open the camera")?
+        .into_iter()
+        .next()
+        .ok_or_else(|| AppError::Recorder("that camera is no longer attached".into()))?;
     // SAFETY: activating a device source returns its IMFMediaSource.
     unsafe { activate.ActivateObject::<IMFMediaSource>() }.map_err(|e| {
         AppError::Recorder(format!(
