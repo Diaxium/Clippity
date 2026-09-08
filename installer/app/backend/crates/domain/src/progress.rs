@@ -56,6 +56,10 @@ pub struct ProgressEvent {
     /// this rather than claiming an unqualified success. Default `false`.
     #[serde(default)]
     pub reboot_required: bool,
+    /// Human-readable terminal failure. Failure events carry no replacement
+    /// task list; the frontend keeps its last snapshot and marks its active row.
+    #[serde(default)]
+    pub error: Option<String>,
 }
 
 impl ProgressEvent {
@@ -65,6 +69,19 @@ impl ProgressEvent {
     pub fn with_reboot_required(mut self, reboot_required: bool) -> Self {
         self.reboot_required = reboot_required;
         self
+    }
+}
+
+/// Build a terminal failure notification without discarding the last detailed
+/// checklist snapshot already rendered by the frontend.
+pub fn failure(kind: ProgressKind, error: impl Into<String>) -> ProgressEvent {
+    ProgressEvent {
+        kind,
+        percent: 0,
+        tasks: Vec::new(),
+        done: false,
+        reboot_required: false,
+        error: Some(error.into()),
     }
 }
 
@@ -137,6 +154,7 @@ pub fn snapshot(
         tasks,
         done,
         reboot_required: false,
+        error: None,
     }
 }
 
@@ -162,5 +180,13 @@ mod tests {
         let ev = snapshot(ProgressKind::Uninstall, tasks, n);
         assert!(ev.done);
         assert_eq!(ev.percent, 100);
+    }
+
+    #[test]
+    fn failure_event_carries_error_without_replacing_tasks() {
+        let event = failure(ProgressKind::Update, "network down");
+        assert_eq!(event.error.as_deref(), Some("network down"));
+        assert!(event.tasks.is_empty());
+        assert!(!event.done);
     }
 }

@@ -32,6 +32,13 @@ Maintenance Engine** (the layered Rust crates under `installer/app/backend`).
 
 ## One-paragraph summary
 
+> **0.3.1 completion pass (2026-09-08):** the remaining updater and wizard
+> gaps are now closed. Release discovery, digest-verified download, transactional
+> update handoff, file associations, application-side startup/update preference
+> enforcement, independent uninstall data choices, settings export, and rollback
+> restoration are implemented. The historical pass-by-pass account below is
+> retained as design context; the current gate is [07 — Test matrix](07-test-matrix.md).
+
 The wizard was a polished UI prototype with a real payload-copy core and real
 elevation, but stubbed Windows integrations and a simulated maintenance layer.
 The first pass made the highest-value, safest pieces **real** — Add/Remove

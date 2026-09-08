@@ -6,9 +6,8 @@
 //! `installer-services` functions the GUI does and translating the result
 //! into a stable [`ExitCode`]. Progress is logged rather than shown. A
 //! silent operation never prompts: a request that would need interaction
-//! (an install that needs elevation this process lacks, an update the
-//! wizard cannot yet apply) returns a specific exit code instead of
-//! blocking.
+//! (an install that needs elevation this process lacks) returns a specific
+//! exit code instead of blocking.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -17,7 +16,6 @@ use installer_domain::install::{build_plan, needs_elevation, InstallOptions, Ins
 use installer_domain::progress::{ProgressEvent, ProgressKind};
 use installer_domain::state::InstallState;
 use installer_domain::uninstall::{default_removal, RemovalSelection};
-use installer_domain::update::{is_update_available, ReleaseChannel};
 use installer_infra::error::InstallerError;
 use installer_infra::paths::InstallerPaths;
 use installer_services::payload::Payload;
@@ -44,7 +42,7 @@ pub fn execute(cmd: &CliCommand) -> ExitCode {
         CliMode::Install | CliMode::Reinstall => run_install(cmd, &paths),
         CliMode::Modify => run_modify(cmd, &paths),
         CliMode::Repair => run_repair(&paths),
-        CliMode::Update => run_update(&paths),
+        CliMode::Update => run_update(cmd, &paths),
         CliMode::Uninstall => run_uninstall(cmd, &paths),
         // The GUI mode never routes here.
         CliMode::Gui => ExitCode::Success,
@@ -123,11 +121,8 @@ fn run_modify(cmd: &CliCommand, paths: &InstallerPaths) -> ExitCode {
     };
     let product = manifest::product();
 
-    let options = InstallOptions {
-        destination: m.install_directory.clone(),
-        scope: m.scope,
-        ..InstallOptions::default()
-    };
+    let mut options = m.installed_options();
+    merge_live_app_preferences(&mut options, paths);
     // Modify to the requested component set, defaulting to what is installed.
     let selected = cmd
         .components
@@ -164,25 +159,47 @@ fn run_repair(paths: &InstallerPaths) -> ExitCode {
     }
 }
 
-/// Headless update. The wizard does not run a second, divergent auto-update
-/// channel (see the ADR): it reports whether the bundled version is newer,
-/// but applying an update this way is not yet available, so it returns a
-/// clear code rather than faking success.
-fn run_update(paths: &InstallerPaths) -> ExitCode {
-    let Some((_, m)) = detect::locate_manifest(paths) else {
+/// Headless online check/download or the private verified bundled apply.
+fn run_update(cmd: &CliCommand, paths: &InstallerPaths) -> ExitCode {
+    if detect::locate_manifest(paths).is_none() {
         return ExitCode::NotInstalled;
-    };
-    let product = manifest::product();
-    if !is_update_available(&m.version, &product.version) {
-        tracing::info!(installed = %m.version, bundled = %product.version, "already up to date");
-        return ExitCode::Success;
     }
-    let _ = update_service::check(&m.version, ReleaseChannel::Stable);
-    tracing::warn!(
-        "an update is available but the wizard's headless apply is not yet implemented; \
-         use the in-app updater (see docs/installer ADR)"
-    );
-    ExitCode::GeneralFailure
+    let reboot = AtomicBool::new(false);
+    let sink = logging_sink(&reboot);
+    let result = if cmd.apply_bundled_update {
+        update_service::apply_bundled(paths, cmd.wait_for_app, cmd.no_restart, &sink)
+    } else {
+        update_service::run_automatic(paths, cmd.wait_for_app, cmd.no_restart, &sink)
+    };
+    match result {
+        Ok(()) => success_code(reboot.load(Ordering::Relaxed)),
+        Err(e) => map_error(&e),
+    }
+}
+
+/// Preferences can be changed from the installed app after Setup writes its
+/// manifest. Preserve those live values during unattended Modify just as the
+/// interactive Modify wizard does.
+fn merge_live_app_preferences(options: &mut InstallOptions, paths: &InstallerPaths) {
+    let settings = paths.local_data.join("data").join("settings.json");
+    let Ok(bytes) = std::fs::read(settings) else {
+        return;
+    };
+    let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
+        return;
+    };
+    let Some(general) = value.get("general") else {
+        return;
+    };
+    if let Some(value) = general.get("startOnStartup").and_then(|v| v.as_bool()) {
+        options.start_at_login = value;
+    }
+    if let Some(value) = general.get("automaticUpdates").and_then(|v| v.as_bool()) {
+        options.automatic_updates = value;
+    }
+    if let Some(value) = general.get("helpImprove").and_then(|v| v.as_bool()) {
+        options.help_improve = value;
+    }
 }
 
 fn run_uninstall(cmd: &CliCommand, paths: &InstallerPaths) -> ExitCode {

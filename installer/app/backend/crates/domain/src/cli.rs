@@ -74,6 +74,10 @@ pub struct CliCommand {
     pub log_path: Option<String>,
     /// Do not relaunch the app after an update.
     pub no_restart: bool,
+    /// Internal handoff used only by a verified downloaded Setup executable.
+    pub apply_bundled_update: bool,
+    /// Keep a silent update worker alive until the installed app exits.
+    pub wait_for_app: bool,
 }
 
 impl CliCommand {
@@ -89,6 +93,8 @@ impl CliCommand {
             remove_settings: false,
             log_path: None,
             no_restart: false,
+            apply_bundled_update: false,
+            wait_for_app: false,
         }
     }
 
@@ -185,6 +191,11 @@ pub fn parse(args: &[String]) -> ParsedCli {
             "--remove-settings" => cmd.remove_settings = true,
             "--log" => cmd.log_path = Some(value!("--log")),
             "--no-restart" => cmd.no_restart = true,
+            "--apply-bundled-update" => {
+                set_mode!(CliMode::Update, arg);
+                cmd.apply_bundled_update = true;
+            }
+            "--wait-for-app" => cmd.wait_for_app = true,
 
             // The elevation handoffs are consumed elsewhere (they always mean
             // "resume a GUI install / uninstall"); tolerate them and their
@@ -285,7 +296,7 @@ pub fn help_text() -> &'static str {
      --install        Install Clippity\n    \
      --modify         Add or remove components\n    \
      --repair         Restore a damaged installation\n    \
-     --update         Update to the bundled version\n    \
+     --update         Check, download, and apply the latest release\n    \
      --reinstall      Reinstall over the current version\n    \
      --uninstall      Remove Clippity\n\
      \n\
@@ -445,6 +456,21 @@ mod tests {
         ]);
         assert!(c.keep_user_data);
         assert!(c.remove_settings);
+    }
+
+    #[test]
+    fn downloaded_update_handoff_is_headless_update() {
+        let c = run(&[
+            "--apply-bundled-update",
+            "--silent",
+            "--wait-for-app",
+            "--no-restart",
+        ]);
+        assert_eq!(c.mode, CliMode::Update);
+        assert!(c.is_headless());
+        assert!(c.apply_bundled_update);
+        assert!(c.wait_for_app);
+        assert!(c.no_restart);
     }
 
     #[test]

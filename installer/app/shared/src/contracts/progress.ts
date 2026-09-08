@@ -19,11 +19,7 @@ export interface ProgressTask {
 
 /** Which long-running operation a progress stream describes. */
 export type ProgressKind =
-  | "install"
-  | "modify"
-  | "repair"
-  | "update"
-  | "uninstall";
+  "install" | "modify" | "repair" | "update" | "uninstall";
 
 /**
  * A snapshot emitted as the operation advances. `percent` is 0..100;
@@ -42,4 +38,6 @@ export interface ProgressEvent {
    * instead of an unqualified success. Optional; absent means `false`.
    */
   rebootRequired?: boolean;
+  /** Present when the operation failed; a failed operation is never `done`. */
+  error?: string;
 }

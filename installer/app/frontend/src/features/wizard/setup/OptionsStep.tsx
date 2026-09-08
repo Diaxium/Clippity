@@ -6,6 +6,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   MonitorCheck,
+  FileType2,
 } from "lucide-react";
 
 import { Button, ToggleSwitch } from "@shared/ui";
@@ -152,9 +153,16 @@ export function OptionsStep() {
             onChange={(v) => setOptions({ automaticUpdates: v })}
           />
           <ToggleRow
+            icon={<FileType2 size={16} strokeWidth={1.8} />}
+            title="File associations"
+            hint="Add Clippity to Open With for supported images and videos"
+            checked={options.fileAssociations}
+            onChange={(v) => setOptions({ fileAssociations: v })}
+          />
+          <ToggleRow
             icon={<ShieldCheck size={16} strokeWidth={1.8} />}
             title="Help improve Clippity"
-            hint="Share anonymous usage data and diagnostics"
+            hint="Record consent for future anonymous diagnostics (none are sent today)"
             checked={options.helpImprove}
             onChange={(v) => setOptions({ helpImprove: v })}
           />
@@ -169,7 +177,7 @@ export function OptionsStep() {
             <ScopeOption
               active={options.scope === "current-user"}
               title="Current user (You)"
-              hint="No admin required"
+              hint="Admin depends on destination"
               onClick={() => setOptions({ scope: "current-user" })}
             />
             <ScopeOption

@@ -3,6 +3,8 @@ import { ArrowRight, Check, HardDrive, Radio, ShieldCheck } from "lucide-react";
 import { Button } from "@shared/ui";
 import { formatBytes } from "@shared/lib/format";
 import { UPDATE_INFO } from "@config/catalog";
+import * as backend from "@services/installer";
+import { openPath } from "@services/tauri";
 import { useWizardStore } from "@state/wizardStore";
 
 import { StepShell } from "../components/StepShell";
@@ -12,13 +14,37 @@ export function UpdateAvailableStep() {
   const back = useWizardStore((s) => s.back);
   const goToStep = useWizardStore((s) => s.goToStep);
   const startOperation = useWizardStore((s) => s.startOperation);
+  const info = useWizardStore((s) => s.updateInfo) ?? UPDATE_INFO;
 
-  const update = () => {
+  const update = (whenAppCloses = false) => {
     goToStep("applying");
-    startOperation("update", "complete");
+    void startOperation("update", "complete", undefined, whenAppCloses);
   };
 
-  const { installed, latest, downloadBytes, releaseNotes } = UPDATE_INFO;
+  const remindLater = async () => {
+    await backend.deferUpdate(info.latest.version);
+    back();
+  };
+
+  const { installed, latest, downloadBytes, releaseNotes } = info;
+
+  if (!info.available) {
+    return (
+      <StepShell
+        title="Clippity is up to date"
+        subtitle={`Version ${installed.version} is the newest release on the ${installed.channel} channel.`}
+        footer={
+          <Button variant="secondary" onClick={back}>
+            Back
+          </Button>
+        }
+      >
+        <div className="rounded-[var(--radius-lg)] border border-[var(--hairline-strong)] bg-[var(--color-overlay-1)] p-5 text-[13px] text-[var(--color-slate)]">
+          No update is available right now.
+        </div>
+      </StepShell>
+    );
+  }
 
   return (
     <StepShell
@@ -41,7 +67,9 @@ export function UpdateAvailableStep() {
               <div className="text-[20px] font-semibold text-[var(--color-ink)]">
                 {installed.version}
               </div>
-              <div className="text-[11px] text-[var(--color-slate)]">Stable</div>
+              <div className="text-[11px] text-[var(--color-slate)]">
+                Stable
+              </div>
             </div>
             <ArrowRight size={18} className="text-[var(--color-hint)]" />
             <div>
@@ -51,7 +79,9 @@ export function UpdateAvailableStep() {
               <div className="text-[20px] font-semibold text-[var(--color-accent)]">
                 {latest.version}
               </div>
-              <div className="text-[11px] text-[var(--color-slate)]">Stable</div>
+              <div className="text-[11px] text-[var(--color-slate)]">
+                Stable
+              </div>
             </div>
           </div>
 
@@ -61,7 +91,10 @@ export function UpdateAvailableStep() {
             </div>
             <ul className="flex flex-col gap-1.5">
               {releaseNotes.map((note) => (
-                <li key={note} className="flex items-start gap-2 text-[12.5px] text-[var(--color-slate)]">
+                <li
+                  key={note}
+                  className="flex items-start gap-2 text-[12.5px] text-[var(--color-slate)]"
+                >
                   <Check
                     size={13}
                     strokeWidth={2.4}
@@ -73,6 +106,7 @@ export function UpdateAvailableStep() {
             </ul>
             <button
               type="button"
+              onClick={() => void openPath(info.releasePage)}
               className="mt-3 text-[12px] font-medium text-[var(--color-accent)] hover:underline"
             >
               View full release notes →
@@ -83,17 +117,26 @@ export function UpdateAvailableStep() {
         {/* Right: meta + actions */}
         <div className="flex flex-col gap-3">
           <div className="rounded-[var(--radius-lg)] border border-[var(--hairline-strong)] bg-[var(--color-overlay-1)] p-3.5">
-            <MetaRow icon={HardDrive} label="Download size" value={formatBytes(downloadBytes)} />
-            <MetaRow icon={ShieldCheck} label="Signature" value="Verified" accent />
-            <MetaRow icon={Radio} label="Channel" value="Stable" />
+            <MetaRow
+              icon={HardDrive}
+              label="Download size"
+              value={formatBytes(downloadBytes)}
+            />
+            <MetaRow
+              icon={ShieldCheck}
+              label="Integrity"
+              value="Verified before install"
+              accent
+            />
+            <MetaRow icon={Radio} label="Channel" value={latest.channel} />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Button onClick={update}>Update now</Button>
-            <Button variant="secondary" onClick={update}>
+            <Button onClick={() => update(false)}>Update now</Button>
+            <Button variant="secondary" onClick={() => update(true)}>
               Update when Clippity closes
             </Button>
-            <Button variant="ghost" onClick={back}>
+            <Button variant="ghost" onClick={() => void remindLater()}>
               Remind me later
             </Button>
           </div>
@@ -116,8 +159,14 @@ function MetaRow({
 }) {
   return (
     <div className="flex items-center gap-2 py-1.5">
-      <Icon size={14} strokeWidth={1.8} className="shrink-0 text-[var(--color-hint)]" />
-      <span className="flex-1 text-[11.5px] text-[var(--color-slate)]">{label}</span>
+      <Icon
+        size={14}
+        strokeWidth={1.8}
+        className="shrink-0 text-[var(--color-hint)]"
+      />
+      <span className="flex-1 text-[11.5px] text-[var(--color-slate)]">
+        {label}
+      </span>
       <span
         className={
           accent

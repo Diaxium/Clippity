@@ -8,6 +8,7 @@ description = "Pure installer types and rules — plans, versions, sizing. No I/
 
 [dependencies]
 serde = { workspace = true }
+semver = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

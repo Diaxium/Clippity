@@ -56,9 +56,9 @@ pub mod components {
     pub const CORE: &str = "core";
     /// OS-global capture hotkeys.
     pub const CAPTURE: &str = "capture";
-    /// File-type associations.
+    /// Legacy file-association component id (accepted for compatibility).
     pub const ASSOC: &str = "assoc";
-    /// Start-with-Windows helper.
+    /// Legacy startup component id (accepted for compatibility).
     pub const STARTUP: &str = "startup";
     /// GIF encoding for screen recordings.
     pub const GIF: &str = "gif";
@@ -184,18 +184,19 @@ pub struct Capabilities {
     pub text_recognition: bool,
     /// Recordings may be encoded as GIF (component `gif`).
     pub gif_recording: bool,
-    /// Clippity may register itself to start with Windows (component
-    /// `startup`).
+    /// Clippity may register itself to start with Windows. Current installs
+    /// expose this as a preference rather than a packaged component.
     pub start_at_login: bool,
-    /// Clippity is a registered handler for supported file types
-    /// (component `assoc` **and** the file-associations preference).
+    /// Clippity is registered in Open With for supported file types when the
+    /// file-associations preference is enabled.
     pub file_associations: bool,
     /// Cross-device sync (component `cloud`). No feature consumes this yet;
     /// it is resolved now so the day one lands it is already gated.
     pub cloud_sync: bool,
     /// The user left automatic updates on.
     pub automatic_updates: bool,
-    /// The user agreed to share anonymous usage data.
+    /// The user recorded consent for possible future anonymous diagnostics.
+    /// No telemetry is sent by this release.
     pub usage_reporting: bool,
     /// True when no installer document was found (or it was unusable) and
     /// every flag above is therefore an assumption rather than the user's
@@ -245,10 +246,11 @@ impl Capabilities {
             global_hotkeys: has(components::CAPTURE),
             text_recognition: has(components::OCR),
             gif_recording: has(components::GIF),
-            start_at_login: has(components::STARTUP),
-            // Both halves matter: the component is the handler registration,
-            // the preference is whether the user wanted it used.
-            file_associations: has(components::ASSOC) && prefs.file_associations,
+            // These integrations are behavior switches, not separately
+            // packaged components. The installer and app can both change
+            // them after installation.
+            start_at_login: true,
+            file_associations: prefs.file_associations,
             cloud_sync: has(components::CLOUD),
             automatic_updates: prefs.automatic_updates,
             usage_reporting: prefs.help_improve,
@@ -278,12 +280,8 @@ impl Capabilities {
 /// would mean a Repair silently reverting settings the user had since
 /// changed, which is the opposite of respecting their choices.
 ///
-/// `capabilities` participates because the wizard can produce a
-/// contradiction: "Start Clippity at login" is an Options-step toggle while
-/// the startup helper is a Components-step item, and nothing stops a user
-/// from ticking the first and declining the second. A setting the app has
-/// decided not to offer must not be seeded on, or the UI would hide a row
-/// that is quietly enabled.
+/// `capabilities` participates so a future policy can still suppress a
+/// preference without changing this seeding contract.
 pub fn seed_general_settings(
     doc: &InstallProvisioning,
     capabilities: &Capabilities,
@@ -394,8 +392,8 @@ mod tests {
         assert!(!caps.global_hotkeys);
         assert!(!caps.text_recognition);
         assert!(!caps.gif_recording);
-        assert!(!caps.start_at_login);
-        assert!(!caps.file_associations);
+        assert!(caps.start_at_login);
+        assert!(caps.file_associations);
         assert!(!caps.cloud_sync);
         // Still a managed install — the app knows these were real answers.
         assert!(!caps.unmanaged);
@@ -506,18 +504,15 @@ mod tests {
     }
 
     #[test]
-    fn the_seed_never_enables_a_setting_the_app_will_not_offer() {
-        // "Start at login" ticked, startup helper declined — a contradiction
-        // the wizard permits. Seeding it on would leave the app starting with
-        // Windows while the Settings row that controls it is hidden.
+    fn the_seed_honors_startup_without_a_separate_component() {
         let mut doc = doc_with(&["core", "capture"]);
         doc.preferences.start_at_login = true;
         let caps = Capabilities::resolve(Some(&doc));
-        assert!(!caps.start_at_login);
+        assert!(caps.start_at_login);
 
         let mut general = crate::settings::GeneralSettings::default();
         seed_general_settings(&doc, &caps, &mut general);
-        assert!(!general.start_on_startup);
+        assert!(general.start_on_startup);
     }
 
     #[test]

@@ -29,7 +29,9 @@ use installer_platform::entry::{UninstallEntry, RUN_SUBKEY, RUN_VALUE, UNINSTALL
 use installer_platform::windows_ops;
 
 use crate::payload::Payload;
-use crate::{clock, journal_store, pace, provisioning_store, rollback, state_store, ProgressSink};
+use crate::{
+    clock, detect, journal_store, pace, provisioning_store, rollback, state_store, ProgressSink,
+};
 
 /// The wizard copy placed in the maintenance directory — the binary
 /// Windows runs for Uninstall / Modify / Repair. It embeds the payload, so
@@ -63,6 +65,19 @@ pub fn run(
     emit: &ProgressSink<'_>,
 ) -> InstallerResult<()> {
     let clock = clock::now();
+    let previous = detect::locate_manifest(paths).map(|(_, manifest)| manifest);
+    if kind != ProgressKind::Install {
+        let previous = previous
+            .as_ref()
+            .ok_or_else(|| other("nothing is installed to modify or update"))?;
+        if previous.install_directory != plan.options.destination
+            || previous.scope != plan.options.scope
+        {
+            return Err(other(
+                "Modify cannot move an installation or change its scope. Uninstall and reinstall to choose a different location or scope.",
+            ));
+        }
+    }
     let all_users = matches!(plan.options.scope, InstallScope::AllUsers);
     let destination = PathBuf::from(&plan.options.destination);
     let maintenance_dir = paths.maintenance_dir(all_users);
@@ -165,6 +180,7 @@ pub fn run(
                         &clock,
                         journal,
                         &maintenance_dir,
+                        previous.as_ref(),
                     )?;
                 }
                 _ => pace(),
@@ -182,6 +198,7 @@ pub fn run(
             journal.finish(Outcome::Committed, &clock.iso);
             let _ = journal_store::write(&maintenance_dir, &journal);
             clean_backup(&destination, payload.exe_name());
+            clean_maintenance_backup(&maintenance_dir);
             let _ = journal_store::remove(&maintenance_dir);
             tracing::info!("install complete");
             Ok(())
@@ -193,6 +210,9 @@ pub fn run(
             journal.fail(e.to_string(), &clock.iso);
             let _ = journal_store::write(&maintenance_dir, &journal);
             let _ = rollback::roll_back(&maintenance_dir, &mut journal);
+            if let Some(previous) = &previous {
+                restore_previous(previous, product, &install_paths);
+            }
             let _ = journal_store::remove(&maintenance_dir);
             Err(e)
         }
@@ -241,6 +261,7 @@ fn apply_integrations(
     clock: &clock::Utc,
     journal: &mut OperationJournal,
     maintenance_dir: &Path,
+    previous: Option<&InstallationManifest>,
 ) -> InstallerResult<()> {
     let exe_str = installed_exe.to_string_lossy().to_string();
     let scope = plan.options.scope;
@@ -250,19 +271,39 @@ fn apply_integrations(
     //    install dir.
     record_dir(journal, maintenance_dir, maintenance_dir, clock);
     let maintenance_exe = maintenance_dir.join(MAINTENANCE_EXE);
-    copy_self_to(&maintenance_exe)?;
-    journal.record_applied(
-        Action::planned(
-            0,
-            ActionKind::PlaceMaintenanceExe,
-            maintenance_exe.to_string_lossy(),
-        ),
-        &clock.iso,
-    );
+    match copy_self_to(&maintenance_exe)? {
+        SelfCopy::Unchanged => {}
+        SelfCopy::Created => {
+            journal.record_applied(
+                Action::planned(
+                    0,
+                    ActionKind::PlaceMaintenanceExe,
+                    maintenance_exe.to_string_lossy(),
+                ),
+                &clock.iso,
+            );
+        }
+        SelfCopy::Replaced(backup) => {
+            journal.record_applied(
+                Action::planned(
+                    0,
+                    ActionKind::ReplaceFile,
+                    maintenance_exe.to_string_lossy(),
+                )
+                .with_backup(backup.to_string_lossy()),
+                &clock.iso,
+            );
+        }
+    }
     let _ = journal_store::write(maintenance_dir, journal);
     let maintenance_exe_str = maintenance_exe.to_string_lossy().to_string();
 
     // 2. Shortcuts — recorded by exact path for a precise uninstall/rollback.
+    if let Some(previous) = previous {
+        for shortcut in &previous.shortcuts {
+            let _ = windows_ops::remove_shortcut_path(Path::new(&shortcut.path));
+        }
+    }
     let mut shortcuts: Vec<ShortcutRecord> = Vec::new();
     if plan.options.create_desktop_shortcut {
         let path = windows_ops::create_desktop_shortcut(&exe_str, "Clippity", all_users)?;
@@ -301,7 +342,21 @@ fn apply_integrations(
         );
     }
 
-    // 4. Add/Remove Programs entry, pointing Uninstall/Modify at the
+    // 4. File associations. Register only as an Open With handler so the
+    // user's existing default applications are never displaced.
+    windows_ops::set_file_associations(hive, &exe_str, plan.options.file_associations)?;
+    if plan.options.file_associations {
+        journal.record_applied(
+            Action::planned(
+                0,
+                ActionKind::WriteRegistryKey,
+                format!("file-associations:{hive:?}"),
+            ),
+            &clock.iso,
+        );
+    }
+
+    // 5. Add/Remove Programs entry, pointing Uninstall/Modify at the
     //    maintenance exe and the icon at the installed app.
     let entry = UninstallEntry::build(
         product,
@@ -336,6 +391,20 @@ fn apply_integrations(
             value_name: Some(RUN_VALUE.to_string()),
         });
     }
+    if plan.options.file_associations {
+        registry_entries.push(RegistryRecord {
+            hive,
+            subkey: r"Software\Classes\Clippity.File".to_string(),
+            value_name: None,
+        });
+        for extension in [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".mp4"] {
+            registry_entries.push(RegistryRecord {
+                hive,
+                subkey: format!(r"Software\Classes\{extension}\OpenWithProgids"),
+                value_name: Some("Clippity.File".to_string()),
+            });
+        }
+    }
 
     let files = vec![InstalledFile {
         path: exe_str.clone(),
@@ -348,7 +417,9 @@ fn apply_integrations(
     let mut manifest = InstallationManifest {
         schema_version: SCHEMA_VERSION,
         product_id: PRODUCT_ID.to_string(),
-        installation_id: state_store::new_installation_id(&exe_str, &clock.iso),
+        installation_id: previous
+            .map(|m| m.installation_id.clone())
+            .unwrap_or_else(|| state_store::new_installation_id(&exe_str, &clock.iso)),
         version: payload.version().to_string(),
         architecture: "x64".to_string(),
         scope,
@@ -403,6 +474,13 @@ fn apply_integrations(
         ),
     }
 
+    // Modify is an explicit settings change, so apply its preference toggles
+    // to an existing app settings file as well. Fresh install deliberately
+    // leaves retained settings alone; first launch seeds only when none exist.
+    if previous.is_some() {
+        sync_existing_app_preferences(paths, plan);
+    }
+
     // Crossing into Commit: the manifest write makes the new state
     // authoritative. Recorded so a rollback removes it too.
     journal.advance(Phase::Commit, &clock.iso);
@@ -430,24 +508,123 @@ fn clean_backup(destination: &Path, exe_name: &str) {
     }
 }
 
+fn sync_existing_app_preferences(paths: &InstallerPaths, plan: &InstallPlan) {
+    let settings_path = paths.local_data.join("data").join("settings.json");
+    let Ok(bytes) = fs::read(&settings_path) else {
+        return;
+    };
+    let Ok(mut value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
+        tracing::warn!(path = %settings_path.display(), "could not parse app settings during modify");
+        return;
+    };
+    let Some(general) = value
+        .get_mut("general")
+        .and_then(|value| value.as_object_mut())
+    else {
+        return;
+    };
+    general.insert("startOnStartup".into(), plan.options.start_at_login.into());
+    general.insert(
+        "automaticUpdates".into(),
+        plan.options.automatic_updates.into(),
+    );
+    general.insert("helpImprove".into(), plan.options.help_improve.into());
+    match serde_json::to_vec_pretty(&value)
+        .and_then(|json| fs::write(&settings_path, json).map_err(serde_json::Error::io))
+    {
+        Ok(()) => {
+            tracing::info!(path = %settings_path.display(), "applied modified preferences to app settings")
+        }
+        Err(error) => {
+            tracing::warn!(%error, path = %settings_path.display(), "could not apply modified preferences to app settings")
+        }
+    }
+}
+
+fn clean_maintenance_backup(maintenance_dir: &Path) {
+    let backup = maintenance_dir.join(MAINTENANCE_EXE).with_extension("old");
+    if backup.exists() {
+        let _ = fs::remove_file(backup);
+    }
+}
+
+/// Re-assert the last committed manifest after a failed Modify/Update. The
+/// generic journal restores files; this restores declarative integrations
+/// that were intentionally reconciled before the new manifest commit.
+fn restore_previous(
+    previous: &InstallationManifest,
+    product: &ProductInfo,
+    paths: &InstallerPaths,
+) {
+    for shortcut in &previous.shortcuts {
+        let _ = windows_ops::create_shortcut_at(
+            Path::new(&shortcut.path),
+            &shortcut.target,
+            "Clippity",
+        );
+    }
+    if let Some(exe) = previous.primary_exe() {
+        let _ = windows_ops::set_start_at_login(exe, previous.start_at_login);
+        let _ = windows_ops::set_file_associations(
+            RegistryHive::for_scope(previous.scope),
+            exe,
+            previous.preferences.file_associations,
+        );
+        let mut previous_product = product.clone();
+        previous_product.version = previous.version.clone();
+        let mut previous_paths = paths.clone();
+        previous_paths.install_dir = previous.install_directory.clone().into();
+        let maintenance_exe = Path::new(&previous.maintenance_directory).join(MAINTENANCE_EXE);
+        let installed_bytes = previous.files.iter().map(|file| file.bytes).sum();
+        let entry = UninstallEntry::build(
+            &previous_product,
+            &previous_paths,
+            previous.scope,
+            &maintenance_exe.to_string_lossy(),
+            exe,
+            previous.install_date_yyyymmdd(),
+            installed_bytes,
+        );
+        let _ = windows_ops::write_uninstall_entry(&entry);
+    }
+    let install_dir = Path::new(&previous.install_directory);
+    let _ = provisioning_store::write_from_manifest(install_dir, previous);
+    let _ = state_store::write(Path::new(&previous.maintenance_directory), previous);
+}
+
 /// Copy the running installer to `dest` (the maintenance/uninstaller
 /// location). A no-op when we are already running from `dest` — which is
 /// the case when the maintenance exe itself drives a repair/modify.
-fn copy_self_to(dest: &Path) -> InstallerResult<()> {
+enum SelfCopy {
+    Unchanged,
+    Created,
+    Replaced(PathBuf),
+}
+
+fn copy_self_to(dest: &Path) -> InstallerResult<SelfCopy> {
     let current = std::env::current_exe()?;
     if current == dest {
-        return Ok(());
+        return Ok(SelfCopy::Unchanged);
     }
     if let Some(parent) = dest.parent() {
         fs::create_dir_all(parent)?;
     }
     // Replace a stale maintenance exe if present (best-effort rename-away).
-    if dest.exists() {
+    let outcome = if dest.exists() {
         let backup = dest.with_extension("old");
         let _ = fs::remove_file(&backup);
-        let _ = fs::rename(dest, &backup);
+        fs::rename(dest, &backup)?;
+        SelfCopy::Replaced(backup)
+    } else {
+        SelfCopy::Created
+    };
+    if let Err(error) = fs::copy(&current, dest) {
+        let _ = fs::remove_file(dest);
+        if let SelfCopy::Replaced(backup) = &outcome {
+            let _ = fs::rename(backup, dest);
+        }
+        return Err(error.into());
     }
-    fs::copy(&current, dest)?;
     tracing::info!(dest = %dest.display(), "placed maintenance executable");
-    Ok(())
+    Ok(outcome)
 }

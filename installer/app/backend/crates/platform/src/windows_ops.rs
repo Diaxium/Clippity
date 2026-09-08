@@ -107,6 +107,23 @@ pub fn set_start_at_login(target_exe: &str, enabled: bool) -> InstallerResult<()
     }
 }
 
+/// Add/remove Clippity from supported media types' Open With lists.
+pub fn set_file_associations(
+    hive: RegistryHive,
+    target_exe: &str,
+    enabled: bool,
+) -> InstallerResult<()> {
+    #[cfg(target_os = "windows")]
+    {
+        crate::windows::registry::set_file_associations(hive, target_exe, enabled)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        tracing::info!(?hive, target_exe, enabled, "set_file_associations (noop)");
+        Ok(())
+    }
+}
+
 /// Write (or update) the Add/Remove Programs entry.
 pub fn write_uninstall_entry(entry: &UninstallEntry) -> InstallerResult<()> {
     #[cfg(target_os = "windows")]
@@ -218,5 +235,21 @@ pub fn relaunch_elevated(exe: &Path, args: &str) -> InstallerResult<()> {
     {
         tracing::info!(exe = %exe.display(), args, "relaunch_elevated (noop)");
         Ok(())
+    }
+}
+
+/// Run a verified update worker elevated and wait for its final exit code.
+pub fn run_elevated_and_wait(exe: &Path, args: &str, hidden: bool) -> InstallerResult<i32> {
+    #[cfg(target_os = "windows")]
+    {
+        crate::windows::relaunch::run_elevated_and_wait(exe, args, hidden)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let status = std::process::Command::new(exe)
+            .args(args.split_whitespace())
+            .status()?;
+        let _ = hidden;
+        Ok(status.code().unwrap_or(1))
     }
 }

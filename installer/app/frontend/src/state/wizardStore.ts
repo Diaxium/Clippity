@@ -23,6 +23,7 @@ import type {
   ProgressKind,
   ProgressTask,
   ReleaseChannel,
+  UpdateInfo,
   WizardFlow,
   StepId,
 } from "@clippity/installer-shared";
@@ -33,7 +34,14 @@ import { hasTauri } from "@services/tauri";
 
 /** Ordered step rail per flow — mirrors Rust `wizard::steps_for`. */
 export const FLOW_STEPS: Record<WizardFlow, StepId[]> = {
-  setup: ["welcome", "options", "components", "review", "installing", "complete"],
+  setup: [
+    "welcome",
+    "options",
+    "components",
+    "review",
+    "installing",
+    "complete",
+  ],
   maintenance: [
     "maintenance",
     "check-updates",
@@ -118,6 +126,7 @@ interface WizardState {
   // ---- update / maintenance ----
   channel: ReleaseChannel;
   checkedForUpdates: boolean;
+  updateInfo: UpdateInfo | null;
 
   // ---- uninstall selections ----
   removeIds: string[];
@@ -128,6 +137,7 @@ interface WizardState {
   progress: ProgressState | null;
   /** Message from a failed operation, or null while things are fine. */
   operationError: string | null;
+  updateScheduled: boolean;
 
   // ---- navigation ----
   setFlow: (flow: WizardFlow) => void;
@@ -147,6 +157,7 @@ interface WizardState {
   // ---- update / maintenance mutations ----
   setChannel: (channel: ReleaseChannel) => void;
   markCheckedForUpdates: () => void;
+  setUpdateInfo: (info: UpdateInfo) => void;
 
   // ---- uninstall mutations ----
   toggleRemove: (id: string) => void;
@@ -161,7 +172,8 @@ interface WizardState {
   startOperation: (
     kind: ProgressKind,
     landOn: StepId,
-    plan?: InstallPlan
+    plan?: InstallPlan,
+    whenAppCloses?: boolean
   ) => Promise<void>;
   /** Record a failed operation and mark the running row as failed. */
   failOperation: (err: unknown) => void;
@@ -183,7 +195,7 @@ const defaultOptions: InstallOptions = {
   createDesktopShortcut: true,
   startAtLogin: false,
   automaticUpdates: true,
-  helpImprove: true,
+  helpImprove: false,
   scope: "current-user",
   fileAssociations: true,
 };
@@ -208,7 +220,8 @@ function clearProgressTimer() {
 async function dispatch(
   kind: ProgressKind,
   state: WizardState,
-  explicitPlan?: InstallPlan
+  explicitPlan?: InstallPlan,
+  whenAppCloses = false
 ): Promise<void> {
   if (kind === "uninstall") {
     await backend.runUninstall({
@@ -220,7 +233,7 @@ async function dispatch(
   }
 
   if (kind === "update") {
-    await backend.runUpdate();
+    await backend.runUpdate(whenAppCloses);
     return;
   }
 
@@ -248,7 +261,9 @@ function snapshot(kind: ProgressKind, completed: number): ProgressState {
       i < completed ? "completed" : i === completed ? "in-progress" : "pending",
   }));
   const done = completed >= rows.length;
-  const percent = Math.round((Math.min(completed, rows.length) / rows.length) * 100);
+  const percent = Math.round(
+    (Math.min(completed, rows.length) / rows.length) * 100
+  );
   return { kind, percent, tasks, done };
 }
 
@@ -263,6 +278,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   channel: "stable",
   checkedForUpdates: false,
+  updateInfo: null,
 
   removeIds: defaultRemoveIds,
   exportSettings: false,
@@ -270,6 +286,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   progress: null,
   operationError: null,
+  updateScheduled: false,
 
   setFlow: (flow) => {
     clearProgressTimer();
@@ -279,11 +296,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       history: [],
       progress: null,
       operationError: null,
+      updateScheduled: false,
     });
   },
 
-  goToStep: (step) =>
-    set((s) => ({ step, history: [...s.history, s.step] })),
+  goToStep: (step) => set((s) => ({ step, history: [...s.history, s.step] })),
 
   back: () =>
     set((s) => {
@@ -328,9 +345,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   setChannel: (channel) => set({ channel }),
   markCheckedForUpdates: () => set({ checkedForUpdates: true }),
+  setUpdateInfo: (updateInfo) => set({ updateInfo, checkedForUpdates: true }),
 
   toggleRemove: (id) =>
     set((s) => {
+      if (id === "app" || id === "shortcuts") return {};
       const has = s.removeIds.includes(id);
       return {
         removeIds: has
@@ -342,9 +361,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setExportSettings: (value) => set({ exportSettings: value }),
   setAcknowledged: (value) => set({ acknowledged: value }),
 
-  startOperation: async (kind, landOn, plan) => {
+  startOperation: async (kind, landOn, plan, whenAppCloses) => {
     clearProgressTimer();
-    set({ progress: snapshot(kind, 0), operationError: null });
+    set({
+      progress: snapshot(kind, 0),
+      operationError: null,
+      updateScheduled: kind === "update" && whenAppCloses === true,
+    });
 
     // No backend in browser preview — walk the checklist on a timer so
     // every screen stays reachable without the Tauri shell.
@@ -366,6 +389,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     // Subscribe before triggering the command: the backend emits its first
     // snapshot synchronously, and a late listener would miss it.
     const unlisten = await backend.onProgress((event) => {
+      if (event.error) {
+        unlisten();
+        get().failOperation(event.error);
+        return;
+      }
       set({ progress: event });
       if (event.done) {
         unlisten();
@@ -374,7 +402,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     });
 
     try {
-      await dispatch(kind, get(), plan);
+      await dispatch(kind, get(), plan, whenAppCloses);
     } catch (err) {
       unlisten();
       get().failOperation(err);
@@ -412,11 +440,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       hydratedFromInstalled: false,
       channel: "stable",
       checkedForUpdates: false,
+      updateInfo: null,
       removeIds: defaultRemoveIds,
       exportSettings: false,
       acknowledged: false,
       progress: null,
       operationError: null,
+      updateScheduled: false,
     });
   },
 }));

@@ -35,10 +35,15 @@ use installer_domain::cli::{self, ParsedCli};
 /// Returns the process exit code so unattended deployment can branch on the
 /// result (see [`installer_domain::cli::ExitCode`]).
 pub fn run() -> ProcessExitCode {
-    installer_infra::logging::init();
-
     let args: Vec<String> = std::env::args().skip(1).collect();
-    match cli::parse(&args) {
+    let parsed = cli::parse(&args);
+    let requested_log = match &parsed {
+        ParsedCli::Run(cmd) => cmd.log_path.as_deref().map(std::path::Path::new),
+        _ => None,
+    };
+    installer_infra::logging::init_to(requested_log);
+
+    match parsed {
         ParsedCli::Help => {
             println!("{}", cli::help_text());
             ProcessExitCode::SUCCESS
@@ -116,6 +121,7 @@ fn run_gui() {
             app::commands::resolve_plan,
             app::commands::get_installed_configuration,
             app::commands::check_updates,
+            app::commands::defer_update,
             app::commands::assess_repair,
             app::commands::check_recovery,
             app::commands::removal_summary,

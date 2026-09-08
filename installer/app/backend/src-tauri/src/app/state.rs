@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use installer_domain::cli::{self, ParsedCli};
 use installer_domain::install::InstallPlan;
 use installer_domain::uninstall::RemovalSelection;
+use installer_domain::update::UpdatePackage;
 use installer_domain::wizard::{launch_route_for, LaunchRoute, ProductInfo};
 use installer_infra::paths::InstallerPaths;
 use installer_services::{elevation, manifest};
@@ -27,6 +28,9 @@ pub struct AppState {
     /// when this process was launched elevated to finish an uninstall the
     /// unelevated instance could not; taken once by the frontend on mount.
     pub pending_removal: Mutex<Option<RemovalSelection>>,
+    /// Exact release candidate returned by the most recent successful check.
+    /// Apply consumes this instead of accepting a webview-supplied URL/hash.
+    pub pending_update: Mutex<Option<UpdatePackage>>,
     /// Where the frontend should start when launched interactively with a
     /// maintenance mode (`--uninstall` / `--modify` from the Add/Remove
     /// Programs buttons). `None` for a plain setup launch or a resume.
@@ -60,6 +64,7 @@ impl AppState {
             operation_running: Mutex::new(false),
             pending_plan: Mutex::new(pending_plan),
             pending_removal: Mutex::new(pending_removal),
+            pending_update: Mutex::new(None),
             launch_route,
         }
     }

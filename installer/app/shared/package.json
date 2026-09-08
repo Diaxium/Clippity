@@ -1,6 +1,6 @@
 {
   "name": "@clippity/installer-shared",
-  "version": "1.5.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "Shared IPC wire-format contracts between the Clippity Setup frontend and the Tauri backend.",

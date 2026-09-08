@@ -21,6 +21,7 @@
 //!                  (UIA per-element region trees stay with the later Object port)
 
 pub mod audio;
+pub mod autostart;
 pub mod capture_shield;
 pub mod chrome;
 pub mod clipboard_files;

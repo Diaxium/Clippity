@@ -18,12 +18,14 @@ import { StepShell } from "../components/StepShell";
 function DataRow({ cat }: { cat: DataCategory }) {
   const checked = useWizardStore((s) => s.removeIds.includes(cat.id));
   const toggle = useWizardStore((s) => s.toggleRemove);
+  const required = cat.id === "app" || cat.id === "shortcuts";
   return (
-    <label className="flex cursor-pointer items-center gap-3 py-2.5">
+    <label className="flex items-center gap-3 py-2.5">
       <Checkbox
         checked={checked}
         onChange={() => toggle(cat.id)}
         label={`Remove ${cat.name}`}
+        disabled={required}
       />
       <span className="flex-1 text-[13px] text-[var(--color-ink)]">
         {cat.name}
@@ -36,7 +38,7 @@ function DataRow({ cat }: { cat: DataCategory }) {
             : "bg-[var(--color-overlay-2)] text-[var(--color-slate)]"
         )}
       >
-        {checked ? "Will be removed" : "Kept"}
+        {required ? "Required" : checked ? "Will be removed" : "Kept"}
       </span>
       <span className="w-16 text-right text-[12.5px] tabular-nums text-[var(--color-slate)]">
         {formatBytes(cat.sizeBytes)}

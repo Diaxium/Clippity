@@ -35,24 +35,23 @@ impl Default for InstallOptions {
             create_desktop_shortcut: true,
             start_at_login: false,
             automatic_updates: true,
-            help_improve: true,
+            help_improve: false,
             scope: InstallScope::CurrentUser,
             file_associations: true,
         }
     }
 }
 
-/// The Options-step choices that leave **no other trace on the machine**,
-/// and therefore have to be recorded in the installation manifest for
-/// anything later to know about them.
+/// Options-step preferences recorded in the installation manifest so Modify,
+/// Update, Uninstall, and the installed app can preserve/reconcile them.
 ///
-/// The other three are already recoverable from what the install did:
+/// Destination, scope, and shortcut/startup state are also recoverable from
+/// concrete installation state:
 /// `create_desktop_shortcut` from [`crate::state::InstallationManifest::shortcuts`],
 /// `start_at_login` from its own manifest field (uninstall needs it to
 /// remove the `Run` value), and `destination`/`scope` from the recorded
-/// directories. These three configure the *application*, not Windows, so
-/// without this record a Modify run would have nothing to pre-fill and the
-/// app would have nothing to honor — see [`crate::provisioning`].
+/// directories. The preferences below still need an authoritative value for
+/// later maintenance and application provisioning — see [`crate::provisioning`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstallPreferences {

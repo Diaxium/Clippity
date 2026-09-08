@@ -145,6 +145,14 @@ fn reverse_registry(action: &Action) -> InstallerResult<()> {
     if target.contains(r"currentversion\run") {
         return windows_ops::set_start_at_login("", false);
     }
+    if let Some(hive) = action.target.strip_prefix("file-associations:") {
+        let hive = if hive.eq_ignore_ascii_case("LocalMachine") {
+            installer_domain::state::RegistryHive::LocalMachine
+        } else {
+            installer_domain::state::RegistryHive::CurrentUser
+        };
+        return windows_ops::set_file_associations(hive, "", false);
+    }
     tracing::warn!(target = %action.target, "no reversal mapped for registry action");
     Ok(())
 }

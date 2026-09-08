@@ -1,7 +1,7 @@
 {
   "name": "clippity-installer-frontend",
   "private": true,
-  "version": "1.5.0",
+  "version": "0.3.1",
   "type": "module",
   "description": "Clippity Setup wizard — install, modify, update, repair, and uninstall UI.",
   "scripts": {

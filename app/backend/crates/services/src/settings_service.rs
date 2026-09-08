@@ -676,9 +676,10 @@ mod tests {
     }
 
     #[test]
-    fn seeding_does_not_enable_a_setting_the_install_cannot_offer() {
-        // Start-at-login ticked but the startup helper declined — the app
-        // hides that row, so it must not be seeded on behind it.
+    fn seeding_honors_startup_without_the_legacy_component_flag() {
+        // Startup is an integration preference in current installers, not a
+        // separately packaged component. Older/minimal component lists must
+        // therefore not discard the user's explicit choice.
         let h = harness();
         h.service.seed_from_installer(&provisioning(
             "contradiction",
@@ -688,7 +689,7 @@ mod tests {
                 "preferences": { "startAtLogin": true }
             }"#,
         ));
-        assert!(!h.service.snapshot().general.start_on_startup);
+        assert!(h.service.snapshot().general.start_on_startup);
     }
 
     #[test]

@@ -379,11 +379,8 @@ pub struct GeneralSettings {
     /// Whether Clippity may check for and apply updates on its own.
     ///
     /// Seeded on first launch from the installer's "Enable automatic
-    /// updates" answer. **Persisted intent only in this build** — there is
-    /// no updater yet, so nothing reads this to go to the network. It is
-    /// stored (and surfaced in Settings) so the wizard's answer is not
-    /// silently discarded, and so the updater port has the user's
-    /// preference waiting for it rather than having to ask again.
+    /// updates" answer. Managed installs read it at startup before invoking
+    /// the maintenance worker's daily-throttled update check.
     #[serde(default = "default_true")]
     pub automatic_updates: bool,
     /// Whether Clippity may share anonymous usage and diagnostic data.
@@ -412,7 +409,7 @@ impl Default for GeneralSettings {
             name_template: String::new(),
             start_on_startup: false,
             automatic_updates: true,
-            help_improve: true,
+            help_improve: false,
             onboarded: false,
         }
     }

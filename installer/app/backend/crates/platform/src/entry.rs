@@ -78,8 +78,8 @@ impl UninstallEntry {
             uninstall_string: format!("{quoted} --uninstall"),
             quiet_uninstall_string: format!("{quoted} --uninstall --silent"),
             modify_path: format!("{quoted} --modify"),
-            url_info_about: "https://clippity.app".to_string(),
-            help_link: "https://clippity.app/help".to_string(),
+            url_info_about: "https://github.com/Diaxium/Clippity".to_string(),
+            help_link: "https://github.com/Diaxium/Clippity#readme".to_string(),
             estimated_size_kib: (installed_bytes / 1024) as u32,
         }
     }

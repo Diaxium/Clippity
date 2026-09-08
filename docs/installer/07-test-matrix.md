@@ -1,79 +1,63 @@
-# Test Matrix & Evidence
+# Installer Test Matrix & Release Evidence
 
-Covers task Phase 19. Two parts: the automated tests that run today, and the
-manual Windows matrix to run on disposable VMs / Windows Sandbox before shipping.
+Current for Clippity 0.3.1 (2026-09-08). The installer is verified at three
+levels: pure policy tests, filesystem/transaction service tests, and a packaged
+Windows lifecycle smoke test performed before publishing.
 
-## Automated tests (run this pass)
+## Automated suites
 
-All green on 2026-07-24. Run with the rename workaround for the UAC-blocked
-`installer_*` binaries (see [installer-uac-exe-naming] / the installer README).
+| Suite              | Coverage                                                                                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App frontend       | Settings persistence and UI behavior across the application                                                                                                             |
+| App Rust workspace | Provisioning, installed-file routing, settings, capture, encoding, storage, and platform behavior                                                                       |
+| Installer domain   | CLI, install planning, semantic-version/channel policy, detection, repair, removal selection, progress, recovery, and rollback decisions                                |
+| Installer services | GitHub release selection, required SHA-256 digest and size validation, journalled install/update, repair, safe data removal, settings export, and unsafe-root rejection |
+| Static checks      | Both TypeScript workspaces, both Rust workspaces, rustfmt, clippy with warnings denied, ESLint, and dependency audit                                                    |
 
-| Suite | Count | Notable coverage |
-| --- | --- | --- |
-| `installer-domain` | 23 | plan building & sizing; elevation policy incl. protected-root casing/separator/prefix-sibling edge cases; version compare; removal summary; **detection `assess` state machine** (not-installed / legacy / partial / damaged / older / same / newer / schema-too-new); progress snapshot ordering; flow shapes |
-| `installer-services` | 7 | resume-arg parsing; **UTC clock civil-date conversion**; **uninstall preserves unknown files**; **empty install dir removed after owned files** |
+Canonical commands:
 
-```bash
-# from installer/app/backend
-cargo test --no-run -p installer-domain -p installer-services
-# copy each installer_* test exe to a name without install/setup, then run it
+```powershell
+pnpm check
+pnpm test:js
+pnpm lint
+cargo test --manifest-path app/backend/Cargo.toml --workspace
+cargo clippy --manifest-path app/backend/Cargo.toml --workspace --all-targets -- -D warnings
+
+Push-Location installer
+pnpm check
+cargo test --manifest-path app/backend/Cargo.toml --workspace
+cargo clippy --manifest-path app/backend/Cargo.toml --workspace --all-targets -- -D warnings
+Pop-Location
 ```
 
-`cargo check --workspace` and `pnpm check` (tsc for shared + frontend, cargo for
-backend) both pass.
+## Lifecycle matrix
 
-The two uninstall-safety tests are the most important: they encode the guarantee
-that a Clippity installed into a shared folder cannot delete unrelated files.
+| Workflow         | Required verification                                                                                                                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fresh install    | Custom per-user destination, payload hash, manifest and installation identity, ARP entry, shortcuts, selected capabilities, file associations, and seeded app preferences                      |
+| Update           | Older packaged Setup followed by 0.3.1 bundled-update handoff; identity, destination, scope, components, preferences, and user data retained; executable replaced with final build             |
+| Modify           | Component selection changes without moving the install or reverting preferences changed inside the app                                                                                         |
+| Repair           | Missing/corrupt owned executable restored from the embedded payload; manifest, associations, shortcuts, settings, and captures preserved                                                       |
+| Uninstall        | App/integrations always removed; cache, settings, and content independently honored; export created before settings removal; unknown files retained; unsafe recursive roots rejected           |
+| Automatic update | Managed app honors `automaticUpdates`; maintenance check is daily-throttled, channel-aware, digest/size verified, waits for the app, applies transactionally, and relaunches unless suppressed |
 
-## Manual Windows matrix (pre-ship, disposable VMs / Sandbox)
+## Production artifact gate
 
-Test both clean and previously-used environments. Legend: **[R]**eady to test
-against the implemented engine · **[P]**ending an unimplemented feature.
+Before publishing a release:
 
-### Installation
-- [R] Clean per-user install · [R] clean per-machine (elevated) · [R] custom dir
-- [R] Path with spaces · [R] non-ASCII username · [P] low disk space (no check yet)
-- [R] UAC denied (stays on Review) · [R] cancelled · [R] installer force-closed
-  (detection reports `partial` next launch)
-- [R] Same version already installed (detection `same-version`) · [R] newer
-  installed (`newer-version`, downgrade refused) · [R] older (`older-version`)
-- [R] Legacy MSI/NSIS present → detection `legacy-unmanaged`
+1. Confirm `main`, `origin/main`, the tag target, and the build commit are the
+   same commit with a clean tracked working tree.
+2. Run the full production build and stage only
+   `Clippity-<version>-Setup.exe`, `Clippity-<version>-portable.zip`, and
+   `SHA256SUMS.txt`.
+3. Run the fresh/update/modify/repair/uninstall packaged lifecycle smoke test
+   in an isolated data root and remove all temporary integrations afterward.
+4. Recompute both SHA-256 values locally and compare them byte-for-byte with
+   `SHA256SUMS.txt`.
+5. Upload, download the published assets again, recompute their hashes, and
+   verify the GitHub asset digests and sizes before declaring the release
+   complete.
 
-### Modify
-- [P] Add/remove one optional component (needs decomposed payload) ·
-  [R] cancel/crash during modify (manifest not overwritten until commit)
-
-### Repair
-- [R] Detection flags `damaged` when exe missing · [P] per-file corruption
-  restore from `sha256` · [R] user settings/captures preserved (never touched)
-
-### Update
-- [P] Normal update / with app open / locked files / corrupt download / invalid
-  signature / network interruption / cancel / failed migration / rollback /
-  reboot-required — **update apply is still simulated; coordinate with the app's
-  Tauri updater first (ADR).**
-
-### Reinstall
-- [R] Reinstall-over-running (exe rename-away) · [P] preserve/reset/clean
-  variants · [R] reinstall after partially failed uninstall (detection routes)
-
-### Uninstall — verify after each, by inspection
-- [R] Normal · [R] while app running (locked exe → reboot-scheduled) ·
-  [R] unknown files in app dir **preserved** · [R] preserve/remove settings ·
-  [R] preserve captures (default) · [R] explicit full data removal (gated)
-- [R] ARP entry removed · [R] shortcuts removed (recorded paths) · [R] Run value
-  removed · [P] services/protocols/tasks (none created, nothing to remove) ·
-  [R] maintenance exe self-removal (reboot fallback) · [P] temp cleanup-worker
-  removal (worker not built)
-
-### Recovery
-- [R] Kill during staging/apply → next launch detects `partial`/`damaged` ·
-  [P] automatic resume of a specific interrupted op (needs journal) ·
-  [R] re-run after incomplete op is safe (idempotent reversals)
-
-### Post-uninstall inspection checklist
-Program Files · ProgramData · LocalAppData · Roaming AppData · Start Menu ·
-Desktop · `HK{CU,LM}\…\Uninstall\Clippity` · `…\Run\Clippity` · Services · Task
-Scheduler · Startup · Firewall · Env vars · running processes · Settings ›
-Installed apps. **Do not declare uninstall successful from the wizard's success
-page alone.**
+Unsigned binaries remain an explicit release-note limitation. Update packages
+are accepted only when GitHub supplies the expected `sha256:` asset digest and
+the downloaded byte count and digest both match.

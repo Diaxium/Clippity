@@ -313,6 +313,18 @@ fn restore_integrations(
     maintenance_dir: &Path,
     clock: &clock::Utc,
 ) -> InstallerResult<()> {
+    let primary_exe = manifest
+        .primary_exe()
+        .ok_or_else(|| other("cannot repair integrations: manifest records no core exe"))?;
+
+    // Preferences are declarative: repair reasserts them even when the ARP
+    // entry and shortcuts happen to be healthy.
+    windows_ops::set_file_associations(
+        installer_domain::state::RegistryHive::for_scope(manifest.scope),
+        primary_exe,
+        manifest.preferences.file_associations,
+    )?;
+
     // Recorded shortcuts that vanished, re-created at their exact paths.
     for s in &manifest.shortcuts {
         let path = Path::new(&s.path);
@@ -332,9 +344,6 @@ fn restore_integrations(
     // *installed* version's facts, not this build's.
     if windows_ops::uninstall_hive_present().is_none() {
         let maintenance_exe = Path::new(&manifest.maintenance_directory).join(MAINTENANCE_EXE);
-        let primary_exe = manifest
-            .primary_exe()
-            .ok_or_else(|| other("cannot repair registration: manifest records no core exe"))?;
         let core_bytes = manifest
             .files
             .iter()

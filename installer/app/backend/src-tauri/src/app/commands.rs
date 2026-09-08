@@ -99,8 +99,27 @@ pub fn resolve_plan(options: InstallOptions, selected: Vec<String>) -> InstallPl
 pub fn get_installed_configuration(state: State<'_, AppState>) -> Option<InstalledConfiguration> {
     let paths = state.paths.lock().expect("paths lock").clone();
     let (_, m) = installer_services::detect::locate_manifest(&paths)?;
+    let mut options = m.installed_options();
+    // The app is allowed to change these preferences after installation.
+    // Reflect its current persisted values when Modify opens so applying an
+    // unrelated component change never reverts a choice made in Settings.
+    if let Ok(bytes) = std::fs::read(paths.local_data.join("data").join("settings.json")) {
+        if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) {
+            if let Some(general) = value.get("general") {
+                if let Some(value) = general.get("startOnStartup").and_then(|v| v.as_bool()) {
+                    options.start_at_login = value;
+                }
+                if let Some(value) = general.get("automaticUpdates").and_then(|v| v.as_bool()) {
+                    options.automatic_updates = value;
+                }
+                if let Some(value) = general.get("helpImprove").and_then(|v| v.as_bool()) {
+                    options.help_improve = value;
+                }
+            }
+        }
+    }
     Some(InstalledConfiguration {
-        options: m.installed_options(),
+        options,
         selected_components: m.installed_components.clone(),
     })
 }
@@ -115,8 +134,25 @@ pub struct InstalledConfiguration {
 
 /// Check the given channel for a newer version than `installed`.
 #[tauri::command]
-pub fn check_updates(installed: String, channel: ReleaseChannel) -> UpdateInfo {
-    update_service::check(&installed, channel)
+pub fn check_updates(
+    state: State<'_, AppState>,
+    channel: ReleaseChannel,
+) -> InstallerResult<UpdateInfo> {
+    let paths = state.paths.lock().expect("paths lock").clone();
+    let installed = installer_services::detect::locate_manifest(&paths)
+        .map(|(_, manifest)| manifest.version)
+        .ok_or_else(|| InstallerError::Invalid("nothing is installed".into()))?;
+    let (info, package) = update_service::check(&installed, channel)?;
+    update_service::persist_channel(&paths, channel)?;
+    *state.pending_update.lock().expect("update lock") = package;
+    Ok(info)
+}
+
+/// Persist "Remind me later" for the release currently shown.
+#[tauri::command]
+pub fn defer_update(state: State<'_, AppState>, version: String) -> InstallerResult<()> {
+    let paths = state.paths.lock().expect("paths lock").clone();
+    update_service::defer(&paths, &version)
 }
 
 /// Removed/kept byte totals for a proposed removal selection.
@@ -246,7 +282,7 @@ pub fn take_pending_removal(state: State<'_, AppState>) -> Option<RemovalSelecti
 pub struct MaintenancePaths {
     /// The install directory (what "Open folder" opens).
     pub app_dir: String,
-    /// The retained user-data root, `%APPDATA%\Clippity` (what the
+    /// The retained user-data root, `%LOCALAPPDATA%\Clippity` (what the
     /// uninstall-complete "Open retained data folder" opens).
     pub data_dir: String,
     /// This run's log file (what "View log" opens).
@@ -263,7 +299,7 @@ pub fn maintenance_paths(state: State<'_, AppState>) -> MaintenancePaths {
         .unwrap_or_else(|| paths.install_dir.display().to_string());
     MaintenancePaths {
         app_dir,
-        data_dir: paths.app_data.display().to_string(),
+        data_dir: paths.local_data.display().to_string(),
         log_file: paths.log_file.display().to_string(),
     }
 }
@@ -272,14 +308,18 @@ pub fn maintenance_paths(state: State<'_, AppState>) -> MaintenancePaths {
 /// the primary executable from the manifest and spawns it detached; errors
 /// if nothing is installed to launch.
 #[tauri::command]
-pub fn launch_app(state: State<'_, AppState>) -> InstallerResult<()> {
+pub fn launch_app(state: State<'_, AppState>, view: Option<String>) -> InstallerResult<()> {
     let paths = state.paths.lock().expect("paths lock").clone();
     let exe = installer_services::detect::locate_manifest(&paths)
         .and_then(|(_, m)| m.primary_exe().map(str::to_string));
     match exe {
         Some(exe) => {
             tracing::info!(exe = %exe, "launching installed application");
-            std::process::Command::new(&exe).spawn()?;
+            let mut command = std::process::Command::new(&exe);
+            if view.as_deref() == Some("settings") {
+                command.arg("--settings");
+            }
+            command.spawn()?;
             Ok(())
         }
         None => Err(InstallerError::Invalid(
@@ -326,6 +366,10 @@ pub fn run_repair(app: AppHandle) -> InstallerResult<()> {
         let emit = progress_emitter(&app);
         if let Err(e) = repair_service::run(&product, &paths, &payload, &emit) {
             tracing::error!(error = %e, "repair failed");
+            let _ = app.emit(
+                PROGRESS_EVENT,
+                installer_domain::progress::failure(ProgressKind::Repair, e.to_string()),
+            );
         }
         end_operation(&app);
     });
@@ -343,12 +387,29 @@ pub fn check_recovery(state: State<'_, AppState>) -> InstallerResult<RecoveryOut
 
 /// Download and apply the latest update.
 #[tauri::command]
-pub fn run_update(app: AppHandle) -> InstallerResult<()> {
+pub fn run_update(app: AppHandle, when_app_closes: bool) -> InstallerResult<()> {
+    let (package, paths) = {
+        let state = app.state::<AppState>();
+        let package = state
+            .pending_update
+            .lock()
+            .expect("update lock")
+            .clone()
+            .ok_or_else(|| {
+                InstallerError::Invalid("check for updates before applying one".into())
+            })?;
+        let paths = state.paths.lock().expect("paths lock").clone();
+        (package, paths)
+    };
     begin_operation(&app)?;
     std::thread::spawn(move || {
         let emit = progress_emitter(&app);
-        if let Err(e) = update_service::run(&emit) {
+        if let Err(e) = update_service::run(&package, &paths, when_app_closes, true, &emit) {
             tracing::error!(error = %e, "update failed");
+            let _ = app.emit(
+                PROGRESS_EVENT,
+                installer_domain::progress::failure(ProgressKind::Update, e.to_string()),
+            );
         }
         end_operation(&app);
     });
@@ -357,10 +418,18 @@ pub fn run_update(app: AppHandle) -> InstallerResult<()> {
 
 /// Remove Clippity per the user's data-removal selection.
 #[tauri::command]
-pub fn run_uninstall(app: AppHandle, selection: RemovalSelection) -> InstallerResult<()> {
+pub fn run_uninstall(app: AppHandle, mut selection: RemovalSelection) -> InstallerResult<()> {
     // Validate up front so a bad request fails synchronously.
     if !selection.acknowledged {
         return Err(InstallerError::Invalid("removal not acknowledged".into()));
+    }
+    // Program removal and integration cleanup are intrinsic to uninstall;
+    // the UI cannot turn them off, and the command boundary enforces that
+    // invariant for direct IPC/CLI callers too.
+    for required in ["app", "shortcuts"] {
+        if !selection.remove_ids.iter().any(|id| id == required) {
+            selection.remove_ids.push(required.to_string());
+        }
     }
     begin_operation(&app)?;
     let paths = {
@@ -372,6 +441,10 @@ pub fn run_uninstall(app: AppHandle, selection: RemovalSelection) -> InstallerRe
         let emit = progress_emitter(&app);
         if let Err(e) = uninstall_service::run(&selection, &paths, &emit) {
             tracing::error!(error = %e, "uninstall failed");
+            let _ = app.emit(
+                PROGRESS_EVENT,
+                installer_domain::progress::failure(ProgressKind::Uninstall, e.to_string()),
+            );
         }
         end_operation(&app);
     });
@@ -401,6 +474,10 @@ fn spawn_install(app: AppHandle, kind: ProgressKind, plan: InstallPlan) -> Insta
         let emit = progress_emitter(&app);
         if let Err(e) = install_service::run(kind, &plan, &product, &paths, &payload, &emit) {
             tracing::error!(error = %e, "install failed");
+            let _ = app.emit(
+                PROGRESS_EVENT,
+                installer_domain::progress::failure(kind, e.to_string()),
+            );
         }
         end_operation(&app);
     });

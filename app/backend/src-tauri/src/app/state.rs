@@ -7,7 +7,7 @@
 use std::sync::{Arc, Mutex};
 
 use crate::tray_service::TrayService;
-use clippity_domain::dashboard::DashboardRequest;
+use clippity_domain::dashboard::{DashboardRequest, DashboardView};
 use clippity_infra::error::AppResult;
 use clippity_infra::paths::AppPaths;
 use clippity_services::capture_service::CaptureService;
@@ -146,7 +146,61 @@ impl AppState {
             vision_service: VisionService::new(),
             settings_service: settings,
             provisioning_service: provisioning,
-            pending_dashboard_view: Mutex::new(None),
+            pending_dashboard_view: Mutex::new(dashboard_request_from_args(std::env::args_os())),
         })
+    }
+}
+
+/// Turn installer launch routes and Windows file-association arguments into
+/// the same dashboard request used by in-app navigation.
+fn dashboard_request_from_args(
+    args: impl IntoIterator<Item = std::ffi::OsString>,
+) -> Option<DashboardRequest> {
+    let args = args.into_iter().skip(1);
+    for arg in args {
+        if arg == "--settings" {
+            return Some(DashboardRequest {
+                view: DashboardView::Settings,
+                capture_id: None,
+            });
+        }
+        let path = std::path::PathBuf::from(&arg);
+        if !path.is_file() {
+            continue;
+        }
+        let extension = path
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+        let view = match extension.as_str() {
+            "png" | "jpg" | "jpeg" | "webp" | "gif" | "bmp" => DashboardView::Editor,
+            "mp4" => DashboardView::Studio,
+            _ => continue,
+        };
+        return Some(DashboardRequest {
+            view,
+            capture_id: Some(path.to_string_lossy().into_owned()),
+        });
+    }
+    None
+}
+
+#[cfg(test)]
+mod installer_launch_tests {
+    use super::*;
+
+    #[test]
+    fn settings_switch_routes_to_settings() {
+        let request = dashboard_request_from_args(["Clippity.exe".into(), "--settings".into()])
+            .expect("route");
+        assert_eq!(request.view, DashboardView::Settings);
+    }
+
+    #[test]
+    fn unsupported_or_missing_files_are_ignored() {
+        assert!(
+            dashboard_request_from_args(["Clippity.exe".into(), "missing.txt".into()]).is_none()
+        );
     }
 }

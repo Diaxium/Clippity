@@ -11,11 +11,14 @@
 import type {
   Detection,
   InstalledConfiguration,
+  InstallStatus,
   InstallOptions,
   InstallPlan,
   LaunchRoute,
   ProgressEvent,
   RemovalSelection,
+  ReleaseChannel,
+  UpdateInfo,
 } from "@clippity/installer-shared";
 
 import { hasTauri, invoke } from "./tauri";
@@ -31,6 +34,11 @@ const PROGRESS_EVENT = "installer://progress";
  */
 export function detectInstallation(): Promise<Detection | undefined> {
   return invoke<Detection>("detect_installation");
+}
+
+/** Version/location snapshot from the authoritative installation manifest. */
+export function getInstallStatus(): Promise<InstallStatus | undefined> {
+  return invoke<InstallStatus>("get_install_status");
 }
 
 /**
@@ -123,13 +131,25 @@ export async function getMaintenancePaths(): Promise<MaintenancePaths | null> {
 }
 
 /** Launch the installed application (no-op in preview). */
-export async function launchApp(): Promise<void> {
-  await invoke<void>("launch_app");
+export async function launchApp(view?: "settings"): Promise<void> {
+  await invoke<void>("launch_app", { view: view ?? null });
 }
 
 /** Download and apply the latest update. */
-export function runUpdate(): Promise<void | undefined> {
-  return invoke<void>("run_update");
+export function runUpdate(whenAppCloses = false): Promise<void | undefined> {
+  return invoke<void>("run_update", { whenAppCloses });
+}
+
+/** Check the selected release channel using the installed manifest version. */
+export function checkUpdates(
+  channel: ReleaseChannel
+): Promise<UpdateInfo | undefined> {
+  return invoke<UpdateInfo>("check_updates", { channel });
+}
+
+/** Persist a one-week reminder deferral for the release currently shown. */
+export function deferUpdate(version: string): Promise<void | undefined> {
+  return invoke<void>("defer_update", { version });
 }
 
 /**
@@ -170,7 +190,9 @@ export async function elevateAndUninstall(
  * elevation, if any. Consumed on first read.
  */
 export async function takePendingRemoval(): Promise<RemovalSelection | null> {
-  return (await invoke<RemovalSelection | null>("take_pending_removal")) ?? null;
+  return (
+    (await invoke<RemovalSelection | null>("take_pending_removal")) ?? null
+  );
 }
 
 /** Remove Clippity per the user's data-removal selection. */

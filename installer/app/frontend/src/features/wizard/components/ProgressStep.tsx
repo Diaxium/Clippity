@@ -23,8 +23,7 @@ const COPY: Record<
   },
   repair: {
     title: "Repairing Clippity",
-    subtitle:
-      "Please wait while Clippity restores missing or damaged files.",
+    subtitle: "Please wait while Clippity restores missing or damaged files.",
     note: "Your settings, captures, and data will be preserved. Please don't close this window.",
   },
   update: {
@@ -42,8 +41,8 @@ const COPY: Record<
 
 /**
  * The shared progress screen for every long-running operation. It reads
- * the live `progress` snapshot from the store (driven by the simulated
- * runner, or by `installer://progress` events under Tauri) and renders a
+ * the live `progress` snapshot from the store (driven by the browser-preview
+ * runner, or by real `installer://progress` events under Tauri) and renders a
  * percentage bar plus the task checklist.
  */
 export function ProgressStep() {
@@ -74,7 +73,8 @@ export function ProgressStep() {
       <div className="pb-6">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-[12.5px] text-[var(--color-slate)]">
-            {tasks.find((t) => t.state === "in-progress")?.label ?? "Finishing up"}
+            {tasks.find((t) => t.state === "in-progress")?.label ??
+              "Finishing up"}
             …
           </span>
           <span className="text-[13px] font-semibold tabular-nums text-[var(--color-ink)]">

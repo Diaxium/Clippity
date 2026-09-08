@@ -143,8 +143,9 @@ impl Payload {
         // and the write are retried: a just-written copy is briefly held by
         // antivirus / the search indexer, so an immediate replace can fail
         // transiently even when Clippity itself is not running.
-        if target.exists() {
-            let backup = destination.join(format!("{}.old", self.manifest.exe));
+        let backup = destination.join(format!("{}.old", self.manifest.exe));
+        let replaced = target.exists();
+        if replaced {
             let _ = fs::remove_file(&backup);
             tracing::debug!(from = %target.display(), to = %backup.display(), "install_to: rename existing aside");
             retry::with_retry(|| fs::rename(&target, &backup)).map_err(|e| {
@@ -156,7 +157,13 @@ impl Payload {
         }
 
         tracing::debug!(target = %target.display(), bytes = self.bytes.len(), "install_to: write payload");
-        retry::with_retry(|| fs::write(&target, self.bytes))?;
+        if let Err(error) = retry::with_retry(|| fs::write(&target, self.bytes)) {
+            let _ = fs::remove_file(&target);
+            if replaced {
+                let _ = fs::rename(&backup, &target);
+            }
+            return Err(error.into());
+        }
         tracing::info!(dest = %target.display(), "payload installed");
         Ok(target)
     }

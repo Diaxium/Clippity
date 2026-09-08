@@ -64,7 +64,7 @@ export function GeneralPanel({ value, onChange }: GeneralPanelProps) {
         {capabilities.startAtLogin ? (
           <Row
             label="Start Clippity on system startup"
-            description="Your choice is saved now — automatic startup itself arrives in an upcoming release."
+            description="Launch Clippity automatically when you sign in to Windows."
             control={
               <ToggleSwitch
                 checked={value.startOnStartup}
@@ -97,7 +97,7 @@ export function GeneralPanel({ value, onChange }: GeneralPanelProps) {
       <SectionCard title="Updates & privacy">
         <Row
           label="Automatic updates"
-          description="Carried over from your installer choice. Your preference is saved now — automatic updating itself arrives in an upcoming release."
+          description="Checks for verified Clippity updates in the background and installs them after the app closes."
           control={
             <ToggleSwitch
               checked={value.automaticUpdates}

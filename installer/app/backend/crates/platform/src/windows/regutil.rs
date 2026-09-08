@@ -113,6 +113,21 @@ pub fn delete_value(key: &Key, name: &str) -> InstallerResult<()> {
     }
 }
 
+/// Delete one named value from a subkey without exposing raw key handles.
+pub fn delete_value_at(hive: RegistryHive, subkey: &str, name: &str) -> InstallerResult<()> {
+    let Some(key) = open_read_write(hive, subkey) else {
+        return Ok(());
+    };
+    delete_value(&key, name)
+}
+
+fn open_read_write(hive: RegistryHive, subkey: &str) -> Option<Key> {
+    let sub = wide(subkey);
+    let mut hkey = HKEY::default();
+    let rc = unsafe { RegOpenKeyExW(root(hive), PCWSTR(sub.as_ptr()), None, KEY_WRITE, &mut hkey) };
+    rc.is_ok().then_some(Key(hkey))
+}
+
 /// Delete `subkey` and everything under it; a missing key is success.
 pub fn delete_tree(hive: RegistryHive, subkey: &str) -> InstallerResult<()> {
     let sub = wide(subkey);

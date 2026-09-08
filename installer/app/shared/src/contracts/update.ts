@@ -30,6 +30,10 @@ export interface UpdateInfo {
   signature: SignatureState;
   /** Human-readable "what's new" bullets for the latest release. */
   releaseNotes: string[];
+  /** Browser page for this release. */
+  releasePage: string;
+  /** RFC-3339 publication time from the update source. */
+  publishedAt: string;
 }
 
 /** Snapshot shown on the maintenance hub for an existing install. */

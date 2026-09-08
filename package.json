@@ -1,6 +1,6 @@
 {
   "name": "clippity",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Clippity — modern screen capture, recording, annotation, and workflow automation. Root workspace.",
   "license": "MIT",
@@ -18,6 +18,7 @@
     "stage:payload": "node scripts/stage-installer-payload.mjs",
     "portable": "node scripts/build-portable.mjs",
     "dist": "pnpm tauri:build && pnpm portable && pnpm stage:payload && pnpm installer:build",
+    "release:artifacts": "node scripts/package-release.mjs",
     "preview": "pnpm --filter clippity-frontend preview",
     "test": "pnpm -r test",
     "test:js": "pnpm --filter @clippity/shared --filter clippity-frontend test",

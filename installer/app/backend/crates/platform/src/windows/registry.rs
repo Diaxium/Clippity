@@ -18,6 +18,8 @@ use crate::windows::regutil;
 /// by the Clippity maintenance engine"; its absence on an existing key
 /// routes detection to the legacy/migration path instead of a happy one.
 pub const MARKER_VALUE: &str = "ClippityInstallerSchema";
+pub const FILE_PROG_ID: &str = "Clippity.File";
+pub const FILE_EXTENSIONS: &[&str] = &[".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".mp4"];
 
 /// Write (or update) the Add/Remove Programs entry under the hive the
 /// scope selected. Idempotent: re-running overwrites the same values.
@@ -79,6 +81,38 @@ pub fn set_start_at_login(target_exe: &str, enabled: bool) -> InstallerResult<()
         tracing::info!("disabling start-at-login");
         regutil::delete_value(&key, RUN_VALUE)
     }
+}
+
+/// Register Clippity in Windows' Open With list for the media types it can
+/// actually route into Editor/Studio. Existing default handlers are never
+/// replaced; this writes only our ProgID and OpenWithProgids values.
+pub fn set_file_associations(
+    hive: RegistryHive,
+    target_exe: &str,
+    enabled: bool,
+) -> InstallerResult<()> {
+    let classes = r"Software\Classes";
+    let prog_id = format!(r"{classes}\{FILE_PROG_ID}");
+    if !enabled {
+        for ext in FILE_EXTENSIONS {
+            let key = format!(r"{classes}\{ext}\OpenWithProgids");
+            let _ = regutil::delete_value_at(hive, &key, FILE_PROG_ID);
+        }
+        return regutil::delete_tree(hive, &prog_id);
+    }
+
+    let root = regutil::create(hive, &prog_id)?;
+    regutil::set_sz(&root, "", "Clippity media")?;
+    let icon = regutil::create(hive, &format!(r"{prog_id}\DefaultIcon"))?;
+    regutil::set_sz(&icon, "", &format!("{target_exe},0"))?;
+    let command = regutil::create(hive, &format!(r"{prog_id}\shell\open\command"))?;
+    regutil::set_sz(&command, "", &format!(r#""{target_exe}" "%1""#))?;
+    for ext in FILE_EXTENSIONS {
+        let key = regutil::create(hive, &format!(r"{classes}\{ext}\OpenWithProgids"))?;
+        regutil::set_sz(&key, FILE_PROG_ID, "")?;
+    }
+    tracing::info!(?hive, enabled, "updated file associations");
+    Ok(())
 }
 
 /// Which hive, if any, carries an `Uninstall\Clippity` key. Machine scope

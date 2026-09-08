@@ -20,7 +20,7 @@ const GB: u64 = 1_000_000_000;
 pub fn product() -> ProductInfo {
     ProductInfo {
         name: "Clippity".into(),
-        version: "0.3.0".into(),
+        version: "0.3.1".into(),
         arch: "64-bit".into(),
         publisher: "Clippity".into(),
         default_install_dir: installer_infra::paths::DEFAULT_INSTALL_DIR.into(),
@@ -47,22 +47,6 @@ pub fn components() -> Vec<Component> {
             recommended_default: true,
         },
         Component {
-            id: "assoc".into(),
-            name: "File associations".into(),
-            description: "Open supported files with Clippity".into(),
-            size_bytes: 12 * MB,
-            required: false,
-            recommended_default: true,
-        },
-        Component {
-            id: "startup".into(),
-            name: "Startup helper".into(),
-            description: "Faster launch and background tasks".into(),
-            size_bytes: 6 * MB,
-            required: false,
-            recommended_default: true,
-        },
-        Component {
             id: "gif".into(),
             name: "GIF encoder (FFmpeg)".into(),
             description: "Create high-quality GIFs".into(),
@@ -75,14 +59,6 @@ pub fn components() -> Vec<Component> {
             name: "OCR engine".into(),
             description: "Extract text from screenshots".into(),
             size_bytes: 36 * MB,
-            required: false,
-            recommended_default: false,
-        },
-        Component {
-            id: "cloud".into(),
-            name: "Cloud sync (Beta)".into(),
-            description: "Sync captures across devices".into(),
-            size_bytes: 22 * MB,
             required: false,
             recommended_default: false,
         },
@@ -114,12 +90,6 @@ pub fn data_categories() -> Vec<DataCategory> {
             id: "settings".into(),
             name: "Settings and presets".into(),
             size_bytes: 8 * MB,
-            destructive: true,
-        },
-        DataCategory {
-            id: "credentials".into(),
-            name: "Saved account credentials".into(),
-            size_bytes: 2 * MB,
             destructive: true,
         },
         DataCategory {

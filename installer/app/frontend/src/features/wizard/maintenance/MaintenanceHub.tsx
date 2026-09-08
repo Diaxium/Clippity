@@ -9,15 +9,23 @@ import {
   Wrench,
 } from "lucide-react";
 
-import type { Detection, InstallState } from "@clippity/installer-shared";
+import type {
+  Detection,
+  InstallState,
+  InstallStatus,
+} from "@clippity/installer-shared";
 
 import { Button, IconTile } from "@shared/ui";
 import { cn } from "@shared/lib/cn";
 import type { IconComponent } from "@shared/lib/icon";
 import { openPath } from "@services/tauri";
-import { detectInstallation, getMaintenancePaths } from "@services/installer";
+import {
+  detectInstallation,
+  getInstallStatus,
+  getMaintenancePaths,
+} from "@services/installer";
 import type { MaintenancePaths } from "@services/installer";
-import { INSTALL_LOCATION, INSTALLED_VERSION, LAST_UPDATED } from "@config/catalog";
+import { INSTALL_LOCATION, INSTALLED_VERSION } from "@config/catalog";
 import { useWizardStore } from "@state/wizardStore";
 
 import { StepShell } from "../components/StepShell";
@@ -89,6 +97,7 @@ export function MaintenanceHub() {
   // undefined). Never blocks first paint — the fallback renders immediately.
   const [detection, setDetection] = useState<Detection | null>(null);
   const [paths, setPaths] = useState<MaintenancePaths | null>(null);
+  const [status, setStatus] = useState<InstallStatus | null>(null);
   // Repair used to run the moment its card was clicked — with no
   // confirmation and, worse, under the "modify" progress labels. It now asks
   // first and runs with the correct repair progress.
@@ -104,6 +113,11 @@ export function MaintenanceHub() {
     getMaintenancePaths()
       .then((p) => {
         if (live) setPaths(p);
+      })
+      .catch(() => {});
+    getInstallStatus()
+      .then((value) => {
+        if (live && value) setStatus(value);
       })
       .catch(() => {});
     return () => {
@@ -136,9 +150,18 @@ export function MaintenanceHub() {
     void store.startOperation("repair", "complete");
   };
 
-  const version = detection?.installedVersion ?? INSTALLED_VERSION;
-  const location = detection?.installDirectory ?? paths?.appDir ?? INSTALL_LOCATION;
-  const lastUpdated = LAST_UPDATED;
+  const version =
+    status?.installed.version ??
+    detection?.installedVersion ??
+    INSTALLED_VERSION;
+  const location =
+    status?.installDir ??
+    detection?.installDirectory ??
+    paths?.appDir ??
+    INSTALL_LOCATION;
+  const lastUpdated = status?.lastUpdated
+    ? new Date(status.lastUpdated).toLocaleString()
+    : "Not available";
   const badge = detection ? STATE_BADGE[detection.state] : STATE_BADGE.healthy;
   const toneVar =
     badge.tone === "success"
@@ -228,8 +251,8 @@ function RepairConfirm({
           </div>
           <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--color-slate)]">
             This restores any missing or damaged application files and
-            re-registers integrations. Your settings, captures, and projects
-            are preserved, and the installed version stays the same.
+            re-registers integrations. Your settings, captures, and projects are
+            preserved, and the installed version stays the same.
           </p>
         </div>
       </div>
@@ -301,7 +324,11 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center gap-3 py-2.5">
-      <Icon size={15} strokeWidth={1.8} className="shrink-0 text-[var(--color-hint)]" />
+      <Icon
+        size={15}
+        strokeWidth={1.8}
+        className="shrink-0 text-[var(--color-hint)]"
+      />
       <span className="shrink-0 text-[12.5px] text-[var(--color-slate)]">
         {label}
       </span>

@@ -2,9 +2,7 @@ import { useEffect } from "react";
 import { FolderOpen } from "lucide-react";
 
 import { Button, Checkbox } from "@shared/ui";
-import { cn } from "@shared/lib/cn";
 import { formatBytes } from "@shared/lib/format";
-import { openBrowseDialog } from "@services/dialog";
 import { COMPONENTS } from "@config/catalog";
 import { useWizardStore } from "@state/wizardStore";
 
@@ -31,19 +29,13 @@ export function ModifyStep() {
 
   const hasComponent = (id: string) => selected.includes(id);
 
-  const spaceRequired = COMPONENTS.filter((c) => selected.includes(c.id)).reduce(
-    (sum, c) => sum + c.sizeBytes,
-    0
-  );
+  const spaceRequired = COMPONENTS.filter((c) =>
+    selected.includes(c.id)
+  ).reduce((sum, c) => sum + c.sizeBytes, 0);
 
   const apply = () => {
     goToStep("applying");
     startOperation("modify", "complete");
-  };
-
-  const browse = async () => {
-    const picked = await openBrowseDialog(options.destination);
-    if (picked) setOptions({ destination: picked });
   };
 
   return (
@@ -82,7 +74,7 @@ export function ModifyStep() {
               onChange={(v) => setOptions({ automaticUpdates: v })}
             />
             <CheckRow
-              label="Help improve Clippity (anonymous usage data)"
+              label="Help improve Clippity (records consent; sends nothing today)"
               checked={options.helpImprove}
               onChange={(v) => setOptions({ helpImprove: v })}
             />
@@ -108,12 +100,6 @@ export function ModifyStep() {
               checked={hasComponent("gif")}
               onChange={() => toggleComponent("gif")}
             />
-            <CheckRow
-              label="Cloud sync"
-              badge="Beta"
-              checked={hasComponent("cloud")}
-              onChange={() => toggleComponent("cloud")}
-            />
           </div>
         </div>
 
@@ -124,35 +110,32 @@ export function ModifyStep() {
               Install location
             </div>
             <div className="flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--color-overlay-2)] px-2.5 py-2">
-              <FolderOpen size={13} className="shrink-0 text-[var(--color-hint)]" />
+              <FolderOpen
+                size={13}
+                className="shrink-0 text-[var(--color-hint)]"
+              />
               <span className="truncate text-[12px] text-[var(--color-ink)]">
                 {options.destination}
               </span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-1.5 w-full"
-              onClick={() => void browse()}
-            >
-              Browse…
-            </Button>
+            <p className="mt-2 text-[11.5px] leading-relaxed text-[var(--color-hint)]">
+              To move Clippity, uninstall it and choose a new location during
+              setup.
+            </p>
           </div>
 
           <div className="rounded-[var(--radius-lg)] border border-[var(--hairline-strong)] bg-[var(--color-overlay-1)] p-3.5">
             <div className="mb-2 text-[12px] font-semibold text-[var(--color-slate)]">
               Install for
             </div>
-            <RadioLine
-              label="Current user (You)"
-              active={options.scope === "current-user"}
-              onClick={() => setOptions({ scope: "current-user" })}
-            />
-            <RadioLine
-              label="All users on this computer"
-              active={options.scope === "all-users"}
-              onClick={() => setOptions({ scope: "all-users" })}
-            />
+            <div className="text-[12.5px] text-[var(--color-ink)]">
+              {options.scope === "current-user"
+                ? "Current user (You)"
+                : "All users on this computer"}
+            </div>
+            <p className="mt-1 text-[11.5px] leading-relaxed text-[var(--color-hint)]">
+              Install scope is fixed for this installation.
+            </p>
           </div>
 
           <div className="rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--color-overlay-1)] px-3.5 py-2.5 text-[12px]">
@@ -192,37 +175,5 @@ function CheckRow({
         )}
       </span>
     </label>
-  );
-}
-
-function RadioLine({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-2.5 py-1.5 text-left"
-    >
-      <span
-        className={cn(
-          "grid h-[16px] w-[16px] shrink-0 place-items-center rounded-full border transition-colors",
-          active
-            ? "border-[var(--color-accent)]"
-            : "border-[var(--hairline-strong)]"
-        )}
-      >
-        {active && (
-          <span className="h-[8px] w-[8px] rounded-full bg-[var(--color-accent)]" />
-        )}
-      </span>
-      <span className="text-[12.5px] text-[var(--color-ink)]">{label}</span>
-    </button>
   );
 }

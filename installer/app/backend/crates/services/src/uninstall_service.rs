@@ -11,7 +11,7 @@
 //! data-category selection, never touched by the file-removal steps.
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use installer_domain::progress::{self, ProgressKind};
 use installer_domain::state::{InstallState, InstallationManifest, RegistryHive};
@@ -56,6 +56,12 @@ pub fn run(
     // best-effort path (install_dir + whichever hive is present).
     let located = detect::locate_manifest(paths);
     let mut reboot_required = false;
+    let capture_dir = resolve_capture_dir(paths);
+
+    if selection.export_settings {
+        let exported = export_settings(paths)?;
+        tracing::info!(path = %exported.display(), "exported settings before uninstall");
+    }
 
     let tasks = progress::checklist_for(ProgressKind::Uninstall);
     let total = tasks.len();
@@ -94,11 +100,11 @@ pub fn run(
                     let _ = windows_ops::remove_desktop_shortcut("Clippity");
                 }
             },
-            "cache" => pace(),
+            "cache" => remove_selected_data(selection, paths, capture_dir.as_deref())?,
             "registry" => remove_registrations(paths, located.as_ref().map(|(_, m)| m))?,
             "finalize" => {
                 if let Some((dir, _)) = &located {
-                    reboot_required = finalize_maintenance_dir(dir)?;
+                    reboot_required |= finalize_maintenance_dir(dir)?;
                 }
             }
             _ => pace(),
@@ -215,9 +221,166 @@ fn remove_registrations(
 
     // Start-at-login is always per-user; clearing it is a no-op when unset.
     let _ = windows_ops::set_start_at_login("", false);
+    let _ = windows_ops::set_file_associations(hive, "", false);
 
     let _ = paths;
     Ok(())
+}
+
+/// Remove only the user-data categories explicitly selected in the wizard.
+/// Program files and integrations are mandatory and handled by their own
+/// checklist steps; these are the independently keepable app-data buckets.
+fn remove_selected_data(
+    selection: &RemovalSelection,
+    paths: &InstallerPaths,
+    capture_dir: Option<&Path>,
+) -> InstallerResult<()> {
+    let selected = |id: &str| selection.remove_ids.iter().any(|value| value == id);
+
+    if selected("cache") {
+        for dir in ["cache", "models", "webview", "EBWebView"] {
+            remove_tree_if_present(&paths.local_data.join(dir))?;
+        }
+    }
+
+    if selected("content") {
+        if let Some(captures) = capture_dir {
+            ensure_safe_content_root(captures, paths)?;
+            remove_tree_if_present(captures)?;
+        }
+        remove_file_if_present(&paths.local_data.join("data").join("library.db"))?;
+        remove_file_if_present(&paths.app_data.join("library.db"))?;
+    }
+
+    if selected("settings") {
+        for name in ["settings.json", "presets.json", "last-region.json"] {
+            remove_file_if_present(&paths.local_data.join("data").join(name))?;
+            remove_file_if_present(&paths.app_data.join(name))?;
+        }
+    }
+
+    for dir in [
+        paths.local_data.join("data"),
+        paths.app_data.clone(),
+        paths.local_data.clone(),
+    ] {
+        remove_dir_if_empty(&dir);
+    }
+    Ok(())
+}
+
+fn remove_tree_if_present(path: &Path) -> InstallerResult<()> {
+    if path.exists() {
+        fs::remove_dir_all(path)?;
+    }
+    Ok(())
+}
+
+fn remove_file_if_present(path: &Path) -> InstallerResult<()> {
+    if path.exists() {
+        fs::remove_file(path)?;
+    }
+    Ok(())
+}
+
+/// Read the configured capture folder before settings can be deleted.
+fn resolve_capture_dir(paths: &InstallerPaths) -> Option<PathBuf> {
+    for settings in [
+        paths.local_data.join("data").join("settings.json"),
+        paths.app_data.join("settings.json"),
+    ] {
+        let Ok(bytes) = fs::read(&settings) else {
+            continue;
+        };
+        let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
+            continue;
+        };
+        if let Some(dir) = value
+            .get("general")
+            .and_then(|general| general.get("capturesDir"))
+            .and_then(|dir| dir.as_str())
+            .filter(|dir| !dir.trim().is_empty())
+        {
+            return Some(PathBuf::from(dir));
+        }
+    }
+    Some(paths.local_data.join("data").join("captures"))
+}
+
+/// Never recursively delete a drive root, the full Clippity root, or the
+/// user's profile even if a malformed settings file points captures there.
+fn ensure_safe_content_root(path: &Path, paths: &InstallerPaths) -> InstallerResult<()> {
+    let normalized = path
+        .to_string_lossy()
+        .trim_end_matches(['\\', '/'])
+        .to_lowercase();
+    let local = paths
+        .local_data
+        .to_string_lossy()
+        .trim_end_matches(['\\', '/'])
+        .to_lowercase();
+    let roaming = paths
+        .app_data
+        .to_string_lossy()
+        .trim_end_matches(['\\', '/'])
+        .to_lowercase();
+    let profile = std::env::var_os("USERPROFILE").map(PathBuf::from).map(|p| {
+        p.to_string_lossy()
+            .trim_end_matches(['\\', '/'])
+            .to_lowercase()
+    });
+    if path.parent().is_none()
+        || normalized.is_empty()
+        || normalized == local
+        || normalized == roaming
+        || profile.as_deref() == Some(normalized.as_str())
+    {
+        return Err(InstallerError::Invalid(format!(
+            "refusing to recursively remove unsafe capture path: {}",
+            path.display()
+        )));
+    }
+    Ok(())
+}
+
+/// Export the portable settings subset to Documents as one JSON file.
+fn export_settings(paths: &InstallerPaths) -> InstallerResult<PathBuf> {
+    let read_json = |candidates: &[PathBuf]| -> serde_json::Value {
+        candidates
+            .iter()
+            .find_map(|path| fs::read(path).ok())
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+            .unwrap_or(serde_json::Value::Null)
+    };
+    let document = serde_json::json!({
+        "schemaVersion": 1,
+        "exportedAt": crate::clock::now().iso,
+        "settings": read_json(&[
+            paths.local_data.join("data").join("settings.json"),
+            paths.app_data.join("settings.json"),
+        ]),
+        "presets": read_json(&[
+            paths.local_data.join("data").join("presets.json"),
+            paths.app_data.join("presets.json"),
+        ]),
+    });
+    let documents = std::env::var_os("USERPROFILE")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| paths.local_data.clone())
+        .join("Documents");
+    fs::create_dir_all(&documents)?;
+    let base = format!("Clippity Settings Backup {}", crate::clock::now().compact);
+    let mut output = documents.join(format!("{base}.json"));
+    let mut suffix = 2;
+    while output.exists() {
+        output = documents.join(format!("{base} ({suffix}).json"));
+        suffix += 1;
+    }
+    let bytes = serde_json::to_vec_pretty(&document).map_err(|error| {
+        installer_infra::error::other(format!("could not export settings: {error}"))
+    })?;
+    fs::write(&output, bytes)?;
+    Ok(output)
 }
 
 /// Remove the manifest and maintenance directory. The running
@@ -264,8 +427,11 @@ fn remove_install_dir(paths: &InstallerPaths) -> InstallerResult<()> {
         tracing::info!(dir = %dir.display(), "install directory already absent");
         return Ok(());
     }
-    tracing::info!(dir = %dir.display(), "removing install directory (no manifest)");
-    fs::remove_dir_all(dir)?;
+    tracing::info!(dir = %dir.display(), "removing known legacy files (no manifest)");
+    for name in ["Clippity.exe", "install-config.json"] {
+        remove_file_if_present(&dir.join(name))?;
+    }
+    remove_dir_if_empty(dir);
     Ok(())
 }
 
@@ -374,5 +540,62 @@ mod tests {
         remove_owned_files(&m).unwrap();
 
         assert!(!dir.exists(), "an install dir left empty should be removed");
+    }
+
+    #[test]
+    fn data_categories_are_independent_and_content_is_opt_in() {
+        let root = temp_dir("categories");
+        let local = root.join("local");
+        let roaming = root.join("roaming");
+        let data = local.join("data");
+        let captures = data.join("captures");
+        fs::create_dir_all(local.join("cache")).unwrap();
+        fs::create_dir_all(&captures).unwrap();
+        fs::create_dir_all(&roaming).unwrap();
+        fs::write(local.join("cache").join("thumb.bin"), b"cache").unwrap();
+        fs::write(data.join("settings.json"), br#"{"general":{}}"#).unwrap();
+        fs::write(captures.join("kept.png"), b"capture").unwrap();
+
+        let paths = InstallerPaths {
+            install_dir: root.join("app"),
+            app_data: roaming,
+            local_data: local.clone(),
+            program_data: root.join("program"),
+            log_file: root.join("setup.log"),
+        };
+        let cache_only = RemovalSelection {
+            remove_ids: vec!["cache".into()],
+            export_settings: false,
+            acknowledged: true,
+        };
+        let capture_dir = resolve_capture_dir(&paths);
+        remove_selected_data(&cache_only, &paths, capture_dir.as_deref()).unwrap();
+        assert!(!local.join("cache").exists());
+        assert!(data.join("settings.json").exists());
+        assert!(captures.join("kept.png").exists());
+
+        let personal = RemovalSelection {
+            remove_ids: vec!["settings".into(), "content".into()],
+            export_settings: false,
+            acknowledged: true,
+        };
+        remove_selected_data(&personal, &paths, capture_dir.as_deref()).unwrap();
+        assert!(!data.join("settings.json").exists());
+        assert!(!captures.exists());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn unsafe_capture_roots_are_rejected() {
+        let root = temp_dir("unsafe-content");
+        let paths = InstallerPaths {
+            install_dir: root.join("app"),
+            app_data: root.join("roaming"),
+            local_data: root.join("local"),
+            program_data: root.join("program"),
+            log_file: root.join("setup.log"),
+        };
+        assert!(ensure_safe_content_root(&paths.local_data, &paths).is_err());
+        let _ = fs::remove_dir_all(root);
     }
 }

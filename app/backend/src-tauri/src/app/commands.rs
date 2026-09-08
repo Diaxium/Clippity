@@ -1526,6 +1526,7 @@ pub fn settings_update(
     // single choke point where every settings write meets the `AppHandle`
     // the plugin needs.
     let touches_shortcuts = patch.shortcuts.is_some();
+    let touches_general = patch.general.is_some();
     let next = state.settings_service.update(&app, patch)?;
     // …and only when the capture integration was actually installed. Without
     // this check a settings write would re-register the accelerator that
@@ -1533,6 +1534,13 @@ pub fn settings_update(
     // choice on the first unrelated settings save.
     if touches_shortcuts && state.provisioning_service.capabilities().global_hotkeys {
         state.global_shortcut_service.apply(&app, &next.shortcuts);
+    }
+    #[cfg(target_os = "windows")]
+    if touches_general && state.provisioning_service.capabilities().start_at_login {
+        clippity_platform::windows::autostart::set_enabled(
+            &std::env::current_exe()?,
+            next.general.start_on_startup,
+        )?;
     }
     Ok(next)
 }

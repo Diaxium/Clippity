@@ -24,7 +24,10 @@ export function CompleteStep() {
   const flow = useWizardStore((s) => s.flow);
   const setFlow = useWizardStore((s) => s.setFlow);
   const removeIds = useWizardStore((s) => s.removeIds);
-  const rebootRequired = useWizardStore((s) => s.progress?.rebootRequired ?? false);
+  const rebootRequired = useWizardStore(
+    (s) => s.progress?.rebootRequired ?? false
+  );
+  const updateScheduled = useWizardStore((s) => s.updateScheduled);
 
   const isUninstall = flow === "uninstall";
   const isMaintenance = flow === "maintenance";
@@ -51,14 +54,18 @@ export function CompleteStep() {
 
   const title = isUninstall
     ? "Uninstall complete"
-    : isMaintenance
-      ? "Changes completed successfully!"
-      : "Installation complete!";
+    : updateScheduled
+      ? "Update scheduled"
+      : isMaintenance
+        ? "Changes completed successfully!"
+        : "Installation complete!";
   const subtitle = isUninstall
     ? "Clippity has been removed from this device."
-    : isMaintenance
-      ? "Clippity has been updated and your installation settings were applied."
-      : "Clippity has been installed successfully.";
+    : updateScheduled
+      ? "The verified update will install after Clippity closes."
+      : isMaintenance
+        ? "Clippity has been updated and your installation settings were applied."
+        : "Clippity has been installed successfully.";
 
   const logLabel = isUninstall
     ? "View uninstall log"
@@ -88,9 +95,7 @@ export function CompleteStep() {
           {subtitle}
         </motion.p>
 
-        {isUninstall ? (
-          <KeptDataSummary removeIds={removeIds} />
-        ) : null}
+        {isUninstall ? <KeptDataSummary removeIds={removeIds} /> : null}
 
         {rebootRequired ? <RebootNotice /> : null}
 
@@ -132,7 +137,11 @@ export function CompleteStep() {
                     <ScrollText size={15} strokeWidth={1.9} />
                     View release notes
                   </Button>
-                  <Button size="lg" variant="secondary" onClick={launch}>
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    onClick={() => void backend.launchApp("settings")}
+                  >
                     <Settings size={15} strokeWidth={1.9} />
                     Open settings
                   </Button>
@@ -246,11 +255,17 @@ function KeptDataSummary({ removeIds }: { removeIds: string[] }) {
       >
         {tiles.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex flex-col items-center gap-1">
-            <Icon size={18} strokeWidth={1.8} className="text-[var(--color-accent)]" />
+            <Icon
+              size={18}
+              strokeWidth={1.8}
+              className="text-[var(--color-accent)]"
+            />
             <span className="text-[13px] font-semibold text-[var(--color-ink)]">
               {value}
             </span>
-            <span className="text-[11px] text-[var(--color-hint)]">{label}</span>
+            <span className="text-[11px] text-[var(--color-hint)]">
+              {label}
+            </span>
           </div>
         ))}
       </div>

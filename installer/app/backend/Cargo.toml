@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.5.0"
+version = "0.3.1"
 edition = "2021"
 rust-version = "1.78"
 authors = ["Clippity"]
@@ -34,6 +34,8 @@ serde_json = "1"
 # --- Integrity ---
 # Verifies the embedded application payload before it is copied out.
 sha2 = "0.10"
+semver = "1"
+ureq = { version = "3", default-features = false, features = ["rustls", "json"] }
 
 # --- Diagnostics ---
 thiserror = "2"

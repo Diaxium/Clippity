@@ -169,6 +169,41 @@ mod snapshot_scheme_tests {
 ///
 /// Kept narrow so `main.rs` stays a one-liner and tests can spin the
 /// builder up with mocked services.
+#[cfg(target_os = "windows")]
+fn schedule_automatic_update(state: &app::state::AppState, enabled: bool) {
+    use std::os::windows::process::CommandExt;
+
+    if !enabled {
+        return;
+    }
+    let Some(document) = state.provisioning_service.document() else {
+        return;
+    };
+    let root_var = match document.scope {
+        clippity_domain::provisioning::InstallScope::CurrentUser => "LOCALAPPDATA",
+        clippity_domain::provisioning::InstallScope::AllUsers => "PROGRAMDATA",
+    };
+    let Some(root) = std::env::var_os(root_var) else {
+        return;
+    };
+    let worker = std::path::PathBuf::from(root)
+        .join("Clippity")
+        .join("maintenance")
+        .join("clippity-maintenance.exe");
+    if !worker.is_file() {
+        tracing::warn!(path = %worker.display(), "automatic updater is not installed");
+        return;
+    }
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    if let Err(error) = std::process::Command::new(&worker)
+        .args(["--update", "--silent", "--wait-for-app"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .spawn()
+    {
+        tracing::warn!(%error, path = %worker.display(), "could not start automatic updater");
+    }
+}
+
 pub fn run() {
     clippity_infra::runtime::mark_started();
     clippity_infra::logging::init();
@@ -293,6 +328,27 @@ pub fn run() {
             let paths =
                 std::sync::Arc::new(clippity_infra::paths::AppPaths::resolve(app.handle())?);
             app.manage(app::state::AppState::new(paths.clone())?);
+
+            // Reconcile app-controlled Windows integrations from persisted
+            // settings, then let the installed maintenance worker perform a
+            // throttled update check. Portable/development builds have no
+            // installer document and skip this cleanly.
+            #[cfg(target_os = "windows")]
+            {
+                let state = app.state::<app::state::AppState>();
+                let settings = state.settings_service.snapshot();
+                if state.provisioning_service.document().is_some() {
+                    if let Ok(exe) = std::env::current_exe() {
+                        if let Err(error) = clippity_platform::windows::autostart::set_enabled(
+                            &exe,
+                            settings.general.start_on_startup,
+                        ) {
+                            tracing::warn!(%error, "could not reconcile start-at-login");
+                        }
+                    }
+                    schedule_automatic_update(&state, settings.general.automatic_updates);
+                }
+            }
 
             // Point the log at `<data>/logs` and set its severity floor
             // from the persisted developer preferences. Done as early as

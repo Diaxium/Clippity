@@ -13,4 +13,6 @@ installer-platform = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sha2 = { workspace = true }
+semver = { workspace = true }
+ureq = { workspace = true }
 tracing = { workspace = true }

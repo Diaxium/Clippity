@@ -18,7 +18,7 @@ const GB = 1_000_000_000;
 
 export const PRODUCT: ProductInfo = {
   name: "Clippity",
-  version: "1.5.0",
+  version: "0.3.1",
   arch: "64-bit",
   publisher: "Clippity",
   defaultInstallDir: "C:\\Program Files\\Clippity",
@@ -26,16 +26,15 @@ export const PRODUCT: ProductInfo = {
 
 /** Outbound links the Complete / Welcome screens open in the browser. */
 export const LINKS = {
-  help: "https://clippity.app/help",
-  docs: "https://clippity.app/docs",
-  whatsNew: "https://clippity.app/whats-new",
-  releaseNotes: "https://clippity.app/releases",
+  help: "https://github.com/Diaxium/Clippity#readme",
+  docs: "https://github.com/Diaxium/Clippity/tree/main/docs",
+  whatsNew: "https://github.com/Diaxium/Clippity/releases",
+  releaseNotes: "https://github.com/Diaxium/Clippity/releases",
 } as const;
 
 /** The version considered "already installed" in the maintenance flows. */
-export const INSTALLED_VERSION = "1.4.0";
+export const INSTALLED_VERSION = "0.2.0";
 export const INSTALL_LOCATION = "C:\\Program Files\\Clippity";
-export const LAST_UPDATED = "May 9, 2025, 10:47 AM";
 
 export const COMPONENTS: Component[] = [
   {
@@ -55,22 +54,6 @@ export const COMPONENTS: Component[] = [
     recommendedDefault: true,
   },
   {
-    id: "assoc",
-    name: "File associations",
-    description: "Open supported files with Clippity",
-    sizeBytes: 12 * MB,
-    required: false,
-    recommendedDefault: true,
-  },
-  {
-    id: "startup",
-    name: "Startup helper",
-    description: "Faster launch and background tasks",
-    sizeBytes: 6 * MB,
-    required: false,
-    recommendedDefault: true,
-  },
-  {
     id: "gif",
     name: "GIF encoder (FFmpeg)",
     description: "Create high-quality GIFs",
@@ -83,14 +66,6 @@ export const COMPONENTS: Component[] = [
     name: "OCR engine",
     description: "Extract text from screenshots",
     sizeBytes: 36 * MB,
-    required: false,
-    recommendedDefault: false,
-  },
-  {
-    id: "cloud",
-    name: "Cloud sync (Beta)",
-    description: "Sync captures across devices",
-    sizeBytes: 22 * MB,
     required: false,
     recommendedDefault: false,
   },
@@ -122,12 +97,6 @@ export const DATA_CATEGORIES: DataCategory[] = [
     destructive: true,
   },
   {
-    id: "credentials",
-    name: "Saved account credentials",
-    sizeBytes: 2 * MB,
-    destructive: true,
-  },
-  {
     id: "content",
     name: "Local captures and projects",
     sizeBytes: 14 * GB + 500 * MB,
@@ -138,7 +107,7 @@ export const DATA_CATEGORIES: DataCategory[] = [
 /** The update the maintenance flow surfaces (installed 1.4.0 → 1.5.0). */
 export const UPDATE_INFO: UpdateInfo = {
   installed: { version: INSTALLED_VERSION, channel: "stable" },
-  latest: { version: "1.5.0", channel: "stable" },
+  latest: { version: "0.3.1", channel: "stable" },
   available: true,
   downloadBytes: 82_400_000,
   signature: "verified",
@@ -148,4 +117,6 @@ export const UPDATE_INFO: UpdateInfo = {
     "OCR engine accuracy and performance improvements.",
     "UI polish, accessibility, and stability enhancements.",
   ],
+  releasePage: LINKS.releaseNotes,
+  publishedAt: "",
 };

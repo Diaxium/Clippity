@@ -1,9 +1,9 @@
 # Lifecycle Modes, Detection, Transactions & Recovery
 
-Status: Detection, safe uninstall, **real repair**, a **transaction journal
-with a rollback executor**, and **startup recovery** implemented; component-
-level modify and real update still partial / documented. Covers task Phases 6,
-7, 13, 14.
+Status: Complete for the 0.3.1 custom Setup lifecycle: detection, install,
+component modification, repair, verified online update, uninstall, transaction
+rollback, and startup recovery are implemented. Covers task Phases 6, 7, 13,
+and 14.
 
 > **Second pass (2026-07-24).** The journal, the rollback executor, the real
 > repair flow, startup recovery, and honest reboot reporting described below
@@ -18,23 +18,23 @@ gathers three independent signals and reconciles them with the pure
 [`assess`](../../installer/app/backend/crates/domain/src/state.rs) rule (which is
 unit-tested):
 
-| Signal | Source |
-| --- | --- |
-| Manifest present + version + exe path | `install-state.json` in either maintenance dir |
-| Registry present + is-ours | `Uninstall\Clippity` in HKLM then HKCU + ownership marker |
-| Exe present | the manifest's recorded primary exe exists on disk |
+| Signal                                | Source                                                    |
+| ------------------------------------- | --------------------------------------------------------- |
+| Manifest present + version + exe path | `install-state.json` in either maintenance dir            |
+| Registry present + is-ours            | `Uninstall\Clippity` in HKLM then HKCU + ownership marker |
+| Exe present                           | the manifest's recorded primary exe exists on disk        |
 
 Resolved `InstallState`s and their routing:
 
-| State | Meaning | Wizard offers |
-| --- | --- | --- |
-| `not-installed` | no trace | Fresh install |
-| `healthy` / `same-version` | manifest+registry+exe agree at this version | Modify / Repair / Uninstall |
-| `older-version` | installed older than the wizard carries | Update / Reinstall |
-| `newer-version` | installed newer than the wizard | Refuse silent downgrade |
-| `damaged` | recorded but exe/registration missing/corrupt | Repair |
-| `partial` | manifest XOR registry present (interrupted op), or schema too new | Recovery |
-| `legacy-unmanaged` | foreign `Uninstall\Clippity` with no manifest (MSI/NSIS legacy) | Migration |
+| State                      | Meaning                                                           | Wizard offers               |
+| -------------------------- | ----------------------------------------------------------------- | --------------------------- |
+| `not-installed`            | no trace                                                          | Fresh install               |
+| `healthy` / `same-version` | manifest+registry+exe agree at this version                       | Modify / Repair / Uninstall |
+| `older-version`            | installed older than the wizard carries                           | Update / Reinstall          |
+| `newer-version`            | installed newer than the wizard                                   | Refuse silent downgrade     |
+| `damaged`                  | recorded but exe/registration missing/corrupt                     | Repair                      |
+| `partial`                  | manifest XOR registry present (interrupted op), or schema too new | Recovery                    |
+| `legacy-unmanaged`         | foreign `Uninstall\Clippity` with no manifest (MSI/NSIS legacy)   | Migration                   |
 
 **The rule prefers recovery when sources disagree** — a manifest whose schema is
 too new, or a manifest-without-registry, becomes `partial`, never `healthy`.
@@ -65,12 +65,12 @@ post-write integrity re-verify + launch-test before declaring success.
 
 ## Modify / Repair / Update / Reinstall (Phase 7)
 
-| Mode | Today | Gap |
-| --- | --- | --- |
-| **Modify** | Runs the full-payload install path with modify labels; manifest records selected components; journalled + rollback-protected | True per-component add/remove needs a decomposed payload or MSI features |
-| **Repair** | **Implemented.** Real integrity scan (existence + SHA-256 vs manifest) → restore the core exe from the embedded payload, re-create missing shortcuts at their recorded paths, rewrite the ARP entry if gone — preserving the *installed* version and all user data. Journalled for crash-detection. | Non-core components share the monolithic payload, so a broken non-core file is restored with core rather than independently (reported in the log) |
-| **Update** | Version compare is real; check surfaces availability | Download/verify/apply/rollback is still simulated — see below and the ADR |
-| **Reinstall** | Reinstall-over works (exe rename-away + re-register), journalled | Preserve/reset/clean variants + user-data backup/restore not yet split out |
+| Mode          | Today                                                                                                                                                                                                 | Gap                                                                                             |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Modify**    | Reconciles selected capabilities and integrations, preserves live app preferences, installation identity, destination, scope, and user data; journalled + rollback-protected                          | Capabilities are provisioning flags in the monolithic app payload rather than separate binaries |
+| **Repair**    | Real integrity scan (existence + SHA-256 vs manifest), targeted core restore, shortcut/ARP/association re-registration, and user-data preservation; journalled                                        | The monolithic payload means core restoration replaces the application executable as one unit   |
+| **Update**    | Channel-aware GitHub release discovery, semantic-version selection, required asset digest/size verification, deferred reminders, app-exit handoff, transactional bundled apply, and optional relaunch | Binaries remain unsigned until the project obtains an Authenticode certificate                  |
+| **Reinstall** | Reinstall-over works with rollback-safe replacement and re-registration while retaining settings and content                                                                                          | A separate destructive factory-reset variant is intentionally not exposed                       |
 
 **Repair details:** the pure classification is
 [`installer_domain::repair::assess_file`](../../installer/app/backend/crates/domain/src/repair.rs)
@@ -81,23 +81,25 @@ data). The service
 performs the I/O and is reachable three ways: the `run_repair` / `assess_repair`
 Tauri commands, and the `--repair` CLI mode.
 
-**Update coordination (ADR decision):** the app already ships a Tauri updater
-with a real minisign pubkey. The wizard must not run a second divergent auto-
-update channel. Until an update server + signed metadata exist, the wizard's
-update path is labelled unavailable rather than faked. The `check` currently
-compares the installed manifest version against the wizard's carried version
-(now consistent at `0.1.0`), so it honestly reports "up to date".
+**Update coordination:** the installed application delegates managed updates to
+the maintenance executable copied by Setup. It checks the repository's release
+API at most once per day when enabled, selects the configured stable/beta/nightly
+channel, requires GitHub's published `sha256:` digest, verifies digest and byte
+count after download, waits for the app to exit, and invokes the new Setup's
+private bundled-update entry point. That entry point uses the same install
+transaction and carries forward the committed scope, location, components,
+preferences, and installation identity.
 
 ## Uninstall (Phase 7) — implemented (safe)
 
 Manifest-driven and conservative (see
 [03-installation-model.md](03-installation-model.md) for the safety rules):
-remove owned files → remove recorded shortcuts → remove ARP entry + start-at-
-login value from the recorded hive → remove manifest → self-remove the
-maintenance dir (reboot fallback for the locked running exe). Unknown files are
-preserved. Graceful process shutdown (Phase 8) and the full native cleanup
-worker (Phase 9) are documented follow-ups in
-[05-self-removal-and-locked-files.md](05-self-removal-and-locked-files.md).
+remove owned files → remove recorded shortcuts → remove ARP, associations, and
+start-at-login registration from the recorded hive → remove manifest →
+self-remove the maintenance directory (reboot fallback for locked files).
+Cache, settings/presets, and content are independent choices; settings export
+is written before deletion. Unknown install-directory files are preserved and
+recursive user-data deletion rejects broad or unsafe roots.
 
 ## Transactions & rollback (Phase 13) — implemented
 
@@ -141,14 +143,14 @@ The pure recovery decision —
 [`installer_domain::journal::recover`](../../installer/app/backend/crates/domain/src/journal.rs)
 — encodes the safety boundary and is fully unit-tested:
 
-| Journal state | Decision | Why |
-| --- | --- | --- |
-| interrupted before `Apply` | `Resume` | no live mutation happened |
-| interrupted during `Stage`/`Apply`/`Verify` | `RollBack` | partial, uncommitted mutations exist |
-| interrupted at `Commit` | `Resume` (roll *forward*) | reversing a half-authoritative op is riskier than finishing it; commit steps are idempotent |
-| `Committed` but not cleaned | `Cleanup` | only leftovers remain |
-| `Failed` | `RollBack` | reverse what was applied |
-| unreadable schema | `ManualRecovery` | never auto-act on a shape we don't understand |
+| Journal state                               | Decision                  | Why                                                                                         |
+| ------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
+| interrupted before `Apply`                  | `Resume`                  | no live mutation happened                                                                   |
+| interrupted during `Stage`/`Apply`/`Verify` | `RollBack`                | partial, uncommitted mutations exist                                                        |
+| interrupted at `Commit`                     | `Resume` (roll _forward_) | reversing a half-authoritative op is riskier than finishing it; commit steps are idempotent |
+| `Committed` but not cleaned                 | `Cleanup`                 | only leftovers remain                                                                       |
+| `Failed`                                    | `RollBack`                | reverse what was applied                                                                    |
+| unreadable schema                           | `ManualRecovery`          | never auto-act on a shape we don't understand                                               |
 
 ## Recovery (Phase 13/14) — implemented
 
@@ -171,10 +173,9 @@ cleared.
 
 ## User-data protection (Phase 14) — implemented at the policy layer
 
-The uninstall data model already separates non-destructive machinery (removed by
-default) from destructive user content (captures, projects, credentials — kept
-unless explicitly opted in, and gated behind the Review step's acknowledgement).
-The file-removal steps never touch `%APPDATA%`/`%LOCALAPPDATA%` user content or
-any user-chosen capture folder — those are governed solely by the data-category
-selection. Recursive deletion of a user content root is impossible by
-construction (no code path passes such a path to `remove_dir_all`).
+The uninstall data model separates mandatory application machinery from cache,
+settings/presets, and personal content. Personal content is kept unless the
+user explicitly opts in and acknowledges the destructive selection. Custom
+capture paths are resolved before settings removal, and every recursive target
+passes a guard that rejects drive roots, the whole profile or data roots, and
+other overly broad paths.

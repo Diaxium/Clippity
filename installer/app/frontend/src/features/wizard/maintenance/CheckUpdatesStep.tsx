@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import type { ReleaseChannel } from "@clippity/installer-shared";
 import { Button } from "@shared/ui";
 import { INSTALLED_VERSION } from "@config/catalog";
+import { UPDATE_INFO } from "@config/catalog";
+import * as backend from "@services/installer";
 import { useWizardStore } from "@state/wizardStore";
 
 import { StepShell } from "../components/StepShell";
@@ -14,17 +16,37 @@ export function CheckUpdatesStep() {
   const setChannel = useWizardStore((s) => s.setChannel);
   const back = useWizardStore((s) => s.back);
   const goToStep = useWizardStore((s) => s.goToStep);
-  const markChecked = useWizardStore((s) => s.markCheckedForUpdates);
+  const setUpdateInfo = useWizardStore((s) => s.setUpdateInfo);
 
   const [checking, setChecking] = useState(false);
+  const [installedVersion, setInstalledVersion] = useState(INSTALLED_VERSION);
+  const [error, setError] = useState<string | null>(null);
 
-  const runCheck = () => {
+  useEffect(() => {
+    backend
+      .getInstallStatus()
+      .then((status) => {
+        if (status) setInstalledVersion(status.installed.version);
+      })
+      .catch(() => {});
+  }, []);
+
+  const runCheck = async () => {
     setChecking(true);
-    // Contact the update server (simulated), then reveal the result.
-    setTimeout(() => {
-      markChecked();
+    setError(null);
+    try {
+      const info = (await backend.checkUpdates(channel)) ?? {
+        ...UPDATE_INFO,
+        installed: { version: installedVersion, channel },
+        latest: { ...UPDATE_INFO.latest, channel },
+      };
+      setUpdateInfo(info);
       goToStep("update-available");
-    }, 1400);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setChecking(false);
+    }
   };
 
   return (
@@ -36,7 +58,7 @@ export function CheckUpdatesStep() {
           <Button variant="secondary" onClick={back} disabled={checking}>
             Back
           </Button>
-          <Button onClick={runCheck} disabled={checking}>
+          <Button onClick={() => void runCheck()} disabled={checking}>
             {checking ? "Checking…" : "Check for updates"}
           </Button>
         </>
@@ -44,7 +66,7 @@ export function CheckUpdatesStep() {
     >
       <div className="pb-6">
         <div className="rounded-[var(--radius-lg)] border border-[var(--hairline-strong)] bg-[var(--color-overlay-1)] px-4 divide-y divide-[var(--hairline)]">
-          <InfoLine label="Installed version" value={`${INSTALLED_VERSION} (Stable)`} />
+          <InfoLine label="Installed version" value={installedVersion} />
           <div className="flex items-center justify-between py-3">
             <span className="text-[13px] text-[var(--color-slate)]">
               Release channel
@@ -60,6 +82,15 @@ export function CheckUpdatesStep() {
             </select>
           </div>
         </div>
+
+        {error ? (
+          <div
+            role="alert"
+            className="mt-3 rounded-[var(--radius-md)] border border-[var(--color-accent)] bg-[var(--color-accent-soft)] px-3.5 py-3 text-[12.5px] text-[var(--color-accent)]"
+          >
+            {error}
+          </div>
+        ) : null}
 
         <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--hairline)] bg-[var(--color-overlay-1)] px-4 py-4">
           <Loader2

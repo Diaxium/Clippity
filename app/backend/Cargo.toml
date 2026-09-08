@@ -11,7 +11,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 rust-version = "1.78"
 authors = ["Clippity"]
@@ -78,6 +78,7 @@ windows = { version = "0.62.2", features = [
   # RegGetValueW — reads the OS product name / build for the
   # diagnostics card, which `GetVersionEx` lies about.
   "Win32_System_Registry",
+  "Win32_Security",
   # CF_HDROP file-drop clipboard copy for finished recordings — a clip
   # goes on the clipboard by path, not by value (see
   # `platform::windows::clipboard_files`).
