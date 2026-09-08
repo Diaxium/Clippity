@@ -99,25 +99,7 @@ pub fn resolve_plan(options: InstallOptions, selected: Vec<String>) -> InstallPl
 pub fn get_installed_configuration(state: State<'_, AppState>) -> Option<InstalledConfiguration> {
     let paths = state.paths.lock().expect("paths lock").clone();
     let (_, m) = installer_services::detect::locate_manifest(&paths)?;
-    let mut options = m.installed_options();
-    // The app is allowed to change these preferences after installation.
-    // Reflect its current persisted values when Modify opens so applying an
-    // unrelated component change never reverts a choice made in Settings.
-    if let Ok(bytes) = std::fs::read(paths.local_data.join("data").join("settings.json")) {
-        if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) {
-            if let Some(general) = value.get("general") {
-                if let Some(value) = general.get("startOnStartup").and_then(|v| v.as_bool()) {
-                    options.start_at_login = value;
-                }
-                if let Some(value) = general.get("automaticUpdates").and_then(|v| v.as_bool()) {
-                    options.automatic_updates = value;
-                }
-                if let Some(value) = general.get("helpImprove").and_then(|v| v.as_bool()) {
-                    options.help_improve = value;
-                }
-            }
-        }
-    }
+    let options = installer_services::manifest::effective_installed_options(&m, &paths);
     Some(InstalledConfiguration {
         options,
         selected_components: m.installed_components.clone(),

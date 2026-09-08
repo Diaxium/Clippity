@@ -474,13 +474,6 @@ fn apply_integrations(
         ),
     }
 
-    // Modify is an explicit settings change, so apply its preference toggles
-    // to an existing app settings file as well. Fresh install deliberately
-    // leaves retained settings alone; first launch seeds only when none exist.
-    if previous.is_some() {
-        sync_existing_app_preferences(paths, plan);
-    }
-
     // Crossing into Commit: the manifest write makes the new state
     // authoritative. Recorded so a rollback removes it too.
     journal.advance(Phase::Commit, &clock.iso);
@@ -494,6 +487,15 @@ fn apply_integrations(
         &clock.iso,
     );
     let _ = journal_store::write(maintenance_dir, journal);
+
+    // Modify is an explicit settings change, so apply its preference toggles
+    // to an existing app settings file after the authoritative commit. Fresh
+    // install deliberately leaves retained settings alone; first launch seeds
+    // only when none exist. Keeping this after the fallible commit boundary
+    // also means rollback can never leave an uncommitted preference change.
+    if previous.is_some() {
+        sync_existing_app_preferences(paths, plan);
+    }
 
     Ok(())
 }

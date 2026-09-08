@@ -353,7 +353,7 @@ pub fn apply_bundled(
     let mut actual_paths = paths.clone();
     actual_paths.install_dir = installed.install_directory.clone().into();
     let plan = build_plan(
-        installed.installed_options(),
+        manifest::effective_installed_options(&installed, paths),
         &manifest::components(),
         &installed.installed_components,
     );

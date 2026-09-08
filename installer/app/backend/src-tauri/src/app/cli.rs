@@ -121,8 +121,7 @@ fn run_modify(cmd: &CliCommand, paths: &InstallerPaths) -> ExitCode {
     };
     let product = manifest::product();
 
-    let mut options = m.installed_options();
-    merge_live_app_preferences(&mut options, paths);
+    let options = manifest::effective_installed_options(&m, paths);
     // Modify to the requested component set, defaulting to what is installed.
     let selected = cmd
         .components
@@ -174,31 +173,6 @@ fn run_update(cmd: &CliCommand, paths: &InstallerPaths) -> ExitCode {
     match result {
         Ok(()) => success_code(reboot.load(Ordering::Relaxed)),
         Err(e) => map_error(&e),
-    }
-}
-
-/// Preferences can be changed from the installed app after Setup writes its
-/// manifest. Preserve those live values during unattended Modify just as the
-/// interactive Modify wizard does.
-fn merge_live_app_preferences(options: &mut InstallOptions, paths: &InstallerPaths) {
-    let settings = paths.local_data.join("data").join("settings.json");
-    let Ok(bytes) = std::fs::read(settings) else {
-        return;
-    };
-    let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
-        return;
-    };
-    let Some(general) = value.get("general") else {
-        return;
-    };
-    if let Some(value) = general.get("startOnStartup").and_then(|v| v.as_bool()) {
-        options.start_at_login = value;
-    }
-    if let Some(value) = general.get("automaticUpdates").and_then(|v| v.as_bool()) {
-        options.automatic_updates = value;
-    }
-    if let Some(value) = general.get("helpImprove").and_then(|v| v.as_bool()) {
-        options.help_improve = value;
     }
 }
 

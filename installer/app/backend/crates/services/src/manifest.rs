@@ -3,12 +3,47 @@
 //! place that describes *what* Clippity ships, so the domain plan logic
 //! stays generic and this is the only file that changes per release.
 
-use installer_domain::install::Component;
+use installer_domain::install::{Component, InstallOptions};
+use installer_domain::state::InstallationManifest;
 use installer_domain::uninstall::DataCategory;
 use installer_domain::wizard::ProductInfo;
+use installer_infra::paths::InstallerPaths;
 
 const MB: u64 = 1_000_000;
 const GB: u64 = 1_000_000_000;
+
+/// Resolve maintenance options from the committed manifest plus preferences
+/// the installed app may have changed since Setup last ran. Every Modify and
+/// Update path must use this view so an unrelated operation never reverts a
+/// live app-side choice.
+pub fn effective_installed_options(
+    installed: &InstallationManifest,
+    paths: &InstallerPaths,
+) -> InstallOptions {
+    let mut options = installed.installed_options();
+    let settings = paths.local_data.join("data").join("settings.json");
+    if let Ok(bytes) = std::fs::read(settings) {
+        if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) {
+            apply_live_general(&mut options, &value);
+        }
+    }
+    options
+}
+
+fn apply_live_general(options: &mut InstallOptions, settings: &serde_json::Value) {
+    let Some(general) = settings.get("general") else {
+        return;
+    };
+    if let Some(value) = general.get("startOnStartup").and_then(|v| v.as_bool()) {
+        options.start_at_login = value;
+    }
+    if let Some(value) = general.get("automaticUpdates").and_then(|v| v.as_bool()) {
+        options.automatic_updates = value;
+    }
+    if let Some(value) = general.get("helpImprove").and_then(|v| v.as_bool()) {
+        options.help_improve = value;
+    }
+}
 
 /// Product facts for this build.
 ///
@@ -99,4 +134,47 @@ pub fn data_categories() -> Vec<DataCategory> {
             destructive: true,
         },
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn live_app_preferences_override_stale_manifest_options() {
+        let mut options = InstallOptions {
+            start_at_login: false,
+            automatic_updates: false,
+            help_improve: true,
+            ..InstallOptions::default()
+        };
+        let settings = serde_json::json!({
+            "general": {
+                "startOnStartup": true,
+                "automaticUpdates": true,
+                "helpImprove": false
+            }
+        });
+
+        apply_live_general(&mut options, &settings);
+
+        assert!(options.start_at_login);
+        assert!(options.automatic_updates);
+        assert!(!options.help_improve);
+    }
+
+    #[test]
+    fn absent_or_wrong_typed_live_fields_leave_manifest_options_alone() {
+        let mut options = InstallOptions {
+            start_at_login: true,
+            automatic_updates: false,
+            ..InstallOptions::default()
+        };
+        apply_live_general(
+            &mut options,
+            &serde_json::json!({ "general": { "startOnStartup": "yes" } }),
+        );
+        assert!(options.start_at_login);
+        assert!(!options.automatic_updates);
+    }
 }
