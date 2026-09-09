@@ -479,7 +479,7 @@ dependencies = [
 
 [[package]]
 name = "clippity-installer"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "installer-domain",
  "installer-infra",
@@ -1768,7 +1768,7 @@ dependencies = [
 
 [[package]]
 name = "installer-domain"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "semver",
  "serde",
@@ -1777,7 +1777,7 @@ dependencies = [
 
 [[package]]
 name = "installer-infra"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "serde",
  "thiserror 2.0.20",
@@ -1787,7 +1787,7 @@ dependencies = [
 
 [[package]]
 name = "installer-platform"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "installer-domain",
  "installer-infra",
@@ -1797,7 +1797,7 @@ dependencies = [
 
 [[package]]
 name = "installer-services"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "installer-domain",
  "installer-infra",
