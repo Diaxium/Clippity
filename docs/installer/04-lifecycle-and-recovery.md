@@ -1,6 +1,6 @@
 # Lifecycle Modes, Detection, Transactions & Recovery
 
-Status: Complete for the 0.3.1 custom Setup lifecycle: detection, install,
+Status: Complete for the 0.3.2 custom Setup lifecycle: detection, install,
 component modification, repair, verified online update, uninstall, transaction
 rollback, and startup recovery are implemented. Covers task Phases 6, 7, 13,
 and 14.

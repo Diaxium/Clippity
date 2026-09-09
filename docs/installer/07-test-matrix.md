@@ -1,6 +1,6 @@
 # Installer Test Matrix & Release Evidence
 
-Current for Clippity 0.3.1 (2026-09-08). The installer is verified at three
+Current for Clippity 0.3.2 (2026-09-09). The installer is verified at three
 levels: pure policy tests, filesystem/transaction service tests, and a packaged
 Windows lifecycle smoke test performed before publishing.
 
@@ -35,7 +35,7 @@ Pop-Location
 | Workflow         | Required verification                                                                                                                                                                          |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Fresh install    | Custom per-user destination, payload hash, manifest and installation identity, ARP entry, shortcuts, selected capabilities, file associations, and seeded app preferences                      |
-| Update           | Older packaged Setup followed by 0.3.1 bundled-update handoff; identity, destination, scope, components, preferences, and user data retained; executable replaced with final build             |
+| Update           | Older packaged Setup followed by 0.3.2 bundled-update handoff; identity, destination, scope, components, preferences, and user data retained; executable replaced with final build             |
 | Modify           | Component selection changes without moving the install or reverting preferences changed inside the app                                                                                         |
 | Repair           | Missing/corrupt owned executable restored from the embedded payload; manifest, associations, shortcuts, settings, and captures preserved                                                       |
 | Uninstall        | App/integrations always removed; cache, settings, and content independently honored; export created before settings removal; unknown files retained; unsafe recursive roots rejected           |

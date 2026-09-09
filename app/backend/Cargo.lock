@@ -793,7 +793,7 @@ dependencies = [
 
 [[package]]
 name = "clippity"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "clippity-domain",
  "clippity-infra",
@@ -813,7 +813,7 @@ dependencies = [
 
 [[package]]
 name = "clippity-bench"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "base64 0.23.1",
  "clippity-domain",
@@ -825,7 +825,7 @@ dependencies = [
 
 [[package]]
 name = "clippity-domain"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "clippity-infra",
  "image",
@@ -835,7 +835,7 @@ dependencies = [
 
 [[package]]
 name = "clippity-infra"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -847,7 +847,7 @@ dependencies = [
 
 [[package]]
 name = "clippity-platform"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "clippity-domain",
  "clippity-infra",
@@ -861,7 +861,7 @@ dependencies = [
 
 [[package]]
 name = "clippity-services"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "arboard",
  "base64 0.23.1",
@@ -883,7 +883,7 @@ dependencies = [
 
 [[package]]
 name = "clippity-vision"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "clippity-domain",
  "clippity-infra",

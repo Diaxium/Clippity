@@ -1,7 +1,7 @@
 {
   "name": "clippity-installer-tauri",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Clippity Setup Tauri shell — owns the Tauri CLI and the wizard app crate.",
   "scripts": {
     "tauri": "tauri",
