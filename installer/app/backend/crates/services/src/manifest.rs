@@ -55,7 +55,10 @@ fn apply_live_general(options: &mut InstallOptions, settings: &serde_json::Value
 pub fn product() -> ProductInfo {
     ProductInfo {
         name: "Clippity".into(),
-        version: "0.3.1".into(),
+        // The workspace package version is the installer's release version.
+        // Derive it instead of duplicating a literal that can drift from the
+        // Tauri config and the embedded application payload during a bump.
+        version: env!("CARGO_PKG_VERSION").into(),
         arch: "64-bit".into(),
         publisher: "Clippity".into(),
         default_install_dir: installer_infra::paths::DEFAULT_INSTALL_DIR.into(),

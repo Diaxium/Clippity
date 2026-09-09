@@ -18,7 +18,7 @@ const GB = 1_000_000_000;
 
 export const PRODUCT: ProductInfo = {
   name: "Clippity",
-  version: "0.3.1",
+  version: "0.3.2",
   arch: "64-bit",
   publisher: "Clippity",
   defaultInstallDir: "C:\\Program Files\\Clippity",
@@ -107,7 +107,7 @@ export const DATA_CATEGORIES: DataCategory[] = [
 /** The update the maintenance flow surfaces (installed 1.4.0 → 1.5.0). */
 export const UPDATE_INFO: UpdateInfo = {
   installed: { version: INSTALLED_VERSION, channel: "stable" },
-  latest: { version: "0.3.1", channel: "stable" },
+  latest: { version: "0.3.2", channel: "stable" },
   available: true,
   downloadBytes: 82_400_000,
   signature: "verified",
