@@ -319,8 +319,6 @@ pub fn run() {
             clippity_infra::paths::migrate_legacy_layout(app.handle());
 
             let webview_data_dir = clippity_infra::paths::webview_data_dir(app.handle())?;
-            create_app_windows(app.handle(), &webview_data_dir)?;
-
             // Resolve paths once at startup, then hand them to the
             // capture (and future) services through AppState. Done
             // inside setup() so the AppHandle is available — Tauri's
@@ -328,6 +326,13 @@ pub fn run() {
             let paths =
                 std::sync::Arc::new(clippity_infra::paths::AppPaths::resolve(app.handle())?);
             app.manage(app::state::AppState::new(paths.clone())?);
+
+            // A WebView starts loading as soon as `build()` returns and its
+            // frontend immediately invokes `settings_get`. Keep AppState ahead
+            // of every WebView so initial settings (including the saved theme)
+            // cannot race managed-state initialization and wait for a later
+            // focus or visibility event before they hydrate.
+            create_app_windows(app.handle(), &webview_data_dir)?;
 
             // Reconcile app-controlled Windows integrations from persisted
             // settings, then let the installed maintenance worker perform a
