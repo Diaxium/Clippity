@@ -21,7 +21,7 @@ and lint all run from the repository root with no `cd` into a package. See
 | [decisions/](decisions/README.md) | Architecture Decision Records (ADRs): the "why" behind non-obvious choices. |
 | [roadmaps/](roadmaps/README.md) | Per-area roadmaps and the current-state audit. |
 | [installer/](installer/README.md) | Design, lifecycle, and test matrix of the Setup / Modify / Update / Uninstall wizard. |
-| [releases/](releases/) | Release notes: [v0.3.2](releases/v0.3.2.md), [v0.3.1](releases/v0.3.1.md), [v0.3.0](releases/v0.3.0.md). |
+| [releases/](releases/) | Release notes: [v0.3.3](releases/v0.3.3.md), [v0.3.2](releases/v0.3.2.md), [v0.3.1](releases/v0.3.1.md), [v0.3.0](releases/v0.3.0.md). |
 | [ux-review/](ux-review/README.md) | Tooling for screenshotting the running app despite its capture shield. |
 
 Historical investigation reports are kept for their evidence and are not
