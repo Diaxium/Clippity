@@ -4,6 +4,7 @@
 // outputs, while build/release is recreated to prevent stale uploads.
 
 import { createHash } from "node:crypto";
+import { createReadStream } from "node:fs";
 import {
   copyFile,
   mkdir,
@@ -14,6 +15,13 @@ import {
 } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+/** Stream a file through SHA-256 without holding it in memory. */
+async function sha256(file) {
+  const hash = createHash("sha256");
+  for await (const chunk of createReadStream(file)) hash.update(chunk);
+  return hash.digest("hex");
+}
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const appConfig = JSON.parse(
@@ -57,9 +65,10 @@ for (const artifact of artifacts) {
   if (!info?.isFile() || info.size === 0) {
     throw new Error(`Missing release input: ${artifact.source}`);
   }
-  const bytes = await readFile(artifact.source);
-  const digest = createHash("sha256").update(bytes).digest("hex");
-  await copyFile(artifact.source, join(releaseDir, artifact.name));
+  const [digest] = await Promise.all([
+    sha256(artifact.source),
+    copyFile(artifact.source, join(releaseDir, artifact.name)),
+  ]);
   checksumLines.push(`${digest}  ${artifact.name}`);
   console.log(`${artifact.name}  ${info.size} bytes  sha256:${digest}`);
 }
