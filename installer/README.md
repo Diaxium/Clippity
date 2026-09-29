@@ -3,9 +3,8 @@
 The **install / modify / update / repair / uninstall** wizard for Clippity.
 
 A standalone project that mirrors the main Clippity app's structure and design
-system. Every screen follows the design boards in [`design/`](design/):
-[Setup](design/Setup-workflow.png), [Modification](design/Modification-workflow.png),
-and [Uninstaller](design/Uninstaller-workflow.png).
+system. Every screen follows the Setup, Modification, and Uninstaller design
+boards (kept outside this repository).
 
 ## Layout
 
@@ -23,8 +22,8 @@ installer/
 │     │  ├─ platform/  Win32 shortcuts, registry (Add/Remove Programs), elevation
 │     │  └─ services/  install / update / uninstall orchestration + manifest
 │     └─ src-tauri/    the single wizard window + thin Tauri commands
-├─ payload/           the staged Clippity.exe, compiled into the binary
-├─ design/            the reference design boards
+├─ payload/           the staged Clippity.exe, compiled into the binary (git-ignored)
+├─ scripts/           collect-build.mjs — lifts the built exe into build/
 ├─ package.json       root workspace scripts
 └─ pnpm-workspace.yaml
 ```

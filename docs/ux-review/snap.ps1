@@ -6,6 +6,8 @@
 #   .\snap.ps1 -Name screen-01-capture-default            # foreground window
 #   .\snap.ps1 -Name screen-02-overlay -Title "Clippity Region Capture"
 #   .\snap.ps1 -Name screen-03-full -FullScreen
+#
+# See README.md in this folder for the window titles and parameters.
 param(
   [Parameter(Mandatory = $true)][string]$Name,
   [string]$Title = "",
@@ -38,7 +40,6 @@ $outFile = Join-Path $outDir ($Name + ".png")
 
 $bounds = $null
 if ($FullScreen) {
-  $screen = [System.Windows.Forms.Screen]::PrimaryScreen
   Add-Type -AssemblyName System.Windows.Forms
   $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
   $bounds = @{ X = $b.X; Y = $b.Y; W = $b.Width; H = $b.Height }

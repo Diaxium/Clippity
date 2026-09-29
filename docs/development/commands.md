@@ -1,7 +1,7 @@
 # Commands
 
-Every command below runs from the **repository root** (`restructure/`). You
-never need to `cd` into a package. Commands are pnpm scripts defined in the
+Every command below runs from the **repository root**. You never need to `cd`
+into a package. Commands are pnpm scripts defined in the
 root [`package.json`](../../package.json); the Rust ones proxy into the Cargo
 workspace at [`app/backend`](../../app/backend).
 
@@ -24,8 +24,22 @@ workspace at [`app/backend`](../../app/backend).
 | Command | What it does |
 | --- | --- |
 | `pnpm build` | Type-check `@clippity/shared`, then type-check + production-build the frontend into `app/frontend/dist`. |
-| `pnpm tauri:build` | Produce the native desktop bundle / installer (runs the frontend build first via Tauri's `beforeBuildCommand`). |
+| `pnpm tauri:build` | Produce the native desktop bundle (runs the frontend build first via Tauri's `beforeBuildCommand`), then collect the artifacts into `build/`. |
 | `pnpm preview` | Serve the built frontend for a local production preview. |
+
+## Package and release
+
+See [getting-started/building.md](../getting-started/building.md#shipping-everything)
+for what each step produces and how the installer payload works.
+
+| Command | What it does |
+| --- | --- |
+| `pnpm dist` | Everything below in order: `tauri:build` → `portable` → `stage:payload` → `installer:build`. |
+| `pnpm collect-build` | Re-copy Tauri's bundles and `clippity.exe` from `app/backend/target/release/` into `build/` (`tauri:build` already does this). |
+| `pnpm portable` | Assemble the portable folder and zip into `build/portable/`. |
+| `pnpm stage:payload` | Copy `build/clippity.exe` into `installer/payload/` with its version, size, and SHA-256. |
+| `pnpm installer:build` | Build the setup wizard in `installer/` (a separate pnpm workspace; run `pnpm install` there once first). |
+| `pnpm release:artifacts` | After `pnpm dist`: stage the versioned setup and portable zip plus `SHA256SUMS.txt` into `build/release/`. |
 
 ## Quality gates
 
@@ -50,6 +64,8 @@ These target the Cargo workspace directly from the root without a `cd`:
 | `pnpm cargo:test` | `cargo test --workspace`. |
 | `pnpm cargo:clippy` | `cargo clippy --workspace`. |
 | `pnpm cargo:fmt` | `cargo fmt` across the workspace. |
+| `pnpm bench` | Criterion benchmarks in `clippity-bench`. |
+| `pnpm bench:check` | Compare the last `pnpm bench` medians against `app/backend/benches-budgets.json`; exits non-zero on a fail band or a missing result. See [perf/benchmarks.md](../perf/benchmarks.md). |
 
 To scope a Rust command to a single crate, use Cargo's `-p` flag, e.g.
 `cargo check -p clippity-domain --manifest-path app/backend/Cargo.toml`.

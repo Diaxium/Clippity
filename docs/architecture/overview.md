@@ -17,8 +17,12 @@ rendered from a single HTML file via hash routing:
 | Toast | `#/toast` | Transient capture-confirmation notifications. |
 | Tray | `#/tray` | Left-click flyout panel of recent captures. |
 | Countdown | `#/countdown` | Pre-capture timer strip. |
+| Recorder frame | `#/recorder-frame` | Click-through border around the area being recorded. |
 
-All windows are created up front in the backend (see
+Each window's component is a lazy chunk selected by hash prefix in
+[`app/windowRoutes.ts`](../../app/frontend/src/app/windowRoutes.ts), so the
+small utility windows never download the editor. All windows are created up
+front in the backend (see
 [`src-tauri/src/lib.rs`](../../app/backend/src-tauri/src/lib.rs)
 `create_app_windows`) so each can pin its WebView2 data directory and so the
 app can hide-to-tray without destroying window state.
@@ -26,7 +30,7 @@ app can hide-to-tray without destroying window state.
 ## The two halves
 
 - **Frontend** ([architecture/frontend.md](frontend.md)) — React 19,
-  TypeScript, Vite 7, Tailwind v4, Zustand for state, Motion for animation.
+  TypeScript, Vite 8, Tailwind v4, Zustand for state, Motion for animation.
   Feature-organized under `app/frontend/src`.
 - **Backend** ([architecture/backend.md](backend.md)) — a Rust Cargo
   workspace of layered crates (`infra → domain → platform/vision →

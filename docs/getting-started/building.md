@@ -16,10 +16,16 @@ pnpm tauri:build
 ```
 
 Runs the frontend build first (Tauri's `beforeBuildCommand`), then compiles
-the Rust workspace in `--release` and produces the platform bundle. On
-Windows the artifacts land under
-`app/backend/src-tauri/target/release/bundle/` (plus the raw
-`Clippity.exe` in `target/release/`).
+the Rust workspace in `--release` and produces the platform bundle. Tauri
+writes it under the workspace target directory,
+`app/backend/target/release/bundle/` (the raw `clippity.exe` sits in
+`app/backend/target/release/`); `scripts/collect-build.mjs` then copies both
+into a clean top-level `build/`:
+
+| Path | Contents |
+| --- | --- |
+| `build/msi/`, `build/nsis/` | Tauri's stock installers |
+| `build/clippity.exe` | The standalone application binary |
 
 ### Release profile
 
@@ -63,6 +69,11 @@ Each step also runs standalone, provided the one before it has.
 | `installer/build/Clippity Setup.exe`             | **The installer.** One self-contained file |
 | `build/portable/Clippity-<version>-portable.zip` | **The portable build.** Unzip and run |
 | `build/msi/`, `build/nsis/`                      | Tauri's stock bundles, if you want them |
+
+For a GitHub release, `pnpm release:artifacts` copies the first two into
+`build/release/` as `Clippity-<version>-Setup.exe` and
+`Clippity-<version>-portable.zip`, and writes `SHA256SUMS.txt` beside them.
+It refuses to run if the app and installer versions disagree.
 
 ### The installer payload
 

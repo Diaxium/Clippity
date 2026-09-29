@@ -1,23 +1,30 @@
 # Frontend
 
 Package `clippity-frontend` ([`app/frontend`](../../app/frontend)) — React 19
-+ TypeScript + Vite 7 + Tailwind CSS v4, with Zustand for state and Motion for
++ TypeScript + Vite 8 + Tailwind CSS v4, with Zustand for state and Motion for
 animation.
 
 ## Layout
 
 ```text
 app/frontend/src/
-├── main.tsx            # single entry; hash-routes to the per-window shell
-├── windows/            # one shell per Tauri window (Capture, Overlay, Toast, Tray, Countdown, Main)
+├── main.tsx            # single entry; app/windowRoutes.ts picks the per-window shell
+├── *-smoke.tsx         # dev-only design-review harnesses (not bundled)
+├── windows/            # one shell per Tauri window (Capture, Main, Overlay, Toast, Tray,
+│                       #   Countdown, RecorderFrame)
 ├── app/                # app shell, providers
-├── features/           # feature modules — capture, overlay, editor, library,
-│                       #   collections, settings, presets, onboarding, toast, tray, countdown, dashboard
+├── features/           # feature modules — capture, overlay, editor, studio, library,
+│                       #   home, dashboard, settings, developer, presets, onboarding,
+│                       #   toast, tray, countdown
 ├── services/tauri/     # IPC clients (one per backend domain) + the invoke/on plumbing
 ├── state/              # Zustand stores
 ├── shared/             # cross-feature hooks / lib / ui
 ├── assets/ styles/ config/ test/
 ```
+
+The `*-smoke.tsx` entries (with matching `*-smoke.html` pages beside
+`index.html`) are described in
+[getting-started/development.md](../getting-started/development.md#design-review-harnesses).
 
 ## Feature modules
 
@@ -37,7 +44,8 @@ function and re-exports that domain's wire types from
 
 - [`vite.config.ts`](../../app/frontend/vite.config.ts) — React + Tailwind
   plugins, path aliases (`@`, `@features`, `@services`, …), fixed dev port
-  1420, and `motion`/`react` manual chunks.
+  1421, and separate `motion` / `react` chunks via Rolldown code-splitting
+  groups.
 - [`tsconfig.app.json`](../../app/frontend/tsconfig.app.json) — strict TS with
   the same path aliases.
 - Tests: Vitest + Testing Library (`vitest.config.ts`, jsdom).

@@ -1,6 +1,6 @@
 # Installation
 
-From the repository root (`restructure/`):
+From the repository root:
 
 ```bash
 pnpm install

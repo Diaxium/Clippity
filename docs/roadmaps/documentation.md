@@ -5,10 +5,14 @@
 Architecture, commands, product concepts, editor/library keybinds, performance
 investigations and 22 surviving ADRs are valuable and unusually detailed. The
 documentation is developer-heavy: user help, troubleshooting, release/security
-policy and in-app contextual guidance are thin. Before this roadmap set,
-`docs/roadmaps/` was empty despite many references. `docs/ux-review/README.md`
-is still absent, historic test totals are stale, the build artifact path is
-outdated and ADRs 0001–0008 are explicitly lost.
+policy and in-app contextual guidance are thin. ADRs 0001–0008 are explicitly
+lost.
+
+D1 progress: the UX-review index, build-artifact paths, dev-server port,
+stale `restructure/` root, crate dependency table and stale test totals have
+been corrected, and the docs index now covers installer, release-notes and
+benchmark docs. CONTRIBUTING and release notes now exist; a link checker does
+not yet.
 
 ## Strengths to preserve
 
@@ -21,8 +25,8 @@ outdated and ADRs 0001–0008 are explicitly lost.
 
 - No user manual organized by outcomes, searchable in-app help or first-run
   troubleshooting.
-- No CONTRIBUTING, SECURITY, changelog, release notes, support bundle guide,
-  compatibility matrix or privacy/model-download explanation.
+- No SECURITY policy file, changelog, support bundle guide, compatibility
+  matrix or privacy/model-download explanation.
 - No link checker, snippet/test-count validation or doc ownership/freshness gate.
 - Code comments link to missing/lost roadmap and ADR material.
 - Docs do not distinguish stable, beta/Labs, platform-specific and planned

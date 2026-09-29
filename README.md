@@ -146,7 +146,7 @@ some surfaces are still being finished.
 | Library, labels, collections, trash, provenance                                      | Complete                                                                                                                                                                          |
 | Editor scene, tools, effects, export                                                 | Complete                                                                                                                                                                          |
 | Presets, tray, toasts, onboarding                                                    | Complete                                                                                                                                                                          |
-| Settings                                                                             | General, appearance, notifications, performance, capture, recording, shortcuts, and models are live; editor, library, integrations, privacy, advanced, and about are placeholders |
+| Settings                                                                             | General, appearance, notifications, performance, capture, recording, shortcuts, models, and advanced are live; editor, library, integrations, privacy, and about are placeholders |
 | Sharing                                                                              | Local handoff only — copy, open, reveal, copy path                                                                                                                                |
 | Search                                                                               | Metadata-oriented; no OCR/semantic search yet                                                                                                                                     |
 | Presets as full workflow recipes                                                     | Partial                                                                                                                                                                           |
@@ -186,18 +186,18 @@ PC" on first run — **More info → Run anyway**, or check the hash first.
 pnpm dist
 ```
 
-That produces every packaging format, collected into `build/`:
+That produces every packaging format (see [Build from source](#build-from-source)
+for prerequisites):
 
-```bash
-pnpm dist
-```
+| Artifact      | Path                                                                                                                                     |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup wizard  | `installer/build/Clippity Setup.exe` — a full Setup / Modify / Update / Uninstall installer, [documented here](docs/installer/README.md) |
+| Portable zip  | `build/portable/Clippity-<version>-portable.zip`                                                                                         |
+| MSI installer | `build/msi/`                                                                                                                             |
+| NSIS setup    | `build/nsis/`                                                                                                                            |
 
-| Artifact      | Path                                                                                                             |
-| ------------- | ---------------------------------------------------------------------------------------------------------------- |
-| MSI installer | `build/msi/`                                                                                                     |
-| NSIS setup    | `build/nsis/`                                                                                                    |
-| Portable zip  | `build/portable/`                                                                                                |
-| Custom wizard | `installer/` — a full Setup / Modify / Update / Uninstall installer, [documented here](docs/installer/README.md) |
+`pnpm release:artifacts` then renames the setup and portable zip to their
+versioned release names and writes `SHA256SUMS.txt` into `build/release/`.
 
 ## Build from source
 
@@ -227,7 +227,7 @@ workspace, no `cd` into a package.
 
 | Command                           | Does                                                              |
 | --------------------------------- | ----------------------------------------------------------------- |
-| `pnpm dev`                        | Frontend dev server only, in a browser (`http://localhost:1420`). |
+| `pnpm dev`                        | Frontend dev server only, in a browser (`http://localhost:1421`). |
 | `pnpm tauri:dev`                  | The full desktop app.                                             |
 | `pnpm build`                      | Production frontend build.                                        |
 | `pnpm tauri:build`                | Native bundle, collected into `build/`.                           |
@@ -238,8 +238,8 @@ workspace, no `cd` into a package.
 | `pnpm bench` · `pnpm bench:check` | Criterion benchmarks and their budget gate.                       |
 
 Full reference: [docs/development/commands.md](docs/development/commands.md).
-The frontend suite alone is 1,398 tests across 122 files, and CI runs the whole
-lot on every push.
+CI type-checks, lints, and tests the frontend, backend, and installer on every
+push and pull request.
 
 ## Architecture
 
@@ -247,15 +247,15 @@ Clippity is a set of dedicated Tauri windows, each with its own React entry poin
 rendered from a single HTML file via hash routing. All of them are created up
 front so the app can hide to the tray without losing window state.
 
-| Window         | Route         | Purpose                                           |
-| -------------- | ------------- | ------------------------------------------------- |
-| Capture        | `index.html`  | The capture hub, shown at launch.                 |
-| Main           | `#/main`      | Library, editor, presets, settings.               |
-| Overlay        | `#/overlay`   | Transparent full-screen selection surface.        |
-| Toast          | `#/toast`     | Transient result notifications.                   |
-| Tray           | `#/tray`      | Left-click flyout of recent captures.             |
-| Countdown      | `#/countdown` | Pre-capture timer strip.                          |
-| Recorder frame | —             | The outline drawn around a region being recorded. |
+| Window         | Route              | Purpose                                           |
+| -------------- | ------------------ | ------------------------------------------------- |
+| Capture        | `index.html`       | The capture hub, shown at launch.                 |
+| Main           | `#/main`           | Library, editor, presets, settings.               |
+| Overlay        | `#/overlay`        | Transparent full-screen selection surface.        |
+| Toast          | `#/toast`          | Transient result notifications.                   |
+| Tray           | `#/tray`           | Left-click flyout of recent captures.             |
+| Countdown      | `#/countdown`      | Pre-capture timer strip.                          |
+| Recorder frame | `#/recorder-frame` | The outline drawn around a region being recorded. |
 
 The Rust side is a layered Cargo workspace — `infra → domain → platform / vision
 → services → src-tauri` — and every interaction across the seam is a typed IPC
@@ -265,7 +265,7 @@ by the Rust `domain` structs.
 ```text
 Clippity/
 ├── app/
-│   ├── frontend/          clippity-frontend   React 19 · Vite 7 · Tailwind v4 · Zustand · Motion
+│   ├── frontend/          clippity-frontend   React 19 · Vite 8 · Tailwind v4 · Zustand · Motion
 │   ├── shared/            @clippity/shared    IPC wire contracts (type-only)
 │   └── backend/           Cargo workspace
 │       ├── crates/
@@ -291,7 +291,7 @@ two outputs.
 
 | Layer            | Technologies                                                                             |
 | ---------------- | ---------------------------------------------------------------------------------------- |
-| **UI**           | React 19, TypeScript 5.8, Vite 7, Tailwind CSS v4, [Motion](https://motion.dev), Zustand |
+| **UI**           | React 19, TypeScript 5.8, Vite 8, Tailwind CSS v4, [Motion](https://motion.dev), Zustand |
 | **Shell**        | Tauri v2 + `dialog`, `opener`, `global-shortcut` plugins                                 |
 | **Native core**  | Rust — `xcap`, `image`, `arboard`, `windows`, `window-vibrancy`                          |
 | **Recording**    | Windows Media Foundation — H.264 + AAC, NV12, fragmented MP4                             |
