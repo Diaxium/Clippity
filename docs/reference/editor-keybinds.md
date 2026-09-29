@@ -7,27 +7,27 @@ file/clipboard/history. Where Clippity already shipped a tool letter that clashe
 with the "ideal" map, the **existing tool wins** (muscle memory + existing
 tests + tooltips beat a letter) and the deviation is documented below.
 
-Press **`?`** in the editor for the in-app overlay — it is generated from the
+Press **`?`** in the editor for the in-app overlay: it is generated from the
 same registry described here, so it never drifts.
 
 ## Architecture
 
 ```
 features/editor/keybinds/
-  keybindTypes.ts       — EditorKeybind, KeybindCategory/Context, CommandCtx, KeybindApi
-  keybindUtils.ts       — platform detection, isTypingTarget, event/combo → signature,
+  keybindTypes.ts:        EditorKeybind, KeybindCategory/Context, CommandCtx, KeybindApi
+  keybindUtils.ts:        platform detection, isTypingTarget, event/combo → signature,
                           platform-aware formatting, conflict detection
-  editorKeybinds.ts     — EDITOR_KEYBINDS: the declarative default map + commands
-  keybindRegistry.ts    — dispatch index (sig → binding), context resolution,
+  editorKeybinds.ts:      EDITOR_KEYBINDS: the declarative default map + commands
+  keybindRegistry.ts:     dispatch index (sig → binding), context resolution,
                           conflict report, help grouping
-  useEditorKeybinds.ts  — the single window keydown/keyup/blur listener + history coalescing
-  index.ts              — public surface
-components/KeybindHelpOverlay.tsx  — the `?` cheat-sheet (reads the registry)
+  useEditorKeybinds.ts:   the single window keydown/keyup/blur listener + history coalescing
+  index.ts:               public surface
+components/KeybindHelpOverlay.tsx:   the `?` cheat-sheet (reads the registry)
 ```
 
 `EditorLayout` mounts exactly one `useEditorKeybinds(enabled, api)`. Everything
 else (pointer gestures, wheel zoom, pen Esc/Enter, inline text editing) stays in
-the canvas — the hook never re-implements pointer logic.
+the canvas: the hook never re-implements pointer logic.
 
 ### `Mod` = Ctrl / Cmd
 
@@ -51,7 +51,7 @@ Authored combos use `=`/`-`/`[`/`]`/`/` tokens (never `+`); `?` is authored as
 |-----|--------|-------------|-------|
 | `V` | Move / Select | Figma | |
 | `C` | Crop | Figma + Snagit | Opens a modal crop session on the page frame (ADR 0019); `Enter` applies, `Esc` cancels. |
-| `A` | Arrow | Clippity | Illustrator's "Direct Select" — Clippity has no point-edit tool, so `A` keeps the existing Arrow tool. |
+| `A` | Arrow | Clippity | Illustrator's "Direct Select"; Clippity has no point-edit tool, so `A` keeps the existing Arrow tool. |
 | `P` | Pen | Illustrator | |
 | `T` | Text | Figma + Illustrator | |
 | `R` | Rectangle | Figma | (Illustrator uses `M`; Clippity follows Figma's `R`.) |
@@ -59,18 +59,18 @@ Authored combos use `=`/`-`/`[`/`]`/`/` tokens (never `+`); `?` is authored as
 | `L` | Line | Figma | |
 | `F` | Frame | Figma | |
 | `B` | Blur | Clippity | |
-| `M` | Measure | Clippity | Illustrator's `M` is its rectangle, which Clippity binds to `R` (Figma's letter) — so `M` was free for the dimension tool (ADR 0024). |
-| `I` | Image | Clippity | Illustrator's "Eyedropper" — Clippity has no global eyedropper tool (color sampling lives in the color popover), so `I` keeps the existing Image tool. |
+| `M` | Measure | Clippity | Illustrator's `M` is its rectangle, which Clippity binds to `R` (Figma's letter), so `M` was free for the dimension tool (ADR 0024). |
+| `I` | Image | Clippity | Illustrator's "Eyedropper"; Clippity has no global eyedropper tool (color sampling lives in the color popover), so `I` keeps the existing Image tool. |
 | `H` | Hand / Pan | Illustrator | |
 | `Space` (hold) | Temporary Pan | Figma + Illustrator | Pans without changing the active tool; restores it on release. |
 | `Esc` | Cancel / deselect | Common | Cancels an open crop, then closes the color editor / context menu / help, then deselects. |
 | `Enter` | Apply crop | Figma + Snagit | Only while a crop session is open (`editor` context). With a text node selected and no crop, `Enter` still enters text editing (`selection` context wins). |
 
 Tool letters only switch to tools available in the **current mode** (Annotate vs
-Design — Workstream M). `B`/highlight/step/etc. are Annotate-only; `P`/`F`/image
+Design, Workstream M). `B`/highlight/step/etc. are Annotate-only; `P`/`F`/image
 are Design-only.
 
-> Not bound: `Z` (no zoom tool — `Mod+Z` is Undo). See **Known limitations**.
+> Not bound: `Z` (no zoom tool; `Mod+Z` is Undo). See **Known limitations**.
 > (`C` was unbound until the crop tool shipped; `M` until Measure did.)
 >
 > **The single-letter map is now full.** Stamps (ADR 0025) shipped without a
@@ -119,7 +119,7 @@ from the canvas (they remain reachable from the layers tree).
 (the scene's only container type), preserving paint order and z-position;
 **Ungroup** dissolves every selected frame back into its slot. Because nodes
 carry **absolute** coordinates and frames are pure logical containers, both are
-a single tree restructure (one undo step) — no geometry is touched. See
+a single tree restructure (one undo step): no geometry is touched. See
 `editorStore.group` / `ungroup`.
 
 ### View (`view`)
@@ -171,12 +171,12 @@ Center resize keeps the frame center fixed; with `Shift+Alt` the center stays pu
 #### Object types that support proportional / center resize
 
 All **box-like** nodes: images, rectangles, ellipses, frames, text boxes,
-polygons, stars, paths (pen/pencil), and the annotation regions built on boxes —
+polygons, stars, paths (pen/pencil), and the annotation regions built on boxes:
 **blur, pixelate, magnifier, highlight, step, callout**. Multi-selected
 box nodes resize together via the keyboard nudges.
 
 **Line-like** nodes (line, arrow) use endpoint handles, not the 8-handle box
-transform, so aspect-ratio/center resize doesn't apply — drag an endpoint
+transform, so aspect-ratio/center resize doesn't apply: drag an endpoint
 (`Shift` constrains the angle). Keyboard resize nudges skip line-like + locked
 nodes.
 
@@ -207,7 +207,7 @@ and **non-destructive** (the original capture file is untouched). Re-opening the
 capture restores the saved scene automatically (`editorLoad` returns it in
 `scene`); a missing/corrupt sidecar falls back to seeding from the flat image.
 The document status pill reads **Draft → Edited → Saved**. (Save is also in the
-document-title menu.) Save As currently behaves like Save — a path-picker is a
+document-title menu.) Save As currently behaves like Save: a path-picker is a
 follow-up.
 
 `Mod+E` / `Mod+Shift+C` reuse the same export pipeline (`useEditorExport`) as the
@@ -219,7 +219,7 @@ Inside the inline text editor (`<textarea>`): `Esc` cancels, `Mod+Enter` commits
 and plain `Enter` inserts a newline. The textarea owns its keys (it stops
 propagation), so normal typing never triggers editor shortcuts.
 
-Rich-text `Mod+B/I/U` are **not** bound — text nodes have no per-run styling (a
+Rich-text `Mod+B/I/U` are **not** bound: text nodes have no per-run styling (a
 node carries one `fontWeight`/color), so there is nothing to toggle on a
 selection range. Documented as a limitation, not faked.
 
@@ -232,20 +232,20 @@ one, so a single key fires at most one command:
 textEditing > selection > editor
 ```
 
-- `editor` (default) — active when the editor owns the keyboard and the user
+- `editor` (default): active when the editor owns the keyboard and the user
   isn't typing.
-- `selection` — additionally requires ≥1 selected node (e.g. Delete, nudge,
+- `selection`: additionally requires ≥1 selected node (e.g. Delete, nudge,
   z-order, lock/hide).
-- `textEditing` — reserved; the inline editor currently owns its own keys.
+- `textEditing`: reserved; the inline editor currently owns its own keys.
 
 A key may appear in two contexts on purpose (e.g. an `editor` default + a
-`selection` override) — that is layering, not a conflict.
+`selection` override): that is layering, not a conflict.
 
 ## Typing protection
 
 `isTypingTarget` suppresses tool/editing shortcuts while focus is in an
 `<input>`, `<textarea>`, `<select>`, `contenteditable`, or an element with
-`role=textbox|searchbox|spinbutton` — covering rename fields, the panel number
+`role=textbox|searchbox|spinbutton`: covering rename fields, the panel number
 fields, color inputs, and the help filter. Exceptions: the inline text editor
 handles its own `Esc`/`Mod+Enter`, and the help overlay handles its own `Esc`.
 
@@ -279,24 +279,24 @@ Append to `EDITOR_KEYBINDS` in `editorKeybinds.ts`:
   undo step.
 - Multi-combo bindings (e.g. the four arrows) disambiguate via `event` in the
   command.
-- Run the tests — `keybindRegistry.test.ts` will fail if you introduce a
+- Run the tests: `keybindRegistry.test.ts` will fail if you introduce a
   conflict.
 
 ## Known limitations & future work
 
 - **Grouping** uses the frame node as the group container (there is no separate
-  `group` type). Ungroup therefore dissolves **any** selected frame — including a
-  frame the user drew deliberately — back into its parent. A distinct group node
+  `group` type). Ungroup therefore dissolves **any** selected frame (including a
+  frame the user drew deliberately) back into its parent. A distinct group node
   type (so frames and groups can diverge) is a possible follow-up.
 - **Save** persists the editable scene as a JSON sidecar and re-opens it, but
   does **not** update the library's preview thumbnail (the original capture PNG
   is left untouched). Re-flattening the preview on save, and a Save-As path
   picker, are follow-ups. The scene embeds the base image, so a saved project is
   portable but larger than the PNG.
-- **No eyedropper/zoom tool** — `I`/`Z` keep their existing meanings (Image /
+- **No eyedropper/zoom tool**: `I`/`Z` keep their existing meanings (Image /
   Undo-modifier). Add the tools first, then the letters. (`C` followed that
   rule: it stayed unbound until the crop tool shipped, then took the letter.)
-- **Rich-text `Mod+B/I/U`** — unsupported until text nodes carry styled runs.
+- **Rich-text `Mod+B/I/U`**: unsupported until text nodes carry styled runs.
 - **`Alt`-drag duplicate** is implemented in the canvas move gesture; there is no
   separate keyboard binding (it's a drag modifier).
 - **Layout (non-US keyboards):** matching keys off `KeyboardEvent.code` is

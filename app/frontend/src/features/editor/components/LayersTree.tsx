@@ -239,7 +239,7 @@ function LayerRow({
       }}
       onContextMenu={(e) => {
         e.preventDefault();
-        // Claims the click so the window-level fallback stays out of it —
+        // Claims the click so the window-level fallback stays out of it;
         // see the note on `EditorCanvas`'s handler.
         e.stopPropagation();
         if (!selected) onSelect(node.id, false);

@@ -62,7 +62,7 @@ export function ProgressStep() {
     DATA_CATEGORIES.some((c) => c.destructive && removeIds.includes(c.id));
   const note =
     kind === "uninstall" && removingPersonalData
-      ? "The items you selected — including personal data such as captures, projects, or settings — are being permanently removed."
+      ? "The items you selected, including personal data such as captures, projects, or settings, are being permanently removed."
       : copy.note;
 
   // No Cancel control: the backend has no way to abort a removal or install

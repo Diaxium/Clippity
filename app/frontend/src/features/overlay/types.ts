@@ -7,7 +7,7 @@
  * UI-only shapes the components / hooks consume.
  */
 
-// Re-export wire types — single source of truth.
+// Re-export wire types: single source of truth.
 export type {
   OverlayMode,
   Region,
@@ -44,8 +44,8 @@ export interface PenAnchor {
   hOut: Pt | null;
 }
 
-/** Logical-pixel rectangle. Frontend works in logical px throughout
- *  — coords get multiplied by `devicePixelRatio` only at the IPC seam
+/** Logical-pixel rectangle. Frontend works in logical px throughout;
+ *  coords get multiplied by `devicePixelRatio` only at the IPC seam
  *  (see `finishRegionCapture`). */
 export interface Rect {
   x: number;
@@ -60,10 +60,10 @@ export interface Rect {
  *  `selected` on pointer-up with a valid rect (handles + grid). */
 export type Phase = "empty" | "idle" | "dragging" | "selected";
 
-/** Eight resize-handle directions — corners + edge midpoints. */
+/** Eight resize-handle directions: corners + edge midpoints. */
 export type ResizeDir = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
-/** Brush paint mode — add to or subtract from the painted mask. */
+/** Brush paint mode: add to or subtract from the painted mask. */
 export type BrushMode = "add" | "subtract";
 
 /** Mode-aware top-banner copy keyed by `(mode, phase)`. The strategy

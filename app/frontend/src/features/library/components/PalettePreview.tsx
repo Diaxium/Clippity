@@ -4,8 +4,8 @@ import type { AuxColor } from "../types";
 
 /**
  * Interactive palette strip for a grid card. Each swatch is its own
- * button — click to copy that color's hex (with brief "Copied"
- * feedback) — sized by the color's share of the region, with the hex +
+ * button: click to copy that color's hex (with brief "Copied"
+ * feedback), sized by the color's share of the region, with the hex +
  * percentage revealed on hover/focus. Unlike `AuxPreview` (which renders
  * non-interactive swatches inside the card's copy-all button), this is
  * rendered standalone so the per-swatch buttons aren't nested in another

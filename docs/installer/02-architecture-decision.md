@@ -1,4 +1,4 @@
-# ADR — Clippity Windows Installation Architecture
+# ADR: Clippity Windows Installation Architecture
 
 Status: Accepted (2026-07-24)
 Supersedes: the implicit "custom wizard is the whole engine" assumption.
@@ -31,7 +31,7 @@ properties*, *Restart Manager*, *MoveFileExW / MOVEFILE_DELAY_UNTIL_REBOOT*,
 
 ## Options evaluated
 
-### Option A — Continue with Tauri NSIS as the engine
+### Option A: Continue with Tauri NSIS as the engine
 NSIS can do branded UI, upgrade handling, silent operation, and self-removal,
 and Tauri already emits an NSIS setup exe. But its "custom UI" is a scripted
 installer look, not the Clippity design system; component/feature-level repair
@@ -40,7 +40,7 @@ and transactional rollback are do-it-yourself in NSIS script; and it would mean
 *primary* engine because it throws away the brand and still hand-rolls the hard
 parts.
 
-### Option B — Tauri MSI (WiX) owns everything
+### Option B: Tauri MSI (WiX) owns everything
 An MSI gives, for free and maintained by Windows Installer itself:
 transactional install with automatic rollback, **repair from a cached package**,
 **component/feature add-remove (true Modify)**, correct and self-maintained
@@ -49,7 +49,7 @@ Add/Remove Programs registration, per-user *and* per-machine modes, and silent
 functionality" the task says not to reinvent. Its weakness is UI: raw MSI dialog
 sets cannot be the Clippity-branded wizard.
 
-### Option C — Branded Tauri wizard as a bootstrapper over an established engine
+### Option C: Branded Tauri wizard as a bootstrapper over an established engine
 The Clippity wizard stays as the **UI + bootstrapper**; the transactional work
 is delegated to a real engine (WiX **Burn** bundle, or a thin bootstrapper that
 drives `msiexec` on a WiX-authored MSI). WiX Burn is *designed* for exactly this:
@@ -70,7 +70,7 @@ Rationale:
    payload-embed pipeline, elevation, and the design system all work and are
    maintainable. Ripping them out for a from-scratch WiX Burn bundle now would
    be high-risk with no VM validation available in this environment, and would
-   waste the existing investment — which the task explicitly warns against.
+   waste the existing investment, which the task explicitly warns against.
 
 2. **Close the dangerous gaps with real Win32, now.** The stubs (ARP registry,
    shortcuts, start-at-login), the missing installation model, the missing
@@ -80,10 +80,10 @@ Rationale:
    (see [08-changelog.md](08-changelog.md)).
 
 3. **Record MSI/WiX as the target for the transactional core.** The pieces that
-   are genuinely hard and dangerous to hand-roll to production quality —
-   transactional rollback across a partially applied install, repair from a
+   are genuinely hard and dangerous to hand-roll to production quality
+   (transactional rollback across a partially applied install, repair from a
    verified cached package, true component-level modify, and reboot-safe locked-
-   file replacement — are where Windows Installer earns its keep. The documented
+   file replacement) are where Windows Installer earns its keep. The documented
    reason to *not* fully hand-roll them is this ADR. The near-term engine
    implements a **transaction journal + inverse actions** (a subset of what MSI
    gives) so the behavior is safe today and the concepts map cleanly onto MSI
@@ -103,8 +103,8 @@ Rationale:
 Near-term (implemented / scaffolded in this pass):
 - Real HKCU/HKLM Add/Remove Programs registration, scope-aware, full value set.
 - Real desktop + Start-menu shortcuts and Run-key start-at-login (Win32/COM).
-- An on-disk **installation manifest** (`install-state.json`) — the single
-  authoritative model — written on install, read for detect/modify/uninstall.
+- An on-disk **installation manifest** (`install-state.json`), the single
+  authoritative model, written on install, read for detect/modify/uninstall.
 - **Detection** correlating manifest + installed exe + registry into an
   `InstallState`.
 - **Manifest-driven uninstall** that deletes owned files, preserves unknown
@@ -117,7 +117,7 @@ Near-term (implemented / scaffolded in this pass):
 
 Long-term (documented, not built here):
 - WiX-authored MSI (`Clippity.msi`) carrying files, components/features,
-  shortcuts, registry, per-user/per-machine, and ARP — maintained by Windows
+  shortcuts, registry, per-user/per-machine, and ARP: maintained by Windows
   Installer.
 - The wizard becomes a **WiX Burn bootstrapper application** (or a thin
   `msiexec`-driving bootstrapper) so the branded UI drives detect → plan →

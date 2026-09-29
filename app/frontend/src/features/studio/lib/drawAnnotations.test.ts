@@ -12,7 +12,7 @@ import {
  * These cover the geometry rather than the painting.
  *
  * jsdom has no canvas rasteriser, so asserting on pixels here would mean
- * asserting on a mock — which tests the mock. What is worth pinning is
+ * asserting on a mock, which tests the mock. What is worth pinning is
  * the arithmetic that decides *where* things go, because each of these
  * has a failure that looks like a rendering glitch and is really a
  * one-line mistake: a spotlight band a pixel short leaves a bright seam,
@@ -48,7 +48,7 @@ describe("spotlightBands", () => {
     const rect: DrawRect = { x: 20, y: 10, w: 40, h: 20 };
     const bands = spotlightBands(rect, width, height);
 
-    // The bands must tile the frame minus the hole exactly — a shortfall
+    // The bands must tile the frame minus the hole exactly: a shortfall
     // is a bright seam, an excess is a band over the spotlight itself.
     const covered = bands.reduce((sum, band) => sum + area(band), 0);
     expect(covered).toBe(width * height - area(rect));

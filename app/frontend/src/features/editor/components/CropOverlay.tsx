@@ -26,7 +26,7 @@ import { useEditorStore, type Viewport } from "../state/editorStore";
 import type { Rect } from "../types";
 
 const HANDLE = 10;
-/** Corner brackets read as "crop" rather than "resize an object" — they sit
+/** Corner brackets read as "crop" rather than "resize an object": they sit
  *  *inside* the frame corners, the way every crop UI draws them. */
 const BRACKET = 20;
 const BRACKET_W = 3;
@@ -61,7 +61,7 @@ export function CropOverlay({ viewport }: { viewport: Viewport }) {
   const [barBox, setBarBox] = useState({ w: 0, h: 0 });
 
   const rect = session?.rect ?? null;
-  // Re-measure when the bar appears or disappears, not on every crop drag —
+  // Re-measure when the bar appears or disappears, not on every crop drag:
   // the rect changes continuously during a gesture but the bar's box doesn't.
   const hasRect = rect !== null;
   useLayoutEffect(() => {

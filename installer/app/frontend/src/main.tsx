@@ -5,7 +5,7 @@ import { App } from "@app/App";
 import "@styles/theme.css";
 import "@styles/globals.css";
 
-// Surface anything React's error boundary can't catch — errors in event
+// Surface anything React's error boundary can't catch: errors in event
 // handlers / timers and unhandled rejections from the wizard's many
 // fire-and-forget `void someAsync()` calls (window controls, openPath).
 window.addEventListener("error", (event) => {

@@ -244,7 +244,7 @@ describe("overlayStore", () => {
     expect(s.rect).toBeNull();
     expect(s.phase).toBe("idle"); // cursor present → idle, not empty
     // Snapshot + cursor survive the in-place method switch (cursor is the
-    // last tracked position — beginFreehand moved it to {2,2}).
+    // last tracked position; beginFreehand moved it to {2,2}).
     expect(s.snapshot.url).toBe("data:image/png;base64,xx");
     expect(s.snapshot.sampleCtx).toBe(fakeCtx);
     expect(s.cursor).toEqual({ x: 2, y: 2 });

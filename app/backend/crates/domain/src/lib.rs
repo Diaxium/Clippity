@@ -1,37 +1,37 @@
-//! Domain layer — pure types and rules. **No I/O, no Tauri**.
+//! Domain layer: pure types and rules. **No I/O, no Tauri**.
 //!
 //! Everything in here must be unit-testable without a desktop session,
 //! a filesystem, or a window. If a type needs an external dependency
 //! to be useful (beyond pure `image` math), it belongs in a service.
 //!
 //! Sub-modules are one per feature:
-//!   annotation — Studio's time-ranged annotations: the redaction
+//!   annotation: Studio's time-ranged annotations: the redaction
 //!                filters and overlay lookup the burn-in needs (the
 //!                shapes themselves are drawn in the webview)
-//!   capture   — fullscreen capture modes + requests
-//!   overlay   — region geometry, overlay modes, finalize requests
-//!   pixels    — which of a 4-byte pixel's channels is red, so a frame
+//!   capture:    fullscreen capture modes + requests
+//!   overlay:    region geometry, overlay modes, finalize requests
+//!   pixels:     which of a 4-byte pixel's channels is red, so a frame
 //!               can travel from capture to encoder without a
 //!               normalising pass
-//!   toast     — toast payloads, durations, corner anchor helpers
-//!   library   — captured-item metadata + storage info
-//!   media     — clip playback description + trim-range rules (Studio)
-//!   metadata  — per-capture provenance (source app/window, mode, time)
-//!   labels    — per-capture tags + favorite flag
-//!   collections — named, ordered capture sets
-//!   developer — diagnostics wire shapes + the redaction rules an
+//!   toast:      toast payloads, durations, corner anchor helpers
+//!   library:    captured-item metadata + storage info
+//!   media:      clip playback description + trim-range rules (Studio)
+//!   metadata:   per-capture provenance (source app/window, mode, time)
+//!   labels:     per-capture tags + favorite flag
+//!   collections: named, ordered capture sets
+//!   developer: diagnostics wire shapes + the redaction rules an
 //!               exported bundle is run through
-//!   editor    — load/save data-URI envelope for the annotation editor
-//!   hdr       — scRGB → SDR tone mapping and BT.2020/PQ HDR preservation
-//!   naming    — capture file-name template engine
-//!   provisioning — the installer's recorded choices + the feature
+//!   editor:     load/save data-URI envelope for the annotation editor
+//!   hdr:        scRGB → SDR tone mapping and BT.2020/PQ HDR preservation
+//!   naming:     capture file-name template engine
+//!   provisioning: the installer's recorded choices + the feature
 //!                  availability they imply
-//!   recorder  — screen-recording requests, status, timing + GIF math
-//!   settings  — settings schema + validation
-//!   share     — where a saved capture can be handed off to
-//!   models    — on-device AI model registry + status wire types
-//!   vision    — object-detection post-processing (decode, NMS, tiling)
-//!   window_attribution — visible-window majority scoring for names
+//!   recorder:   screen-recording requests, status, timing + GIF math
+//!   settings:   settings schema + validation
+//!   share:      where a saved capture can be handed off to
+//!   models:     on-device AI model registry + status wire types
+//!   vision:     object-detection post-processing (decode, NMS, tiling)
+//!   window_attribution: visible-window majority scoring for names
 
 pub mod annotation;
 pub mod capture;

@@ -1,9 +1,9 @@
 /**
- * Per-material backdrop tuning — tables + pure helpers.
+ * Per-material backdrop tuning: tables + pure helpers.
  *
  * The backdrop picker is coarse: it chooses *which* DWM material the
  * window asks for, and the materials don't respond alike. Mica and
- * Tabbed are wallpaper-derived — DWM blurs the desktop *wallpaper*
+ * Tabbed are wallpaper-derived: DWM blurs the desktop *wallpaper*
  * once, so nothing behind the window (another app, video, a window
  * dragged past) ever shows through them however transparent the chrome
  * is made. Acrylic and Blur sample live content; Clear removes the
@@ -17,7 +17,7 @@
  *
  * Mirrors Rust `domain::settings::{BackdropTuning, BackdropTuningSet}`.
  * The envelopes here must stay in lock-step with the Rust
- * `{MIN,MAX}_BACKDROP_*_PCT` clamps — the backend re-clamps on save, so
+ * `{MIN,MAX}_BACKDROP_*_PCT` clamps: the backend re-clamps on save, so
  * a drift shows up as a slider that snaps back.
  */
 
@@ -63,7 +63,7 @@ export const BACKDROP_SATURATION_MAX_PCT = 200;
 export const BACKDROP_TUNING_STEP_PCT = 5;
 
 /** Shipped tuning for a tintable material. Mirrors Rust
- *  `BackdropTuning::default` — 70 % tint is the alpha the acrylic tint
+ *  `BackdropTuning::default`: 70 % tint is the alpha the acrylic tint
  *  was hardcoded to, and the three scale knobs sit neutral so a fresh
  *  install renders exactly what it did before tuning existed. */
 export const DEFAULT_BACKDROP_TUNING: BackdropTuning = {
@@ -73,7 +73,7 @@ export const DEFAULT_BACKDROP_TUNING: BackdropTuning = {
   saturation: 100,
 };
 
-/** Shipped tuning for every material that doesn't read a tint — Blur's
+/** Shipped tuning for every material that doesn't read a tint: Blur's
  *  was pinned to a visually-invisible alpha 1, Clear paints no material
  *  at all, and Mica / Tabbed are tinted by DWM itself. Mirrors Rust
  *  `default_untinted_tuning`. */
@@ -95,7 +95,7 @@ export const DEFAULT_BACKDROP_TUNING_SET: BackdropTuningSet = {
 
 /** One tuning slider, as rendered by the Appearance panel. `key` is the
  *  `BackdropTuning` field it writes; `appliesTo` gates the row on the
- *  selected material. Order is display order — the knob most likely to
+ *  selected material. Order is display order: the knob most likely to
  *  fix "I can't see through it" comes first. */
 export interface BackdropTuningControl {
   key: keyof BackdropTuning;
@@ -151,7 +151,7 @@ export function backdropTuningControls(
   );
 }
 
-/** The shipped tuning for one material — what "Reset" restores. */
+/** The shipped tuning for one material: what "Reset" restores. */
 export function defaultBackdropTuning(
   backdrop: WindowBackdrop
 ): BackdropTuning {

@@ -1,5 +1,5 @@
 /**
- * The diagnostics bundle — what goes in it, and where it went.
+ * The diagnostics bundle: what goes in it, and where it went.
  *
  * A bundle is made to be sent to somebody else, which is why redaction
  * is on by default and why the export writes a **folder** the user can

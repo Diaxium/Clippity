@@ -10,7 +10,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# CI only reads the tree — it publishes nothing and comments nowhere. Setting
+# CI only reads the tree: it publishes nothing and comments nowhere. Setting
 # this at the top level makes the read-only default explicit rather than
 # inherited from a repository setting that can change underneath the workflow.
 permissions:

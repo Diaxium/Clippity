@@ -21,7 +21,7 @@ const THEME_OPTS: readonly {
 ];
 
 /**
- * Step 2 — pick a theme. Clicking a tile applies the choice live
+ * Step 2: pick a theme. Clicking a tile applies the choice live
  * through the settings store, so the wizard's surroundings re-tint
  * instantly. The active tile uses the accent border + accent-soft fill
  * so the choice reads at a glance.

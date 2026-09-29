@@ -125,7 +125,7 @@ describe("resolveBackdropTuning", () => {
 });
 
 describe("withBackdropTuning", () => {
-  it("leaves the other materials untouched — the point of storing per material", () => {
+  it("leaves the other materials untouched: the point of storing per material", () => {
     const next = withBackdropTuning(DEFAULT_BACKDROP_TUNING_SET, "acrylic", {
       ...DEFAULT_BACKDROP_TUNING,
       glassStrength: 0,

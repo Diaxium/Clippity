@@ -5,7 +5,7 @@
  * typed IPC wrappers live under `services/tauri/clients/`. The tray
  * flyout's action buttons reuse the capture / overlay / countdown /
  * library / dashboard clients; this file holds only the tray-specific
- * surface — dismiss the panel, quit the app, and the "panel opened"
+ * surface: dismiss the panel, quit the app, and the "panel opened"
  * event the backend emits after positioning + showing it.
  *
  * Imported by full path (like `countdown` / `settings`) rather than the
@@ -42,9 +42,9 @@ export function quitApp(): Promise<void> {
 
 /**
  * Subscribe to `clippity://tray/opened`. The backend emits once per
- * panel open, after the window is positioned + shown — the panel
+ * panel open, after the window is positioned + shown: the panel
  * persists hidden between opens, so this (not React mount) is the cue
- * to refresh recents + reset focus. Returns a sync unsubscribe — return
+ * to refresh recents + reset focus. Returns a sync unsubscribe; return
  * it directly from a `useEffect`.
  */
 export function onTrayOpened(handler: () => void): () => void {

@@ -52,7 +52,7 @@ afterEach(cleanup);
 beforeEach(() => useEditorStore.setState({ sectionsOpen: {} }));
 
 describe("BackdropSection scoping", () => {
-  it("shows on an empty selection — that is how you address the page", () => {
+  it("shows on an empty selection: that is how you address the page", () => {
     seed();
     state().clearSelection();
     render(<BackdropSection />);
@@ -180,7 +180,7 @@ describe("BackdropSection wiring", () => {
 });
 
 describe("page padding actions", () => {
-  it("padding is the page frame's rect — the same edit crop makes", () => {
+  it("padding is the page frame's rect: the same edit crop makes", () => {
     const { pageId, photoId } = seed();
     state().setPagePadding(40);
 
@@ -255,7 +255,7 @@ describe("page padding actions", () => {
     state().setCropRect({ x: 100, y: 50, width: 200, height: 150 });
     state().commitCrop();
     // The capture is unchanged by the crop, so padding still measures against
-    // it — the page grows back out around the full bitmap plus the margin.
+    // it: the page grows back out around the full bitmap plus the margin.
     state().setPagePadding(20);
     const p = page(pageId);
     expect({ x: p.x, y: p.y, width: p.width, height: p.height }).toEqual({

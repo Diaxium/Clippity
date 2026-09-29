@@ -2,8 +2,8 @@
  * Collections IPC client.
  *
  * A collection is a **named, manually ordered set of captures**. Unlike
- * tags and the favorite flag — which are properties of a capture and ride
- * in a sidecar beside it — a collection has its own name and its own
+ * tags and the favorite flag (which are properties of a capture and ride
+ * in a sidecar beside it) a collection has its own name and its own
  * order, so it is its own document, `<captures>/collections.json`, and its
  * own IPC surface
  * ([ADR 0029](../../../../docs/decisions/0029-labels-are-a-sidecar-collections-are-a-document.md)).
@@ -32,7 +32,7 @@ export function collectionsCreate(name: string): Promise<Collection> {
   return invoke<Collection, { name: string }>("collections_create", { name });
 }
 
-/** Rename. Duplicate names are allowed — the id is the identity. */
+/** Rename. Duplicate names are allowed: the id is the identity. */
 export function collectionsRename(
   id: string,
   name: string
@@ -74,7 +74,7 @@ export function collectionsRemoveMembers(
  * Rearrange to `captureIds`.
  *
  * Members the list forgets keep their relative place at the end rather
- * than being dropped — a reorder computed before another window added a
+ * than being dropped: a reorder computed before another window added a
  * capture must not delete it.
  */
 export function collectionsSetOrder(
@@ -90,7 +90,7 @@ export function collectionsSetOrder(
 // ---------- Event listeners ----------
 
 /**
- * Subscribe to `clippity://collections/updated` — emitted after any
+ * Subscribe to `clippity://collections/updated`: emitted after any
  * create / rename / delete / membership / reorder.
  *
  * Deliberately separate from `library/updated`: a capture joining a
@@ -98,7 +98,7 @@ export function collectionsSetOrder(
  * make every library view re-fetch its whole list over an arrangement it
  * isn't showing.
  *
- * Returns a sync unsubscribe — return it directly from a `useEffect`.
+ * Returns a sync unsubscribe: return it directly from a `useEffect`.
  */
 export function onCollectionsUpdated(handler: () => void): () => void {
   return on<unknown>(EVENT_NAMES.collectionsUpdated, () => handler());

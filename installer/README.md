@@ -8,13 +8,13 @@ boards (kept outside this repository).
 
 ## Layout
 
-Same shape as the main app — a pnpm + Cargo workspace under `app/`:
+Same shape as the main app: a pnpm + Cargo workspace under `app/`:
 
 ```
 installer/
 ├─ app/
 │  ├─ frontend/        React 19 + Vite + Tailwind 4 wizard UI
-│  ├─ shared/          @clippity/installer-shared — IPC wire-format contracts
+│  ├─ shared/          @clippity/installer-shared: IPC wire-format contracts
 │  └─ backend/
 │     ├─ crates/
 │     │  ├─ infra/     errors, logging, resolved paths
@@ -23,7 +23,7 @@ installer/
 │     │  └─ services/  install / update / uninstall orchestration + manifest
 │     └─ src-tauri/    the single wizard window + thin Tauri commands
 ├─ payload/           the staged Clippity.exe, compiled into the binary (git-ignored)
-├─ scripts/           collect-build.mjs — lifts the built exe into build/
+├─ scripts/           collect-build.mjs: lifts the built exe into build/
 ├─ package.json       root workspace scripts
 └─ pnpm-workspace.yaml
 ```
@@ -45,7 +45,7 @@ preview):
 
 Maintenance and Uninstall share the maintenance **hub** (Update / Modify /
 Repair / Uninstall). Uninstall keeps destructive user content (captures,
-projects, credentials) unless explicitly opted in — removal of those is off by
+projects, credentials) unless explicitly opted in: removal of those is off by
 default.
 
 A small **Preview** switcher (bottom center) jumps between the three entry
@@ -80,7 +80,7 @@ pnpm cargo:check              # compile the whole Rust workspace
 
 ## The bundled payload
 
-The installer ships the application *inside its own binary* — no download
+The installer ships the application *inside its own binary*: no download
 at install time, and no sibling files. `payload/` holds the staged
 `Clippity.exe` plus a `payload.json` recording its version, size, and
 SHA-256; [`crates/services/build.rs`](app/backend/crates/services/build.rs)
@@ -89,7 +89,7 @@ compiles both in with `include_bytes!`.
 That is why **Tauri bundling is switched off** (`bundle.active: false` in
 `tauri.conf.json`). `tauri build` emits one executable that needs nothing
 beside it, and `scripts/collect-build.mjs` lifts it out as
-`build/Clippity Setup.exe` — around 56 MB, the wizard plus the app.
+`build/Clippity Setup.exe`, around 56 MB, the wizard plus the app.
 Wrapping that in an msi or nsis would only be an installer for the
 installer. The `icon` config still applies: `tauri-build` embeds the
 `.ico` into the exe regardless of bundling.
@@ -107,7 +107,7 @@ staged.
 At install time `installer_services::payload` verifies the embedded bytes
 against the manifest (the "Verifying" step) and writes them to the
 destination (the "Installing files" step). A build with no payload staged
-still compiles — the build script emits `None` and warns — and then fails
+still compiles (the build script emits `None` and warns) and then fails
 at Verifying with a message naming the staging step.
 
 ## Elevation
@@ -120,7 +120,7 @@ the user can already write does not.
 When it is needed, the Review step writes the plan to a handoff file,
 relaunches the installer under the `runas` verb with `--resume <file>`,
 and closes. The elevated copy reads the plan back and jumps straight to
-the Installing step — so the user answers the wizard once and sees at most
+the Installing step, so the user answers the wizard once and sees at most
 one UAC prompt. Declining leaves them on Review with their selections
 intact.
 
@@ -129,6 +129,6 @@ A per-user install into a writable folder never prompts at all.
 ## Design system
 
 The frontend reuses the main app's `theme.css` / `globals.css` design tokens
-verbatim — the coral `--color-accent`, glassmorphic surfaces, and the same
+verbatim: the coral `--color-accent`, glassmorphic surfaces, and the same
 radius / shadow / motion scales. It is **dark-first** to match the design
 boards, though the light token set still resolves.

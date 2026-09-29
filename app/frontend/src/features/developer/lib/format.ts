@@ -14,7 +14,7 @@ import type {
   SystemInfo,
 } from "@services/tauri/clients/developer";
 
-/** `1.4 KB`, `824 KB`, `4.2 MB` — the unit a reader thinks in. */
+/** `1.4 KB`, `824 KB`, `4.2 MB`: the unit a reader thinks in. */
 export function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -29,15 +29,15 @@ export function formatBytes(bytes: number): string {
   return `${value.toFixed(digits)} ${units[exponent]}`;
 }
 
-/** `42 ms`, `1.20 s` — durations as measured, not rounded to nothing. */
+/** `42 ms`, `1.20 s`: durations as measured, not rounded to nothing. */
 export function formatMs(ms: number): string {
-  if (!Number.isFinite(ms) || ms < 0) return "—";
+  if (!Number.isFinite(ms) || ms < 0) return "-";
   if (ms < 1) return `${ms.toFixed(2)} ms`;
   if (ms < 1000) return `${Math.round(ms)} ms`;
   return `${(ms / 1000).toFixed(2)} s`;
 }
 
-/** `3m 04s`, `1h 12m` — for uptime and recording lengths. */
+/** `3m 04s`, `1h 12m`: for uptime and recording lengths. */
 export function formatDuration(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return "0s";
   const totalSeconds = Math.floor(ms / 1000);
@@ -49,7 +49,7 @@ export function formatDuration(ms: number): string {
   return `${seconds}s`;
 }
 
-/** `2560×1440 @150% · 165 Hz` — one monitor, as a person describes it. */
+/** `2560×1440 @150% · 165 Hz`: one monitor, as a person describes it. */
 export function formatMonitor(monitor: MonitorDiagnostics): string {
   const scale = `${Math.round(monitor.scale * 100)}%`;
   const refresh =
@@ -70,7 +70,7 @@ export function formatMonitor(monitor: MonitorDiagnostics): string {
  *
  * Markdown-ish rather than JSON: it is pasted into an issue, a chat, or
  * an email, and none of those render a JSON blob usefully. Paths are
- * included as-is — this is the *unredacted* summary, which is why the
+ * included as-is: this is the *unredacted* summary, which is why the
  * button that produces it says so and the exported bundle (the thing
  * meant to be sent onward) redacts by default.
  */
@@ -115,7 +115,7 @@ export function formatSystemSummary(
       `- Global capture hotkey: ${
         status.globalCapture.registered
           ? `${status.globalCapture.combo} (registered)`
-          : `${status.globalCapture.combo || "none"} — ${
+          : `${status.globalCapture.combo || "none"}, ${
               status.globalCapture.detail ?? "not registered"
             }`
       }`,
@@ -130,14 +130,14 @@ export function formatSystemSummary(
   return lines.join("\n");
 }
 
-/** `mp4 1920×1080 @60 fps` — what a recording session was asked for. */
+/** `mp4 1920×1080 @60 fps`: what a recording session was asked for. */
 export function formatRecorderTarget(d: RecorderDiagnostics): string {
   return `${d.format.toUpperCase()} ${d.width}×${d.height} @${d.targetFps} fps`;
 }
 
 /**
  * Pure: dropped frames as a percentage of everything the source
- * produced — mirrors `RecorderDiagnostics::drop_rate_pct` on the Rust
+ * produced; mirrors `RecorderDiagnostics::drop_rate_pct` on the Rust
  * side, so the HUD and the settings page can't disagree.
  */
 export function dropRatePct(d: RecorderDiagnostics): number {
@@ -146,8 +146,8 @@ export function dropRatePct(d: RecorderDiagnostics): number {
 }
 
 /**
- * Average bitrate in kbit/s, or null for a session with no duration —
- * a discard, or a failure before the first frame — where the number
+ * Average bitrate in kbit/s, or null for a session with no duration
+ * (a discard, or a failure before the first frame) where the number
  * would be a division dressed up as data.
  */
 export function avgBitrateKbps(d: RecorderDiagnostics): number | null {

@@ -6,25 +6,25 @@ import { useEditorStore } from "../../state/editorStore";
  * Shared shell + header primitives for the right-inspector's property sections.
  *
  * Every section used to inline its own `<section className="px-3 py-2.5">` plus
- * an `<h3>` (static) or a disclosure `<button>` (collapsible) with identical —
- * but copy-pasted — Tailwind. Centralising them here keeps the inspector's
+ * an `<h3>` (static) or a disclosure `<button>` (collapsible) with identical,
+ * but copy-pasted, Tailwind. Centralising them here keeps the inspector's
  * spacing, type scale, and the two header styles in lockstep, and means the
  * vertical rhythm is tuned in one place.
  *
  * **Every section now collapses** through one {@link SectionHeader} (there used
  * to be a static `SectionTitle` and a separate `CollapsibleHeader`), and the
  * open/closed bit lives in the store via {@link useSectionOpen} rather than
- * local state — so it survives the section unmounting on a tab switch or a
+ * local state, so it survives the section unmounting on a tab switch or a
  * node-type change.
  *
- * A section is a **card** — a raised slab with a gap to its neighbours, not a
+ * A section is a **card**: a raised slab with a gap to its neighbours, not a
  * row in a divided list. That is what lets a collapsed section read as finished
  * rather than truncated: header-only is a complete card, so there's no chevron
  * telling you something is hidden. The trade is that the disclosure control has
  * no glyph, which is why the whole header row is the hit target.
  *
  * Markup contract kept stable for the test suite: the header is the W3C
- * accordion pattern — an `<h3>` *wrapping* a `<button aria-expanded>`. That
+ * accordion pattern, an `<h3>` *wrapping* a `<button aria-expanded>`. That
  * keeps `getByRole("heading", { name })` resolving (the heading's accessible
  * name comes from the button's text) while also exposing a properly-named
  * disclosure control. The action sits outside the heading, and the count badge
@@ -53,7 +53,7 @@ const SECTION_LABEL =
   "select-none text-[13px] font-semibold text-[var(--ed-text)]";
 
 /**
- * Section wrapper — the card itself: its own raised surface, the collapse
+ * Section wrapper: the card itself: its own raised surface, the collapse
  * header, and the padding every section's body sits in. Owns the disclosure so
  * a call site is just `<PanelSection id="fill" title="Fill">{body}</…>`; the
  * body is unmounted while collapsed, leaving a header-only card.
@@ -95,7 +95,7 @@ export function PanelSection({
 }
 
 /**
- * Section header — a disclosure button (title + optional count badge) wrapped in
+ * Section header: a disclosure button (title + optional count badge) wrapped in
  * an `<h3>`, plus an optional right-aligned action (add fill, visibility
  * toggle, …) that sits outside the heading so it never joins the accessible
  * name. The button stretches across the free space so the whole header row

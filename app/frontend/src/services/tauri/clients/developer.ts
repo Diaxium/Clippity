@@ -56,7 +56,7 @@ export interface RuntimeFlags {
 
 // ---------- Inspection ----------
 
-/** Versions, paths, monitors, models, log size — the system card. */
+/** Versions, paths, monitors, models, log size: the system card. */
 export function getSystemInfo(): Promise<SystemInfo> {
   return invoke<SystemInfo>("developer_system_info");
 }
@@ -117,7 +117,7 @@ function forwardLog(record: {
   context?: string | null;
 }): void {
   void invoke<void, typeof record>("developer_log", record).catch(() => {
-    /* swallowed deliberately — see the doc comment */
+    /* swallowed deliberately; see the doc comment */
   });
 }
 
@@ -159,7 +159,7 @@ export function uninstallLogForwarding(): void {
 }
 
 /** Serialize an already-redacted context object for the log file.
- *  Never throws — a context that can't be encoded is worth less than
+ *  Never throws: a context that can't be encoded is worth less than
  *  the message it belongs to. */
 function safeJson(value: unknown): string | null {
   try {
@@ -172,7 +172,7 @@ function safeJson(value: unknown): string | null {
   }
 }
 
-/** Level names, ordered least to most severe — the log-level pickers
+/** Level names, ordered least to most severe: the log-level pickers
  *  render this. `off` is included: it is a legal choice for both. */
 export const LOG_LEVELS: readonly LogLevel[] = [
   "off",
@@ -214,7 +214,7 @@ export function exportDiagnosticsBundle(
  * Arm safe mode and restart.
  *
  * The process is replaced, so the returned promise never meaningfully
- * resolves — don't chain work after it.
+ * resolves: don't chain work after it.
  */
 export function restartInSafeMode(): Promise<void> {
   return invoke<void>("developer_restart_safe_mode");

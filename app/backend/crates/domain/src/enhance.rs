@@ -1,19 +1,19 @@
-//! "Smart enhance" — the optional post-crop clean-up pass behind the
+//! "Smart enhance": the optional post-crop clean-up pass behind the
 //! overlay's Sparkles toggle.
 //!
-//! Pure pixel math on an `RgbaImage`, no I/O — same arrangement as
+//! Pure pixel math on an `RgbaImage`, no I/O; same arrangement as
 //! `domain::palette`, which also takes decoded images. Applied by the
 //! capture pipelines immediately before PNG encoding, so it affects the
 //! saved file and the clipboard copy alike.
 //!
 //! Two steps, both tuned for *screenshots* rather than photographs:
 //!
-//! 1. **Auto-levels** — stretch the tonal range when the capture is
+//! 1. **Auto-levels**: stretch the tonal range when the capture is
 //!    washed out (a dimmed window, a low-contrast dark theme, an HDR
 //!    surface tone-mapped flat). Computed on luminance and applied
-//!    equally to R/G/B so hues don't shift — a per-channel stretch would
+//!    equally to R/G/B so hues don't shift: a per-channel stretch would
 //!    tint neutral UI grey, which is exactly what a screenshot is full of.
-//! 2. **Unsharp mask** — a light crispen so downscaled text stays
+//! 2. **Unsharp mask**: a light crispen so downscaled text stays
 //!    legible.
 //!
 //! Both steps are **alpha-aware**: fully transparent pixels are ignored
@@ -34,7 +34,7 @@ use image::RgbaImage;
 const CLIP_FRACTION: f32 = 0.005;
 
 /// Minimum luminance span (of 255) that counts as "already using the
-/// range". Above this the stretch is skipped entirely — the gain would
+/// range". Above this the stretch is skipped entirely: the gain would
 /// be under ~1.09, which is invisible and only risks clipping.
 const ALREADY_STRETCHED_SPAN: u32 = 235;
 
@@ -55,13 +55,13 @@ pub fn smart_enhance(img: &mut RgbaImage) {
 }
 
 /// Rec. 601 luma of an RGB triple, rounded to a `u8` histogram bin.
-/// Integer math — this runs once per pixel over a multi-megapixel canvas.
+/// Integer math: this runs once per pixel over a multi-megapixel canvas.
 fn luma(r: u8, g: u8, b: u8) -> u8 {
     ((r as u32 * 77 + g as u32 * 150 + b as u32 * 29) >> 8) as u8
 }
 
 /// The black/white points to stretch between, or `None` when no stretch
-/// should happen — either the image is already using the range, is
+/// should happen: either the image is already using the range, is
 /// entirely transparent, or is flat (a solid colour, where stretching
 /// would amplify nothing into everything).
 ///
@@ -71,7 +71,7 @@ fn levels_window(img: &RgbaImage) -> Option<(u8, u8)> {
     let mut histogram = [0u32; 256];
     let mut counted = 0u32;
     for px in img.pixels() {
-        // Transparent pixels carry no visible tone — a Freehand cut-out
+        // Transparent pixels carry no visible tone: a Freehand cut-out
         // is mostly transparent, and counting it would drag the black
         // point to 0 and disable the stretch entirely.
         if px.0[3] == 0 {
@@ -123,7 +123,7 @@ fn percentile_bin(histogram: &[u32; 256], clip: u32, from_top: bool) -> u8 {
 /// every channel so neutrals stay neutral. Alpha is untouched and fully
 /// transparent pixels are left exactly as they were.
 fn apply_levels(img: &mut RgbaImage, lo: u8, hi: u8) {
-    // Precomputed lookup — 256 entries beats a float multiply per
+    // Precomputed lookup: 256 entries beats a float multiply per
     // channel per pixel.
     let span = (hi - lo) as f32;
     let mut lut = [0u8; 256];
@@ -147,13 +147,13 @@ const BLUR_KERNEL: [i32; 9] = [1, 2, 1, 2, 4, 2, 1, 2, 1];
 /// Unsharp mask: `out = src + amount * (src - blur(src))`.
 ///
 /// The blur is alpha-weighted, so a neighbour that is fully transparent
-/// contributes nothing rather than contributing black — that's what
+/// contributes nothing rather than contributing black: that's what
 /// keeps a cut-out's edge from picking up a dark rim. Pixels whose whole
 /// neighbourhood is transparent are left alone.
 fn apply_unsharp(img: &mut RgbaImage, amount: f32) {
     let (w, h) = (img.width(), img.height());
     if w < 3 || h < 3 || amount <= 0.0 {
-        // Nothing to convolve against — a 1- or 2-px strip has no
+        // Nothing to convolve against: a 1- or 2-px strip has no
         // interior pixel with a full neighbourhood.
         return;
     }
@@ -218,7 +218,7 @@ mod tests {
 
     #[test]
     fn a_washed_out_image_gets_a_stretch_window() {
-        // Every pixel between 100 and 140 — a badly dimmed capture.
+        // Every pixel between 100 and 140: a badly dimmed capture.
         let mut img = RgbaImage::new(10, 10);
         for (i, px) in img.pixels_mut().enumerate() {
             let v = 100 + (i % 41) as u8;
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn an_image_already_spanning_the_range_is_not_stretched() {
-        // Half pure black, half pure white — nothing to gain.
+        // Half pure black, half pure white: nothing to gain.
         let mut img = RgbaImage::new(10, 10);
         for (i, px) in img.pixels_mut().enumerate() {
             let v = if i % 2 == 0 { 0 } else { 255 };
@@ -308,7 +308,7 @@ mod tests {
 
     #[test]
     fn enhance_leaves_fully_transparent_pixels_untouched() {
-        // The cut-out surround must come out bit-identical — any bleed
+        // The cut-out surround must come out bit-identical: any bleed
         // here is a visible halo in a Freehand or Brush capture.
         let mut img = RgbaImage::new(5, 5);
         for (i, px) in img.pixels_mut().enumerate() {
@@ -352,7 +352,7 @@ mod tests {
 
     #[test]
     fn unsharp_is_a_no_op_on_a_flat_image() {
-        // No edges means nothing to sharpen — a solid fill must survive
+        // No edges means nothing to sharpen: a solid fill must survive
         // untouched rather than picking up rounding drift.
         let mut img = solid(6, 6, Rgba([123, 45, 67, 255]));
         apply_unsharp(&mut img, UNSHARP_AMOUNT);

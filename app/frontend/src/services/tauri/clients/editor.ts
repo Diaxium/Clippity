@@ -47,7 +47,7 @@ export function editorSave(dataUri: string): Promise<string> {
 
 /**
  * Persist the editor's editable scene (a JSON document) as a sidecar beside
- * capture `id`, so it can be re-opened and edited. Non-destructive — the
+ * capture `id`, so it can be re-opened and edited. Non-destructive: the
  * capture file is untouched. Returns the sidecar's absolute path.
  */
 export function editorSaveScene(id: string, scene: string): Promise<string> {

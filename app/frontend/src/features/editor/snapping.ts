@@ -14,7 +14,7 @@
 import { rotatedAABB } from "./geometry";
 import { isContainer, type Rect, type SceneNode } from "./types";
 
-/** Snap radius in screen pixels — the same feel regardless of zoom. */
+/** Snap radius in screen pixels: the same feel regardless of zoom. */
 export const SNAP_PX = 6;
 
 /** A candidate alignment line contributed by one target object (or the
@@ -39,7 +39,7 @@ export interface Guide {
   kind: SnapLine["kind"];
 }
 
-/** Selection ids plus every descendant — the set excluded from snap targets so
+/** Selection ids plus every descendant: the set excluded from snap targets so
  *  a frame never snaps to its own children (which travel with it). */
 export function excludeSet(
   nodes: Record<string, SceneNode>,

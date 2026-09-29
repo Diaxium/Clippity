@@ -1,6 +1,6 @@
 /**
  * Toast measurement + animation constants. Values inherited from
- * legacy `ToastWindow.tsx` — confirmed sufficient through Step 4
+ * legacy `ToastWindow.tsx`: confirmed sufficient through Step 4
  * manual validation of the capture + overlay ports.
  */
 
@@ -13,7 +13,7 @@ export const TOAST_WIDTH = 380;
  *  shadow-clip safety). */
 export const CHROME_HEIGHT = 30;
 
-/** Defensive bounds — the backend clamps too. */
+/** Defensive bounds: the backend clamps too. */
 export const MIN_HEIGHT = 96;
 export const MAX_HEIGHT = 480;
 
@@ -29,6 +29,6 @@ export const EXIT_DURATION_MS = 220;
  *
  *  Comfortably longer than `EXIT_DURATION_MS` so it never races the
  *  normal dismiss flow, and long enough to cover the gap between the
- *  backend revealing the window and its `toast/show` payload arriving
- *  — an empty window is only pathological once it *stays* empty. */
+ *  backend revealing the window and its `toast/show` payload arriving:
+ *  an empty window is only pathological once it *stays* empty. */
 export const RECONCILE_GRACE_MS = 400;

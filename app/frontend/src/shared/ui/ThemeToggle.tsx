@@ -7,19 +7,19 @@ import type { Theme } from "@state/themeStore";
 import { cn } from "@shared/lib/cn";
 
 interface ThemeToggleProps {
-  /** Compact rail layout — buttons stack vertically. */
+  /** Compact rail layout: buttons stack vertically. */
   collapsed?: boolean;
   /** Optional Settings shortcut. Renders to the right (or below in
    *  collapsed mode) of the theme button. */
   onSettings?: () => void;
   /** Highlight the Settings button when it's the current view. */
   settingsActive?: boolean;
-  /** Optional persistence hook — when provided, the explicit
+  /** Optional persistence hook: when provided, the explicit
    *  light/dark click routes through here (typically a
    *  `useSettingsPatch` wrapper). The component still mirrors into
    *  `themeStore` for snappy local feedback. */
   onThemeChange?: (next: Theme) => void;
-  /** Optional leading "switch workspace" action — the capture window
+  /** Optional leading "switch workspace" action: the capture window
    *  passes a Dashboard target, the dashboard window passes a Capture
    *  target, so one pill cross-navigates between the two primary
    *  windows. Rendered as the first button when `onSwitch` is set. */

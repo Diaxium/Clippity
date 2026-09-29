@@ -1,5 +1,5 @@
 /**
- * Editor feature — public surface.
+ * Editor feature: public surface.
  *
  * `EditorLayout` is mounted by the dashboard when its view is "editor".
  * `EditorDocTitle` is rendered in the shared window title bar (composed by the

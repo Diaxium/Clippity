@@ -1,4 +1,4 @@
-//! Clippity Setup backend — the `src-tauri` wizard shell crate.
+//! Clippity Setup backend: the `src-tauri` wizard shell crate.
 //!
 //! Top of a Cargo workspace whose layers are separate crates (top-down
 //! dependency direction):

@@ -1,23 +1,23 @@
 //! Windows-only platform code.
 //!
 //! Sub-modules (added per feature):
-//!   chrome       — DWM corner rounding + Mica backdrop for frosted windows
-//!   clipboard_files — CF_HDROP file-drop copy, for putting a finished
+//!   chrome:        DWM corner rounding + Mica backdrop for frosted windows
+//!   clipboard_files: CF_HDROP file-drop copy, for putting a finished
 //!                  recording on the clipboard by reference
-//!   cursor       — Win32 cursor compositing (paired with overlay port)
-//!   input        — synthetic mouse-wheel scroll for the Panoramic port
-//!   hdr_display  — per-monitor HDR mode + SDR white level
-//!   hdr_capture  — Desktop Duplication grab in scRGB FP16, for HDR
+//!   cursor:        Win32 cursor compositing (paired with overlay port)
+//!   input:         synthetic mouse-wheel scroll for the Panoramic port
+//!   hdr_display:   per-monitor HDR mode + SDR white level
+//!   hdr_capture:   Desktop Duplication grab in scRGB FP16, for HDR
 //!                  displays where an 8-bit grab comes back washed out
-//!   media_foundation — H.264/AAC MP4 sink writer for the recorder (ADR 0031)
-//!   media_reader — the decode counterpart: probes and re-reads a saved
+//!   media_foundation: H.264/AAC MP4 sink writer for the recorder (ADR 0031)
+//!   media_reader: the decode counterpart: probes and re-reads a saved
 //!                  clip so Studio can play and trim it
-//!   nv12         — BGRA → NV12 colour conversion feeding that encoder
-//!   audio        — WASAPI microphone + system-loopback capture
-//!   pcm          — sample-format / rate / channel normalisation for it
-//!   monitor      — Win32 cursor-monitor work-area lookup (paired with toast port)
-//!   os_info      — which Windows this is, for the diagnostics card
-//!   enumeration  — Win32 top-level window walking for the Window-capture port
+//!   nv12:          BGRA → NV12 colour conversion feeding that encoder
+//!   audio:         WASAPI microphone + system-loopback capture
+//!   pcm:           sample-format / rate / channel normalisation for it
+//!   monitor:       Win32 cursor-monitor work-area lookup (paired with toast port)
+//!   os_info:       which Windows this is, for the diagnostics card
+//!   enumeration:   Win32 top-level window walking for the Window-capture port
 //!                  (UIA per-element region trees stay with the later Object port)
 
 pub mod audio;
@@ -51,15 +51,15 @@ pub(crate) mod duplication_tests {
     /// Serialises every live test that duplicates an output.
     ///
     /// Desktop Duplication permits one duplication per output per
-    /// process, so two of these running concurrently — the default,
-    /// `cargo test` being threaded — make each other fail with
+    /// process, so two of these running concurrently (the default,
+    /// `cargo test` being threaded) make each other fail with
     /// `E_INVALIDARG`. That matters more than an ordinary flake: these
     /// tests treat a refusal as "not this code's fault" and return
     /// early, so the collision shows up as a test that passes without
     /// asserting anything rather than as a failure.
     static DUPLICATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-    /// Take the duplication lock, ignoring poisoning — a panic in
+    /// Take the duplication lock, ignoring poisoning: a panic in
     /// another live test says nothing about whether this one can run.
     pub(crate) fn one_at_a_time() -> std::sync::MutexGuard<'static, ()> {
         DUPLICATION.lock().unwrap_or_else(|e| e.into_inner())
@@ -71,7 +71,7 @@ pub(crate) mod duplication_tests {
     /// `DXGI_ERROR_UNSUPPORTED` in a DPI-unaware process, and a bare
     /// `cargo test` binary is DPI-unaware. tao makes the real app
     /// per-monitor-v2 aware before any capture runs, so a live test that
-    /// skips this exercises a configuration the app is never in — every
+    /// skips this exercises a configuration the app is never in: every
     /// grab refuses, the refusal is indistinguishable from "this display
     /// is not HDR", and the whole path reports itself as covered.
     pub(crate) fn match_app_dpi_awareness() {

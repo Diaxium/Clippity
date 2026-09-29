@@ -13,8 +13,8 @@ import "@styles/globals.css";
 const log = createLogger("window");
 
 // Catch what React's error boundary can't: errors thrown outside the
-// render cycle (event handlers, timers) and unhandled promise rejections
-// — including the app's many fire-and-forget `void someAsync()` calls
+// render cycle (event handlers, timers) and unhandled promise rejections,
+// including the app's many fire-and-forget `void someAsync()` calls
 // (e.g. `void emitErrorToast(...)`). Without these listeners such
 // failures vanish with no trace anywhere.
 window.addEventListener("error", (event) => {

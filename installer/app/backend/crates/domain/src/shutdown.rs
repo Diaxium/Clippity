@@ -1,13 +1,13 @@
 //! Which processes lock the files a maintenance operation must change, and
 //! what the engine is allowed to do about each of them.
 //!
-//! Windows **Restart Manager** answers the first half — it enumerates the
+//! Windows **Restart Manager** answers the first half: it enumerates the
 //! processes holding a file open. The rules for *what to do* are the pure,
 //! testable half and live here: a process is only ever force-terminated when
 //! it is unambiguously Clippity's own; a critical/system process or Explorer
 //! is never touched; and any *unrelated* user application holding one of our
 //! files is surfaced for the user to close rather than killed. That encodes
-//! the task's hard safety line — "do not kill unrelated applications without
+//! the task's hard safety line: "do not kill unrelated applications without
 //! permission, do not force Explorer to close unless absolutely necessary".
 //!
 //! The services layer resolves the raw facts (pid, image path, Restart
@@ -28,11 +28,11 @@ pub enum RmAppKind {
     OtherWindow,
     /// A Windows service (`RmService`).
     Service,
-    /// Windows Explorer (`RmExplorer`) — never force-closed by us.
+    /// Windows Explorer (`RmExplorer`): never force-closed by us.
     Explorer,
     /// A console application (`RmConsole`).
     Console,
-    /// A process the OS deems critical (`RmCritical`) — never touched.
+    /// A process the OS deems critical (`RmCritical`): never touched.
     Critical,
     /// Anything Restart Manager could not type (`RmUnknownApp`).
     Unknown,
@@ -54,7 +54,7 @@ impl RmAppKind {
     }
 }
 
-/// How a locking process relates to Clippity — the decision that gates
+/// How a locking process relates to Clippity: the decision that gates
 /// whether the engine may stop it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -67,7 +67,7 @@ pub enum ProcessOwnership {
     /// even if it holds one of our files (e.g. a shell integration).
     SystemCritical,
     /// Any other user application holding one of our files. Must be surfaced
-    /// for the user to close — never terminated without consent.
+    /// for the user to close: never terminated without consent.
     Unrelated,
 }
 
@@ -79,7 +79,7 @@ pub struct LockingProcess {
     /// OS process id.
     pub pid: u32,
     /// The friendly application name Restart Manager reported (window title
-    /// or image name) — used for display and as a last-resort match.
+    /// or image name): used for display and as a last-resort match.
     pub app_name: String,
     /// The full image path, when it could be resolved. `None` when the
     /// process could not be opened (e.g. a more-privileged process); the
@@ -88,7 +88,7 @@ pub struct LockingProcess {
     /// Restart Manager's application type.
     pub kind: RmAppKind,
     /// True when this is the maintenance process itself (it holds its own
-    /// image open). Cannot be terminated — it is handled by reboot-scheduled
+    /// image open). Cannot be terminated: it is handled by reboot-scheduled
     /// self-removal or the cleanup worker instead.
     pub is_self: bool,
 }
@@ -109,7 +109,7 @@ impl LockingProcess {
         owned_exe_names: &[&str],
     ) -> ProcessOwnership {
         // Explorer / critical are off-limits regardless of where their image
-        // sits — killing them is the "force Explorer to close" case the task
+        // sits: killing them is the "force Explorer to close" case the task
         // forbids except as an absolute last resort (which is not automated).
         if matches!(self.kind, RmAppKind::Explorer | RmAppKind::Critical) {
             return ProcessOwnership::SystemCritical;
@@ -137,7 +137,7 @@ impl LockingProcess {
             }
         } else {
             // No path (could not open the process): fall back to the friendly
-            // name only when it is an *exact* product exe name — a fuzzy
+            // name only when it is an *exact* product exe name; a fuzzy
             // window-title match must not license a termination.
             if owned_exe_names
                 .iter()
@@ -159,8 +159,8 @@ pub struct ShutdownPlan {
     /// Clippity-owned processes (excluding this one) that may be asked to
     /// stop and, failing that, terminated to release a lock.
     pub terminable: Vec<LockingProcess>,
-    /// True when the running maintenance process itself holds a target file
-    /// — it cannot terminate itself; reboot-scheduled removal handles it.
+    /// True when the running maintenance process itself holds a target file:
+    /// it cannot terminate itself; reboot-scheduled removal handles it.
     pub self_locked: bool,
     /// Unrelated user applications holding a target file. Surfaced to the
     /// user to close; never terminated by the engine.
@@ -202,7 +202,7 @@ impl ShutdownPlan {
         !self.unrelated.is_empty() || !self.system_critical.is_empty()
     }
 
-    /// Whether the operation can clear every lock on its own — nothing but
+    /// Whether the operation can clear every lock on its own: nothing but
     /// Clippity-owned processes (and possibly our own image) are involved.
     pub fn can_proceed_automatically(&self) -> bool {
         !self.requires_user_action()
@@ -309,7 +309,7 @@ mod tests {
     #[test]
     fn explorer_is_never_owned_even_under_our_root() {
         // A shell extension loaded into Explorer, imaged from our dir, must
-        // still be SystemCritical — never a termination target.
+        // still be SystemCritical: never a termination target.
         let p = proc(
             10,
             "Windows Explorer",

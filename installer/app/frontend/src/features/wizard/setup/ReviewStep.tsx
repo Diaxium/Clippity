@@ -21,7 +21,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Setup step 4 — confirm selections, then start the install. */
+/** Setup step 4: confirm selections, then start the install. */
 export function ReviewStep() {
   const options = useWizardStore((s) => s.options);
   const selected = useWizardStore((s) => s.selectedComponents);
@@ -38,7 +38,7 @@ export function ReviewStep() {
    *
    * A writable destination installs right here with no UAC prompt. A
    * protected one hands the plan to an elevated copy of the installer,
-   * which resumes at the Installing step — so the user answers the wizard
+   * which resumes at the Installing step, so the user answers the wizard
    * once either way. Declining the prompt leaves them on this step with
    * their selections intact, free to pick another folder.
    */
@@ -133,8 +133,8 @@ export function ReviewStep() {
             <div className="text-[13px] text-[var(--color-slate)]">
               {elevationError}
               <div className="mt-1">
-                Choose a folder you can write to — such as one under your user
-                profile — to install without administrator rights.
+                Choose a folder you can write to (such as one under your user
+                profile) to install without administrator rights.
               </div>
             </div>
           </div>

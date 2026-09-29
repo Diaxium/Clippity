@@ -24,7 +24,7 @@ function cornersOf(node: SceneNode): Corners | undefined {
 }
 
 /**
- * Corner radius — one uniform value, or four independent corners behind the
+ * Corner radius: one uniform value, or four independent corners behind the
  * link toggle. Split out of `AppearanceSection` so the card list matches the
  * shape of the properties: compositing and geometry are different questions,
  * and only some node types can answer this one.
@@ -49,7 +49,7 @@ export function CornersSection() {
   if (!radius) return null;
 
   // "Independent corners" is on only when every radius-capable node has a
-  // `cornerRadii` set — a split reads as off, so one press unifies them.
+  // `cornerRadii` set: a split reads as off, so one press unifies them.
   const independent = triState(radiusNodes, (n) => n.cornerRadii != null);
   const corners = sharedWhere(
     sel,

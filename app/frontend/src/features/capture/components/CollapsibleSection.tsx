@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@shared/lib/cn";
 
 interface CollapsibleSectionProps {
-  /** Step number — renders as a small chip before the title. */
+  /** Step number: renders as a small chip before the title. */
   n: number;
   title: string;
   /** Optional right-aligned slot (e.g. a settings shortcut). */

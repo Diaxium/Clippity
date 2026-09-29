@@ -24,7 +24,7 @@ export interface LibraryFilter {
   smart?: SmartId | null;
   /** Free-text query from the search box. Blank / absent matches all. */
   search?: string;
-  /** Clock for the time-window smart collections — one value for the
+  /** Clock for the time-window smart collections: one value for the
    *  whole pass. */
   now?: number;
 }
@@ -38,7 +38,7 @@ export interface LibraryFilter {
  *
  * Kind: `all` passes everything; a specific kind keeps only matches.
  * Favorites, smart collection, tag and search are further refinements,
- * ANDed with the rest — "starred images tagged bug" is the intersection,
+ * ANDed with the rest: "starred images tagged bug" is the intersection,
  * which is what a stack of active filter chips reads as.
  */
 export function filterCaptures(
@@ -64,8 +64,8 @@ export function filterCaptures(
  *
  * Substring, case-insensitive, across everything the user can *see* or
  * plausibly remember about a capture: its title, its tags, the app and
- * window it came from, and — for aux entries, whose titles are generated
- * rather than named — the payload itself. That last part is what makes
+ * window it came from, and (for aux entries, whose titles are generated
+ * rather than named) the payload itself. That last part is what makes
  * the box useful for the non-file kinds: a palette is findable by any
  * one of its swatches (`#ff6e4a` finds the palette it came from, not
  * just the color entry), and a clipboard-text entry by its contents,
@@ -74,7 +74,7 @@ export function filterCaptures(
  * did not ask for, and "why is that here?" is a worse failure than
  * "nothing found".
  *
- * `query` is expected pre-trimmed and lower-cased by the caller — this
+ * `query` is expected pre-trimmed and lower-cased by the caller: this
  * runs once per row per keystroke, and re-normalising the needle each
  * time is the one wasteful thing in the loop.
  */
@@ -96,7 +96,7 @@ export function matchesSearch(meta: CaptureMeta, query: string): boolean {
 /**
  * Order a (pre-filtered) list.
  *
- * Copies rather than sorting in place — the caller's array is the
+ * Copies rather than sorting in place: the caller's array is the
  * memoised filter output, and re-ordering it under React would leave a
  * previous render's list silently rearranged.
  *
@@ -133,7 +133,7 @@ export function sortCaptures(
 /**
  * How many captures of each kind, for the sidebar's counts.
  *
- * Counted over whatever list the caller passes — which is the live
+ * Counted over whatever list the caller passes, which is the live
  * (non-trashed) set, not the raw listing, so the number beside "Videos"
  * is the number of rows clicking it would show. A count that included
  * trashed rows would send the user to a grid with fewer items than the
@@ -166,7 +166,7 @@ export function tagCounts(
 /**
  * Does this capture carry `tag`? Case-insensitively, because the backend
  * preserves the spelling the user typed while treating `Bug` and `bug`
- * as one tag — a filter that compared exactly would show an empty grid
+ * as one tag: a filter that compared exactly would show an empty grid
  * for a tag plainly visible on the cards.
  */
 export function hasTag(meta: CaptureMeta, tag: string): boolean {
@@ -176,7 +176,7 @@ export function hasTag(meta: CaptureMeta, tag: string): boolean {
 }
 
 /**
- * Every distinct tag across `items`, sorted case-insensitively — the
+ * Every distinct tag across `items`, sorted case-insensitively: the
  * vocabulary behind the tag filter row and the editor's suggestions.
  *
  * Derived from the listing rather than fetched: every row already
@@ -199,7 +199,7 @@ export function allTags(items: CaptureMeta[]): string[] {
 /**
  * The captures of `collection`, in its curated order.
  *
- * Members whose capture isn't in `items` are skipped — trashed while the
+ * Members whose capture isn't in `items` are skipped: trashed while the
  * collection was open, or on a drive that isn't mounted. They are *not*
  * removed from the collection; that only happens on a purge, so a
  * temporarily-absent capture keeps its place.

@@ -10,11 +10,11 @@
 //!    otherwise, so a top-down capture buffer produces a vertically
 //!    mirrored recording unless `MF_MT_DEFAULT_STRIDE` is negative and
 //!    the source pointer is aimed at the last row. It is a silent
-//!    failure — the file is valid, just upside down. NV12 has no such
+//!    failure: the file is valid, just upside down. NV12 has no such
 //!    convention: it is always top-down.
 //! 2. *It is untestable here.* The DSP only runs inside a live MF
 //!    pipeline. A pure conversion is a function over bytes, so the
-//!    pixel path — the part most likely to be subtly wrong — gets unit
+//!    pixel path (the part most likely to be subtly wrong) gets unit
 //!    tests instead of a manual "watch the recording back" check.
 //!
 //! The conversion is BT.709 limited range, which is what an HD H.264
@@ -39,7 +39,7 @@ const V_R: i32 = 112;
 const V_G: i32 = -102;
 const V_B: i32 = -10;
 
-/// Studio-swing offsets. Luma rides 16..=235, chroma 16..=240 — the
+/// Studio-swing offsets. Luma rides 16..=235, chroma 16..=240: the
 /// "limited range" the coefficients above are scaled for.
 const Y_OFFSET: i32 = 16;
 const C_OFFSET: i32 = 128;
@@ -51,7 +51,7 @@ const C_MAX: i32 = 240;
 /// Size in bytes of an NV12 buffer for `width × height`.
 ///
 /// NV12 is a full-resolution 8-bit luma plane followed by a
-/// half-resolution interleaved chroma plane — 12 bits per pixel, hence
+/// half-resolution interleaved chroma plane: 12 bits per pixel, hence
 /// the 3/2. Both dimensions must be even (the caller guarantees this
 /// via `domain::recorder::even_dimensions`), so the division is exact.
 pub fn nv12_len(width: u32, height: u32) -> usize {
@@ -62,13 +62,13 @@ pub fn nv12_len(width: u32, height: u32) -> usize {
 ///
 /// Both orders reach this module: a decoded clip is RGBA, while every
 /// raw Win32 surface (GDI DIBs, the recorder's Desktop Duplication
-/// read-back) is BGRA. Passing the wrong one doesn't fail — it swaps red
+/// read-back) is BGRA. Passing the wrong one doesn't fail: it swaps red
 /// and blue in the recording, which is why the caller states it
 /// explicitly rather than this module assuming.
 ///
 /// Re-exported from the domain, where it moved once the sinks began
-/// carrying it: absorbing the swap here — the two indices below are read
-/// per pixel either way — is what lets a BGRA capture reach the encoder
+/// carrying it: absorbing the swap here (the two indices below are read
+/// per pixel either way) is what lets a BGRA capture reach the encoder
 /// without a normalising pass over the whole frame first.
 pub use clippity_domain::pixels::PixelOrder;
 
@@ -81,7 +81,7 @@ pub use clippity_domain::pixels::PixelOrder;
 /// Chroma is averaged over each 2×2 luma block rather than point-sampled
 /// from one corner. Point sampling is cheaper and is what a naive
 /// converter does, but on screen content it visibly fringes every
-/// single-pixel-wide coloured line — which is most of a UI.
+/// single-pixel-wide coloured line, which is most of a UI.
 ///
 /// Returns `false` (writing nothing) when the buffers don't match the
 /// declared geometry, so a mis-sized frame can't read out of bounds.
@@ -109,7 +109,7 @@ pub fn to_nv12(src: &[u8], dst: &mut [u8], width: u32, height: u32, order: Pixel
     //
     // This is the frame's dominant cost at any size that matters: a
     // 5120x1440 frame is 7.4 million pixels, and doing them one after
-    // another took 200 ms — six frame budgets, on its own, before the
+    // another took 200 ms: six frame budgets, on its own, before the
     // encoder has seen anything. The work is embarrassingly parallel
     // (no pixel depends on another) and the bands are disjoint slices,
     // so this needs no synchronisation: the pool's `run` borrows the
@@ -164,7 +164,7 @@ fn convert_band(src: &[u8], luma: &mut [u8], chroma: &mut [u8], w: usize, ri: us
 
         // Four pixels, four luma samples and one chroma sample, from a
         // single load of each. Iterating in 2x2 blocks over slices lets
-        // the bounds checks fall out — the compiler can see every span
+        // the bounds checks fall out: the compiler can see every span
         // is exactly two pixels wide.
         for ((((top_px, bottom_px), luma_top_px), luma_bottom_px), chroma_px) in top
             .chunks_exact(8)
@@ -249,7 +249,7 @@ mod tests {
 
     #[test]
     fn a_neutral_frame_has_neutral_chroma() {
-        // Grey must sit at chroma 128 in both planes — any drift here
+        // Grey must sit at chroma 128 in both planes: any drift here
         // is a colour cast across the whole recording.
         let grey = convert(2, 2, &solid(2, 2, 128, 128, 128));
         assert_eq!(&grey[4..6], &[128, 128]);
@@ -302,7 +302,7 @@ mod tests {
 
     #[test]
     fn every_row_is_converted_not_just_the_first() {
-        // Top half white, bottom half black — catches a stride bug that
+        // Top half white, bottom half black: catches a stride bug that
         // would leave the tail of the luma plane untouched.
         let (w, h) = (4u32, 4u32);
         let mut src = solid(w, h, 255, 255, 255);
@@ -323,7 +323,7 @@ mod tests {
     fn both_channel_orders_describe_the_same_colour() {
         // The same red pixel written in each order must convert
         // identically. If it doesn't, one of the two paths has red and
-        // blue swapped — the failure mode that makes a recording look
+        // blue swapped: the failure mode that makes a recording look
         // like a photo negative of itself.
         let bgra: Vec<u8> = [0u8, 0, 255, 255].repeat(4); // B,G,R,A
         let rgba: Vec<u8> = [255u8, 0, 0, 255].repeat(4); // R,G,B,A

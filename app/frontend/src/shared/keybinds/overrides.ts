@@ -1,5 +1,5 @@
 /**
- * User keybind overrides — the live bridge between the persisted
+ * User keybind overrides: the live bridge between the persisted
  * `settings.shortcuts.overrides` map and the in-app keybind registries
  * (editor / library / quick-capture).
  *
@@ -11,12 +11,12 @@
  * those pure indices rebuild when overrides change without threading React
  * state through every keystroke. {@link useSettings} pushes the current
  * map in via {@link setKeybindOverrides} whenever settings hydrate or
- * change — a one-way flow (settings store → this registry → registries),
+ * change: a one-way flow (settings store → this registry → registries),
  * mirrored in every window because every window mounts `Providers`.
  *
  * ### The override contract
  *
- * The map is keyed by fully-qualified binding id — `"<scope>:<id>"` — and
+ * The map is keyed by fully-qualified binding id, `"<scope>:<id>"`, and
  * the value *replaces* that binding's registry-default combos:
  *
  * - id absent  → use the registry default.
@@ -27,7 +27,7 @@
  * shape 1:1, so the persisted JSON and the runtime behaviour never drift.
  */
 
-/** Registry a binding belongs to — the `<scope>` half of a fully-qualified id. */
+/** Registry a binding belongs to: the `<scope>` half of a fully-qualified id. */
 export type KeybindScope = "editor" | "library" | "quickCapture";
 
 /** `fqid → replacement combos`. Matches the wire `overrides` map exactly. */
@@ -61,7 +61,7 @@ export function effectiveKeys(
  * was overridden), so an unchanged overrides map costs no allocation and
  * lets callers cheaply skip an index rebuild.
  *
- * Note this only rewrites `keys` — it doesn't touch hand-authored
+ * Note this only rewrites `keys`: it doesn't touch hand-authored
  * `helpKeys`. The editor clears those itself for overridden bindings (its
  * chips regenerate from the new combo); library / quick-capture carry no
  * `helpKeys`, so the generic form is exactly right for them.

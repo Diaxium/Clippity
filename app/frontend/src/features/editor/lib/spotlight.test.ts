@@ -86,7 +86,7 @@ describe("spotlightOf", () => {
 });
 
 describe("spotlightPageRect", () => {
-  it("is the page frame's rect — the outermost frame ancestor of the capture", () => {
+  it("is the page frame's rect: the outermost frame ancestor of the capture", () => {
     const { nodes } = scene();
     expect(spotlightPageRect(nodes)).toEqual(PAGE);
   });

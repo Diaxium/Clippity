@@ -17,14 +17,14 @@ function Harness() {
   return <ContextMenuHost />;
 }
 
-/** The store is driven directly here — regions are covered by their own
- *  feature tests — so opens need wrapping to flush the host's render. */
+/** The store is driven directly here (regions are covered by their own
+ *  feature tests) so opens need wrapping to flush the host's render. */
 function openMenu(menu: OpenContextMenu) {
   act(() => useContextMenuStore.getState().open(menu));
 }
 
 /** A right-click, returning the event so callers can assert on
- *  `defaultPrevented` — which is the whole contract being tested. */
+ *  `defaultPrevented`, which is the whole contract being tested. */
 function rightClick(el: Element) {
   const event = new MouseEvent("contextmenu", {
     bubbles: true,
@@ -36,7 +36,7 @@ function rightClick(el: Element) {
   return event;
 }
 
-/** Entry labels only — the first span; the shortcut hint is a second one. */
+/** Entry labels only: the first span; the shortcut hint is a second one. */
 function labels(): string[] {
   return screen
     .getAllByRole("menuitem")
@@ -66,7 +66,7 @@ describe("native menu suppression", () => {
     const bare = document.createElement("div");
     document.body.appendChild(bare);
 
-    // Nothing to show here — but the browser menu is still gone, which is
+    // Nothing to show here, but the browser menu is still gone, which is
     // the whole point of suppressing unconditionally in the capture phase.
     expect(rightClick(bare).defaultPrevented).toBe(true);
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();

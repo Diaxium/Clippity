@@ -1,5 +1,5 @@
 /**
- * Editor keybind model — pure types, no React, no store coupling beyond the
+ * Editor keybind model: pure types, no React, no store coupling beyond the
  * `EditorState` action surface a command drives. The declarative registry
  * ({@link ./editorKeybinds}) is a list of {@link EditorKeybind}; the hook
  * ({@link ./useEditorKeybinds}) resolves an event to at most one binding and
@@ -9,7 +9,7 @@
  *  - Declarative registration with categories + contexts.
  *  - Platform-aware modifiers via the `Mod` abstraction (Ctrl ⇄ Cmd).
  *  - Keydown + keyup bindings (temporary tools), typing protection,
- *    conflict detection, and a help overlay — all reading the same list.
+ *    conflict detection, and a help overlay: all reading the same list.
  */
 
 import type { EditorState } from "../state/editorStore";
@@ -34,7 +34,7 @@ export type KeybindCategory =
  * `editor` (the default) is active whenever the editor owns the keyboard and the
  * user isn't typing; `selection` additionally requires ≥1 selected node;
  * `textEditing` is reserved for the inline text editor (which today owns its own
- * keys, so no registry binding uses it yet — kept for forward-compat).
+ * keys, so no registry binding uses it yet; kept for forward-compat).
  */
 export type KeybindContext = "editor" | "selection" | "textEditing";
 
@@ -48,7 +48,7 @@ export interface KeybindApi {
   exportImage(): void;
   /** Reveal the inspector's Export tab / options (Mod+Shift+E). */
   exportOptions(): void;
-  /** Save the project — surfaces a non-blocking "not yet" message (Mod+S). */
+  /** Save the project: surfaces a non-blocking "not yet" message (Mod+S). */
   saveDocument(): void;
   /** Copy the flattened final image to the clipboard (Mod+Shift+C). */
   copyFlattened(): void;
@@ -63,7 +63,7 @@ export interface CommandCtx {
   /**
    * The originating keyboard event (read `key`/modifiers, call preventDefault).
    * Absent when the command is invoked from a non-keyboard surface such as the
-   * command palette — commands that need it must degrade to a no-op rather than
+   * command palette: commands that need it must degrade to a no-op rather than
    * assume a synthetic event (see `paletteHidden`).
    */
   event?: KeyboardEvent;
@@ -97,14 +97,14 @@ export interface EditorKeybind {
   onKeyDown?: EditorCommand;
   onKeyUp?: EditorCommand;
   /** Hide from the help overlay (aliases / internal duplicates). Also hides the
-   *  binding from the command palette — an alias is not a distinct command. */
+   *  binding from the command palette: an alias is not a distinct command. */
   hidden?: boolean;
   /**
    * Hide from the command palette while staying in the help overlay. For
    * bindings that only make sense from a key event: either they read
    * {@link CommandCtx.event} to disambiguate a multi-combo binding (the arrow
    * nudge/resize family), or they model a held key (`onKeyUp`). Set it
-   * explicitly — do not infer it from `keys.length`, which is only
+   * explicitly: do not infer it from `keys.length`, which is only
    * accidentally correlated.
    */
   paletteHidden?: boolean;

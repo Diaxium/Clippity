@@ -5,7 +5,7 @@ import { useOverlayStore } from "../state/overlayStore";
  * stroke over the dimmed desktop. While drawing (`dragging`) it's an
  * open dashed polyline; once finalized (`selected`) it closes into a
  * solid polygon with a faint accent fill so the user sees exactly what
- * will be kept. Pointer-transparent — the canvas-wide handlers own
+ * will be kept. Pointer-transparent: the canvas-wide handlers own
  * input. Self-subscribes so the ~120 Hz path growth re-renders only
  * this layer.
  *

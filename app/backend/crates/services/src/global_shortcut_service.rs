@@ -1,4 +1,4 @@
-//! OS-global capture hotkey — registration + press-routing helper.
+//! OS-global capture hotkey: registration + press-routing helper.
 //!
 //! The `shortcuts.global_capture` accelerator opens the region-capture
 //! overlay from anywhere, even when Clippity has no focused window. It's
@@ -39,13 +39,13 @@ impl GlobalShortcutService {
 
     /// Re-register the global capture hotkey so it matches `shortcuts`.
     /// Unregisters the previously-registered accelerator first, then
-    /// registers the new one when enabled + parseable. Best-effort — a
+    /// registers the new one when enabled + parseable. Best-effort: a
     /// parse or registration failure (e.g. another app already owns the
     /// combo) is logged, never fatal. Idempotent: calling it with an
     /// unchanged config re-registers the same accelerator.
     ///
     /// Must run on the main/event-loop thread (Tauri requirement) and NOT
-    /// from inside the plugin's own shortcut handler — the handler holds
+    /// from inside the plugin's own shortcut handler: the handler holds
     /// the plugin's registry lock, and register/unregister re-lock it.
     pub fn apply(&self, app: &AppHandle, shortcuts: &ShortcutsSettings) {
         let mut slot = self.registered.lock().unwrap_or_else(|p| p.into_inner());
@@ -61,15 +61,15 @@ impl GlobalShortcutService {
             if !shortcuts.global_capture.trim().is_empty() {
                 tracing::warn!(
                     combo = %shortcuts.global_capture,
-                    "global capture: unparseable combo — not registered"
+                    "global capture: unparseable combo; not registered"
                 );
             }
             return;
         };
-        // Escape (no modifiers) is owned by the countdown strip — never let
+        // Escape (no modifiers) is owned by the countdown strip: never let
         // the capture hotkey shadow it and break countdown cancellation.
         if shortcut == Shortcut::new(None, Code::Escape) {
-            tracing::warn!("global capture: Escape is reserved — not registering");
+            tracing::warn!("global capture: Escape is reserved; not registering");
             return;
         }
 
@@ -94,15 +94,15 @@ impl GlobalShortcutService {
     }
 
     /// True when `shortcut` is the capture accelerator currently
-    /// registered — the plugin handler routes a matching press to the
+    /// registered: the plugin handler routes a matching press to the
     /// region overlay.
     pub fn is_capture_shortcut(&self, shortcut: &Shortcut) -> bool {
         let slot = self.registered.lock().unwrap_or_else(|p| p.into_inner());
         slot.as_ref() == Some(shortcut)
     }
 
-    /// What the OS actually holds for the capture accelerator, and — when
-    /// it holds nothing — why.
+    /// What the OS actually holds for the capture accelerator, and, when
+    /// it holds nothing, why.
     ///
     /// "The hotkey stopped working" is one of the few complaints the app
     /// cannot answer from its own settings: the combo is stored, the
@@ -125,7 +125,7 @@ impl GlobalShortcutService {
         } else if parse_combo(&combo).is_none() {
             Some("the combo could not be parsed".to_string())
         } else {
-            Some("the OS refused it — another application may already own it".to_string())
+            Some("the OS refused it; another application may already own it".to_string())
         };
         ShortcutDiagnostics {
             combo,
@@ -141,7 +141,7 @@ impl GlobalShortcutService {
 ///
 /// `Mod` maps to Control on Windows/Linux and Super (⌘) on macOS,
 /// matching the frontend's Ctrl⇄Cmd `Mod` collapse. Modifier-only combos
-/// (no main key) are rejected — a global accelerator needs a key.
+/// (no main key) are rejected: a global accelerator needs a key.
 pub fn parse_combo(combo: &str) -> Option<Shortcut> {
     let mut mods = Modifiers::empty();
     let mut code: Option<Code> = None;
@@ -177,7 +177,7 @@ pub fn parse_combo(combo: &str) -> Option<Shortcut> {
 
 /// Map a single combo key token to a plugin [`Code`] by normalizing it to
 /// its UI Events `code` name and parsing (`Code` implements `FromStr` over
-/// those names — `"KeyA"`, `"Digit2"`, `"ArrowUp"`, `"Space"`, …).
+/// those names: `"KeyA"`, `"Digit2"`, `"ArrowUp"`, `"Space"`, …).
 fn code_from_token(token: &str) -> Option<Code> {
     let name = ui_code_name(token)?;
     Code::from_str(&name).ok()

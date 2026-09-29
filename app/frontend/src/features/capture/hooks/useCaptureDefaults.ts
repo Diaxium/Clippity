@@ -7,7 +7,7 @@
  * overwrites them once with the user's saved defaults the moment the
  * settings snapshot arrives. `hydrateDefaults` self-guards on
  * `defaultsHydrated`, so:
- *   - it seeds exactly once per window realm (≈ once per app run — the
+ *   - it seeds exactly once per window realm (≈ once per app run: the
  *     capture window is created hidden at startup and only shown/hidden,
  *     never torn down), and
  *   - a later Settings → Capture edit that broadcasts `settings/changed`

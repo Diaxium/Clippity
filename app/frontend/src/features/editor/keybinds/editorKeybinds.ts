@@ -1,12 +1,12 @@
 /**
- * The editor's default keybind map — a Figma + Illustrator hybrid. Pure data +
+ * The editor's default keybind map: a Figma + Illustrator hybrid. Pure data +
  * command closures over the store/api (no React). The hook installs one window
  * listener and dispatches into this list; the help overlay renders it; the
  * conflict checker validates it.
  *
  * Inspiration tags live in `docs/editor-keybinds.md`. Where Clippity already had
  * a tool letter that clashed with the "ideal" map (A = Arrow not Direct-Select,
- * I = Image not Eyedropper, M unused), the existing tool wins — muscle memory
+ * I = Image not Eyedropper, M unused), the existing tool wins: muscle memory
  * and existing tests beat a letter, per the task's "map to the closest existing
  * tool" rule. Those deviations are documented, not silently dropped.
  */
@@ -19,7 +19,7 @@ import { tokenFromEvent } from "./keybindUtils";
 /** Selected ids at dispatch time. */
 const sel = (ctx: CommandCtx): string[] => ctx.store.selectedIds;
 
-/** Arrow delta (×`step`) from the event's main key, or null for non-arrows —
+/** Arrow delta (×`step`) from the event's main key, or null for non-arrows,
  *  and null when there is no event at all (a non-keyboard invocation), which
  *  makes every arrow-driven command a safe no-op off the keyboard. */
 function arrowDelta(
@@ -47,7 +47,7 @@ const TOOL_KEYBINDS: EditorKeybind[] = TOOLS.filter((t) => t.shortcut).map(
   (t) => ({
     id: `tool-${t.id}`,
     // Labels already read as tools under the "Tools" help heading ("Move",
-    // "Hand tool", "Text", …) — don't suffix another "tool".
+    // "Hand tool", "Text", …); don't suffix another "tool".
     label: t.label,
     category: "tools",
     keys: [t.shortcut],
@@ -98,7 +98,7 @@ const ACTION_KEYBINDS: EditorKeybind[] = [
     },
   },
   // Crop clears the selection when it opens, so this `editor`-context Enter is
-  // the one that resolves during a session — `enter-text-edit` below needs a
+  // the one that resolves during a session: `enter-text-edit` below needs a
   // selection and is therefore inactive. Losing the session (Apply/Cancel/tool
   // change) hands Enter straight back to text editing.
   {
@@ -245,7 +245,7 @@ const ACTION_KEYBINDS: EditorKeybind[] = [
     context: "selection",
     onKeyDown: (ctx) => ctx.store.sendToBack(sel(ctx)),
   },
-  // Illustrator also offers Cmd+Alt+] / [ — kept as hidden aliases.
+  // Illustrator also offers Cmd+Alt+] / [; kept as hidden aliases.
   {
     id: "bring-forward-alt",
     label: "Bring forward",
@@ -281,7 +281,7 @@ const ACTION_KEYBINDS: EditorKeybind[] = [
     onKeyDown: ({ store }) => store.toggleHideSelected(),
   },
   // Grouping wraps the selection in a non-clipping frame (the scene's only
-  // container type) — a pure tree restructure, since nodes carry absolute
+  // container type): a pure tree restructure, since nodes carry absolute
   // coords (see editorStore.group/ungroup).
   {
     id: "group",
@@ -336,7 +336,7 @@ const ACTION_KEYBINDS: EditorKeybind[] = [
     label: "Zoom to selection",
     category: "view",
     keys: ["Shift+2"],
-    // No-op (non-blocking) when nothing is selected — fitSelection guards itself.
+    // No-op (non-blocking) when nothing is selected; fitSelection guards itself.
     onKeyDown: ({ store }) => store.fitSelection(),
   },
   {

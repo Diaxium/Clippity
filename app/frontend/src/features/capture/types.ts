@@ -2,7 +2,7 @@
  * Public types for the capture feature.
  *
  * Wire-format types (`CaptureType`, `CaptureRequest`, `CaptureResult`,
- * etc.) live in `@services/tauri/clients/capture` per ADR 0001 — this
+ * etc.) live in `@services/tauri/clients/capture` per ADR 0001: this
  * file re-exports them so existing intra-feature imports
  * (`../types`) keep working, and adds the UI-only shapes the
  * components / hooks consume.
@@ -33,7 +33,7 @@ export type ModeIcon = ComponentType<{
 
 export type ModeTint = "warm" | "cool";
 
-/** Metadata for a single mode tile — drives both the type grid and the
+/** Metadata for a single mode tile: drives both the type grid and the
  *  custom-modes panel. `available` controls whether the tile is armable
  *  in the current build; disabled tiles render with `unavailableHint`
  *  as a tooltip. */
@@ -47,6 +47,6 @@ export interface ModeDef<Id extends string> {
   icon: ModeIcon;
   tint: ModeTint;
   available: boolean;
-  /** Tooltip when disabled — points at the responsible later port. */
+  /** Tooltip when disabled: points at the responsible later port. */
   unavailableHint?: string;
 }

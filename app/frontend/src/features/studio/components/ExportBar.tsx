@@ -58,7 +58,7 @@ export function ExportBar() {
             aria-pressed={format === option}
             title={
               option === "gif" && gifTooLong
-                ? `A GIF can be at most ${GIF_MAX_MS / 1000} seconds — shorten the selection`
+                ? `A GIF can be at most ${GIF_MAX_MS / 1000} seconds; shorten the selection`
                 : undefined
             }
             className={cn(
@@ -80,7 +80,7 @@ export function ExportBar() {
       </div>
 
       {/* Audio is only a choice when there is audio and a track to put
-          it in — offering a mute toggle for a GIF would imply the
+          it in: offering a mute toggle for a GIF would imply the
           format could carry sound. */}
       {info.hasAudio && format === "mp4" ? (
         <label
@@ -171,7 +171,7 @@ export function ExportBar() {
         disabled={running || blocked}
         title={
           blocked
-            ? `A GIF can be at most ${GIF_MAX_MS / 1000} seconds — shorten the selection`
+            ? `A GIF can be at most ${GIF_MAX_MS / 1000} seconds; shorten the selection`
             : undefined
         }
         className="focus-ring inline-flex items-center gap-2 rounded-[9px] px-3.5 py-2 text-[12.5px] font-medium transition-opacity disabled:opacity-50"

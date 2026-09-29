@@ -1,5 +1,5 @@
 /**
- * Settings feature — UI-local types + wire-type re-exports.
+ * Settings feature: UI-local types + wire-type re-exports.
  *
  * Components import their types from here so the rest of the feature
  * never reaches into `@services/tauri/clients/settings` directly. If

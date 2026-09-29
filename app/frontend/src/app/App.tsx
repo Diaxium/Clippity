@@ -8,7 +8,7 @@ import { useSettingsStore } from "@features/settings";
 import { ErrorBoundary } from "@shared/ui";
 import { useThemeStore } from "@state/themeStore";
 
-// Split into its own chunk — only the capture/main windows ever mount
+// Split into its own chunk: only the capture/main windows ever mount
 // the wizard, so the transient utility windows shouldn't ship it.
 const OnboardingLayout = lazy(() =>
   import("@features/onboarding").then((m) => ({ default: m.OnboardingLayout }))
@@ -22,7 +22,7 @@ function currentRoute(): string {
 /**
  * Routes that bypass the onboarding gate. Overlay / countdown / toast /
  * tray are transient utility windows triggered by the user (or a global
- * hotkey) AFTER the wizard has run — letting the wizard hijack them
+ * hotkey) AFTER the wizard has run: letting the wizard hijack them
  * would mean a captured region opens the wizard, which is nonsense.
  */
 function isSystemRoute(route: string): boolean {
@@ -39,12 +39,12 @@ function isSystemRoute(route: string): boolean {
  * Root component. Composition order:
  *   1. Providers (theme, store hydration)
  *   2. MotionConfig for the reduced-motion preference
- *   3. The window-specific component matched by the URL hash —
+ *   3. The window-specific component matched by the URL hash,
  *      optionally swapped for the OnboardingLayout when the user
  *      hasn't completed first-launch setup yet.
  *
  * Each Tauri window loads the same bundle and selects its component
- * via the hash route — that's how five OS windows share one frontend
+ * via the hash route: that's how five OS windows share one frontend
  * build without per-window bundles.
  */
 export function App() {
@@ -72,7 +72,7 @@ function AppShell() {
   // System routes always render normally; user-facing routes (capture
   // / main) render the wizard until `settings.general.onboarded`
   // flips true. `Providers` triggers a `settings_get` on mount, so
-  // `settings === null` while that first fetch is in flight — render
+  // `settings === null` while that first fetch is in flight: render
   // the normal window during that gap rather than blanking the UI
   // (matches the legacy app's behaviour: getSettings returns null in
   // browser-only previews and the wizard skips).
@@ -88,14 +88,14 @@ function AppShell() {
           <OnboardingLayout
             settings={settings}
             // Persistence flips `onboarded` via the wizard's complete()
-            // handler — once the settings/changed event lands, this
+            // handler: once the settings/changed event lands, this
             // selector re-runs and `showOnboarding` becomes false.
             // `onDone` exists as a belt-and-suspenders dismiss path in
             // case the patch propagation lags the user's click; the
             // visual handoff to the normal window is still settings-
             // driven so a stale local state can't get stuck.
             onDone={() => {
-              /* no-op — gate flips via settings selector */
+              /* no-op: gate flips via settings selector */
             }}
           />
         ) : (

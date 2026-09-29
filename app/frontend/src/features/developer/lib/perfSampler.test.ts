@@ -28,7 +28,7 @@ describe("summarizeFrames", () => {
 
   it("surfaces the worst interval, which is where a stutter lives", () => {
     const { fps, worstFrameMs } = summarizeFrames([0, 16, 32, 232, 248]);
-    // The mean stays respectable while one frame took 200 ms — which is
+    // The mean stays respectable while one frame took 200 ms, which is
     // the stutter a user actually felt.
     expect(worstFrameMs).toBe(200);
     expect(fps).toBeGreaterThan(10);

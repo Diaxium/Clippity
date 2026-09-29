@@ -40,7 +40,7 @@ export const DEFAULT_TOGGLES: CaptureToggles & { delay: boolean } = {
   delay: false,
 };
 
-/** Top-level capture types — the 2×2 grid. */
+/** Top-level capture types: the 2×2 grid. */
 export const CAPTURE_TYPES: readonly ModeDef<CaptureType>[] = [
   {
     id: "region",
@@ -72,12 +72,12 @@ export const CAPTURE_TYPES: readonly ModeDef<CaptureType>[] = [
   },
 ];
 
-/** Standard-tier custom modes — top of the custom panel. */
+/** Standard-tier custom modes: top of the custom panel. */
 export const CUSTOM_MODES_STANDARD: readonly ModeDef<CustomMode>[] = [
   {
     id: "object",
     label: "Object",
-    desc: "On-device AI spots objects and UI elements — click one to capture it.",
+    desc: "On-device AI spots objects and UI elements. Click one to capture it.",
     bestFor: ["Buttons & icons", "UI elements", "Dialogs", "Quick captures"],
     icon: ScanEye,
     tint: "warm",
@@ -113,7 +113,7 @@ export const CUSTOM_MODES_STANDARD: readonly ModeDef<CustomMode>[] = [
   {
     id: "panoramic",
     label: "Panoramic",
-    desc: "Clippity auto-scrolls and stitches the whole length — hands-free.",
+    desc: "Clippity auto-scrolls and stitches the whole length, hands-free.",
     bestFor: ["Long pages", "Articles", "Chat logs", "Documentation"],
     icon: Frame,
     tint: "warm",
@@ -130,7 +130,7 @@ export const CUSTOM_MODES_STANDARD: readonly ModeDef<CustomMode>[] = [
   },
 ];
 
-/** Advanced-tier custom modes — bottom of the custom panel. */
+/** Advanced-tier custom modes: bottom of the custom panel. */
 export const CUSTOM_MODES_ADVANCED: readonly ModeDef<CustomMode>[] = [
   {
     id: "color-picker",
@@ -169,7 +169,7 @@ export const AVAILABLE_CUSTOM_MODES: ReadonlySet<CustomMode> = new Set(
  * listed is part of the `core` component and is always present.
  *
  * `available` above answers "does this build implement the mode?"; this
- * answers "does *this installation* include it?" — a mode can be fully built
+ * answers "does *this installation* include it?": a mode can be fully built
  * and still absent because the user declined its component in the installer
  * (see `domain::provisioning`).
  */
@@ -209,7 +209,7 @@ export function isCustomModeUsable(
 export const CUSTOM_MODE_TO_OVERLAY: Partial<Record<CustomMode, OverlayMode>> =
   {
     object: "object",
-    // Freehand is no longer a Custom tile — it (and the other freeform
+    // Freehand is no longer a Custom tile: it (and the other freeform
     // selection methods) live under the overlay's Region method dropdown.
     "multi-area": "multi-area",
     "color-picker": "color-pick",
@@ -229,7 +229,7 @@ export const CUSTOM_MODE_TO_OVERLAY: Partial<Record<CustomMode, OverlayMode>> =
  *                                                 enhance, delay
  *   everything else                             → all five
  *
- * `enhance` follows wherever an image is produced — it is a pass over
+ * `enhance` follows wherever an image is produced: it is a pass over
  * captured pixels, so the modes that yield colors or text instead of a
  * bitmap (Color-Picker, Palette, Grab-Text) leave it out.
  */
@@ -262,9 +262,9 @@ export function visibleOptionKeys(
  *  later port keeps the deferral visible. */
 export const OPTION_UNAVAILABLE_HINT: Record<string, string | undefined> = {
   hdr: undefined,
-  preview: undefined, // wired — opens the new capture in the editor (feature #5 landed)
+  preview: undefined, // wired: opens the new capture in the editor (feature #5 landed)
   clipboard: undefined, // works in MVP
-  cursor: undefined, // works in MVP — landed with the overlay port
-  enhance: undefined, // wired — `domain::enhance` runs before the PNG encode
-  delay: undefined, // armed with the countdown port — fires the HUD strip before capture
+  cursor: undefined, // works in MVP: landed with the overlay port
+  enhance: undefined, // wired: `domain::enhance` runs before the PNG encode
+  delay: undefined, // armed with the countdown port: fires the HUD strip before capture
 };

@@ -1,4 +1,4 @@
-//! Which Windows this is — for the diagnostics card and the exported
+//! Which Windows this is: for the diagnostics card and the exported
 //! bundle.
 //!
 //! Read from `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion` rather
@@ -22,7 +22,7 @@ use windows::Win32::System::Registry::{
 /// Registry path holding the OS description.
 const CURRENT_VERSION: PCWSTR = w!(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
 
-/// Build number at which Windows 10 became Windows 11 — the registry's
+/// Build number at which Windows 10 became Windows 11: the registry's
 /// `ProductName` famously still says "Windows 10" on an 11 install, so
 /// the build is the only honest discriminator.
 const WINDOWS_11_BUILD: u32 = 22000;
@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn describe_names_a_windows() {
         // Live: this test runs on the machine it describes. It asserts
-        // shape, not contents — the point is that the registry read
+        // shape, not contents: the point is that the registry read
         // path works at all, since its failure mode is a silent
         // fallback that would otherwise never be noticed.
         let described = describe();

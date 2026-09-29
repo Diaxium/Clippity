@@ -1,9 +1,9 @@
 /**
- * Uninstall contracts — mirror Rust `installer_domain::uninstall`.
+ * Uninstall contracts: mirror Rust `installer_domain::uninstall`.
  *
  * Backs the "Choose data to remove" and "Review removal" steps. Data is
  * split into what is removed by default (application files) and what is
- * *kept* unless the user opts in (captures, projects, credentials) — the
+ * *kept* unless the user opts in (captures, projects, credentials): the
  * design's core promise that user content survives an uninstall.
  */
 
@@ -15,7 +15,7 @@ export interface DataCategory {
   sizeBytes: number;
   /**
    * When true this category is destructive user content (captures,
-   * projects, credentials) — removal is opt-in and disabled by default.
+   * projects, credentials): removal is opt-in and disabled by default.
    * When false it is application machinery removed by default.
    */
   destructive: boolean;
@@ -29,7 +29,7 @@ export interface RemovalSelection {
   removeIds: string[];
   /** Export settings to a file before removing anything. */
   exportSettings: boolean;
-  /** Confirmation toggle on the Review step — required to proceed. */
+  /** Confirmation toggle on the Review step: required to proceed. */
   acknowledged: boolean;
 }
 

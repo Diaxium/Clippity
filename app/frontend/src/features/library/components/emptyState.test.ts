@@ -22,7 +22,7 @@ describe("emptyStateMessage", () => {
 
   it("names the narrowest active refinement", () => {
     // With several filters on, the one the user most recently reached
-    // for is the one they can undo — pointing at "no captures" would be
+    // for is the one they can undo: pointing at "no captures" would be
     // false with a full library sitting behind the filter.
     expect(
       emptyStateMessage(

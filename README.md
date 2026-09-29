@@ -10,7 +10,7 @@
 **A private, local-first capture studio for Windows.**
 
 Grab a region, a window, a scrolling page, a color, the text inside an image, or
-a screen recording — then annotate it in a real layered editor and keep it in a
+a screen recording, then annotate it in a real layered editor and keep it in a
 library that actually remembers where it came from.
 
 [![CI](https://github.com/Diaxium/Clippity/actions/workflows/ci.yml/badge.svg)](https://github.com/Diaxium/Clippity/actions/workflows/ci.yml)
@@ -32,7 +32,7 @@ Most capture tools ask you to choose between _fast_ and _capable_, and a lot of
 them ask for an account before they'll let you keep a screenshot.
 
 Clippity's capture, OCR, object detection, and image processing all run natively
-on your machine — a Rust core behind a [Tauri v2](https://tauri.app) shell — and
+on your machine (a Rust core behind a [Tauri v2](https://tauri.app) shell) and
 nothing leaves it. There is no account and no cloud dependency; the app sends no
 usage data anywhere today. The only network access in the product is the one you
 trigger: downloading an on-device vision model.
@@ -44,7 +44,7 @@ trigger: downloading an on-device vision model.
   all come out of the same overlay.
 - **The editor is a real editor.** A non-destructive scene graph with layers,
   blend modes, gradients, effects, and a keyboard map borrowed from Figma and
-  Illustrator — not four fixed arrow colors.
+  Illustrator, not four fixed arrow colors.
 - **Your captures keep their story.** Every capture records the app and window it
   came from, the mode, the monitor, and the moment, so the library can answer
   "where did this come from?" months later.
@@ -55,25 +55,25 @@ trigger: downloading an on-device vision model.
 
 ![The capture hub](docs/assets/screenshots/capture-hub.png)
 
-<em>The capture hub — type, options, and output in one pass.</em>
+<em>The capture hub: type, options, and output in one pass.</em>
 
 </div>
 
-|                                                                                                                                               |                                                                                                           |
-| --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| ![Region selection overlay](docs/assets/screenshots/overlay.png)                                                                              | ![The layered editor](docs/assets/screenshots/editor.png)                                                 |
-| **Overlay** — a dimmed snapshot of the desktop with live dimensions, thirds guides, and a magnifier that reads the pixel under the crosshair. | **Editor** — a non-destructive scene: annotate, blur, reframe, then export flattened or keep it editable. |
-| ![The library](docs/assets/screenshots/library.png)                                                                                           | ![Recording setup](docs/assets/screenshots/record.png)                                                    |
-| **Library** — captures, aux entries, collections, and smart collections, with provenance in the inspector.                                    | **Record** — video or GIF, region/window/screen, with audio, cursor, and frame-rate controls.             |
+|                                                                                                                                              |                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| ![Region selection overlay](docs/assets/screenshots/overlay.png)                                                                             | ![The layered editor](docs/assets/screenshots/editor.png)                                                |
+| **Overlay**: a dimmed snapshot of the desktop with live dimensions, thirds guides, and a magnifier that reads the pixel under the crosshair. | **Editor**: a non-destructive scene: annotate, blur, reframe, then export flattened or keep it editable. |
+| ![The library](docs/assets/screenshots/library.png)                                                                                          | ![Recording setup](docs/assets/screenshots/record.png)                                                   |
+| **Library**: captures, aux entries, collections, and smart collections, with provenance in the inspector.                                    | **Record**: video or GIF, region/window/screen, with audio, cursor, and frame-rate controls.             |
 
 <details>
 <summary>More screens</summary>
 
 ![Home](docs/assets/screenshots/home.png)
-_Home — quick capture, recent work, storage, and what's new._
+_Home: quick capture, recent work, storage, and what's new._
 
 ![Shortcut settings](docs/assets/screenshots/settings-shortcuts.png)
-_Settings — every shortcut is remappable, including the OS-global capture hotkey._
+_Settings: every shortcut is remappable, including the OS-global capture hotkey._
 
 </details>
 
@@ -84,14 +84,14 @@ _Settings — every shortcut is remappable, including the OS-global capture hotk
 |                                |                                                                                              |
 | ------------------------------ | -------------------------------------------------------------------------------------------- |
 | **Region, window, fullscreen** | A transparent overlay over a cached desktop snapshot, plus one-shot window and screen grabs. |
-| **Selection methods**          | Rectangle, freehand, pen/Bézier, magnetic lasso, and brush — all sharing one snapshot.       |
+| **Selection methods**          | Rectangle, freehand, pen/Bézier, magnetic lasso, and brush, all sharing one snapshot.        |
 | **Multi-area**                 | Collect several disjoint regions into a single capture.                                      |
 | **Scrolling window**           | Auto-scrolls a target window and stitches the frames into one tall image.                    |
 | **Panoramic**                  | Sweep a wide area and stitch it into a single shot.                                          |
 | **Grab Text (OCR)**            | Native Windows `Media.Ocr` pulls selectable text straight out of the screen.                 |
 | **Object mode**                | On-device ONNX object detection proposes the region for you.                                 |
 | **Color & palette**            | Sample a pixel or pull a whole palette; both land in the library as first-class entries.     |
-| **Recording**                  | H.264 + AAC video and GIF from one Media Foundation session — region, window, or screen.     |
+| **Recording**                  | H.264 + AAC video and GIF from one Media Foundation session, for region, window, or screen.  |
 | **Countdown & delay**          | A taskbar-edge timer strip runs before a delayed capture.                                    |
 | **Presets**                    | Save a capture configuration and re-run it from the app or the tray.                         |
 
@@ -100,23 +100,23 @@ _Settings — every shortcut is remappable, including the OS-global capture hotk
 A layered, non-destructive editor with more than twenty tools.
 
 - **Shapes, text, arrows, lines, frames, measure, and stamps** (bundled vector icons).
-- **Sample regions** — blur, pixelate, and a magnifier loupe that read from the
+- **Sample regions**: blur, pixelate, and a magnifier loupe that read from the
   image beneath them.
-- **Effects** — inner and outer shadow with spread, per-node blend modes,
+- **Effects**: inner and outer shadow with spread, per-node blend modes,
   freeform and mesh gradients, spotlight page dimming, and window chrome framing.
 - **Crop that resizes the page frame**, so the export always matches the canvas.
 - **Layers, multi-select, grouping, bounded undo**, and a `?` cheat sheet
   generated from the same keybind registry that dispatches the shortcuts.
-- **Save flattened or editable** — a PNG, or the scene as a sidecar you can reopen.
+- **Save flattened or editable**: a PNG, or the scene as a sidecar you can reopen.
 
 ### Organize
 
 - **Library** with grid and list views, fast thumbnails, an inspector, and batch selection.
-- **Labels** — tags plus a favorite flag, stored in a sidecar beside each capture.
-- **Collections** — named, manually ordered sets, kept as their own document.
+- **Labels**: tags plus a favorite flag, stored in a sidecar beside each capture.
+- **Collections**: named, manually ordered sets, kept as their own document.
 - **Smart collections**, trash and restore, and an aux catalog for colors,
   palettes, and grabbed text (entries with no file of their own).
-- **Provenance** — source app, window title, capture mode, monitor, and timestamp
+- **Provenance**: source app, window title, capture mode, monitor, and timestamp
   written at the single save choke point.
 - The index is a **reconciled SQLite cache**: the files on disk stay the source of
   truth, so moving or deleting one never leaves a phantom entry behind.
@@ -124,13 +124,13 @@ A layered, non-destructive editor with more than twenty tools.
 ### Live on your desktop
 
 - **System tray flyout** with recent captures, quick modes, and preset launching.
-- **Global hotkey** — `Ctrl` `Shift` `2` opens the region overlay from anywhere;
+- **Global hotkey**: `Ctrl` `Shift` `2` opens the region overlay from anywhere;
   `Ctrl` `1`–`4` fire screenshot, window, record, and GIF. Every binding is
   remappable from Settings.
 - **Typed toasts** that tell you what actually happened and hand you the next action.
 - **Mica-backed, rounded, transparent windows** on Windows 11, with light/dark
   themes, a custom accent, and reduced-motion support.
-- **Capture shield** — every Clippity window is excluded from screen capture, so
+- **Capture shield**: every Clippity window is excluded from screen capture, so
   the app can never photograph itself and the overlay opens without waiting for
   its own chrome to disappear.
 
@@ -147,13 +147,13 @@ some surfaces are still being finished.
 | Editor scene, tools, effects, export                                                 | Complete                                                                                                                                                                          |
 | Presets, tray, toasts, onboarding                                                    | Complete                                                                                                                                                                          |
 | Settings                                                                             | General, appearance, notifications, performance, capture, recording, shortcuts, models, and advanced are live; editor, library, integrations, privacy, and about are placeholders |
-| Sharing                                                                              | Local handoff only — copy, open, reveal, copy path                                                                                                                                |
+| Sharing                                                                              | Local handoff only: copy, open, reveal, copy path                                                                                                                                 |
 | Search                                                                               | Metadata-oriented; no OCR/semantic search yet                                                                                                                                     |
 | Presets as full workflow recipes                                                     | Partial                                                                                                                                                                           |
 | Run at startup, auto-update                                                          | Complete for managed Windows installs; updates are checked daily and applied after exit                                                                                           |
 | macOS / Linux                                                                        | Builds are Tauri-capable, but capture, OCR, and window handling are Windows-specific                                                                                              |
 
-Planned work is tracked per area in [docs/roadmaps/](docs/roadmaps/README.md) —
+Planned work is tracked per area in [docs/roadmaps/](docs/roadmaps/README.md):
 capture, editor tools, library organization, sharing & export, vision & AI,
 performance, accessibility, and security.
 
@@ -166,10 +166,10 @@ performance, accessibility, and security.
 Grab the latest build from
 [**Releases**](https://github.com/Diaxium/Clippity/releases). Two ways in:
 
-| Download                          | What it does                                                                                                                   |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `Clippity-<version>-Setup.exe`    | The full wizard — installs, modifies, repairs, updates, and uninstalls. One self-contained file with the app compiled into it. |
-| `Clippity-<version>-portable.zip` | Unzip and run. No installer, no registry entries, settings kept beside the executable.                                         |
+| Download                          | What it does                                                                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `Clippity-<version>-Setup.exe`    | The full wizard: installs, modifies, repairs, updates, and uninstalls. One self-contained file with the app compiled into it. |
+| `Clippity-<version>-portable.zip` | Unzip and run. No installer, no registry entries, settings kept beside the executable.                                        |
 
 Verify what you downloaded against `SHA256SUMS.txt`:
 
@@ -178,7 +178,7 @@ certutil -hashfile Clippity-0.3.2-Setup.exe SHA256
 ```
 
 Because the binaries are unsigned, SmartScreen will show "Windows protected your
-PC" on first run — **More info → Run anyway**, or check the hash first.
+PC" on first run: **More info → Run anyway**, or check the hash first.
 
 ### Or build it yourself
 
@@ -189,12 +189,12 @@ pnpm dist
 That produces every packaging format (see [Build from source](#build-from-source)
 for prerequisites):
 
-| Artifact      | Path                                                                                                                                     |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Setup wizard  | `installer/build/Clippity Setup.exe` — a full Setup / Modify / Update / Uninstall installer, [documented here](docs/installer/README.md) |
-| Portable zip  | `build/portable/Clippity-<version>-portable.zip`                                                                                         |
-| MSI installer | `build/msi/`                                                                                                                             |
-| NSIS setup    | `build/nsis/`                                                                                                                            |
+| Artifact      | Path                                                                                                                                    |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup wizard  | `installer/build/Clippity Setup.exe`: a full Setup / Modify / Update / Uninstall installer, [documented here](docs/installer/README.md) |
+| Portable zip  | `build/portable/Clippity-<version>-portable.zip`                                                                                        |
+| MSI installer | `build/msi/`                                                                                                                            |
+| NSIS setup    | `build/nsis/`                                                                                                                           |
 
 `pnpm release:artifacts` then renames the setup and portable zip to their
 versioned release names and writes `SHA256SUMS.txt` into `build/release/`.
@@ -203,10 +203,10 @@ versioned release names and writes `SHA256SUMS.txt` into `build/release/`.
 
 ### Prerequisites
 
-- **[Node.js](https://nodejs.org/) 22.13+** — required by pnpm 11
-- **[pnpm](https://pnpm.io/) 11+** — the only supported package manager (`corepack enable`)
+- **[Node.js](https://nodejs.org/) 22.13+**: required by pnpm 11
+- **[pnpm](https://pnpm.io/) 11+**: the only supported package manager (`corepack enable`)
 - **[Rust](https://rustup.rs/) 1.78+** with `rustfmt` and `clippy`
-- **Tauri v2 system dependencies** — on Windows: MSVC C++ Build Tools and WebView2
+- **Tauri v2 system dependencies**: on Windows: MSVC C++ Build Tools and WebView2
   ([Tauri prerequisites](https://tauri.app/start/prerequisites/))
 
 The first native build needs network access: `ort` downloads matching ONNX Runtime
@@ -220,7 +220,7 @@ pnpm install
 pnpm tauri:dev
 ```
 
-Everything runs from the repository root — one pnpm workspace, one Cargo
+Everything runs from the repository root: one pnpm workspace, one Cargo
 workspace, no `cd` into a package.
 
 ### Commands
@@ -257,8 +257,8 @@ front so the app can hide to the tray without losing window state.
 | Countdown      | `#/countdown`      | Pre-capture timer strip.                          |
 | Recorder frame | `#/recorder-frame` | The outline drawn around a region being recorded. |
 
-The Rust side is a layered Cargo workspace — `infra → domain → platform / vision
-→ services → src-tauri` — and every interaction across the seam is a typed IPC
+The Rust side is a layered Cargo workspace (`infra → domain → platform / vision
+→ services → src-tauri`) and every interaction across the seam is a typed IPC
 call or event whose wire shape is declared once in `@clippity/shared` and mirrored
 by the Rust `domain` structs.
 
@@ -271,18 +271,18 @@ Clippity/
 │       ├── crates/
 │       │   ├── infra/       config, logging, events, paths
 │       │   ├── domain/      types and rules, no I/O
-│       │   ├── platform/    Windows APIs — capture shield, chrome, monitors, input
+│       │   ├── platform/    Windows APIs: capture shield, chrome, monitors, input
 │       │   ├── vision/      ONNX inference and model downloads
 │       │   ├── services/    capture, recorder, library, editor, presets, OCR, …
 │       │   └── bench/       criterion benchmarks with budgets
 │       └── src-tauri/       the Tauri app crate and tauri.conf.json
-├── docs/                  documentation — start at docs/README.md
+├── docs/                  documentation, start at docs/README.md
 ├── installer/             the standalone Setup / Modify / Update / Uninstall wizard
 └── scripts/               build collection, payload staging, benchmark budgets
 ```
 
 Non-obvious decisions are recorded as ADRs in
-[docs/decisions/](docs/decisions/README.md) — why the library index is a
+[docs/decisions/](docs/decisions/README.md): why the library index is a
 reconciled cache, why labels are a sidecar but collections are a document, why
 crop resizes the page frame, why recording is one Media Foundation session with
 two outputs.
@@ -293,8 +293,8 @@ two outputs.
 | ---------------- | ---------------------------------------------------------------------------------------- |
 | **UI**           | React 19, TypeScript 5.8, Vite 8, Tailwind CSS v4, [Motion](https://motion.dev), Zustand |
 | **Shell**        | Tauri v2 + `dialog`, `opener`, `global-shortcut` plugins                                 |
-| **Native core**  | Rust — `xcap`, `image`, `arboard`, `windows`, `window-vibrancy`                          |
-| **Recording**    | Windows Media Foundation — H.264 + AAC, NV12, fragmented MP4                             |
+| **Native core**  | Rust: `xcap`, `image`, `arboard`, `windows`, `window-vibrancy`                           |
+| **Recording**    | Windows Media Foundation: H.264 + AAC, NV12, fragmented MP4                              |
 | **Vision / OCR** | ONNX Runtime via `ort` + `ndarray`; Windows `Media.Ocr`                                  |
 | **Data**         | SQLite (`rusqlite`) index over file-backed captures and JSON sidecars                    |
 | **Quality**      | Vitest + Testing Library, ESLint 9, Prettier, clippy, `tracing`, criterion               |
@@ -309,13 +309,13 @@ Start at [docs/README.md](docs/README.md).
 | [Architecture](docs/architecture/overview.md)  | Overview, frontend, backend, IPC, project structure.    |
 | [Development](docs/development/commands.md)    | Commands, conventions, testing, debugging, performance. |
 | [Product](docs/product/features.md)            | Concepts and the feature inventory.                     |
-| [Decisions](docs/decisions/README.md)          | ADRs — the "why" behind non-obvious choices.            |
+| [Decisions](docs/decisions/README.md)          | ADRs: the "why" behind non-obvious choices.             |
 | [Roadmaps](docs/roadmaps/README.md)            | Per-area plans and the current-state audit.             |
 | [Reference](docs/reference/editor-keybinds.md) | Editor and library keybind maps.                        |
 
 ## Contributing
 
-Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) for
 the workflow, coding conventions, and what CI checks before a merge.
 
 ## License

@@ -1,4 +1,4 @@
-//! `installer-domain` — pure types and rules for the Clippity installer.
+//! `installer-domain`: pure types and rules for the Clippity installer.
 //!
 //! Everything here is deterministic and I/O-free: it computes install
 //! plans, compares versions, sums component sizes, and derives the

@@ -10,7 +10,7 @@ import type { SceneNode } from "../types";
  * multi-select reads in `lib/multi` all start from one definition of "the
  * selection", and adding a section no longer means re-deriving it.
  *
- * `sel[0]` is the **primary** — the node a mixed field scrubs from and the one
+ * `sel[0]` is the **primary**: the node a mixed field scrubs from and the one
  * whose list rows the fill/stroke/effect sections lay out (Fork P-F1).
  */
 export function useSelection(): readonly SceneNode[] {
@@ -25,7 +25,7 @@ export function useSelection(): readonly SceneNode[] {
   );
 }
 
-/** Selection ids that survive the node lookup — the batch-write target set. */
+/** Selection ids that survive the node lookup: the batch-write target set. */
 export function selectionIds(sel: readonly SceneNode[]): string[] {
   return sel.map((n) => n.id);
 }

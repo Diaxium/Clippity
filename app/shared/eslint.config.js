@@ -4,7 +4,7 @@ import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import prettier from "eslint-config-prettier";
 
-// `@clippity/shared` is a framework-agnostic, type-only package — no React,
+// `@clippity/shared` is a framework-agnostic, type-only package: no React,
 // no DOM globals. A trimmed version of the frontend's flat config.
 export default [
   {

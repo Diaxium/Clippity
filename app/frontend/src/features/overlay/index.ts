@@ -1,5 +1,5 @@
 /**
- * Overlay feature — Region-mode selection overlay.
+ * Overlay feature: Region-mode selection overlay.
  *
  * Public surface is just the root layout. Tests + sub-components live
  * inside the feature; nothing else needs to reach in. Cross-feature

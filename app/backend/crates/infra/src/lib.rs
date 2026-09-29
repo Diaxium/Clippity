@@ -1,7 +1,7 @@
-//! Infrastructure — cross-cutting concerns shared by every layer.
+//! Infrastructure: cross-cutting concerns shared by every layer.
 //!
 //! `infra` is the base crate: it does NOT depend on `domain`, `services`,
-//! `platform`, or the app. The direction is one-way — anyone can pull
+//! `platform`, or the app. The direction is one-way: anyone can pull
 //! errors / logging / paths / the outbound event channel in.
 
 pub mod config;

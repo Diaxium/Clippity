@@ -1,6 +1,6 @@
 /**
  * Lazy + cached thumbnail loader. Ported from the legacy
- * `lib/useThumbnail.ts` — same three guarantees:
+ * `lib/useThumbnail.ts`, same three guarantees:
  *
  * - **Cache survives navigation.** A module-level `Map` keyed by
  *   `(id, maxWidth)` means switching grid↔list or refreshing after a
@@ -13,7 +13,7 @@
  * The cache is module-level (persists for the app session) and bounded
  * by a small LRU cap: each entry holds a base64 data URI (tens to a few
  * hundred KB), so an unbounded map would let idle RAM climb without limit
- * as the user scrolls a large library — memory that's never reclaimed even
+ * as the user scrolls a large library: memory that's never reclaimed even
  * after the dashboard window is hidden to the tray. `cacheGet`/`cacheSet`
  * keep the most-recently-used `CACHE_LIMIT` entries and evict the rest; a
  * re-scroll past an evicted capture just re-decodes through Tauri.
@@ -76,7 +76,7 @@ function fetchThumbnail(id: string, maxWidth: number): Promise<string | null> {
       return null;
     })
     .catch(() => {
-      // A failed decode shouldn't wedge the in-flight slot — drop it
+      // A failed decode shouldn't wedge the in-flight slot: drop it
       // so a later attempt can retry.
       inflight.delete(key);
       return null;
@@ -102,7 +102,7 @@ export function useThumbnail(
   const [src, setSrc] = useState<string | null>(() => cacheGet(key) ?? null);
 
   useEffect(() => {
-    // Aux entries (color / palette / text) have no file to decode — the
+    // Aux entries (color / palette / text) have no file to decode: the
     // card renders a swatch instead and passes a null id here.
     if (!id) {
       setSrc(null);

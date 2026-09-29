@@ -1,5 +1,5 @@
 /**
- * Dashboard feature — public surface.
+ * Dashboard feature: public surface.
  *
  * Only `DashboardLayout` is exported. The main window mounts it.
  * Cross-window handoff helpers (`openDashboard`,

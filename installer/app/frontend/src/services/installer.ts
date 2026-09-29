@@ -114,11 +114,11 @@ export function runRepair(): Promise<void | undefined> {
 
 /** Real filesystem targets the Complete / maintenance screens open. */
 export interface MaintenancePaths {
-  /** Install directory — what "Open folder" opens. */
+  /** Install directory: what "Open folder" opens. */
   appDir: string;
-  /** Retained user-data root — what "Open retained data folder" opens. */
+  /** Retained user-data root: what "Open retained data folder" opens. */
   dataDir: string;
-  /** This run's log file — what "View log" opens. */
+  /** This run's log file: what "View log" opens. */
   logFile: string;
 }
 
@@ -205,7 +205,7 @@ export function runUninstall(
 /**
  * Subscribe to backend progress snapshots.
  *
- * Returns an unsubscribe function — a no-op in preview, where no events
+ * Returns an unsubscribe function: a no-op in preview, where no events
  * are ever emitted. Callers must await this before triggering the
  * operation, or the first snapshots are missed.
  */

@@ -12,7 +12,7 @@ import { useOverlayStore } from "../state/overlayStore";
  * selection method and opens a popover to switch between Rectangle,
  * Freehand, Pen / Bézier, Magnetic Lasso, and Brush.
  *
- * Switching is in-place — all methods crop the same cached desktop
+ * Switching is in-place: all methods crop the same cached desktop
  * snapshot, so picking one clears the current selection (without dropping
  * the snapshot), flips the local overlay mode, and tells the backend so
  * the saved file is labelled after the method drawn. No re-snapshot, no
@@ -25,7 +25,7 @@ export function RegionMethodMenu() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Dismiss on outside pointer / Escape — but let Escape still cancel the
+  // Dismiss on outside pointer / Escape, but let Escape still cancel the
   // overlay when the menu is closed (handled by useOverlayKeybinds).
   useEffect(() => {
     if (!open) return;

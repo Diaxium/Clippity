@@ -3,8 +3,8 @@
 //! Before uninstall deletes the application, or update replaces it, the
 //! files may be held open by a running Clippity. This module enumerates the
 //! holders with Windows Restart Manager (via `installer-platform`), asks the
-//! pure [`ShutdownPlan`] which of them are ours, and — as the controlled
-//! fallback the task permits for *Clippity-owned* processes only — stops
+//! pure [`ShutdownPlan`] which of them are ours, and (as the controlled
+//! fallback the task permits for *Clippity-owned* processes only) stops
 //! them so the file operation can proceed. Unrelated user applications and
 //! system/Explorer processes are never touched; they are reported so the
 //! caller can surface them and fall back to a reboot rather than claiming an
@@ -37,8 +37,8 @@ const SETTLE: Duration = Duration::from_millis(300);
 pub struct LockClearReport {
     /// pids of Clippity-owned processes that were stopped.
     pub terminated: Vec<u32>,
-    /// Display names of unrelated / system applications the user must close
-    /// — never stopped by the engine.
+    /// Display names of unrelated / system applications the user must close:
+    /// never stopped by the engine.
     pub blocking_apps: Vec<String>,
     /// True when the running maintenance image itself is among the holders
     /// (it cannot stop itself; reboot-scheduled removal handles it).
@@ -57,7 +57,7 @@ impl LockClearReport {
 ///
 /// `install_root` / `maintenance_root` come from the installation manifest
 /// and bound what counts as "ours". Enumeration failures degrade to an
-/// empty report and a warning — the operation then proceeds and relies on
+/// empty report and a warning: the operation then proceeds and relies on
 /// the locked-file reboot fallback, never a false success.
 pub fn clear_locks(
     targets: &[&Path],
@@ -102,7 +102,7 @@ pub fn clear_locks(
         report.blocking_apps = plan.blocking_app_names();
         tracing::warn!(
             apps = ?report.blocking_apps,
-            "target files are held by applications the engine will not close — a reboot may be required to finish"
+            "target files are held by applications the engine will not close; a reboot may be required to finish"
         );
     }
 
@@ -114,7 +114,7 @@ mod tests {
     use super::*;
     use std::sync::atomic::{AtomicU32, Ordering};
 
-    /// A file that nothing has open must report no locks and no blockers —
+    /// A file that nothing has open must report no locks and no blockers:
     /// on any platform (off-Windows the enumerator is an empty no-op; on
     /// Windows Restart Manager finds no holders of an unopened temp file).
     #[test]

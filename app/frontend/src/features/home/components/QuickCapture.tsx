@@ -1,12 +1,12 @@
 /**
- * "Quick capture" launcher row — four cards that jump straight into a
+ * "Quick capture" launcher row: four cards that jump straight into a
  * capture flow. Screenshot is the featured card (accent border + soft
  * wash). Available cards show their live keyboard shortcut and fire the
  * capture on click or hotkey.
  *
  * A card can be disabled for two different reasons, and says which: the
  * port hasn't landed ("Soon"), or the component was declined when Clippity
- * was installed ("Not installed" — see `domain::provisioning`). The second
+ * was installed ("Not installed"; see `domain::provisioning`). The second
  * is the user's own past choice and is reversible through the installer, so
  * the card explains it instead of disappearing.
  */

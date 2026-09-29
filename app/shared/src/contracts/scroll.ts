@@ -1,10 +1,10 @@
 /**
- * Scroll / panoramic recording wire-format contracts — mirror Rust
+ * Scroll / panoramic recording wire-format contracts: mirror Rust
  * `domain::scroll`.
  */
 
 /**
- * Scroll/stitch direction for a Scrolling or Panoramic capture — sets
+ * Scroll/stitch direction for a Scrolling or Panoramic capture: sets
  * the stitch axis and, for Panoramic, which way the app auto-scrolls.
  * Mirrors Rust `domain::scroll::ScrollDirection` (kebab-case wire).
  */

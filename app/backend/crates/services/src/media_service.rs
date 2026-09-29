@@ -1,4 +1,4 @@
-//! Media orchestration — describe a saved clip so Studio can play it,
+//! Media orchestration: describe a saved clip so Studio can play it,
 //! and hand its bytes to the webview.
 //!
 //! The counterpart to [`crate::editor_service`]: that one loads a
@@ -9,7 +9,7 @@
 //! **A screenshot is delivered; a recording is streamed.** `editor_load`
 //! base64s an entire PNG into a command's return value, which is fine
 //! for a few megabytes. A recording is routinely three orders of
-//! magnitude larger, and a `<video>` element needs to *seek* into it —
+//! magnitude larger, and a `<video>` element needs to *seek* into it:
 //! it issues ranged requests and expects partial responses. So the bytes
 //! never travel over IPC at all. Studio calls [`MediaService::probe`],
 //! gets a [`MediaToken`], and the webview fetches ranges of the file
@@ -17,8 +17,8 @@
 //! to a path through [`MediaService::resolve`].
 //!
 //! Validation: every `id` goes through `library::validate_id` before it
-//! becomes a token, so the scheme handler — which runs on webview input
-//! and has no session context — never has to decide for itself whether
+//! becomes a token, so the scheme handler (which runs on webview input
+//! and has no session context) never has to decide for itself whether
 //! a path is allowed. A token *is* the proof that the check passed.
 //!
 //! Concurrency: the token registry is the only state, behind a `Mutex`.
@@ -44,7 +44,7 @@ use crate::settings_service::{CapturesDirSource, NameTemplateSource};
 
 /// How many clips stay fetchable at once.
 ///
-/// Studio shows one clip at a time, so one would nearly do — but "nearly"
+/// Studio shows one clip at a time, so one would nearly do, but "nearly"
 /// is where the bugs are. A webview keeps in-flight ranged requests
 /// against the *previous* clip alive for a moment after the `<video>`
 /// src changes, and a page reload re-probes while the old element is
@@ -62,7 +62,7 @@ const MAX_OVERLAY_BYTES: usize = 32 * 1024 * 1024;
 
 /// Where rendered overlay bitmaps are staged.
 ///
-/// A directory of our choosing, never the caller's — which is what makes
+/// A directory of our choosing, never the caller's, which is what makes
 /// [`MediaService::stage_overlay`] safe to expose and what
 /// [`validate_overlays`] checks trim requests against.
 fn overlay_staging_dir() -> PathBuf {
@@ -73,7 +73,7 @@ fn overlay_staging_dir() -> PathBuf {
 ///
 /// The paths in a trim request arrive from the webview, and the encoder
 /// opens them. Without this, a page could name any file on disk and have
-/// the export read it — the same class of hole `library::validate_id`
+/// the export read it: the same class of hole `library::validate_id`
 /// closes for capture ids, and the reason the playback scheme carries a
 /// token instead of a path at all (ADR 0032).
 ///
@@ -116,7 +116,7 @@ pub struct MediaService {
     /// Cancellation flag for the trim currently encoding, if any.
     ///
     /// Held here rather than passed around because the party that wants
-    /// to cancel — a command handler serving a button press — is not the
+    /// to cancel (a command handler serving a button press) is not the
     /// party running the encode, and the two never meet. An `Arc` so the
     /// worker keeps its own handle after this slot is cleared.
     active_trim: Mutex<Option<Arc<AtomicBool>>>,
@@ -154,8 +154,8 @@ impl MediaService {
     /// Rejects anything that isn't a video. Studio's timeline is built
     /// on seeking, and the two other things the library holds cannot be
     /// seeked: a still has no time axis, and an animated GIF has one the
-    /// platform's decoder won't expose. Refusing here — rather than
-    /// opening a player that turns out not to scrub — is why the library
+    /// platform's decoder won't expose. Refusing here (rather than
+    /// opening a player that turns out not to scrub) is why the library
     /// only offers Studio for `video` entries in the first place.
     pub fn probe(&self, id: &str) -> AppResult<MediaInfo> {
         let path = library::validate_id(id, &self.captures.captures_dir())?;
@@ -199,7 +199,7 @@ impl MediaService {
     /// **A trim decodes and re-encodes rather than remuxing**, and that
     /// is the central decision here. Copying the compressed stream would
     /// be near-instant and lossless, but a cut can only land on a
-    /// keyframe — so an in-point would silently jump to the nearest one
+    /// keyframe, so an in-point would silently jump to the nearest one
     /// before it, by up to a couple of seconds on a screen recording. A
     /// trim UI whose handles are decorative is worse than one that takes
     /// a moment, because the user cannot see that it lied.
@@ -210,8 +210,8 @@ impl MediaService {
     /// recording (ADR 0031).
     ///
     /// `progress` is called as the output grows; `cancel` is polled
-    /// between frames. A cancelled or failed trim leaves nothing behind
-    /// — the working file is dot-prefixed so the library scan skips it,
+    /// between frames. A cancelled or failed trim leaves nothing behind:
+    /// the working file is dot-prefixed so the library scan skips it,
     /// and it is deleted on every exit path that doesn't commit.
     pub fn trim(
         &self,
@@ -264,7 +264,7 @@ impl MediaService {
 
         let outcome = encode_trim(&path, &working, &trim, cancel, progress);
         // The overlays existed only to be encoded, and they are large.
-        // Cleared on every exit path — a cancelled or failed export must
+        // Cleared on every exit path: a cancelled or failed export must
         // not leave a pile of full-resolution bitmaps in the temp
         // directory.
         for overlay in &trim.overlays {
@@ -385,7 +385,7 @@ impl MediaService {
 /// needed and the next is only reached when the playhead crosses an
 /// annotation boundary. Holding one decoded bitmap rather than all of
 /// them is what keeps a clip with a dozen annotations from costing a
-/// dozen full-resolution RGBA buffers — on this desk's 5120×1440 panel
+/// dozen full-resolution RGBA buffers: on this desk's 5120×1440 panel
 /// that is 29 MiB each.
 ///
 /// Keyed on the path rather than on an index, so an interval that
@@ -393,7 +393,7 @@ impl MediaService {
 struct OverlayCache<'a> {
     refs: &'a [OverlayRef],
     loaded: Option<(String, image::RgbaImage)>,
-    /// A size mismatch is reported once, not once per frame — at 60 fps
+    /// A size mismatch is reported once, not once per frame: at 60 fps
     /// the log would be the slowest part of the export.
     warned_about_size: bool,
 }
@@ -420,7 +420,7 @@ impl<'a> OverlayCache<'a> {
         frame_h: u32,
     ) -> AppResult<Option<&image::RgbaImage>> {
         // Copied out first so the lookup's borrow does not outlive into
-        // the mutation below — `refs` is a shared slice, so this is a
+        // the mutation below: `refs` is a shared slice, so this is a
         // pointer copy rather than a clone of anything.
         let refs = self.refs;
         let Some(overlay) = clippity_domain::annotation::overlay_at(refs, ms) else {
@@ -459,7 +459,7 @@ impl<'a> OverlayCache<'a> {
 /// Decode `[start, end)` out of `source` and encode it to `working`.
 ///
 /// Split out of the service so the `cfg` and the COM apartment live in
-/// one place. Runs entirely on the calling thread — Media Foundation's
+/// one place. Runs entirely on the calling thread: Media Foundation's
 /// reader and writer are both `!Send`, and this is a foreground job with
 /// nothing to gain from crossing a thread.
 #[cfg(target_os = "windows")]
@@ -487,7 +487,7 @@ fn encode_trim(
     // Output frame spacing. Used to *decimate*, not to re-time: a 60 fps
     // source going into a 15 fps GIF must drop three frames in four, or
     // the file would carry four times the frames each holding for a
-    // fifteenth of a second — a clip four times too long.
+    // fifteenth of a second: a clip four times too long.
     let frame_spacing_hns = frame_duration_hns(trim.fps);
 
     // Seeking lands on the keyframe at or before the in-point, so the
@@ -569,7 +569,7 @@ fn encode_trim(
             if chunk.timestamp_hns < start_hns || chunk.pcm.is_empty() {
                 continue;
             }
-            // Duration from the sample count, never from the clock —
+            // Duration from the sample count, never from the clock:
             // the sample rate *is* the audio timeline, and deriving it
             // from anything else is how tracks drift (ADR 0031).
             let frames = chunk.pcm.len() as i64 / AUDIO_BLOCK_ALIGN as i64;
@@ -641,7 +641,7 @@ mod tests {
     use std::fs;
     use std::sync::atomic::AtomicU64 as TestNonce;
 
-    /// Hermetic harness — same shape as `editor_service`'s.
+    /// Hermetic harness: same shape as `editor_service`'s.
     struct TestHarness {
         root: PathBuf,
         captures: PathBuf,
@@ -781,14 +781,14 @@ mod tests {
     #[test]
     fn a_trim_may_not_name_an_overlay_outside_the_staging_directory() {
         // The paths in a trim request come from the webview and the
-        // encoder opens them — the same hole `validate_id` closes for
+        // encoder opens them: the same hole `validate_id` closes for
         // capture ids.
         let h = harness();
 
         // The staging directory has to exist for this test to test
         // anything. `validate_overlays` canonicalizes it first, so
         // without it the call fails with "staging directory is
-        // unavailable" — a refusal, but the wrong one, and it would pass
+        // unavailable": a refusal, but the wrong one, and it would pass
         // an assertion looking for the substring "stag". Whether the
         // directory happens to be there depends on whether a staging
         // test ran first, which is why this only failed on some runs.
@@ -826,7 +826,7 @@ mod tests {
 
     /// Write a real MP4 into the captures dir and return its id.
     ///
-    /// Holds its own COM apartment for the writer's lifetime — the test
+    /// Holds its own COM apartment for the writer's lifetime: the test
     /// thread has none, and `Mp4Writer` needs one before Media
     /// Foundation will open anything.
     #[cfg(target_os = "windows")]
@@ -950,8 +950,8 @@ mod tests {
     /// Decode the first frame of a clip, as RGBA.
     ///
     /// The burn-in cannot be checked any other way. Everything upstream
-    /// of the encoder can be right — the request validated, the overlay
-    /// staged, the progress reported — and the annotation still never
+    /// of the encoder can be right (the request validated, the overlay
+    /// staged, the progress reported) and the annotation still never
     /// reach the file, because the one thing that matters happens
     /// between the decoder and the sink.
     #[cfg(target_os = "windows")]
@@ -1021,7 +1021,7 @@ mod tests {
             .expect("the annotated trim should encode");
 
         // Geometry and duration must be exactly what an unannotated trim
-        // would produce — burning in must not resize or re-time.
+        // would produce: burning in must not resize or re-time.
         let written = h.service.probe(&result.path).expect("re-probes");
         assert_eq!(
             (written.width, written.height),
@@ -1042,7 +1042,7 @@ mod tests {
             lg > 150 && lr < 110 && lb < 110,
             "overlay not burned in: left pixel was ({lr}, {lg}, {lb})"
         );
-        // Right half: transparent overlay, so the source shows through —
+        // Right half: transparent overlay, so the source shows through,
         // proving the composite honoured alpha rather than painting the
         // whole frame.
         let (rr, rg, rb) = at(w - w / 4);
@@ -1057,7 +1057,7 @@ mod tests {
     #[ignore = "needs a real Media Foundation platform (encode + decode)"]
     fn a_clip_probes_from_a_thread_that_is_already_an_sta() {
         // The end-to-end half of the COM apartment fix. `media_probe` is
-        // a non-async Tauri command, so it runs on the main thread —
+        // a non-async Tauri command, so it runs on the main thread,
         // which is an STA because the window and WebView require one.
         // Asking for an MTA there returns RPC_E_CHANGED_MODE, and while
         // `ComThread` now tolerates that, tolerating it is only useful

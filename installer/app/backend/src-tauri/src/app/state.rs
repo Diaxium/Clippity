@@ -11,7 +11,7 @@ use installer_infra::paths::InstallerPaths;
 use installer_services::{elevation, manifest};
 
 /// Installer-wide state. The wizard is single-window and mostly
-/// stateless — the frontend holds the user's in-progress selections —
+/// stateless (the frontend holds the user's in-progress selections)
 /// so this carries just the resolved paths, product facts, and a guard
 /// against launching two long-running operations at once.
 pub struct AppState {
@@ -88,7 +88,7 @@ fn resume_plan_from_args(args: &[String]) -> Option<InstallPlan> {
 
 /// Load the removal selection this process was launched to resume, if any.
 /// Like the install handoff, an unreadable file is ignored rather than
-/// aborting startup — the wizard falls back to the maintenance hub.
+/// aborting startup: the wizard falls back to the maintenance hub.
 fn resume_removal_from_args(args: &[String]) -> Option<RemovalSelection> {
     let path = elevation::resume_uninstall_path_from_args(args)?;
     match elevation::read_uninstall_handoff(&path) {

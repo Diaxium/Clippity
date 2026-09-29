@@ -91,7 +91,7 @@ describe("precisionPoint", () => {
     move({ x: 400, y: 400 }, true);
     const key = {};
     const first = precisionPoint(key, { x: 500, y: 400 }, true, VW, VH);
-    // Same event bubbling to a second handler — the selection's own
+    // Same event bubbling to a second handler: the selection's own
     // onPointerMove does not stopPropagation, so this really happens.
     const second = precisionPoint(key, { x: 500, y: 400 }, true, VW, VH);
     expect(second).toEqual(first);
@@ -121,7 +121,7 @@ describe("precisionPoint", () => {
   // divergence in place. Because damped travel drives the OS pointer
   // ~1/FACTOR times farther than the reticle, the real cursor routinely
   // ended up pinned against a screen edge with the reticle still far
-  // inland — and pushing further that way emits NO pointer events, so
+  // inland, and pushing further that way emits NO pointer events, so
   // the reel-in (which only runs on movement) could never recover. The
   // reticle was stuck until something else perturbed the state.
   it("sync puts the reticle back on the OS cursor", () => {
@@ -157,7 +157,7 @@ describe("precisionPoint", () => {
   it("holds the reticle steady mid-drag even without a keyup", () => {
     move({ x: 400, y: 400 }, false);
     const crept = move({ x: 500, y: 400 }, true);
-    // canResync=false — a drag is in flight, so the release must NOT
+    // canResync=false: a drag is in flight, so the release must NOT
     // snap; the offset reels in gradually instead.
     const released = precisionPoint(
       {},
@@ -177,7 +177,7 @@ describe("precisionPoint", () => {
     let raw = 300;
     const hand = (dx: number, precision: boolean) => {
       const next = Math.min(Math.max(raw + dx, 0), VW - 1);
-      if (next === raw) return null; // pinned — no pointermove fires
+      if (next === raw) return null; // pinned: no pointermove fires
       raw = next;
       return move({ x: raw, y: 300 }, precision);
     };

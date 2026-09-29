@@ -1,5 +1,5 @@
 /**
- * Update / maintenance contracts — mirror Rust `installer_domain::update`.
+ * Update / maintenance contracts: mirror Rust `installer_domain::update`.
  *
  * Backs the "Check for updates" and "Update available" steps and the
  * maintenance-hub summary.

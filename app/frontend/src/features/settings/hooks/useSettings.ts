@@ -42,7 +42,7 @@ export function useSettings() {
           if (alive) setSettings(s);
         })
         .catch((err) => {
-          // Settings load failure shouldn't blank the UI — render
+          // Settings load failure shouldn't blank the UI: render
           // against null (panels show their skeleton) and surface the
           // error through the toast pipeline so the user knows.
           const msg = err instanceof Error ? err.message : String(err);
@@ -52,7 +52,7 @@ export function useSettings() {
     refresh();
     const unsubscribe = onSettingsChanged(setSettings);
 
-    // Every window is created at startup and only hidden (never destroyed —
+    // Every window is created at startup and only hidden (never destroyed;
     // see the backend's `create_app_windows`). A hidden WebView2 page can
     // miss or defer the `settings/changed` broadcast, so a backgrounded
     // window holds a STALE snapshot: the dashboard re-shows the completed
@@ -62,11 +62,11 @@ export function useSettings() {
     //
     // Two signals, because neither alone is reliable for these frameless,
     // transparent, boot-hidden windows:
-    //   - Tauri `onFocusChanged` — authoritative when a hidden window is
+    //   - Tauri `onFocusChanged`: authoritative when a hidden window is
     //     shown+focused (its DOM `visibilityState` may already read
     //     "visible", so `visibilitychange` never fires on show), and DOM
     //     focus events aren't reliably delivered to such a webview.
-    //   - `document.visibilitychange` — covers minimize / occlusion, and is
+    //   - `document.visibilitychange`: covers minimize / occlusion, and is
     //     the only signal in the browser-preview / test build.
     const onVisible = () => {
       if (document.visibilityState === "visible") refresh();
@@ -85,7 +85,7 @@ export function useSettings() {
           else unlistenFocus = u;
         })
         .catch(() => {
-          /* focus listener failed — visibilitychange remains the fallback */
+          /* focus listener failed; visibilitychange remains the fallback */
         });
     }
 

@@ -1,6 +1,6 @@
 /**
- * Rolling record of what crossed the IPC bridge — duration, payload
- * sizes, outcome — for Settings → Advanced → command inspector.
+ * Rolling record of what crossed the IPC bridge (duration, payload
+ * sizes, outcome) for Settings → Advanced → command inspector.
  *
  * It lives in `shared/lib` rather than in the developer feature because
  * the recorder has to sit inside `services/tauri/client`, which every
@@ -16,7 +16,7 @@
 
 /** One completed IPC call. */
 export interface IpcSample {
-  /** Monotonic within the process — a stable React key. */
+  /** Monotonic within the process: a stable React key. */
   seq: number;
   command: string;
   /** Wall-clock duration, ms, measured at the invoke boundary. */
@@ -33,8 +33,8 @@ export interface IpcSample {
 }
 
 /**
- * How many samples to keep. Two hundred covers "what just happened"
- * — the question the inspector answers — without holding a session's
+ * How many samples to keep. Two hundred covers "what just happened",
+ * the question the inspector answers, without holding a session's
  * worth of command metadata in memory.
  */
 export const MAX_SAMPLES = 200;
@@ -187,7 +187,7 @@ export interface IpcSummary {
   /** Calls at or over the slow threshold. */
   slow: number;
   avgMs: number;
-  /** 95th-percentile duration — the number that moves when something is
+  /** 95th-percentile duration: the number that moves when something is
    *  occasionally, rather than always, slow. */
   p95Ms: number;
   /** Slowest commands first, by total time spent. */
@@ -250,7 +250,7 @@ export function summarizeIpc(
   };
 }
 
-/** Test seam — reset the module between cases. */
+/** Test seam: reset the module between cases. */
 export function resetIpcMetrics(): void {
   enabled = false;
   slowMs = 100;

@@ -22,7 +22,7 @@ interface SelectionBarProps {
   items: CaptureMeta[];
   mode: LibraryMode;
   collections: Collection[];
-  /** The collection being viewed, if any — the only context in which
+  /** The collection being viewed, if any: the only context in which
    *  "remove from collection" means something specific. */
   activeCollectionId: string | null;
   /** Every tag in use, for the tag editor's suggestions. */
@@ -33,14 +33,14 @@ interface SelectionBarProps {
 }
 
 /**
- * The bulk action bar — appears the moment anything is selected and
+ * The bulk action bar: appears the moment anything is selected and
  * leaves when the selection is cleared.
  *
  * Every action it offers is a single IPC call over the whole selection
  * rather than a loop, because the label and collection commands take an
  * id list ([ADR 0029](../../../../../docs/decisions/0029-labels-are-a-sidecar-collections-are-a-document.md)).
  * Trash / restore / purge are the exception: those are per-file moves
- * with per-file failure modes, so they fan out — and one failing must
+ * with per-file failure modes, so they fan out, and one failing must
  * not stop the rest, which is why the caller runs them independently.
  *
  * It floats over the grid rather than pushing it down: a bar that
@@ -83,7 +83,7 @@ export function SelectionBar({
 
   const chosen = items.filter((m) => selected.includes(m.id));
   // "Star" when any of them isn't starred yet; once they all are, the
-  // same button unstars — one control, and its label always says which.
+  // same button unstars: one control, and its label always says which.
   const willStar = chosen.some((m) => m.favorite !== true);
 
   const addToCollection = async (collection: Collection) => {
@@ -161,7 +161,7 @@ export function SelectionBar({
                 >
                   {collections.length === 0 ? (
                     <p className="px-2 py-1.5 text-[12px] text-[var(--color-hint)]">
-                      No collections yet — make one in the rail above.
+                      No collections yet. Make one in the rail above.
                     </p>
                   ) : (
                     collections.map((c) => (

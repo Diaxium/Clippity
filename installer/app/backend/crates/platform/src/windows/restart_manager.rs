@@ -1,4 +1,4 @@
-//! Windows **Restart Manager** — enumerate the processes locking a file a
+//! Windows **Restart Manager**: enumerate the processes locking a file a
 //! maintenance operation must change, and (as a controlled fallback)
 //! terminate a Clippity-owned one.
 //!
@@ -50,7 +50,7 @@ impl Drop for RmSession {
 /// Enumerate the processes currently holding any of `paths` open.
 ///
 /// Returns an empty vector when nothing locks them (the common, healthy
-/// case). Registration of a path that does not exist is harmless — Restart
+/// case). Registration of a path that does not exist is harmless: Restart
 /// Manager simply reports no holders for it.
 pub fn enumerate_lockers(paths: &[&Path]) -> InstallerResult<Vec<LockingProcess>> {
     if paths.is_empty() {
@@ -147,7 +147,7 @@ fn get_list(handle: u32) -> InstallerResult<Vec<RM_PROCESS_INFO>> {
                 buf.truncate(have as usize);
                 return Ok(buf);
             }
-            // The set grew between calls — `needed` now holds the new size.
+            // The set grew between calls: `needed` now holds the new size.
             e if e == ERROR_MORE_DATA => continue,
             e => return Err(other(format!("RmGetList failed (WIN32_ERROR {})", e.0))),
         }
@@ -186,7 +186,7 @@ fn resolve_exe_path(pid: u32) -> Option<String> {
 
 /// Force-terminate a process by pid. The services layer calls this **only**
 /// for a process the domain plan classified as Clippity-owned and not our
-/// own image — never an unrelated or system-critical one.
+/// own image: never an unrelated or system-critical one.
 pub fn terminate(pid: u32) -> InstallerResult<()> {
     // SAFETY: open with terminate rights; a failed open is a mapped error.
     let handle: HANDLE = unsafe { OpenProcess(PROCESS_TERMINATE, false, pid) }.map_err(|e| {

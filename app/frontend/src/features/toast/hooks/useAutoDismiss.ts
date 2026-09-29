@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 
 interface UseAutoDismissParams {
   /** True while a toast is being shown. When false the hook is a
-   *  pure no-op — timers cleared, progress reset. */
+   *  pure no-op: timers cleared, progress reset. */
   active: boolean;
-  /** Auto-dismiss duration in ms. `0` (or less) means sticky — no
+  /** Auto-dismiss duration in ms. `0` (or less) means sticky: no
    *  timer, no progress bar. */
   durationMs: number;
   /** Pointer is currently over the toast. Pauses the timer + rAF
@@ -19,7 +19,7 @@ interface UseAutoDismissParams {
 
 interface UseAutoDismissResult {
   /** Remaining time as a fraction (1 = full, 0 = expired). For
-   *  sticky toasts this stays at 1 forever — the `ProgressBar`
+   *  sticky toasts this stays at 1 forever: the `ProgressBar`
    *  component reads this to decide whether to render. */
   progress: number;
 }
@@ -76,7 +76,7 @@ export function useAutoDismiss({
       }
     };
 
-    // Idle (no active toast) or sticky (duration <= 0) — no timer.
+    // Idle (no active toast) or sticky (duration <= 0): no timer.
     if (!active || durationMs <= 0) {
       clearTimers();
       return;

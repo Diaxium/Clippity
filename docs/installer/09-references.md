@@ -20,8 +20,8 @@ implementation (recorded per the task's requirement). Consulted 2026-07-24.
   `QuietUninstallString`, `ModifyPath`, `NoModify`, `NoRepair`, `URLInfoAbout`,
   `HelpLink`, `WindowsInstaller`, `SystemComponent`.
 - Restart Manager for Win32 (`RmStartSession`, `RmRegisterResources`,
-  `RmGetList`) — for identifying processes holding files in use.
-- `MoveFileExW` + `MOVEFILE_DELAY_UNTIL_REBOOT` — delete-on-reboot; directories
+  `RmGetList`): for identifying processes holding files in use.
+- `MoveFileExW` + `MOVEFILE_DELAY_UNTIL_REBOOT`: delete-on-reboot; directories
   removed only when empty.
 - Code-signing options for Windows developers; SignTool (sign, verify,
   timestamp); Windows Installer error/return codes (1602, 1223, 1638, 1639,
@@ -34,7 +34,7 @@ implementation (recorded per the task's requirement). Consulted 2026-07-24.
 ## Tauri v2
 
 - Windows Installer (MSI via WiX, NSIS setup exe) bundle documentation.
-- Updater plugin (minisign signing, update manifest) — the app already uses this.
+- Updater plugin (minisign signing, update manifest): the app already uses this.
 - Code-signing, bundle configuration reference, NSIS/WiX configuration, sidecar
   & resource bundling.
 

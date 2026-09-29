@@ -1,4 +1,4 @@
-//! Media playback and trimming — the pure rules behind the Studio
+//! Media playback and trimming: the pure rules behind the Studio
 //! surface.
 //!
 //! Studio is where a *recording* is reviewed and cut, the way the editor
@@ -10,7 +10,7 @@
 //! The split from [`crate::recorder`] is deliberate and narrow. That
 //! module describes a session that *produces* frames from the screen;
 //! this one describes a file that *already has* them. They meet at the
-//! output end — a trim is encoded by the very same sinks a recording is,
+//! output end: a trim is encoded by the very same sinks a recording is,
 //! so every ceiling this module enforces is imported from there rather
 //! than restated, and a change to GIF's duration limit moves both.
 
@@ -23,7 +23,7 @@ use crate::recorder::{self, RecorderFormat};
 ///
 /// A container is allowed to omit the frame rate, and a variable-frame-rate
 /// recording genuinely has no single answer. The number is not used for
-/// decoding — the decoder reads real timestamps — only for the two places
+/// decoding, the decoder reads real timestamps, only for the two places
 /// the UI needs a grid: how far one "step a frame" press moves, and what
 /// a frame count in the transport reads as. Guessing 30 makes those
 /// controls work sensibly on a file that won't say; the alternative is
@@ -42,7 +42,7 @@ pub const MIN_TRIM_MS: u64 = 200;
 /// What playback and the timeline need to know about an opened clip.
 ///
 /// Everything here is read once, when Studio opens the file, and never
-/// again — the `<video>` element owns playback position from then on.
+/// again: the `<video>` element owns playback position from then on.
 /// The fields exist because the timeline has to be drawn *before* the
 /// first frame decodes: a ruler needs the duration, the stage needs the
 /// aspect ratio to reserve its box, and the transport needs to know
@@ -63,7 +63,7 @@ pub struct MediaInfo {
     pub height: u32,
     pub duration_ms: u64,
     /// Nominal frame rate, or [`ASSUMED_FPS`] when the file doesn't
-    /// declare one. Never zero — a zero here would divide by zero in
+    /// declare one. Never zero: a zero here would divide by zero in
     /// every frame-stepping calculation downstream.
     pub fps: u32,
     /// Whether the file carries an audio stream. Drives whether the
@@ -76,7 +76,7 @@ impl MediaInfo {
     /// Total frames on the timeline's grid.
     ///
     /// Derived from the duration and the nominal rate rather than
-    /// counted, because counting means decoding the whole file — a
+    /// counted, because counting means decoding the whole file: a
     /// multi-second stall to open a clip, to produce a number only the
     /// transport's readout uses.
     pub fn frame_count(&self) -> u64 {
@@ -93,7 +93,7 @@ impl MediaInfo {
 /// captures root, so the scheme handler serves bytes without having to
 /// re-derive whether it is allowed to.
 ///
-/// Monotonic, never reused within a run — a stale URL left in the
+/// Monotonic, never reused within a run: a stale URL left in the
 /// webview's cache resolves to a 404 rather than to whatever clip
 /// happens to hold that slot now, exactly as the snapshot scheme's ids
 /// behave.
@@ -114,7 +114,7 @@ impl MediaToken {
     }
 }
 
-/// A trim as the frontend asks for it — unchecked.
+/// A trim as the frontend asks for it, unchecked.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrimRequest {
@@ -135,8 +135,8 @@ pub struct TrimRequest {
     pub mute: bool,
     /// Redactions to burn in, timed against the **source** clip.
     ///
-    /// Defaulted so a request that predates annotations — or a caller
-    /// that has none — is unchanged on the wire.
+    /// Defaulted so a request that predates annotations, or a caller
+    /// that has none, is unchanged on the wire.
     #[serde(default)]
     pub redactions: Vec<Redaction>,
     /// Pre-rendered overlay bitmaps to composite, also timed against the
@@ -158,14 +158,14 @@ pub struct ValidatedTrim {
     pub format: RecorderFormat,
     pub fps: u32,
     /// Whether to decode and re-encode audio. False when the source has
-    /// none, when the user muted it, or when the format can't hold it —
+    /// none, when the user muted it, or when the format can't hold it:
     /// the three collapse here so the export loop never branches again.
     pub with_audio: bool,
     /// Size of the frames the **decoder** will produce, rounded to even
     /// edges (H.264's 4:2:0 chroma cannot describe an odd one).
     ///
     /// Not the output size. A sink is handed source frames and applies
-    /// its own format's rules to them — GIF scales down internally,
+    /// its own format's rules to them: GIF scales down internally,
     /// because quantizing at full resolution and shrinking afterwards
     /// would both waste the frame budget and blend palette entries into
     /// colours that were never in the palette. Ask [`Self::output_size`]
@@ -173,7 +173,7 @@ pub struct ValidatedTrim {
     pub width: u32,
     pub height: u32,
     /// Redactions to burn in. **Timed against the source clip**, not the
-    /// output — the user authored them on the source's timeline in
+    /// output: the user authored them on the source's timeline in
     /// Studio, so a trim starting at 0:30 must look them up by the
     /// frame's own timestamp rather than by its position in the export.
     /// Getting that backwards shifts every annotation by the in-point.
@@ -197,7 +197,7 @@ impl ValidatedTrim {
 
     /// Frame size the finished file will have.
     ///
-    /// Applies the same rule the sink will — one function so the size
+    /// Applies the same rule the sink will: one function so the size
     /// reported back to the user cannot disagree with the size on disk.
     pub fn output_size(&self) -> (u32, u32) {
         match self.format {
@@ -252,7 +252,7 @@ impl std::fmt::Display for TrimError {
 /// The range is **clamped** to the source rather than rejected for
 /// overrunning it: a timeline drag that ends a pixel past the end of a
 /// clip means "to the end", not "error". Ordering and length, by
-/// contrast, are refused — those are the cases where guessing what the
+/// contrast, are refused: those are the cases where guessing what the
 /// user meant would silently produce a different clip than the one the
 /// handles showed.
 pub fn validate_trim(
@@ -279,7 +279,7 @@ pub fn validate_trim(
         });
     }
 
-    // The source's own rate is the natural default for MP4 — re-encoding
+    // The source's own rate is the natural default for MP4: re-encoding
     // a 60 fps capture at the format's 30 fps default would quietly
     // halve its smoothness. GIF has no such option: its ceiling is far
     // below a typical recording's rate, so it always takes the format's.
@@ -290,7 +290,7 @@ pub fn validate_trim(
     let fps = recorder::clamp_fps(requested_fps, request.format);
 
     // The size the decoder yields, for either format. What the *file*
-    // ends up being is the sink's business — see `output_size`.
+    // ends up being is the sink's business; see `output_size`.
     let (width, height) = recorder::even_dimensions(source.width, source.height);
 
     Ok(ValidatedTrim {
@@ -314,7 +314,7 @@ pub fn validate_trim(
 ///
 /// Reported as encoded-milliseconds rather than a percentage so the UI
 /// can show a real position on the same timeline the user set the
-/// handles on, and so a percentage — which needs the total anyway — can
+/// handles on, and so a percentage, which needs the total anyway, can
 /// still be derived.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -327,7 +327,7 @@ pub struct TrimProgress {
 
 impl TrimProgress {
     /// Fraction complete in `0.0..=1.0`. Zero-length totals report 0
-    /// rather than dividing — validation forbids them, but a progress
+    /// rather than dividing: validation forbids them, but a progress
     /// readout is the wrong place to discover that.
     pub fn fraction(&self) -> f32 {
         if self.total_ms == 0 {
@@ -342,7 +342,7 @@ impl TrimProgress {
 #[serde(rename_all = "camelCase")]
 pub struct TrimResult {
     /// Absolute path of the new clip. A trim never writes over its
-    /// source — the same non-destructive rule the editor's scene
+    /// source, the same non-destructive rule the editor's scene
     /// sidecar follows, and for the same reason: the original frames
     /// are of a moment that cannot be re-recorded.
     pub path: String,
@@ -417,7 +417,7 @@ mod tests {
     #[test]
     fn a_range_running_past_the_end_is_clamped_not_refused() {
         // A drag that overshoots the end of the timeline means "to the
-        // end" — see `validate_trim`.
+        // end"; see `validate_trim`.
         let trim = validate_trim(&request(110_000, 999_000), &source()).expect("valid");
         assert_eq!(trim.end_ms, 120_000);
     }
@@ -512,7 +512,7 @@ mod tests {
 
     #[test]
     fn mp4_output_dimensions_are_even() {
-        // H.264's 4:2:0 chroma cannot describe an odd edge — an odd
+        // H.264's 4:2:0 chroma cannot describe an odd edge: an odd
         // source has to round before it reaches the encoder.
         let mut src = source();
         src.width = 1921;
@@ -605,7 +605,7 @@ mod tests {
     #[test]
     fn a_request_that_names_no_annotations_still_deserializes() {
         // The fields are additive, so a payload written before they
-        // existed — or by a caller with nothing to burn in — must not
+        // existed (or by a caller with nothing to burn in) must not
         // fail to parse.
         let json = r#"{
             "id": "C:/caps/Rec.mp4",

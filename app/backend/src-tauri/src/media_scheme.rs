@@ -1,11 +1,11 @@
-//! The `clippity-media` URI scheme — how a saved recording's bytes
+//! The `clippity-media` URI scheme: how a saved recording's bytes
 //! reach the Studio player.
 //!
 //! Sibling to the `clippity-snapshot` handler in [`crate`], and it
 //! exists separately for one reason: **a video is seeked, not
 //! delivered.** The snapshot handler answers every request with a whole
 //! PNG, which is right for an image the page shows all of at once. A
-//! `<video>` element does the opposite — it asks for byte ranges, plays
+//! `<video>` element does the opposite: it asks for byte ranges, plays
 //! them, and asks for different ones when the user drags the playhead.
 //! Answering those with the whole file would mean holding a multi-
 //! gigabyte recording in memory to serve the two seconds around the
@@ -16,7 +16,7 @@
 //! So this handler speaks the part of HTTP that makes seeking work:
 //! `Accept-Ranges`, `206 Partial Content` with `Content-Range`, and
 //! `416` for a range past the end. Everything it reads off disk is
-//! bounded by [`MAX_RANGE_BYTES`] — a scheme handler returns an
+//! bounded by [`MAX_RANGE_BYTES`]: a scheme handler returns an
 //! in-memory `Vec<u8>`, so "stream it" is not available and the bound is
 //! the only thing standing between a long recording and the allocator.
 //!
@@ -24,7 +24,7 @@
 //! after it validated the capture id against the captures root. The URL
 //! never contains a path, so there is no path for the page to edit, and
 //! this handler never has to re-derive whether a file is allowed to be
-//! read — the token *is* that decision, already made.
+//! read: the token *is* that decision, already made.
 
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
@@ -40,7 +40,7 @@ use clippity_domain::media::MediaToken;
 /// A webview asks for `bytes=0-` (meaning "everything from here") and is
 /// perfectly happy to be given a chunk and come back for more, so this
 /// caps memory without capping playback. Eight mebibytes is several
-/// seconds of a screen recording at any bitrate the encoder produces —
+/// seconds of a screen recording at any bitrate the encoder produces:
 /// big enough that the request rate stays low, small enough that eight
 /// concurrent ones still cost less than a frame buffer.
 const MAX_RANGE_BYTES: u64 = 8 * 1024 * 1024;
@@ -48,7 +48,7 @@ const MAX_RANGE_BYTES: u64 = 8 * 1024 * 1024;
 /// Largest file served in one rangeless `200`.
 ///
 /// A media element always sends a `Range`, so this path is for the
-/// unusual caller — a `fetch`, or a URL opened directly. Truncating a
+/// unusual caller: a `fetch`, or a URL opened directly. Truncating a
 /// `200` would be a lie about the entity, so an oversized rangeless
 /// request is refused rather than silently answered with part of a file.
 const MAX_FULL_BYTES: u64 = 64 * 1024 * 1024;
@@ -73,7 +73,7 @@ pub fn serve_media<R: tauri::Runtime>(
 }
 
 /// The handler's whole decision, separated from the Tauri runtime so it
-/// can be tested — the same split `snapshot_response` uses, and for a
+/// can be tested; the same split `snapshot_response` uses, and for a
 /// stronger reason: range arithmetic is off-by-one country, and every
 /// mistake in it presents as "seeking is subtly broken" rather than as
 /// an error anyone sees.
@@ -91,7 +91,7 @@ fn media_response(
     let mime = mime_for(&file);
 
     let Some(header_value) = range_header else {
-        // No `Range` — not a media element. Serve the whole thing, or
+        // No `Range`, not a media element. Serve the whole thing, or
         // refuse if that would mean reading a recording into memory.
         if total > MAX_FULL_BYTES {
             return status(StatusCode::PAYLOAD_TOO_LARGE);
@@ -104,7 +104,7 @@ fn media_response(
     };
 
     let Some(range) = ByteRange::parse(header_value, total) else {
-        // Unsatisfiable — the spec wants the entity length back so the
+        // Unsatisfiable: the spec wants the entity length back so the
         // client can correct itself rather than retry the same range.
         return Response::builder()
             .status(StatusCode::RANGE_NOT_SATISFIABLE)
@@ -123,7 +123,7 @@ fn media_response(
         .status(StatusCode::PARTIAL_CONTENT)
         .header(
             header::CONTENT_RANGE,
-            // Inclusive end, per RFC 9110 — `bytes 0-8388607/1000000000`.
+            // Inclusive end, per RFC 9110: `bytes 0-8388607/1000000000`.
             format!("bytes {}-{}/{}", range.start, range.end, total),
         )
         .body(bytes)
@@ -144,7 +144,7 @@ fn base(mime: &'static str, length: u64) -> tauri::http::response::Builder {
         .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         // Deliberately uncached, unlike the snapshot scheme. A token is
         // bound to a path, and a path's bytes are not immutable across a
-        // session — a clip can be trashed and restored, and a trim
+        // session: a clip can be trashed and restored, and a trim
         // writes a new file into the same directory. Re-reading from a
         // local disk costs microseconds; serving a stale frame from
         // cache costs the user's trust in what they are looking at.
@@ -176,7 +176,7 @@ fn read_at(path: &Path, start: u64, length: u64) -> std::io::Result<Vec<u8>> {
 /// Only the four the library classifies as video (`library::kind_of`),
 /// because those are the only ones `MediaService::probe` will mint a
 /// token for. An unknown extension gets the generic type rather than a
-/// refusal — by the time a token exists the file has already been
+/// refusal: by the time a token exists the file has already been
 /// probed and decoded successfully.
 fn mime_for(path: &Path) -> &'static str {
     match path
@@ -210,7 +210,7 @@ impl ByteRange {
     /// Parse a `Range` header against a known entity length.
     ///
     /// `None` means unsatisfiable (a `416`), which is distinct from
-    /// "absent" — the caller has already handled that case.
+    /// "absent": the caller has already handled that case.
     ///
     /// Handles the three forms RFC 9110 defines, and deliberately
     /// handles only the first of a multi-range request: a media element
@@ -232,7 +232,7 @@ impl ByteRange {
         let last = total - 1;
 
         let (start, end) = match (start_text.is_empty(), end_text.is_empty()) {
-            // `bytes=-N` — the final N bytes. Used by players sniffing a
+            // `bytes=-N`: the final N bytes. Used by players sniffing a
             // container's trailer, which is how a non-fragmented MP4's
             // index gets found.
             (true, false) => {
@@ -242,9 +242,9 @@ impl ByteRange {
                 }
                 (total.saturating_sub(suffix), last)
             }
-            // `bytes=N-` — everything from N. The opening request.
+            // `bytes=N-`: everything from N. The opening request.
             (false, true) => (start_text.parse().ok()?, last),
-            // `bytes=N-M` — an explicit window.
+            // `bytes=N-M`: an explicit window.
             (false, false) => (start_text.parse().ok()?, end_text.parse::<u64>().ok()?),
             (true, true) => return None,
         };
@@ -253,7 +253,7 @@ impl ByteRange {
             return None;
         }
         // Clamp the far end twice: to the entity, then to what one
-        // response may carry. Clamping is not a partial answer — the
+        // response may carry. Clamping is not a partial answer: the
         // `Content-Range` states exactly what was sent, and the client
         // asks again for the rest.
         let end = end.min(last).min(start + MAX_RANGE_BYTES - 1);
@@ -277,7 +277,7 @@ mod tests {
 
     #[test]
     fn an_explicit_window_parses_inclusively() {
-        // `bytes=0-499` is 500 bytes, not 499 — the classic off-by-one.
+        // `bytes=0-499` is 500 bytes, not 499: the classic off-by-one.
         let range = parse("bytes=0-499").expect("satisfiable");
         assert_eq!((range.start, range.end), (0, 499));
         assert_eq!(range.len(), 500);
@@ -346,7 +346,7 @@ mod tests {
     #[test]
     fn a_long_range_is_capped_so_one_response_stays_bounded() {
         // `bytes=0-` on a multi-gigabyte recording must not read a
-        // multi-gigabyte Vec — see MAX_RANGE_BYTES.
+        // multi-gigabyte Vec; see MAX_RANGE_BYTES.
         let huge = 4 * 1024 * 1024 * 1024;
         let range = ByteRange::parse("bytes=0-", huge).expect("satisfiable");
         assert_eq!(range.len(), MAX_RANGE_BYTES);
@@ -420,7 +420,7 @@ mod tests {
     #[test]
     fn every_response_advertises_range_support() {
         // Without this the element never asks for a range at all, and
-        // the scrubber is dead — see `base`.
+        // the scrubber is dead; see `base`.
         let res = body(b"0123456789", "/1", Some("bytes=0-"));
         assert_eq!(res.headers()[header::ACCEPT_RANGES], "bytes");
     }
@@ -471,7 +471,7 @@ mod tests {
     #[test]
     fn bytes_are_never_cached() {
         // A token names a path, and a path's bytes are not immutable
-        // across a session — see `base`.
+        // across a session; see `base`.
         let res = body(b"0123456789", "/1", Some("bytes=0-"));
         assert_eq!(res.headers()[header::CACHE_CONTROL], "no-store");
     }

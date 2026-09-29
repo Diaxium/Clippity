@@ -8,8 +8,8 @@
 
 Performance & efficiency audit of the Clippity codebase (Tauri 2 app:
 React 19 + TypeScript + Zustand frontend, layered Rust backend). The audit
-prioritized the **editor** — the per-frame, interaction-heavy subsystem that
-dominates user-perceived responsiveness — and did lighter passes over state
+prioritized the **editor** (the per-frame, interaction-heavy subsystem that
+dominates user-perceived responsiveness) and did lighter passes over state
 management, memory lifecycle (timers/listeners/history/caches), the
 image-heavy library path, and the dependency footprint.
 
@@ -36,7 +36,7 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 
 ## Findings
 
-### Finding 1 — Scene-node views re-render the whole tree on every drag tick
+### Finding 1: Scene-node views re-render the whole tree on every drag tick
 
 - Severity: **High**
 - Confidence: **Confirmed** (code path traced end-to-end)
@@ -51,9 +51,9 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
   `EditorCanvas` subscribes to `s.nodes`, so it re-renders each pointer tick
   and re-runs `rootIds.map(id => <SceneNodeView node nodes />)`. Because the
   views were unmemoized and `nodes` changed identity every tick, **every** node
-  in the scene re-ran its render work each tick — recomputing polygon/star
+  in the scene re-ran its render work each tick: recomputing polygon/star
   outlines (trig), gradient geometry, point/path strings, and `findBaseImage`
-  scans — at ~60–120 Hz, for nodes that did not move.
+  scans, at ~60–120 Hz, for nodes that did not move.
 - Evidence: `EditorCanvas.tsx:936` mapped all roots with `nodes` threaded in;
   `editorStore.ts` `moveNodes`/`mutate` return a fresh `nodes` object per
   transient tick; `SceneNodeView` had no `memo`. The `nodes` prop is used in
@@ -76,7 +76,7 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 - Validation: full editor suite (353 tests incl. 20 `sceneNodeView` tests) +
   full app suite (691) pass; typecheck + lint clean.
 
-### Finding 2 — Unbounded undo history (memory growth over long sessions)
+### Finding 2: Unbounded undo history (memory growth over long sessions)
 
 - Severity: **Medium**
 - Confidence: **Confirmed**
@@ -100,7 +100,7 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 - Validation: added a regression test (`caps the undo stack…`) asserting the
   stack stays at 100 after 150 edits and recent undo still works; suite green.
 
-### Finding 3 — Per-pointer-move store write with no live consumer
+### Finding 3: Per-pointer-move store write with no live consumer
 
 - Severity: **Low**
 - Confidence: **Confirmed**
@@ -114,7 +114,7 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
   is only mounted when rulers are shown.
 - Evidence: grep of editor `s.cursor` consumers → `CanvasRulers.tsx:136` only;
   `CanvasRulers` is gated behind `{showRulers && …}` in `EditorCanvas`.
-- Performance impact: minor — avoidable selector churn on every mouse move when
+- Performance impact: minor: avoidable selector churn on every mouse move when
   rulers are off (the common default).
 - Fix: guard the write with `if (store.showRulers)`. When rulers are off the
   field has no consumer; the next move repopulates it on toggle-on.
@@ -124,7 +124,7 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 
 ## Changes Made
 
-### Change 1 — Memoize `SceneNodeView`
+### Change 1: Memoize `SceneNodeView`
 
 - Files changed: `features/editor/components/SceneNodeView.tsx`
 - Reason: Finding 1.
@@ -137,7 +137,7 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 - Risk: Low–medium (single component boundary).
 - Validation: 691 tests, typecheck, lint all green.
 
-### Change 2 — Bound the undo stack
+### Change 2: Bound the undo stack
 
 - Files changed: `features/editor/state/editorStore.ts`,
   `features/editor/state/editorStore.test.ts`
@@ -148,7 +148,7 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 - Risk: Low (undo depth capped at 100).
 - Validation: new test asserts cap + recent-undo correctness; suite green.
 
-### Change 3 — Skip cursor store write when rulers are hidden
+### Change 3: Skip cursor store write when rulers are hidden
 
 - Files changed: `features/editor/components/EditorCanvas.tsx`
 - Reason: Finding 3.
@@ -159,14 +159,14 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 
 ## Deferred Recommendations
 
-### Recommendation 1 — Thumbnail cache has no LRU eviction
+### Recommendation 1: Thumbnail cache has no LRU eviction
 
 - Reason deferred: already acknowledged in `useThumbnail.ts`; only bites very
   large libraries (≈10k captures × tens-of-KB base64). Low severity.
 - Suggested owner: Library feature.
 - Suggested next step: add LRU/size-bounded eviction keyed by `(id,maxWidth)`.
 
-### Recommendation 2 — Backend `thumbnail` re-decodes the full image per call
+### Recommendation 2: Backend `thumbnail` re-decodes the full image per call
 
 - Reason deferred: mitigated in practice by the frontend module-level cache +
   in-flight dedup; only a cost if the cache is bypassed. Static-only (backend
@@ -175,16 +175,16 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 - Suggested next step: if profiling shows repeated decode, add a small
   decoded-image or thumbnail LRU in `library_service`.
 
-### Recommendation 3 — Frame "shell" re-renders O(frames)/tick during unrelated drags
+### Recommendation 3: Frame "shell" re-renders O(frames)/tick during unrelated drags
 
 - Reason deferred: the memo comparator (Finding 1) conservatively re-renders
   containers on any `nodes` change so descendant moves are never missed; their
-  memoized children still skip. Cost is O(frames), not O(all nodes) — a large
+  memoized children still skip. Cost is O(frames), not O(all nodes): a large
   win already. Further reduction needs a refactor.
 - Suggested next step: split a frame's own shell (pure in `node`) from its
   children list (depends on `nodes`) so the shell can memoize independently.
 
-### Recommendation 4 — Multiple store writes per drag tick
+### Recommendation 4: Multiple store writes per drag tick
 
 - Reason deferred: a move tick issues `moveNodes` + `setGuides` +
   `setTransformHud` (+ `setCursor` when rulers on), each notifying all
@@ -229,7 +229,7 @@ fixed with contained, behavior-preserving changes, plus one minor cleanup
 ## Scope
 
 Targeted follow-up focused on a single question: **how much RAM / CPU / GPU
-does the app burn while idle** — unfocused, minimized, hidden, or sent to the
+does the app burn while idle**: unfocused, minimized, hidden, or sent to the
 tray. Covered the whole codebase but weighted toward app lifecycle: the
 multi-window model, background threads, timers/RAF, looping animations, IPC
 event fan-out, and session-lifetime caches. Static review for backend (no
@@ -240,17 +240,17 @@ unit/component suite.
 
 The app is **already quiet at idle on the CPU side**. There are **no
 `setInterval`s anywhere in the frontend** and **no persistent polling threads
-in the backend** — every backend thread (`scroll_capture` worker, `model`
+in the backend**: every backend thread (`scroll_capture` worker, `model`
 download, overlay loupe-encode) is operation-scoped and exits on a stop flag,
 and every frontend timer/RAF is tied to an active, visible state (countdown
 strip, toast auto-dismiss, copy-confirmation). State is event-driven, not
 polled.
 
 The real idle costs are structural to the **six-webviews-kept-alive** design
-(ADR 0003 — windows are hidden, never destroyed, for fast re-show):
+(ADR 0003: windows are hidden, never destroyed, for fast re-show):
 
 1. **GPU/compositor:** looping CSS animations keep compositing even when the
-   window is unfocused or hidden — chiefly the capture button's infinite
+   window is unfocused or hidden: chiefly the capture button's infinite
    "breathing" ring in the default (capture) window.
 2. **RAM:** the module-level thumbnail cache grew unbounded for the session;
    the ONNX detector session stayed resident after a single object-mode use.
@@ -261,7 +261,7 @@ pass, typecheck + lint clean.**
 
 ## Findings
 
-### Finding 4 — Looping animations keep the compositor/GPU busy on idle windows
+### Finding 4: Looping animations keep the compositor/GPU busy on idle windows
 
 - Severity: **Medium-High** (idle GPU/CPU)
 - Confidence: **Confirmed** (every window shares one bundle via `Providers`;
@@ -272,14 +272,14 @@ pass, typecheck + lint clean.**
 - Files affected: `shared/hooks/useWindowActivity.ts` (new),
   `app/Providers.tsx`, `styles/theme.css`
 - Issue: infinite CSS keyframe animations (`.capture-ring` breathing glow on
-  the capture button — `clippity-breathe … infinite`; `.crosshair-dot` pulse;
+  the capture button: `clippity-breathe … infinite`; `.crosshair-dot` pulse;
   the Tailwind `animate-spin/pulse/ping/bounce` utilities) advance their
   timelines and force per-frame compositing **even while their window is
   unfocused, minimized, or hidden in the tray**. Every window is kept alive for
   the whole session, so an off-screen window's looping animation is pure waste.
   The breathing capture ring is the standout: the capture window is the default
   window users leave visible-but-unfocused.
-- Fix: added `useWindowActivity` — a per-window hook (mounted once in
+- Fix: added `useWindowActivity`: a per-window hook (mounted once in
   `Providers`, so every window gets it) that combines Tauri `onFocusChanged`
   (authoritative OS focus), `document.visibilitychange` (minimize/occlusion),
   and DOM `blur`/`focus` into a single signal written to `<html data-idle>`. A
@@ -295,7 +295,7 @@ pass, typecheck + lint clean.**
 - Validation: 4 new hook tests (active start, blur→idle→focus, hidden→idle,
   never-focused-stays-active) + full suite green; typecheck + lint clean.
 
-### Finding 5 — Unbounded session-lifetime thumbnail cache (resolves Rec. 1)
+### Finding 5: Unbounded session-lifetime thumbnail cache (resolves Rec. 1)
 
 - Severity: **Medium** (idle RAM)
 - Confidence: **Confirmed**
@@ -304,7 +304,7 @@ pass, typecheck + lint clean.**
 - Files affected: `features/library/hooks/useThumbnail.ts`,
   `features/library/hooks/useThumbnail.test.ts`
 - Issue: the module-level `Map<`(id,width)`, dataURI>` held every decoded
-  thumbnail for the whole session — base64 strings of tens-to-hundreds of KB —
+  thumbnail for the whole session, base64 strings of tens-to-hundreds of KB,
   never released, even after the dashboard window is hidden to the tray.
   Scrolling a large library climbs idle RAM without bound.
 - Fix: turned the Map into a bounded LRU (`CACHE_LIMIT = 160`) via `cacheGet`
@@ -315,7 +315,7 @@ pass, typecheck + lint clean.**
 - Validation: added an LRU eviction test (stream 200 distinct captures → size
   stays ≤160, most-recent served from cache, oldest re-decodes); suite green.
 
-### Finding 6 — ONNX detector session stays resident after object-mode use
+### Finding 6: ONNX detector session stays resident after object-mode use
 
 - Severity: **Medium** (idle RAM, object-mode users only)
 - Confidence: **Confirmed** (static)
@@ -354,25 +354,25 @@ pass, typecheck + lint clean.**
   behavior" pass; destroying/recreating windows is a separate architectural
   decision.
 - **No frontend `setInterval`; backend has no polling threads.** Verified, not
-  changed — already optimal.
+  changed: already optimal.
 - **`backdrop-filter` blur + Win11 Mica.** Real continuous-compositing cost,
   but already user-controllable via `performance.windowEffects` → `flat` mode
   (drops every blur + clears Mica). Left to the existing setting.
 
 ## Deferred Recommendations (idle pass)
 
-### Recommendation 5 — High-frequency recording events broadcast to all windows
+### Recommendation 5: High-frequency recording events broadcast to all windows
 
 - `app.emit` (in `app/events.rs`) broadcasts to all six webviews. Most events
   are user-action-rate and harmless, but `recording/tick` + `recording/preview`
   fire continuously during a scroll/panoramic capture and only the toast window
-  consumes them — every other (hidden) webview still wakes its JS to drop them.
+  consumes them: every other (hidden) webview still wakes its JS to drop them.
   This is an *active-capture* cost, not an idle one, so it's low priority.
 - Suggested next step: `emit_to("toast", …)` for the `recording/*` events
-  (keep `library/updated`, `settings/changed`, etc. as broadcasts — those
+  (keep `library/updated`, `settings/changed`, etc. as broadcasts; those
   legitimately fan out).
 
-### Recommendation 6 — Editor retains the source image when the main window hides
+### Recommendation 6: Editor retains the source image when the main window hides
 
 - The editor store keeps the loaded image + scene in memory when the main
   window is hidden to the tray (needed for instant re-show). For very large
@@ -440,12 +440,12 @@ times (backdrop, magnifier, small preview).
    (`platform::windows::capture_shield::shield_windows`), so it renders on
    screen but is excluded from the capture pipeline. The desktop snapshot
    therefore cannot contain our chrome *no matter what is on screen when
-   the grab fires* — so the overlay open path drops the hide-then-wait
+   the grab fires*, so the overlay open path drops the hide-then-wait
    compositor settle entirely (`OverlayService::capture_shielded` gates
    it). Empirically validated on this machine's GDI capture path + Parsec
    display by an ignored probe (`capture_shield` tests): a magenta probe
    window goes from 250,000 captured pixels to **0** under the flag.
-   Also fixes a latent bug — a lingering toast / countdown / tray flyout
+   Also fixes a latent bug: a lingering toast / countdown / tray flyout
    from a prior capture could previously contaminate the next snapshot;
    now they're excluded too.
 
@@ -463,15 +463,15 @@ times (backdrop, magnifier, small preview).
 4. **Fallback path made deterministic.** For pre-2004 Windows / non-
    Windows (no shield), the old fixed 260 ms sleep was replaced by
    `window_service::settle_after_hide`, which polls `IsWindowVisible`
-   until the hidden window is actually down (bounded), *then* flushes —
+   until the hidden window is actually down (bounded), *then* flushes,
    so the flush can't present a frame that still contains the window.
    This was an interim fix before the shield; it now only guards the
    unshielded fallback.
 
 ## Result
 
-On the shielded path (Windows 2004+), the entire compositor wait is gone
-— the snapshot grab starts immediately after the hide is posted. The
+On the shielded path (Windows 2004+), the entire compositor wait is gone:
+the snapshot grab starts immediately after the hide is posted. The
 loupe payload no longer crosses IPC as a string and is decoded once. The
 capture window can no longer ghost into the snapshot, by construction.
 

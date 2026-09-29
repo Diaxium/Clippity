@@ -1,4 +1,4 @@
-//! Media Foundation MP4 sink writer — the recorder's H.264 + AAC muxer
+//! Media Foundation MP4 sink writer: the recorder's H.264 + AAC muxer
 //! (ADR 0031).
 //!
 //! Windows ships a hardware-accelerated H.264 encoder and an MPEG-4
@@ -10,14 +10,14 @@
 //! **Threading.** COM interfaces from `windows-rs` are `!Send` by
 //! construction, and Media Foundation wants its callers on an
 //! initialised apartment. [`Mp4Writer`] is therefore created, fed and
-//! finalised on **one** thread — the recorder service's encoder thread,
+//! finalised on **one** thread: the recorder service's encoder thread,
 //! which holds a [`ComThread`] guard for its lifetime. Nothing about a
 //! writer crosses a thread boundary.
 //!
 //! **Crash safety.** The container is *fragmented* MP4: the muxer
 //! commits self-describing fragments as it goes instead of writing the
 //! index once at `Finalize`. A plain MP4 whose `moov` box never got
-//! written is not a short recording, it is a zero-second one — every
+//! written is not a short recording, it is a zero-second one: every
 //! byte is there and no player can read any of it. With fragments, a
 //! process that dies mid-recording leaves a file that plays up to the
 //! last committed fragment, which is the roadmap's "no recoverable
@@ -55,7 +55,7 @@ use clippity_infra::error::{AppError, AppResult};
 use super::{nv12, p010};
 
 /// Sample rate every audio path converges on before reaching the AAC
-/// encoder. Not a preference — Media Foundation's AAC encoder accepts
+/// encoder. Not a preference: Media Foundation's AAC encoder accepts
 /// only 44.1 and 48 kHz, so WASAPI's whatever-the-device-runs-at output
 /// has to be resampled to one of them, and 48 kHz is what modern
 /// endpoints already use.
@@ -69,12 +69,12 @@ pub const AUDIO_CHANNELS: u16 = 2;
 pub const AUDIO_BITS_PER_SAMPLE: u32 = 16;
 /// Bytes per frame of interleaved PCM (all channels, one instant).
 pub const AUDIO_BLOCK_ALIGN: u32 = AUDIO_CHANNELS as u32 * (AUDIO_BITS_PER_SAMPLE / 8);
-/// Encoded AAC bitrate, in **bytes** per second — the unit
+/// Encoded AAC bitrate, in **bytes** per second: the unit
 /// `MF_MT_AUDIO_AVG_BYTES_PER_SECOND` wants. The encoder accepts a
 /// fixed set of values; 16000 (128 kbps) is the top of it for stereo
 /// AAC-LC and is transparent for speech over UI sound.
 const AAC_BYTES_PER_SECOND: u32 = 16_000;
-/// AAC-LC, Level 2 — the profile every player and browser decodes.
+/// AAC-LC, Level 2: the profile every player and browser decodes.
 const AAC_PROFILE_LEVEL_LC: u32 = 0x29;
 /// Raw AAC (no ADTS framing), which is what an MP4 container wants.
 const AAC_PAYLOAD_RAW: u32 = 0;
@@ -88,7 +88,7 @@ const AAC_PAYLOAD_RAW: u32 = 0;
 pub struct ComThread {
     /// Whether this guard owes a `CoUninitialize`.
     ///
-    /// True for every call that *succeeded*, which includes `S_FALSE` —
+    /// True for every call that *succeeded*, which includes `S_FALSE`;
     /// see [`ComThread::init`] on why that one is easy to get wrong in
     /// the direction of a leak.
     balance: bool,
@@ -102,15 +102,15 @@ impl ComThread {
     /// `CoInitializeEx` answers in three ways, and treating any of them
     /// as another is a real bug rather than a stylistic choice.
     ///
-    /// - **`S_OK`** — this call created the apartment. It must be
+    /// - **`S_OK`**: this call created the apartment. It must be
     ///   balanced by `CoUninitialize`.
-    /// - **`S_FALSE`** — the thread was already in the *same* kind of
+    /// - **`S_FALSE`**: the thread was already in the *same* kind of
     ///   apartment. This is a **success**, and it still took a
     ///   reference: the documented rule is one `CoUninitialize` per
     ///   successful `CoInitializeEx`, `S_FALSE` included. Reading it as
     ///   "someone else owns this, leave it alone" leaks the apartment
     ///   for the life of the thread.
-    /// - **`RPC_E_CHANGED_MODE`** — the thread is already in an
+    /// - **`RPC_E_CHANGED_MODE`**: the thread is already in an
     ///   apartment of the *other* kind. No reference was taken, so this
     ///   one must **not** be balanced.
     ///
@@ -118,7 +118,7 @@ impl ComThread {
     ///
     /// It used to be, and that is the bug this comment exists for.
     /// Non-async Tauri commands run on the main thread, which is already
-    /// an STA because the window and the WebView require one — so
+    /// an STA because the window and the WebView require one, so
     /// `media_probe` asking for an MTA got `RPC_E_CHANGED_MODE` and
     /// opening any recording in Studio failed with a COM error blaming
     /// the recorder. `list_audio_devices` had the same latent fault.
@@ -134,7 +134,7 @@ impl ComThread {
     /// loop, and an STA Media Foundation caller that never dispatches
     /// messages can deadlock when the encoder marshals a call back. That
     /// guarantee is preserved by *where the encoders run* rather than by
-    /// failing here — `media_trim` and the recorder both encode on their
+    /// failing here: `media_trim` and the recorder both encode on their
     /// own threads (`spawn_blocking` and the recorder worker), which
     /// start with no apartment and therefore get the MTA they ask for.
     ///
@@ -150,7 +150,7 @@ impl ComThread {
             false
         } else if hr.is_err() {
             return Err(AppError::Recorder(format!(
-                "COM init failed: {hr:?} — Media Foundation is unreachable"
+                "COM init failed: {hr:?}; Media Foundation is unreachable"
             )));
         } else {
             // S_OK and S_FALSE alike.
@@ -176,7 +176,7 @@ impl Drop for ComThread {
 ///
 /// Deliberately never paired with `MFShutdown`: shutdown is
 /// process-wide, so calling it when one recording ends would pull the
-/// platform out from under any other MF user in the app — the Grab-Text
+/// platform out from under any other MF user in the app: the Grab-Text
 /// mode's `Windows.Media.Ocr` among them. The platform is cheap to leave
 /// running and the process teardown reclaims it.
 fn ensure_platform() -> AppResult<()> {
@@ -194,7 +194,7 @@ fn ensure_platform() -> AppResult<()> {
 }
 
 /// PCM audio shape handed to [`Mp4Writer::write_audio`]. Fixed by the
-/// AAC encoder's constraints — see the `AUDIO_*` constants — so this
+/// AAC encoder's constraints, see the `AUDIO_*` constants, so this
 /// carries no fields; it exists to make "this recording has audio"
 /// explicit at the call site.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -203,7 +203,7 @@ pub struct AudioTrack;
 /// Everything the writer needs to describe its output.
 #[derive(Debug, Clone, Copy)]
 pub struct Mp4Config {
-    /// Encoded frame size — what ends up in the file.
+    /// Encoded frame size: what ends up in the file.
     pub width: u32,
     pub height: u32,
     /// Size of the frames the caller will hand to
@@ -213,7 +213,7 @@ pub struct Mp4Config {
     ///
     /// Doing it here rather than resizing each frame in Rust is worth
     /// the extra field: the processor is SIMD/GPU-backed, and a CPU box
-    /// filter over a 4K frame does not fit in a 60 fps budget — the
+    /// filter over a 4K frame does not fit in a 60 fps budget: the
     /// setting meant to make recording cheaper would have made it drop
     /// frames.
     pub source_width: u32,
@@ -230,16 +230,16 @@ pub struct Mp4Config {
     /// [`Mp4Writer::apply_rate_control`] for why this is best-effort.
     pub variable_bitrate: bool,
     /// Prefer the GPU's encoder. `false` forces Media Foundation's
-    /// software H.264 encoder — the escape hatch for a driver whose
+    /// software H.264 encoder: the escape hatch for a driver whose
     /// output looks wrong.
     pub prefer_hardware: bool,
     /// H.264 level, as the level-times-ten code `MF_MT_MPEG2_LEVEL`
-    /// takes. Resolved by `domain::recorder::h264_level` — the caller
+    /// takes. Resolved by `domain::recorder::h264_level`: the caller
     /// supplies it rather than this module deriving it, so the spec
     /// table stays testable without Media Foundation.
     pub level: u32,
     /// `Some` adds an AAC stream. A recording with no audio must have
-    /// **no** audio stream rather than a silent one — a zero-sample
+    /// **no** audio stream rather than a silent one: a zero-sample
     /// track makes some players report a broken file.
     pub audio: Option<AudioTrack>,
 }
@@ -251,13 +251,13 @@ pub struct Mp4Writer {
     video_stream: u32,
     audio_stream: Option<u32>,
     /// Geometry of the frames [`Mp4Writer::write_video`] expects, which
-    /// is the *negotiated* input size — not necessarily the one asked
+    /// is the *negotiated* input size, not necessarily the one asked
     /// for. See [`Mp4Writer::input_size`].
     width: u32,
     height: u32,
     /// Size of one NV12 frame, computed once from the negotiated
     /// geometry. Not a buffer: frames are converted straight into the
-    /// Media Foundation sample — see [`Mp4Writer::write_video`].
+    /// Media Foundation sample; see [`Mp4Writer::write_video`].
     frame_len: usize,
     hdr: bool,
     finalized: bool,
@@ -354,17 +354,17 @@ impl Mp4Writer {
 
     /// Encode one frame at `timestamp_hns`, lasting `duration_hns`.
     ///
-    /// `order` states the source's channel byte order — `xcap` produces
+    /// `order` states the source's channel byte order: `xcap` produces
     /// RGBA, raw Win32 surfaces produce BGRA, and guessing swaps red
     /// with blue (see [`nv12::PixelOrder`]).
     ///
     /// Timestamps come from the session's wall clock rather than a frame
-    /// counter — see `domain::recorder::hns_from_millis` for why.
+    /// counter; see `domain::recorder::hns_from_millis` for why.
     ///
     /// **The conversion writes straight into the sample's buffer.** A
     /// scratch `Vec` used to sit in between, converted into and then
     /// copied across, which meant every frame crossed an extra 11 MiB at
-    /// 5120x1440 — a millisecond of pure memory traffic, per frame, to
+    /// 5120x1440: a millisecond of pure memory traffic, per frame, to
     /// move bytes that were already in their final form. The buffer has
     /// to be a fresh Media Foundation one (the sink writer keeps a
     /// reference for as long as the encoder needs it, so it cannot be
@@ -422,7 +422,7 @@ impl Mp4Writer {
         }
         let geometry = || {
             AppError::Recorder(format!(
-                "HDR frame does not match the recording geometry ({}Ã—{})",
+                "HDR frame does not match the recording geometry ({}×{})",
                 self.width, self.height
             ))
         };
@@ -463,7 +463,7 @@ impl Mp4Writer {
             dst.copy_from_slice(pcm);
             Ok(())
         })?;
-        // SAFETY: as above — a configured stream index and a valid sample.
+        // SAFETY: as above; a configured stream index and a valid sample.
         unsafe { self.writer.WriteSample(stream, &sample) }
             .map_err(|e| AppError::Recorder(format!("audio rejected: {e}")))
     }
@@ -471,7 +471,7 @@ impl Mp4Writer {
     /// Tell the muxer a stream has no data for a stretch of the
     /// timeline, so it doesn't stall waiting to interleave.
     ///
-    /// Needed whenever video and audio advance at different rates — a
+    /// Needed whenever video and audio advance at different rates: a
     /// paused-then-resumed session, or a static screen the capture
     /// source produced no frames for. Without it the sink writer holds
     /// samples from the *other* stream indefinitely, and the recording's
@@ -482,7 +482,7 @@ impl Mp4Writer {
             .map_err(|e| AppError::Recorder(format!("stream tick rejected: {e}")))
     }
 
-    /// Flush the encoder and close the container. Consumes the writer —
+    /// Flush the encoder and close the container. Consumes the writer:
     /// there is nothing useful to do with one afterwards.
     pub fn finish(mut self) -> AppResult<()> {
         self.finalize_once()
@@ -505,7 +505,7 @@ impl Drop for Mp4Writer {
     /// The `?` on any `write_video` propagates out of the encoder loop
     /// and drops the writer; without this, the fragments already on disk
     /// would be missing their trailer. Best-effort and logged rather
-    /// than panicking — this runs on an unwind path.
+    /// than panicking: this runs on an unwind path.
     fn drop(&mut self) {
         if let Err(e) = self.finalize_once() {
             tracing::warn!("recording not finalized cleanly: {e}");
@@ -520,7 +520,7 @@ impl Drop for Mp4Writer {
 /// `0x80070057 E_INVALIDARG` from a wall of attribute writes says
 /// nothing about which one. Grouping each media type's setup under a
 /// label is the difference between a debuggable log line and a hex
-/// code — and it keeps `?` usable inside the block, since the closure
+/// code, and it keeps `?` usable inside the block, since the closure
 /// returns Media Foundation's own `Result`.
 fn configure(label: &'static str, f: impl FnOnce() -> windows::core::Result<()>) -> AppResult<()> {
     f().map_err(|e| AppError::Recorder(format!("{label}: {e}")))
@@ -541,7 +541,7 @@ fn sink_attributes(prefer_hardware: bool) -> AppResult<IMFAttributes> {
         unsafe {
             // Let the GPU's encoder do the work when there is one. On a
             // machine without it MF falls back to the software encoder
-            // transparently — this is a preference, not a requirement.
+            // transparently: this is a preference, not a requirement.
             //
             // Turning it *off* is a real setting rather than a debug
             // knob: a handful of drivers encode visibly worse than the
@@ -559,7 +559,7 @@ fn sink_attributes(prefer_hardware: bool) -> AppResult<IMFAttributes> {
             // with grows a queue in RAM until the process dies, instead
             // of dropping frames.
             attributes.SetUINT32(&MF_SINK_WRITER_DISABLE_THROTTLING, 0)?;
-            // Fragmented MP4 — see the module docs on crash safety.
+            // Fragmented MP4; see the module docs on crash safety.
             attributes.SetGUID(
                 &MF_TRANSCODE_CONTAINERTYPE,
                 &MFTranscodeContainerType_FMPEG4,
@@ -573,7 +573,7 @@ fn sink_attributes(prefer_hardware: bool) -> AppResult<IMFAttributes> {
 /// Declare the H.264 output type, then the NV12 input type feeding it.
 ///
 /// Returns the stream index and the input geometry that was actually
-/// accepted — see [`Mp4Writer::input_size`] for why those can differ
+/// accepted; see [`Mp4Writer::input_size`] for why those can differ
 /// from what was asked for.
 fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u32, (u32, u32))> {
     let out = new_media_type()?;
@@ -606,7 +606,7 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u3
             }
             // Stated, not inferred. Left unset, several hardware H.264
             // encoders pick a level too small for an ultrawide frame
-            // and then reject the media type — see
+            // and then reject the media type; see
             // `domain::recorder::h264_level`. HEVC uses a different
             // level/tier value space, so the H.264 level must not leak
             // into a Main10 output type.
@@ -618,7 +618,7 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u3
             attrs.SetUINT64(&MF_MT_PIXEL_ASPECT_RATIO, pack(1, 1))?;
             // A decoder can only start at a keyframe, so this is the
             // granularity Studio's scrubber can seek to. Left unset the
-            // encoders pick wildly different values — some default to
+            // encoders pick wildly different values: some default to
             // several hundred frames, which makes a fresh recording feel
             // broken to scrub.
             if !config.hdr {
@@ -660,7 +660,7 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u3
 /// Ask the encoder MFT to vary (or hold) its bitrate over time.
 ///
 /// **Best-effort, and deliberately not an error.** Rate control is not a
-/// media-type attribute — it lives on the encoder's `ICodecAPI`, reached
+/// media-type attribute: it lives on the encoder's `ICodecAPI`, reached
 /// through the sink writer's `GetServiceForStream`, and not every
 /// encoder exposes one or accepts this property. A machine where it
 /// fails still produces a correct file at the declared
@@ -669,8 +669,8 @@ fn add_video_stream(writer: &IMFSinkWriter, config: &Mp4Config) -> AppResult<(u3
 /// wrong trade, so this logs and returns.
 ///
 /// `UnconstrainedVBR` rather than one of the peak-constrained modes:
-/// the point is to let long motionless stretches — which is most of a
-/// screen recording — cost almost nothing, and a peak constraint gives
+/// the point is to let long motionless stretches (which is most of a
+/// screen recording) cost almost nothing, and a peak constraint gives
 /// that saving back.
 fn apply_rate_control(writer: &IMFSinkWriter, stream: u32, variable: bool) {
     let mode = if variable {
@@ -712,7 +712,7 @@ fn apply_rate_control(writer: &IMFSinkWriter, stream: u32, variable: bool) {
 /// A `VT_UI4` VARIANT.
 ///
 /// Built by hand because `windows` 0.62 has no `From<u32> for VARIANT`,
-/// and the alternative — `InitVariantFromUInt32` out of propsys — would
+/// and the alternative, `InitVariantFromUInt32` out of propsys, would
 /// pull in another import for the same four stores.
 fn u32_variant(value: u32) -> VARIANT {
     let mut variant = VARIANT::default();
@@ -754,7 +754,7 @@ fn set_video_input(
                 set_hdr_color_attributes(attrs)?;
             }
             attrs.SetUINT32(&MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive.0 as u32)?;
-            // Every uncompressed frame stands alone — lets the encoder
+            // Every uncompressed frame stands alone: lets the encoder
             // skip the "is this a delta frame?" question per sample.
             attrs.SetUINT32(&MF_MT_ALL_SAMPLES_INDEPENDENT, 1)?;
             attrs.SetUINT64(&MF_MT_FRAME_SIZE, pack(size.0, size.1))?;
@@ -792,7 +792,7 @@ fn add_audio_stream(writer: &IMFSinkWriter) -> AppResult<u32> {
     configure("AAC output type", || {
         let attrs: &IMFAttributes = (&out).into();
         // SAFETY: documented AAC encoder output keys. Sample rate,
-        // channel count and depth are constrained by the encoder — see
+        // channel count and depth are constrained by the encoder; see
         // the AUDIO_* constants.
         unsafe {
             attrs.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Audio)?;
@@ -852,7 +852,7 @@ fn new_media_type() -> AppResult<IMFMediaType> {
 ///
 /// `fill` receives the buffer's bytes directly. That is what lets the
 /// NV12 conversion land in its final home rather than being converted
-/// somewhere else and copied in — see [`Mp4Writer::write_video`]. A
+/// somewhere else and copied in; see [`Mp4Writer::write_video`]. A
 /// `fill` that fails leaves the buffer unpublished and the sample is
 /// dropped, so a refused frame writes nothing.
 fn build_sample(
@@ -915,7 +915,7 @@ fn build_sample(
 /// Foundation uses for sizes and ratios.
 ///
 /// The SDK exposes `MFSetAttributeSize` / `MFSetAttributeRatio` for
-/// this, but they are C inline functions in `mfapi.h` — there is no
+/// this, but they are C inline functions in `mfapi.h`: there is no
 /// export for `windows-rs` to bind, so the packing is done here. High
 /// 32 bits first: width before height, numerator before denominator.
 fn pack(high: u32, low: u32) -> u64 {
@@ -930,7 +930,7 @@ mod tests {
 
     // The COM surface can't be exercised without a real MF pipeline, so
     // what is testable here is the pure packing helper every media type
-    // depends on — an inverted `pack` yields a recording with its width
+    // depends on: an inverted `pack` yields a recording with its width
     // and height swapped, which negotiates fine and looks broken.
 
     #[test]
@@ -950,7 +950,7 @@ mod tests {
     /// End-to-end encode against the real platform encoders.
     ///
     /// `#[ignore]`d because it needs a Windows session with H.264 and
-    /// AAC encoders present — true on any normal desktop, not
+    /// AAC encoders present: true on any normal desktop, not
     /// guaranteed on a bare Server SKU or a container, where it would
     /// be a spurious failure rather than a regression. Run it with
     /// `cargo test -p clippity-platform -- --ignored` after touching
@@ -1098,12 +1098,12 @@ mod tests {
     ///
     /// The keyframe spacing and the hardware preference are media-type
     /// and attribute-store values, so a machine that dislikes one fails
-    /// at *negotiation* — "no H.264 encoder available" the instant the
+    /// at *negotiation*: "no H.264 encoder available" the instant the
     /// user presses Record. Rate control is different: it is applied
     /// through `ICodecAPI` and is allowed to fail silently, so what this
     /// asserts is that trying it never breaks the writer.
     ///
-    /// Ignored for the same reason as the tests above — it needs real
+    /// Ignored for the same reason as the tests above: it needs real
     /// encoders present. Note the software-encoder case: forcing
     /// `prefer_hardware: false` is the one path a GPU-equipped dev
     /// machine otherwise never exercises.
@@ -1223,7 +1223,7 @@ mod tests {
         )
         .expect("encoder accepts a 5120×2160 media type");
 
-        // One frame is enough — negotiation is what breaks, not the
+        // One frame is enough: negotiation is what breaks, not the
         // steady state, and a second of 4K-plus video is a slow test.
         let bgra = vec![0u8; (width as usize) * (height as usize) * 4];
         writer
@@ -1247,7 +1247,7 @@ mod tests {
     /// a fixed size is the right shape for a regression test. This one
     /// covers something a fixed size cannot: that the encoder accepts
     /// what *this* machine will ask for. The failure it guards is both
-    /// size-specific and driver-specific — an encoder that will not take
+    /// size-specific and driver-specific: an encoder that will not take
     /// a media type for a frame wider than 4096 refuses at negotiation,
     /// and the user sees "no H.264 encoder available" the instant they
     /// press Record, with nothing recorded and nothing to retry.
@@ -1331,13 +1331,13 @@ mod tests {
     fn com_init_succeeds_on_a_thread_that_is_already_an_sta() {
         // The regression. A non-async Tauri command runs on the main
         // thread, which is an STA because the window and WebView need
-        // one — so asking for an MTA there returns RPC_E_CHANGED_MODE.
+        // one, so asking for an MTA there returns RPC_E_CHANGED_MODE.
         // Treating that as fatal made opening any recording in Studio
         // fail with "COM init failed: HRESULT(0x80010106)".
         use windows::Win32::System::Com::COINIT_APARTMENTTHREADED;
 
         std::thread::spawn(|| {
-            // SAFETY: a fresh thread, initialised once as an STA — the
+            // SAFETY: a fresh thread, initialised once as an STA, the
             // apartment the app's main thread is already in.
             let hr = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
             assert!(hr.is_ok(), "the STA itself should initialise: {hr:?}");
@@ -1378,7 +1378,7 @@ mod tests {
     #[test]
     fn nested_com_guards_leave_the_apartment_alive_for_the_outer_one() {
         // The `S_FALSE` path. The inner guard's init returns "already
-        // initialised, same mode" — a success that still takes a
+        // initialised, same mode": a success that still takes a
         // reference, so it must be balanced. Getting this wrong in the
         // other direction leaks the apartment for the thread's life.
         std::thread::spawn(|| {
@@ -1394,7 +1394,7 @@ mod tests {
             let hr = unsafe { CoInitializeEx(None, COINIT_MULTITHREADED) };
             assert_eq!(
                 hr.0, 1,
-                "expected S_FALSE — the apartment should still be up, got {hr:?}"
+                "expected S_FALSE: the apartment should still be up, got {hr:?}"
             );
             unsafe { CoUninitialize() };
             drop(outer);

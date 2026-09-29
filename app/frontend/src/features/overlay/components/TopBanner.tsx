@@ -7,7 +7,7 @@ import { bannerCopy } from "../modes";
 
 /**
  * State-aware instruction banner pinned to the top of the overlay.
- * Only visible in `empty` and `idle` phases (progressive disclosure) —
+ * Only visible in `empty` and `idle` phases (progressive disclosure):
  * the toolbar provides sufficient context once a selection exists.
  * Animates in/out with a small vertical slide so phase transitions feel
  * intentional rather than abrupt.

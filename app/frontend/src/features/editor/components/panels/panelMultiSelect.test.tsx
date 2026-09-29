@@ -34,12 +34,12 @@ import { StrokeSection } from "./StrokeSection";
 import { TextSection } from "./TextSection";
 
 /**
- * Workstream P3 — multi-select editing (Figma's "Mixed" + batch apply).
+ * Workstream P3: multi-select editing (Figma's "Mixed" + batch apply).
  *
  * These assert the two halves the panels are built from: a field **reads**
  * `Mixed` when the selection disagrees, and **writes** to the whole selection in
  * one undo step. `lib/multi.test.ts` covers the pure read primitives; this file
- * covers the wiring — which field, which store action, which nodes.
+ * covers the wiring, which field, which store action, which nodes.
  */
 
 function load(list: SceneNode[], select: string[]): void {
@@ -374,7 +374,7 @@ describe("CalloutSection multi-select", () => {
     type(angle!, "45");
     expect(node(a.id).callout!.angle).toBe(45);
     expect(node(b.id).callout!.angle).toBe(45);
-    // Each keeps its own length — the patch is per-node, not the primary's spec.
+    // Each keeps its own length: the patch is per-node, not the primary's spec.
     expect(node(a.id).callout!.length).toBe(20);
     expect(node(b.id).callout!.length).toBe(40);
   });
@@ -411,7 +411,7 @@ describe("MeasureSection multi-select", () => {
     type(scale!, "0.5");
     expect(node(a.id).measure!.scale).toBeCloseTo(0.5);
     expect(node(b.id).measure!.scale).toBeCloseTo(0.5);
-    // Each keeps its own unit — the patch is per-node, not the primary's spec.
+    // Each keeps its own unit: the patch is per-node, not the primary's spec.
     expect(node(a.id).measure!.unit).toBe("px");
     expect(node(b.id).measure!.unit).toBe("pt");
   });
@@ -448,7 +448,7 @@ describe("SampleSection multi-select", () => {
     expect(node(b.id).sample!.amount).toBe(8);
   });
 
-  it("leaves a different sample mode alone — the amount means another quantity", () => {
+  it("leaves a different sample mode alone: the amount means another quantity", () => {
     const a = sample("blur", 4);
     const b = sample("pixelate", 12);
     load([a, b], [a.id, b.id]);
@@ -476,7 +476,7 @@ describe("ShapeSection multi-select", () => {
     expect((node(b.id) as PolygonNode).sides).toBe(6);
   });
 
-  it("groups by shape type — a star in the selection keeps its own params", () => {
+  it("groups by shape type: a star in the selection keeps its own params", () => {
     const a = makePolygon(box(0), { sides: 5 });
     const b = makeStar(box(1), { pointCount: 7 });
     load([a, b], [a.id, b.id]);

@@ -1,9 +1,9 @@
-# Final Report — Clippity Windows Setup & Maintenance Wizard Upgrade
+# Final Report: Clippity Windows Setup & Maintenance Wizard Upgrade
 
 > **Superseded for release 0.3.1 (2026-09-08).** This report records the
 > earlier foundation pass. The remaining updater, integration, modification,
 > and data-removal work described as incomplete below is now implemented and
-> verified; see [07 — Test matrix](07-test-matrix.md) and the
+> verified; see [07: Test matrix](07-test-matrix.md) and the
 > [0.3.1 release notes](../releases/v0.3.1.md).
 
 Date: 2026-07-24 · Scheduled task: "installer-big-task" · Run: autonomous (user
@@ -27,16 +27,16 @@ system**, without the VM-gated rewrite that a full engine swap would require, an
 documented a staged migration of the transactional core onto Windows Installer
 (MSI/WiX). Concretely, it now:
 
-- **Registers with Windows for real** — a scope-aware (HKCU/HKLM) Add/Remove
+- **Registers with Windows for real**: a scope-aware (HKCU/HKLM) Add/Remove
   Programs entry with the full documented value set, whose Uninstall/Modify
   buttons run a maintenance executable that is actually placed on disk.
 - **Creates real shortcuts** (desktop + Start menu via COM) and a real
   start-at-login `Run` value.
-- **Keeps an authoritative on-disk installation manifest** (`install-state.json`)
-  — the single shared model for detect / modify / repair / uninstall.
+- **Keeps an authoritative on-disk installation manifest** (`install-state.json`):
+  the single shared model for detect / modify / repair / uninstall.
 - **Detects** installation health by correlating manifest + registry + on-disk
   exe through a unit-tested state machine, and drives the maintenance hub from it.
-- **Uninstalls safely** — manifest-driven, deleting only owned resources,
+- **Uninstalls safely**: manifest-driven, deleting only owned resources,
   preserving unknown files, never blindly recursing a shared path, with a
   reboot-scheduled fallback for the locked running uninstaller.
 
@@ -61,7 +61,7 @@ critical uninstall-safety tests).
 | 11  | Update & package-verification improvements | ⚠️ payload verify real; signed-download update pending (coordinate w/ Tauri updater)                                                                                                                                            |
 | 12  | Complete wizard UI states                  | ⚠️ **2nd pass:** repair engine + reboot-notice wired; per-mode UI _flows_ (repair/recovery screens) still pending                                                                                                               |
 | 13  | Silent-operation support                   | ✅ **2nd pass:** pure CLI parser + headless execution + stable exit-code table (unit-tested); console-text + full-width exit code are caveated follow-ups                                                                       |
-| 14  | Automated tests                            | ✅ **73 tests** (2nd pass: +43 — journal, repair, cli, rollback, recovery, journal-store)                                                                                                                                       |
+| 14  | Automated tests                            | ✅ **73 tests** (2nd pass: +43 across journal, repair, cli, rollback, recovery, journal-store)                                                                                                                                  |
 | 15  | Manual Windows test matrix                 | ✅ [07](07-test-matrix.md)                                                                                                                                                                                                      |
 | 16  | Updated documentation                      | ✅ this `docs/installer/` set                                                                                                                                                                                                   |
 | 17  | Detailed final report                      | ✅ this document                                                                                                                                                                                                                |
@@ -82,7 +82,7 @@ critical uninstall-safety tests).
 - **Tested:** `cargo check` (against verified `windows` 0.62.2 signatures);
   detection unit tests exercise the presence/marker logic paths.
 - **Result:** compiles; logic tested. **Limit:** live-registry round-trip not run
-  in this headless session — see the manual matrix.
+  in this headless session; see the manual matrix.
 
 ### Real shortcuts + start-at-login
 
@@ -114,11 +114,11 @@ critical uninstall-safety tests).
   unknown files; scope-correct registry + shortcut removal; reboot-scheduled
   fallback for the locked maintenance exe.
 - **Where:** `services/uninstall_service.rs`, `platform/windows/reboot.rs`.
-- **Why:** the old uninstall `remove_dir_all`'d the install dir unconditionally —
+- **Why:** the old uninstall `remove_dir_all`'d the install dir unconditionally:
   dangerous on a shared/pre-existing folder.
 - **Tested:** `owned_files_are_removed_but_unknown_files_are_preserved` and
   `empty_install_dir_is_removed_after_owned_files` (real-fs temp-dir tests).
-- **Result:** ✅ passing — the "don't delete unrelated files" guarantee is proven.
+- **Result:** ✅ passing; the "don't delete unrelated files" guarantee is proven.
 
 ### Version-drift fix
 
@@ -143,11 +143,11 @@ critical uninstall-safety tests).
   `SHGetKnownFolderPath`) were read from the vendored `windows` 0.62.2 source
   before use, not assumed.
 
-## Second pass (2026-07-24) — transaction engine, repair, CLI, reboot reporting
+## Second pass (2026-07-24): transaction engine, repair, CLI, reboot reporting
 
 A continuation of the same task turned four of the first pass's `⚠️` gaps into
 real, tested implementations. Full file list:
-[08-changelog.md](08-changelog.md#second-pass--2026-07-24).
+[08-changelog.md](08-changelog.md#second-pass-2026-07-24).
 
 ### Transaction journal + rollback + recovery (deliverable #10)
 
@@ -163,7 +163,7 @@ real, tested implementations. Full file list:
   journal-store unit tests, incl. "a partial install that died mid-Apply is
   rolled back and the created file is deleted". **Result:** ✅ passing.
 - **Limit:** the rollback executor is correct for install/modify (create/replace);
-  uninstall is not journalled (its removals have no backup to reverse — re-run is
+  uninstall is not journalled (its removals have no backup to reverse; re-run is
   the recovery). Roll-_forward_ resume of a specific plan is surfaced, not
   automated (the plan isn't persisted in the journal).
 
@@ -171,7 +171,7 @@ real, tested implementations. Full file list:
 
 - **What:** integrity scan (existence + SHA-256 vs the manifest) → restore the
   core exe from the embedded payload, re-create missing shortcuts at their exact
-  recorded paths, rewrite the ARP entry if absent — preserving user data and the
+  recorded paths, rewrite the ARP entry if absent, preserving user data and the
   _installed_ version (never a covert upgrade). Reachable via the `run_repair` /
   `assess_repair` commands and `--repair`.
 - **Where:** `domain/repair.rs`, `services/repair_service.rs`,
@@ -191,19 +191,19 @@ real, tested implementations. Full file list:
   `main.rs`.
 - **Tested:** 14 parser/exit-code unit tests. **Result:** ✅. **Limit:** GUI
   subsystem means `--help`/`--version` text isn't console-attached, and the
-  shell sees the low byte of the code — both caveated in
+  shell sees the low byte of the code: both caveated in
   [06](06-security-cli-logging.md) with the fix.
 
 ### Honest reboot reporting (follow-up)
 
 - **What:** `ProgressEvent.reboot_required` threads from the uninstall finalize
   step through the store to a "restart required to finish" notice on the Complete
-  screen — no more unqualified success when a locked file was deferred to reboot.
+  screen: no more unqualified success when a locked file was deferred to reboot.
 - **Where:** `domain/progress.rs`, `services/uninstall_service.rs`,
   `shared/.../progress.ts`, `state/wizardStore.ts`, `components/CompleteStep.tsx`.
 - **Tested:** `pnpm check`. **Result:** ✅.
 
-## Third pass (2026-07-24) — Restart Manager & graceful lock-clearing (Phase 8/10)
+## Third pass (2026-07-24): Restart Manager & graceful lock-clearing (Phase 8/10)
 
 Turned the largest remaining `⚠️` (deliverable #8) into a real, tested
 implementation, and improved the locked-file path it feeds.
@@ -214,7 +214,7 @@ implementation, and improved the locked-file path it feeds.
   **Restart Manager** exactly which processes hold the manifest's owned files
   open, then stops the _Clippity-owned_ ones so removal succeeds instead of
   deferring to a reboot. Unrelated user applications and Explorer/critical
-  processes are **never** force-closed — they are classified out and surfaced.
+  processes are **never** force-closed: they are classified out and surfaced.
   A pure state machine makes the "who may we stop" decision testable without a
   live desktop; the Win32 calls are a thin wrapper over it.
 - **Where:** `domain/shutdown.rs` (pure policy: `classify`,
@@ -231,7 +231,7 @@ implementation, and improved the locked-file path it feeds.
   before use. **Result:** ✅ passing; `cargo check --workspace` clean; no new
   clippy warnings.
 - **Limit:** the _live_ enumeration/termination side effects are not exercisable
-  in this headless session — only the pure policy is unit-tested; a real
+  in this headless session: only the pure policy is unit-tested; a real
   running-app uninstall on a desktop is manual-matrix work. The graceful
   shutdown **IPC** (state-saving precursor) is still pending; force-termination
   is the bounded fallback.
@@ -239,7 +239,7 @@ implementation, and improved the locked-file path it feeds.
 ### Honest locked-file reboot deferral (Phase 10, step 7–8)
 
 - **What:** `remove_owned_files` no longer just warns when a file is still
-  locked — it schedules the file (then its now-empty directory, in the correct
+  locked: it schedules the file (then its now-empty directory, in the correct
   child-before-parent order) for deletion at the next reboot via `MoveFileExW`,
   and returns whether a reboot was deferred so the Complete screen reports it.
 - **Where:** `services/uninstall_service.rs`.
@@ -260,41 +260,41 @@ implementation, and improved the locked-file path it feeds.
    and is auto-elevated. If the shipping `Clippity Setup.exe` behaves the same, it
    defeats the per-user no-UAC path. Fix: embed an `asInvoker` application
    manifest. Not applied blind (unverifiable here, may collide with Tauri's
-   bundler manifest) — a priority for the first real-machine test. Details in
+   bundler manifest): a priority for the first real-machine test. Details in
    [06-security-cli-logging.md](06-security-cli-logging.md#least-privilege-elevation-phase-12).
 3. **Update apply is still simulated.** Do not ship the wizard's update as real;
    coordinate with the app's existing Tauri updater first (ADR). The headless
    `--update` honestly returns `GeneralFailure` with a "not yet implemented" log
    rather than faking success.
-4. **Component-level modify/repair is not truthful yet** — the payload is
+4. **Component-level modify/repair is not truthful yet**: the payload is
    monolithic. Either decompose it or move to MSI features.
 5. **No graceful-shutdown IPC (Restart Manager now done).** _Resolved in the
    third pass:_ Restart Manager enumerates exactly which processes lock a target
    file, the engine force-stops the Clippity-owned holders (never unrelated or
    Explorer/critical), and a file still locked afterwards is scheduled for reboot
    deletion. _Still open:_ an authenticated maintenance-shutdown **IPC** to the
-   running app so it can stop captures and save state _before_ it is terminated —
+   running app so it can stop captures and save state _before_ it is terminated:
    force-termination is the bounded fallback until then.
-6. **No native cleanup worker** — the maintenance dir self-removes via reboot
+6. **No native cleanup worker**: the maintenance dir self-removes via reboot
    scheduling rather than immediately.
 7. **Resume is surfaced, not automated.** Interrupted operations are now detected,
    _rolled back_ where safe (install/modify), and cleaned; but rolling _forward_ a
    specific interrupted plan is surfaced to the user rather than auto-run, because
    the plan is not persisted in the journal.
-8. **Elevation still runs the whole GUI elevated** — the narrow elevated-worker
+8. **Elevation still runs the whole GUI elevated**: the narrow elevated-worker
    split is designed, not built. See also the auto-elevation finding (risk #2).
 9. **Signing not configured** in the repo for the wizard/maintenance exe.
 
 Resolved since the first pass (no longer risks): the persisted operation journal,
 automatic rollback of a failed install, the real repair flow, silent operation +
-exit codes, and honest reboot reporting — all now implemented and tested.
+exit codes, and honest reboot reporting: all now implemented and tested.
 
 ## Recommended follow-ups (priority order)
 
 1. Run the manual Windows test matrix on a disposable VM / Windows Sandbox;
    capture before/after registry + filesystem snapshots as shipping evidence.
    **First:** verify/fix the installer-detection auto-elevation (embed an
-   `asInvoker` manifest) — risk #2.
+   `asInvoker` manifest); risk #2.
 2. Add the pre-commit backup + post-write integrity re-verify + launch-test to
    install/update (the journal + rollback executor are now in place to carry it).
 3. ~~Implement Restart Manager enumeration~~ (done, 3rd pass) + an authenticated
@@ -313,7 +313,7 @@ exit codes, and honest reboot reporting — all now implemented and tested.
 9. Decide the MSI/WiX cutover (ADR Option-C target) and implement legacy-install
    adoption/supersede using `installationId`.
 
-## Fourth pass (2026-07-24 evening) — live-machine runtime verification + three fixes
+## Fourth pass (2026-07-24 evening): live-machine runtime verification + three fixes
 
 The first real end-to-end run on a live Windows 11 desktop (the "no live-VM
 runtime test" gap, risk #1). Built the whole chain fresh (`pnpm dist` → app +
@@ -322,11 +322,11 @@ binary** through a full per-user lifecycle exactly as the Add/Remove Programs
 buttons invoke it. This surfaced and fixed three real defects that only a
 runtime test could expose.
 
-### 1. Installer-detection auto-elevation — FIXED (was risk #2)
+### 1. Installer-detection auto-elevation: FIXED (was risk #2)
 
 - **Symptom:** the built exe was refused execution unelevated (`os error 740`)
   even renamed; extracting its manifest showed Tauri's default carries only the
-  Common-Controls dependency — **no `requestedExecutionLevel`** — so Windows'
+  Common-Controls dependency, **no `requestedExecutionLevel`**, so Windows'
   installer-detection heuristic auto-elevated the large, payload-embedding
   "Setup" exe, defeating the no-UAC per-user path.
 - **Fix:** `src-tauri/build.rs` now embeds a custom manifest
@@ -335,7 +335,7 @@ runtime test could expose.
   Confirmed: the rebuilt exe runs unelevated and a per-user install/modify/
   repair/uninstall never prompts for UAC.
 
-### 2. Modify corrupted the manifest's install directory — FIXED
+### 2. Modify corrupted the manifest's install directory: FIXED
 
 - **Symptom:** after a `--modify` invoked without `--install-dir` (i.e. the ARP
   "Modify" button, `clippity-maintenance.exe --modify`), the manifest's
@@ -348,9 +348,9 @@ runtime test could expose.
 - **Fix:** `install_service::run` now pins a corrected `install_paths.install_dir
 = plan.options.destination` and passes it to `apply_integrations`, so the
   manifest + ARP always record the true location. (`files[]` paths were already
-  correct — they derive from the installed exe.)
+  correct: they derive from the installed exe.)
 
-### 3. Transient AV file-locks + repair backup leftover — FIXED
+### 3. Transient AV file-locks + repair backup leftover: FIXED
 
 - **Symptom:** a freshly written unsigned 41 MB `Clippity.exe` is briefly held
   by Defender's real-time scan, so an immediate delete (uninstall) or rewrite
@@ -369,7 +369,7 @@ runtime test could expose.
 
 Install → Modify (components change, **install dir preserved**) → Repair
 (corrupt→restore, SHA matches, no leftover) → Update (up-to-date) → Uninstall.
-Every stage exit 0; final machine state fully clean — install dir, maintenance
+Every stage exit 0; final machine state fully clean: install dir, maintenance
 dir, `install-state.json`, HKCU ARP entry, both shortcuts, and start-at-login all
 removed, no residue. Installed `Clippity.exe` SHA matches the payload and the app
 launches. Test suite after the fixes: **78 pass** (3 infra + 55 domain + 20
@@ -378,7 +378,7 @@ services), `cargo check` clean.
 **Remaining runtime limitations (unchanged, documented):**
 
 - The _running_ maintenance exe still cannot delete itself on a per-user
-  uninstall (self-lock + no admin to reboot-schedule) — it and its dir are left
+  uninstall (self-lock + no admin to reboot-schedule): it and its dir are left
   until reboot/manual cleanup (native cleanup worker, risk #6/#9, still pending).
   An uninstall driven from an external copy removes them cleanly.
 - GUI screens past the first mount could not be screenshotted in this pass: the
@@ -389,10 +389,10 @@ services), `cargo check` clean.
 
 ## Notes for the maintainer
 
-- Not a git repo ([clippity-not-a-git-repo]) — no commit was made; changes are on
+- Not a git repo ([clippity-not-a-git-repo]): no commit was made; changes are on
   disk only.
 - Running the Rust tests requires the rename workaround for `installer_*`
   binaries ([installer-uac-exe-naming]); documented in the installer README and
   the test matrix.
-- The wizard remains fully browser-previewable — the new detection call resolves
+- The wizard remains fully browser-previewable: the new detection call resolves
   `undefined` outside Tauri and the hub falls back to the static catalog.

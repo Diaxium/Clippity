@@ -4,7 +4,7 @@
  * Per [ADR 0001](../../../../docs/decisions/0001-capture-overlay-dispatch.md),
  * typed IPC wrappers live under `services/tauri/clients/` so every feature
  * that wants to emit a toast (capture / overlay / library / editor / future
- * custom modes) imports from one place — never from `features/toast/`. The
+ * custom modes) imports from one place, never from `features/toast/`. The
  * wire-format types live in `@clippity/shared` and are re-exported here.
  *
  * Rust side: `domain::toast::*` + `services::toast_service::*`.
@@ -48,7 +48,7 @@ export function showToast(payload: ToastPayload): Promise<void> {
 }
 
 /**
- * Sugar for the common case — build a `kind: "error"` payload from
+ * Sugar for the common case: build a `kind: "error"` payload from
  * a message and show it. Use this wherever a `console.warn` would
  * have surfaced an error in the legacy.
  */
@@ -79,7 +79,7 @@ export function resizeToast(width: number, height: number): Promise<void> {
 }
 
 /**
- * Bring the capture window forward — used by the toast's Focus
+ * Bring the capture window forward: used by the toast's Focus
  * button. Available from any window; thin wrapper around the
  * backend's `restore_window("capture")` primitive.
  */
@@ -94,7 +94,7 @@ export function showCaptureWindow(): Promise<void> {
  * time a toast is revealed, carrying the payload + per-kind
  * `durationMs` (0 = sticky).
  *
- * Returns a sync unsubscribe — return it directly from a `useEffect`.
+ * Returns a sync unsubscribe; return it directly from a `useEffect`.
  */
 export function onToastShow(
   handler: (event: ToastShowEvent) => void
@@ -105,7 +105,7 @@ export function onToastShow(
 /**
  * Subscribe to `clippity://toast/hide`. Backend emits this when it
  * hides the toast (the common path is the frontend's own post-
- * animation hideToast call — so the listener mostly sees its own
+ * animation hideToast call, so the listener mostly sees its own
  * emit, idempotently).
  */
 export function onToastHide(handler: () => void): () => void {

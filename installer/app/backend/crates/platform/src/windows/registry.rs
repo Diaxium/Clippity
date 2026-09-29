@@ -46,7 +46,7 @@ pub fn write_uninstall_entry(entry: &UninstallEntry) -> InstallerResult<()> {
     regutil::set_sz(&key, "HelpLink", &entry.help_link)?;
     regutil::set_dword(&key, "EstimatedSize", entry.estimated_size_kib)?;
     // The wizard offers Modify and Repair; leave both enabled. We
-    // deliberately do NOT set `WindowsInstaller` or `SystemComponent` —
+    // deliberately do NOT set `WindowsInstaller` or `SystemComponent`:
     // this is not an MSI, and claiming so would mislead Windows and hide
     // the entry.
     regutil::set_dword(&key, "NoModify", 0)?;
@@ -70,7 +70,7 @@ pub fn remove_uninstall_entry(hive: RegistryHive) -> InstallerResult<()> {
 
 /// Enable or disable launching `target_exe` at user login by writing or
 /// deleting the [`RUN_VALUE`] under the per-user `Run` key. Start-at-login
-/// is always per-user — it is a user preference, never machine policy.
+/// is always per-user: it is a user preference, never machine policy.
 pub fn set_start_at_login(target_exe: &str, enabled: bool) -> InstallerResult<()> {
     let key = regutil::create(RegistryHive::CurrentUser, RUN_SUBKEY)?;
     if enabled {

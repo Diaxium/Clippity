@@ -9,7 +9,7 @@ body:
         [docs/roadmaps/](https://github.com/Diaxium/Clippity/blob/main/docs/roadmaps/README.md),
         and the reasoning behind existing designs is in
         [docs/decisions/](https://github.com/Diaxium/Clippity/blob/main/docs/decisions/README.md). Worth a look
-        before writing — your idea may already be scheduled, or already
+        before writing: your idea may already be scheduled, or already
         deliberately rejected.
 
   - type: textarea
@@ -52,5 +52,5 @@ body:
     attributes:
       label: Alternatives you've considered
       description: >
-        Including "I currently do this with another tool" — knowing what the
+        Including "I currently do this with another tool": knowing what the
         workaround is helps size the gap.

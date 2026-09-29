@@ -22,7 +22,7 @@ const store = () => useStudioStore.getState();
  * The bug: a recording whose header said five seconds while only three
  * seconds of it existed. The timeline was drawn five seconds wide, so
  * playback stopped three-fifths of the way along a track that claimed
- * more, and every position on that track mapped to the wrong moment —
+ * more, and every position on that track mapped to the wrong moment,
  * which is why the playhead could not be put anywhere exactly.
  *
  * The header is read before a frame is decoded, which is what makes a

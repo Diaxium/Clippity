@@ -1,5 +1,5 @@
 /**
- * "Pinned presets" card — the first few saved capture presets. Clicking
+ * "Pinned presets" card: the first few saved capture presets. Clicking
  * a row runs the preset; "Manage" and "Add preset" jump to the Presets
  * view.
  */

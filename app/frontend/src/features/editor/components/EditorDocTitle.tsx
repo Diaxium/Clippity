@@ -15,7 +15,7 @@ const STATUS_LABEL: Record<"draft" | "edited" | "saved", string> = {
 /**
  * Compact document title control for the window title bar: an inline-editable
  * name, a status pill, and a chevron menu whose only entry re-enters rename.
- * Self-contained — reads/writes `docName`/`docStatus` on the scene store.
+ * Self-contained: reads/writes `docName`/`docStatus` on the scene store.
  */
 export function EditorDocTitle() {
   const docName = useEditorStore((s) => s.docName);

@@ -1,6 +1,6 @@
 /**
  * Pure 2-D geometry for the editor canvas: rotation-aware hit-testing,
- * transform handles, and resize math. No React, no DOM — every export is a
+ * transform handles, and resize math. No React, no DOM: every export is a
  * deterministic function so the store and tests can exercise it directly.
  *
  * Convention: a node's frame is the unrotated rect `{ x, y, width, height }`
@@ -248,7 +248,7 @@ export interface ResizeOptions {
  * New frame after dragging `handle` to scene point `pointer`. The anchor
  * (the handle's opposite point) is held fixed in scene space, so the result
  * is correct at any rotation. Width/height are clamped to `MIN_SIZE` (no
- * flip). `rotation` is preserved on the returned frame implicitly — callers
+ * flip). `rotation` is preserved on the returned frame implicitly: callers
  * keep the node's rotation; only `{x,y,width,height}` come from here.
  */
 export function resizeFrame(
@@ -487,7 +487,7 @@ function rayBoxExit(
 
 /**
  * The tail's base (where it leaves the body perimeter), its tip (`length` px
- * past that, in the aimed direction), and which edge it exits — rotation-free
+ * past that, in the aimed direction), and which edge it exits: rotation-free
  * scene coords like {@link calloutOutline}. Returns null for a node with no
  * callout. Shared by {@link calloutOutline} (which splices the base into the
  * outline), the on-canvas tail handle, and the drag→spec inverse
@@ -511,7 +511,7 @@ export function calloutTailGeometry(
 
 /**
  * Invert an on-canvas tail drag: given a pointer in the node's frame-local box
- * (origin at the top-left, rotation removed — exactly what
+ * (origin at the top-left, rotation removed: exactly what
  * {@link sceneToFrameLocal} returns), the callout `{angle, length}` whose tip
  * lands under it. `angle` is measured like {@link angleFromCenter} (0 = up,
  * clockwise). `length` is the reach *past the body edge* along the aimed
@@ -543,7 +543,7 @@ export function calloutTailFromLocal(
  * pointer tail spliced into one edge, as a single closed clockwise polygon
  * (sharp corners for now). The tail aims out from the body center at
  * `callout.angle` (0 = up, clockwise), tip `callout.length` px past the body
- * edge. Rotation-free / scene-space like {@link polygonOutline} — shared by the
+ * edge. Rotation-free / scene-space like {@link polygonOutline}: shared by the
  * SVG view and the canvas exporter, so fill and stroke flow around the tail.
  */
 export function calloutOutline(node: SceneNode): Vec2[] {
@@ -639,7 +639,7 @@ export function pathScenePoints(node: PathNode): Vec2[] {
   }));
 }
 
-/** SVG path `d` for a {@link PathNode} — a polyline through its points, closed
+/** SVG path `d` for a {@link PathNode}: a polyline through its points, closed
  *  when `node.closed`. Shared by the SVG renderer + canvas exporter. */
 export function pathSvgD(node: PathNode): string {
   const pts = pathScenePoints(node);

@@ -3,7 +3,7 @@
 // console subsystem).
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// Thin bin entry — all setup lives in the library so it can be reused by
+// Thin bin entry: all setup lives in the library so it can be reused by
 // tests and the Tauri test harness. The library returns a process exit code
 // (0 on success, a stable non-zero for silent-operation failures) which we
 // propagate so unattended deployment can branch on the result.

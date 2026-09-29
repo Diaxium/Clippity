@@ -1,7 +1,7 @@
 //! Put *files* on the Windows clipboard, as `CF_HDROP`.
 //!
 //! Distinct from everything `arboard` does for us elsewhere. `arboard`
-//! copies **content** — an image's pixels, a string's bytes — which is
+//! copies **content** (an image's pixels, a string's bytes) which is
 //! right for a screenshot and wrong for a recording: a two-minute MP4 is
 //! tens of megabytes, nothing renders it from a raw byte blob, and the
 //! apps a user actually wants to paste a clip into (Explorer, Discord,
@@ -13,13 +13,13 @@
 //! The consequence worth knowing: the clipboard names a path, so moving
 //! or deleting the file invalidates the paste. That is the same contract
 //! Explorer's own Copy has, and it is why the recorder only ever calls
-//! this *after* the working file has been promoted to its final name —
+//! this *after* the working file has been promoted to its final name:
 //! a `CF_HDROP` pointing at `.clippity-recording-1234.mp4` would go
 //! stale the instant the session finished.
 //!
 //! The buffer layout is a pure function ([`hdrop_payload`]) so the part
-//! that is easy to get wrong — the `DROPFILES` header offset, wide
-//! encoding, and the double-NUL terminator — is unit-tested on any
+//! that is easy to get wrong (the `DROPFILES` header offset, wide
+//! encoding, and the double-NUL terminator) is unit-tested on any
 //! platform, leaving [`copy_files_to_clipboard`] as a thin Win32 shell.
 
 use std::os::windows::ffi::OsStrExt;
@@ -52,7 +52,7 @@ const DROPFILES_LEN: usize = std::mem::size_of::<DROPFILES>();
 /// past the end, which fails as a garbage filename in someone else's
 /// process rather than as an error here.
 ///
-/// Returns `None` for an empty list — there is no such thing as a
+/// Returns `None` for an empty list: there is no such thing as a
 /// zero-file drop, and an empty `CF_HDROP` would replace whatever the
 /// user had on their clipboard with nothing.
 pub fn hdrop_payload<P: AsRef<Path>>(paths: &[P]) -> Option<Vec<u8>> {
@@ -68,7 +68,7 @@ pub fn hdrop_payload<P: AsRef<Path>>(paths: &[P]) -> Option<Vec<u8>> {
         // A path containing an interior NUL would silently truncate for
         // every consumer of the block. It cannot come from the recorder
         // (we build those names ourselves), so this is a guard against a
-        // future caller rather than an expected case — but a corrupt
+        // future caller rather than an expected case, but a corrupt
         // clipboard is a bad way to find out.
         if list[before..].contains(&0) {
             return None;
@@ -107,8 +107,8 @@ pub fn hdrop_payload<P: AsRef<Path>>(paths: &[P]) -> Option<Vec<u8>> {
 /// Best-effort by design at the call site, but loud here: every failure
 /// path returns a message rather than being swallowed, so the caller can
 /// decide whether losing the clipboard copy is worth telling the user
-/// about. For the recorder it is not — the recording is the product and
-/// the clipboard is a convenience — so it logs and moves on.
+/// about. For the recorder it is not (the recording is the product and
+/// the clipboard is a convenience) so it logs and moves on.
 pub fn copy_files_to_clipboard<P: AsRef<Path>>(paths: &[P]) -> Result<(), String> {
     let payload = hdrop_payload(paths).ok_or("no usable file paths for the clipboard")?;
 
@@ -186,7 +186,7 @@ mod tests {
         // bytes are the offset the list starts at.
         let p_files = u32::from_le_bytes(payload[0..4].try_into().unwrap());
         assert_eq!(p_files as usize, DROPFILES_LEN);
-        // "a", its NUL, and the list's NUL — three UTF-16 units.
+        // "a", its NUL, and the list's NUL: three UTF-16 units.
         assert_eq!(payload.len(), DROPFILES_LEN + 3 * 2);
     }
 

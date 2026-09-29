@@ -59,7 +59,7 @@ describe("captureFullscreenFromOverlay", () => {
       expect(finishFullscreenCaptureMock).toHaveBeenCalled()
     );
     // The backend picks the monitor itself (the one under the cursor) out
-    // of the cached snapshot — the frontend has no monitor bounds to send,
+    // of the cached snapshot: the frontend has no monitor bounds to send,
     // so `toggles` is the whole payload.
     expect(finishFullscreenCaptureMock).toHaveBeenCalledWith({
       preview: true,
@@ -87,7 +87,7 @@ describe("captureFullscreenFromOverlay", () => {
   });
 
   it("toasts and leaves the overlay alone when the capture fails", async () => {
-    // e.g. a monitor hot-plugged after the snapshot was taken — the
+    // e.g. a monitor hot-plugged after the snapshot was taken: the
     // backend rejects rather than cropping the wrong pixels.
     finishFullscreenCaptureMock.mockRejectedValueOnce(
       new Error("that monitor is outside the captured desktop")

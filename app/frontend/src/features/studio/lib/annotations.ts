@@ -1,10 +1,10 @@
 /**
- * Annotation model helpers — creating them, splitting them into
+ * Annotation model helpers: creating them, splitting them into
  * intervals, and turning them into what the backend receives.
  *
  * The interval split is the piece worth reading. An export burns
  * annotations in by compositing a pre-rendered overlay onto each frame,
- * and the naive version of that renders one overlay per frame — tens of
+ * and the naive version of that renders one overlay per frame: tens of
  * thousands of full-resolution bitmaps for a clip of any length.
  *
  * Because an annotation holds one position for its whole range, the
@@ -57,7 +57,7 @@ function newId(): string {
  * Build an annotation of `kind` with that kind's defaults.
  *
  * One factory rather than a literal at each call site, so a new kind
- * cannot be created somewhere with a field missing — the union would
+ * cannot be created somewhere with a field missing: the union would
  * catch a missing field, but not a nonsensical default like a zero
  * stroke width or an empty time range.
  */
@@ -77,7 +77,7 @@ export function createAnnotation<K extends AnnotationKind>(
   // `{ ...createAnnotation("text", 0), text: "hi" }` and be checked
   // against `TextAnnotation` rather than against the whole union. Each
   // arm below genuinely returns the variant its `kind` names, which is
-  // a fact TypeScript cannot carry through a switch on a generic — hence
+  // a fact TypeScript cannot carry through a switch on a generic: hence
   // the one cast, at the boundary rather than at every call site.
   const built = ((): Annotation => {
     switch (kind) {
@@ -132,7 +132,7 @@ export function activeAt(
  * backend as parameters, so a blur starting halfway through does not
  * need an overlay boundary and would only cost an extra bitmap.
  *
- * Spans with nothing showing are omitted rather than emitted empty — the
+ * Spans with nothing showing are omitted rather than emitted empty: the
  * backend composites nothing for a frame it finds no overlay for, so an
  * empty overlay would be a full-resolution transparent PNG rendered,
  * encoded, staged and alpha-blended to change no pixels.
@@ -226,8 +226,8 @@ export type AnnotationEdge = "start" | "end";
  * Resolve dragging one end of an annotation's range to `valueMs`.
  *
  * The counterpart of the trim's `resolveHandleDrag`, and it exists for
- * the same reason: every path that changes a range — a drag, a button, a
- * keystroke — goes through one resolver, so none of them can produce a
+ * the same reason: every path that changes a range (a drag, a button, a
+ * keystroke) goes through one resolver, so none of them can produce a
  * range the others would consider invalid. An inverted or
  * zero-length annotation cannot be grabbed again to fix it.
  *
@@ -271,7 +271,7 @@ export function resolveAnnotationDrag(
  *
  * Clamps the *position* rather than the length, so dragging an
  * annotation into either end of the clip parks it there instead of
- * squashing it — the same behaviour `moveRect` gives a rectangle pushed
+ * squashing it: the same behaviour `moveRect` gives a rectangle pushed
  * against the edge of the frame.
  */
 export function moveAnnotationRange(
@@ -316,7 +316,7 @@ export type ResizeCorner = "nw" | "ne" | "sw" | "se";
  * Resize a rect by dragging one corner to `(x, y)`.
  *
  * Normalises afterwards, so dragging a corner past its opposite flips
- * the rectangle rather than producing a negative size — which would
+ * the rectangle rather than producing a negative size, which would
  * render mirrored and hit-test as empty.
  */
 export function resizeRect(

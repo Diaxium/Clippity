@@ -2,12 +2,12 @@
  * Reflects whether THIS window is "active" onto `<html data-idle>`.
  *
  * Every Clippity window is created at startup and kept alive for the
- * whole session (only hidden, never destroyed — see the backend's
+ * whole session (only hidden, never destroyed; see the backend's
  * `create_app_windows` + the `CloseRequested` hide-to-tray handler), so a
  * backgrounded window keeps its full render tree mounted. Anything that
- * keeps the compositor ticking — chiefly the infinite CSS keyframe
+ * keeps the compositor ticking, chiefly the infinite CSS keyframe
  * animations (the capture button's breathing ring, the overlay crosshair
- * pulse, the Tailwind `animate-*` spinners) — would otherwise burn GPU /
+ * pulse, the Tailwind `animate-*` spinners), would otherwise burn GPU /
  * CPU while the user isn't even looking at the window. `theme.css` pauses
  * those animations under `[data-idle="true"]`; this hook owns the signal.
  *
@@ -18,11 +18,11 @@
  *     Clippity on screen) → the window loses focus.
  *
  * Three signals are combined because none alone covers every window type:
- *   - Tauri `onFocusChanged` — authoritative OS focus from the window
+ *   - Tauri `onFocusChanged`: authoritative OS focus from the window
  *     manager (the `blur`/`focus` DOM events aren't always delivered to a
  *     frameless, transparent webview),
- *   - `document.visibilitychange` — minimize / occlusion,
- *   - window `blur`/`focus` — DOM fallback for the browser-preview build
+ *   - `document.visibilitychange`: minimize / occlusion,
+ *   - window `blur`/`focus`: DOM fallback for the browser-preview build
  *     where there is no Tauri window context.
  *
  * **Never-focused utility windows.** The toast and countdown windows are
@@ -63,7 +63,7 @@ export function useWindowActivity(): void {
     const apply = () => {
       const visible = document.visibilityState !== "hidden";
       // A window that has never held focus (toast / countdown) is judged
-      // on visibility alone — it's allowed to animate while shown even
+      // on visibility alone: it's allowed to animate while shown even
       // though it's unfocused by design.
       const idle = everFocused ? !(focused && visible) : !visible;
       setIdle(idle);
@@ -84,7 +84,7 @@ export function useWindowActivity(): void {
     document.addEventListener("visibilitychange", apply);
     apply();
 
-    // Authoritative OS focus via Tauri — the DOM `blur`/`focus` events
+    // Authoritative OS focus via Tauri: the DOM `blur`/`focus` events
     // above aren't reliably delivered to a frameless transparent webview.
     // Guarded on the Tauri context because `getCurrentWindow()` throws
     // synchronously in the plain-browser preview / test build, where the
@@ -103,7 +103,7 @@ export function useWindowActivity(): void {
           else unlisten = u;
         })
         .catch(() => {
-          /* listener failed to register — DOM events remain the fallback */
+          /* listener failed to register; DOM events remain the fallback */
         });
     }
 

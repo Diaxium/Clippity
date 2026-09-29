@@ -8,7 +8,7 @@
 //! normalise to the encoder's PCM shape (`super::pcm`), hand up.
 //!
 //! **Every failure here is non-fatal.** A denied microphone, an
-//! endpoint unplugged mid-session, a device that refuses shared mode —
+//! endpoint unplugged mid-session, a device that refuses shared mode:
 //! none of them may end a recording. The screen content is what the
 //! user came for, and a video with no audio track beats no video at
 //! all. Constructors return `Ok(None)`-shaped outcomes or log and
@@ -17,7 +17,7 @@
 //! letting the user discover it on playback.
 //!
 //! **Polling, not event-driven.** `SetEventHandle` is the usual advice,
-//! but a loopback client fires no events while nothing is playing —
+//! but a loopback client fires no events while nothing is playing:
 //! a session recording a silent desktop would simply block forever.
 //! Polling on a fixed cadence and synthesising silence for the gaps
 //! keeps the audio timeline aligned with the video's regardless of
@@ -60,9 +60,9 @@ pub const POLL_INTERVAL: Duration = Duration::from_millis(10);
 /// Which side of the audio graph a device sits on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
-    /// A microphone or line-in — captured directly.
+    /// A microphone or line-in: captured directly.
     Microphone,
-    /// A speaker/headphone endpoint — captured in loopback, giving
+    /// A speaker/headphone endpoint: captured in loopback, giving
     /// whatever the machine is playing.
     SystemLoopback,
 }
@@ -88,7 +88,7 @@ impl Direction {
 /// An audio endpoint offered to the settings UI.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AudioDevice {
-    /// Opaque endpoint id — what `AudioSelection`'s device fields pin.
+    /// Opaque endpoint id: what `AudioSelection`'s device fields pin.
     pub id: String,
     /// Human-readable name, e.g. "Microphone (Yeti X)".
     pub name: String,
@@ -100,7 +100,7 @@ pub struct AudioDevice {
 /// List active endpoints on one side of the graph.
 ///
 /// Returns an empty list rather than an error when the machine has no
-/// devices of that kind — a laptop with no microphone is a normal
+/// devices of that kind: a laptop with no microphone is a normal
 /// configuration, not a failure the UI should shout about.
 pub fn list_devices(direction: Direction) -> AppResult<Vec<AudioDevice>> {
     // SAFETY: standard COM activation of the endpoint enumerator; the
@@ -174,7 +174,7 @@ fn device_name(device: &IMMDevice) -> Option<String> {
 
 /// One open, running WASAPI stream normalised to the encoder's format.
 ///
-/// `!Send` like every COM object here — created and drained on the
+/// `!Send` like every COM object here: created and drained on the
 /// audio thread that owns it.
 pub struct AudioCapture {
     client: IAudioClient,
@@ -195,7 +195,7 @@ impl AudioCapture {
     ///
     /// `device_id` pins a specific endpoint; `None` follows the OS
     /// default. Errors are returned rather than logged so the caller can
-    /// decide — the recorder logs and continues without this track.
+    /// decide: the recorder logs and continues without this track.
     pub fn open(
         direction: Direction,
         device_id: Option<&str>,
@@ -234,7 +234,7 @@ impl AudioCapture {
             return Err(AppError::Recorder("audio device reported no format".into()));
         }
 
-        // Describe, then initialise, then free — in that order. The
+        // Describe, then initialise, then free, in that order. The
         // format pointer has to stay alive across `Initialize`, which
         // reads it; freeing it first would hand the driver a dangling
         // pointer. Both fallible steps therefore run inside one block
@@ -252,7 +252,7 @@ impl AudioCapture {
         let opened = (|| -> AppResult<(SampleFormat, u16, u32)> {
             // SAFETY: `mix` is valid and non-null here.
             let shape = unsafe { describe_format(mix) }?;
-            // SAFETY: `mix` is still live — the free happens below,
+            // SAFETY: `mix` is still live: the free happens below,
             // after this returns.
             unsafe {
                 client.Initialize(
@@ -306,7 +306,7 @@ impl AudioCapture {
     /// Drain every packet currently queued, returning interleaved
     /// stereo f32 at the target rate.
     ///
-    /// Returns an empty vec when the endpoint has nothing queued — the
+    /// Returns an empty vec when the endpoint has nothing queued: the
     /// normal state for loopback on a quiet desktop. The caller pads
     /// with [`pcm::silence`] rather than treating it as an error.
     pub fn drain(&mut self) -> Vec<f32> {
@@ -341,7 +341,7 @@ impl AudioCapture {
                 let silent = flags & AUDCLNT_BUFFERFLAGS_SILENT.0 as u32 != 0;
                 let decoded = if silent {
                     // The endpoint says "this packet is silence" and the
-                    // buffer contents are undefined — synthesise rather
+                    // buffer contents are undefined: synthesise rather
                     // than decode whatever happens to be in memory.
                     vec![0.0f32; frames as usize * 2]
                 } else {
@@ -481,7 +481,7 @@ mod tests {
     /// with the loopback flag, `GetService`, `Start`, and the
     /// `GetBuffer`/`ReleaseBuffer` pairing. A mismatched
     /// release-after-get corrupts the endpoint's ring buffer, which
-    /// shows up as garbled audio much later — not as a compile error.
+    /// shows up as garbled audio much later, not as a compile error.
     ///
     /// Deliberately does **not** assert that samples arrive: a quiet
     /// desktop legitimately produces none, and asserting otherwise

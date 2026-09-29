@@ -5,13 +5,13 @@
 //! starts in a different process, days later, and the manifest that records
 //! the install is the installer's own private schema in a directory the app
 //! has no business locating. So a declined component or a cleared toggle
-//! used to evaporate the moment the wizard closed — the app shipped every
+//! used to evaporate the moment the wizard closed: the app shipped every
 //! feature regardless, and "Enable automatic updates" bound to nothing.
 //!
 //! This module is the contract that closes that gap: a small, versioned
 //! JSON document written **beside the installed executable** as
 //! [`PROVISIONING_FILE`], which the app finds with nothing but
-//! `current_exe()`. It is deliberately not the installation manifest —
+//! `current_exe()`. It is deliberately not the installation manifest:
 //! the manifest is a removal ledger (every file, registry value and
 //! shortcut, so uninstall can reverse exactly those), while this is a
 //! statement of *what the user asked for*. Keeping them apart means the
@@ -36,7 +36,7 @@ use crate::state::InstallationManifest;
 /// next to the application executable.
 ///
 /// The app resolves it as `current_exe().parent().join(…)`, so the name is
-/// load-bearing on both sides — change it here and in
+/// load-bearing on both sides: change it here and in
 /// `clippity_domain::provisioning` together.
 pub const PROVISIONING_FILE: &str = "install-config.json";
 
@@ -44,11 +44,11 @@ pub const PROVISIONING_FILE: &str = "install-config.json";
 /// list.
 ///
 /// Deliberately **not** one of the catalog's selectable components: the
-/// document belongs to no feature the user can decline — it is what
+/// document belongs to no feature the user can decline: it is what
 /// *records* those declines. Its own id keeps
 /// [`crate::repair::RepairAssessment::core_is_broken`] about the executable
 /// alone (so a missing document doesn't trigger a needless exe rewrite)
-/// while still letting a deleted document light up "Repair recommended" —
+/// while still letting a deleted document light up "Repair recommended",
 /// which matters, because a deleted document silently hands back every
 /// feature the user turned off.
 pub const PROVISIONING_COMPONENT: &str = "config";
@@ -91,13 +91,13 @@ pub struct AppProvisioning {
     /// Stable product id, so a stray file from another product is ignored
     /// rather than acted on.
     pub product_id: String,
-    /// Version that was installed — for diagnostics, not for decisions.
+    /// Version that was installed: for diagnostics, not for decisions.
     pub version: String,
     /// ISO-8601 UTC timestamp of the install / last modify.
     pub written_at: String,
     pub scope: InstallScope,
     /// Component ids the user kept. The app reads feature availability
-    /// from this list — see `clippity_domain::provisioning::Capabilities`.
+    /// from this list; see `clippity_domain::provisioning::Capabilities`.
     pub components: Vec<String>,
     pub preferences: ProvisionedPreferences,
 }
@@ -182,7 +182,7 @@ mod tests {
 
     #[test]
     fn desktop_shortcut_is_derived_from_the_recorded_shortcuts() {
-        // Nothing records the toggle itself — a `.lnk` on the Desktop *is*
+        // Nothing records the toggle itself: a `.lnk` on the Desktop *is*
         // the record, which is also what makes it survive a repair.
         let mut m = manifest();
         m.shortcuts = vec![

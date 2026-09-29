@@ -26,7 +26,7 @@ import { useStudioStore } from "../state/studioStore";
  *
  * That stacking mirrors the export exactly: the backend applies the
  * redactions to the decoded frame and then composites the drawn overlay
- * on top of it. Same order, same operations — see `drawAnnotations` and
+ * on top of it. Same order, same operations; see `drawAnnotations` and
  * `redact.ts`.
  *
  * The overlay canvas is drawn by the *same function the export uses*,
@@ -94,7 +94,7 @@ export function AnnotationLayer({ video }: AnnotationLayerProps) {
   // ---- drawing ----
 
   // The drawn annotations. Redrawn whenever the playhead crosses a
-  // boundary or an annotation changes — cheap, because it is one clear
+  // boundary or an annotation changes: cheap, because it is one clear
   // and a handful of shapes at the clip's native size.
   useEffect(() => {
     const canvas = overlayRef.current;
@@ -105,7 +105,7 @@ export function AnnotationLayer({ video }: AnnotationLayerProps) {
 
   // The redactions. These need the frame's own pixels, so this samples
   // the `<video>` element and runs the same integer filters the export
-  // runs — see `redact.ts` on why they are specified rather than
+  // runs; see `redact.ts` on why they are specified rather than
   // approximated.
   //
   // Driven by rAF rather than by the store: the picture changes sixty
@@ -207,7 +207,7 @@ export function AnnotationLayer({ video }: AnnotationLayerProps) {
 
     if (active.kind === "move") {
       // Measured from where the rect *was* when the grab started, not
-      // from its current position — accumulating deltas drifts as the
+      // from its current position: accumulating deltas drifts as the
       // clamp bites at an edge.
       setAnnotationRect(
         active.id,

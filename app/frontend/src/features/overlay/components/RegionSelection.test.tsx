@@ -42,7 +42,7 @@ afterEach(() => {
   });
 });
 
-describe("RegionSelection — size badge vs. magnified preview", () => {
+describe("RegionSelection: size badge vs. magnified preview", () => {
   it("shows its size badge for a normal selection", () => {
     commit({ x: 100, y: 100, w: 200, h: 120 }, true);
     renderSelection();
@@ -63,7 +63,7 @@ describe("RegionSelection — size badge vs. magnified preview", () => {
   });
 });
 
-describe("RegionSelection — resize handles scale with a small selection", () => {
+describe("RegionSelection: resize handles scale with a small selection", () => {
   const handleCount = (c: HTMLElement) =>
     c.querySelectorAll(".ovl-handle").length;
 

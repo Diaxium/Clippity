@@ -2,20 +2,20 @@
 //!
 //! Tauri's `decorations: false` + `transparent: true` removes the title
 //! bar but leaves DWM's default square frame + faint shadow behind the
-//! window — visible as a semi-transparent square boundary around the
+//! window, visible as a semi-transparent square boundary around the
 //! CSS-rounded content. Two Win32 calls fix it:
 //!
-//! 1. **`DWMWA_WINDOW_CORNER_PREFERENCE = DWMWCP_ROUND`** — asks DWM
+//! 1. **`DWMWA_WINDOW_CORNER_PREFERENCE = DWMWCP_ROUND`**: asks DWM
 //!    to natively round the window's hit-test frame so it matches the
 //!    CSS corner radius. Win11 only; older Windows silently ignores.
-//! 2. **`window_vibrancy::apply_mica`** — paints the Win11 Mica
+//! 2. **`window_vibrancy::apply_mica`**: paints the Win11 Mica
 //!    backdrop into the otherwise-transparent area so the window
 //!    reads as a deliberate frosted surface instead of an empty
 //!    box. `dark = None` follows the OS theme on first apply.
 //!
 //! Apply both in `setup()` for every primary window that should look
 //! like a "frosted card". The `overlay` and `countdown` windows are
-//! excluded — both need to stay fully transparent over the desktop
+//! excluded: both need to stay fully transparent over the desktop
 //! (overlay for the region-capture snapshot, countdown for its
 //! edge-to-edge status strip), and a Mica backdrop would paint a
 //! visible translucent fill across them.
@@ -48,14 +48,14 @@ pub fn round_window_corners(app: &AppHandle) {
     for label in FROSTED_WINDOWS {
         let Some(win) = app.get_webview_window(label) else {
             // Window not created yet (e.g. main is `visible: false` and
-            // may not exist on first boot). Skip silently — apply again
+            // may not exist on first boot). Skip silently; apply again
             // when the window is later shown if needed.
             continue;
         };
         // Tauri pins an older `windows` crate than our direct
         // dependency, so its `HWND` struct identity differs from ours
-        // even though both wrap the same raw pointer. Re-wrap to bridge
-        // — both crates' `HWND` is `HWND(pub *mut c_void)` so no cast
+        // even though both wrap the same raw pointer. Re-wrap to bridge;
+        // both crates' `HWND` is `HWND(pub *mut c_void)` so no cast
         // is needed; modern clippy enforces this (legacy used `as *mut
         // c_void` redundantly).
         let Ok(tauri_hwnd) = win.hwnd() else {
@@ -80,18 +80,18 @@ pub fn round_window_corners(app: &AppHandle) {
 /// `apply_window_theme` command on mount + every theme flip.
 ///
 /// `tuning` is the user's per-material fine-tuning for `backdrop`. Only
-/// `tint_strength` lands here — the other three knobs (glass / blur /
+/// `tint_strength` lands here: the other three knobs (glass / blur /
 /// saturation) drive CSS in the webview, since they describe how the
 /// app's own panels sit *over* the material. Mica, Tabbed and Clear
 /// ignore the tint too: the first two are DWM system backdrops that
 /// tint themselves, and Clear paints nothing at all.
 ///
-/// `WindowBackdrop::Clear` is just "cleared and left cleared" — with
+/// `WindowBackdrop::Clear` is just "cleared and left cleared": with
 /// the window already `transparent: true`, removing the DWM material
 /// leaves a plain hole onto the desktop. It's the only mode where
 /// lowering chrome opacity reveals *live* content on every build.
 ///
-/// Errors are intentionally swallowed — the backdrop is polish, not a
+/// Errors are intentionally swallowed: the backdrop is polish, not a
 /// correctness concern, and we'd rather degrade to a flat translucent
 /// background than fail boot on a Win10 machine.
 #[cfg(target_os = "windows")]
@@ -114,7 +114,7 @@ pub fn apply_backdrop(
                     window_vibrancy::apply_blur(&win, backdrop_tint(dark, alpha))
                 }
                 WindowBackdrop::Tabbed => window_vibrancy::apply_tabbed(&win, dark),
-                // Already cleared above — that *is* the material.
+                // Already cleared above: that *is* the material.
                 WindowBackdrop::Clear => Ok(()),
             };
             if let Err(e) = result {
@@ -127,7 +127,7 @@ pub fn apply_backdrop(
 /// Strip the native backdrop from every frosted window. Used when the
 /// `performance.window_effects` setting is off so the windows fall back
 /// to their flat opaque canvas. Errors are swallowed for the same reason
-/// `apply_backdrop` swallows them — the backdrop is polish, not
+/// `apply_backdrop` swallows them: the backdrop is polish, not
 /// correctness.
 #[cfg(target_os = "windows")]
 pub fn clear_backdrop(app: &AppHandle) {
@@ -141,7 +141,7 @@ pub fn clear_backdrop(app: &AppHandle) {
 /// Apply or clear the native backdrop in one call, driven by the
 /// `performance.window_effects` setting. On (the default) tints the
 /// selected material to the resolved theme; off strips it so the window reads as a flat
-/// opaque surface — the frontend simultaneously drops `backdrop-filter`
+/// opaque surface: the frontend simultaneously drops `backdrop-filter`
 /// blur via `data-effects="flat"`, so the pair together removes the DWM
 /// compositor + GPU cost of the frosted chrome.
 #[cfg(target_os = "windows")]

@@ -1,4 +1,4 @@
-# 0016 — Centralized editor keybind system (Figma + Illustrator hybrid)
+# 0016: Centralized editor keybind system (Figma + Illustrator hybrid)
 
 - **Status:** Accepted (implemented)
 - **Date:** 2026-06-13
@@ -33,14 +33,14 @@ Two facts shaped the design:
 **1. A declarative registry + one window listener.** New `editor/keybinds/`
 module:
 
-- `keybindTypes.ts` — `EditorKeybind` (id, label, category, `keys[]`, context,
+- `keybindTypes.ts`: `EditorKeybind` (id, label, category, `keys[]`, context,
   `coalesce`, key handlers), `CommandCtx` (`{ store, event, api }`), `KeybindApi`.
-- `editorKeybinds.ts` — `EDITOR_KEYBINDS`: the default map. Tool bindings are
+- `editorKeybinds.ts`: `EDITOR_KEYBINDS`: the default map. Tool bindings are
   **derived from `TOOLS`** (single source of truth), so the tooltip, help
   overlay, and binding never drift.
-- `keybindRegistry.ts` — a signature→binding index, context resolution, conflict
+- `keybindRegistry.ts`: a signature→binding index, context resolution, conflict
   report, and the help grouping.
-- `useEditorKeybinds.ts` — the single `keydown`/`keyup`/`blur` listener; owns
+- `useEditorKeybinds.ts`: the single `keydown`/`keyup`/`blur` listener; owns
   history coalescing.
 
 `EditorLayout`'s inline handler and the canvas's bespoke Space effect are
@@ -58,13 +58,13 @@ shortcuts; the inline text editor + help overlay own their own `Esc`.
 
 **4. Existing tool letters win; gaps are documented, not faked.** `A`/`I`/`R`
 keep their shipped meanings. Grouping (`Mod+G`) and Save (`Mod+S`) have no
-backend — they are **registered + surfaced as "Coming soon" / a non-blocking
+backend; they are **registered + surfaced as "Coming soon" / a non-blocking
 message** rather than swallowed or faked. No eyedropper/crop/zoom tool ⇒ `C`/`Z`
 stay unbound.
 
 **5. Temporary pan via a `tempPan` flag, not a tool swap.** `Space` sets
 `tempPan`; the canvas grab-pans (reusing the `tool === "hand"` path) and the tool
-is **preserved** on release — matching Figma, and avoiding toolbar-primary drift
+is **preserved** on release, matching Figma, and avoiding toolbar-primary drift
 or cancelling an open pen path.
 
 **6. History coalescing in the hook.** `coalesce` bindings (arrow nudge, keyboard
@@ -85,17 +85,17 @@ snapshot.
 - Visible cue: the `TransformHud` shows a lock glyph during a proportional
   resize.
 - Net new tests: +48 (geometry center/aspect, store actions, registry/util,
-  hook behavior, overlay) — 669 app-wide green.
+  hook behavior, overlay); 669 app-wide green.
 
 ## Alternatives considered
 
-- **Keep the inline handler, just add cases.** Rejected — it was already
+- **Keep the inline handler, just add cases.** Rejected: it was already
   unscalable and had no conflict/help/platform story.
-- **`Space` swaps the active tool to Hand.** Rejected — drifts the toolbar
+- **`Space` swaps the active tool to Hand.** Rejected: drifts the toolbar
   primary and cancels open pen paths; a `tempPan` flag is closer to Figma.
-- **Fold `sample`-style grouping in via frames.** Rejected — frames carry
+- **Fold `sample`-style grouping in via frames.** Rejected: frames carry
   clip/corner semantics; faking groups would mislead. Reserved keys + a "Coming
   soon" note are honest.
-- **A keybind library (hotkeys-js / mousetrap).** Rejected — the brief warns
+- **A keybind library (hotkeys-js / mousetrap).** Rejected: the brief warns
   against heavy deps for this; a ~200-line registry covers contexts, `keyup`,
   coalescing, and platform display exactly as needed.

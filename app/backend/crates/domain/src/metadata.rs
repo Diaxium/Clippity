@@ -1,11 +1,11 @@
-//! Capture **provenance** — what we knew about a capture at the moment
+//! Capture **provenance**: what we knew about a capture at the moment
 //! it was written to disk. Pure: no I/O, no platform code, no clock.
 //!
 //! The filesystem stays the source of truth for the library (a capture
 //! *is* its file). This module describes the small JSON record that
 //! rides alongside each one so the library can answer questions the
 //! pixels can't: which app was on screen, which mode produced it, how
-//! big it is, and when it was actually taken — as opposed to whenever
+//! big it is, and when it was actually taken, as opposed to whenever
 //! the file was last touched.
 //!
 //! Two types, and the split matters:
@@ -13,14 +13,14 @@
 //! - [`CaptureSource`] is the **input**: borrowed, `Copy`, assembled by
 //!   whichever pipeline is about to save. It is also what
 //!   `domain::naming` renders a file name from, so a capture's name and
-//!   its metadata can never disagree about where it came from — they
+//!   its metadata can never disagree about where it came from: they
 //!   read the same struct.
 //! - [`CaptureMetadata`] is the **record**: owned, serde, versioned,
 //!   written next to the capture by `services::sidecar`.
 //!
 //! Every field is optional except the ones a capture cannot lack (mode,
 //! timestamp). A field we cannot honestly resolve is absent, never
-//! guessed — a sparse record is a true record, and the library renders
+//! guessed: a sparse record is a true record, and the library renders
 //! what is there.
 
 use serde::{Deserialize, Serialize};
@@ -36,7 +36,7 @@ pub const SCHEMA_VERSION: u32 = 1;
 /// it just produced.
 ///
 /// `type_label` is the capture mode's display name (`Region`,
-/// `Fullscreen`, `Scrolling`, `Edited`, …) — the same string the
+/// `Fullscreen`, `Scrolling`, `Edited`, …): the same string the
 /// file-name template's `{type}` token renders. `window` and `app` are
 /// the raw (unsanitised) dominant-window title and its owning
 /// application; either can be `None` when attribution found nothing.
@@ -46,7 +46,7 @@ pub struct CaptureSource<'a> {
     /// attribution found nothing (a capture of the desktop, say).
     pub window: Option<&'a str>,
     /// Friendly name of the application owning `window`. Resolved from
-    /// the executable, so it is `None` on the same paths `window` is —
+    /// the executable, so it is `None` on the same paths `window` is,
     /// and additionally when the process could not be queried.
     pub app: Option<&'a str>,
     /// Capture-mode display label. Never empty in practice; the namer
@@ -61,7 +61,7 @@ pub struct CaptureSource<'a> {
     /// reading by [`monitor_label`]. Resolved by area attribution over
     /// the capture rect, so a selection straddling two screens records
     /// the one it mostly sits on. `None` when the capture has no screen
-    /// of origin at all — a clipboard ingest, an editor export.
+    /// of origin at all: a clipboard ingest, an editor export.
     pub monitor: Option<&'a str>,
     /// Name of the capture preset that produced this, when a preset did.
     /// The backend cannot infer it: presets are executed by the
@@ -71,7 +71,7 @@ pub struct CaptureSource<'a> {
 }
 
 impl<'a> CaptureSource<'a> {
-    /// A source that knows only which mode produced the capture — the
+    /// A source that knows only which mode produced the capture: the
     /// floor every pipeline can meet.
     pub fn from_mode(type_label: &'a str) -> Self {
         Self {
@@ -97,7 +97,7 @@ impl<'a> CaptureSource<'a> {
         self
     }
 
-    /// Attach the display the pixels came from — see [`monitor_label`]
+    /// Attach the display the pixels came from; see [`monitor_label`]
     /// for the shape of the string.
     pub fn with_monitor(mut self, monitor: Option<&'a str>) -> Self {
         self.monitor = monitor;
@@ -114,18 +114,18 @@ impl<'a> CaptureSource<'a> {
 /// Turn a platform display-device name into the label the record stores
 /// and the library shows.
 ///
-/// Windows names its displays `\\.\DISPLAY1`, `\\.\DISPLAY2`, … — the
+/// Windows names its displays `\\.\DISPLAY1`, `\\.\DISPLAY2`, …: the
 /// same ordinal Display Settings puts on screen as "1", "2". So the
 /// device name already carries the number the user recognises; this only
 /// re-spells it as `Display 2`. Anything that doesn't match that shape
 /// (another platform, a virtual adapter) is passed through trimmed
-/// rather than reformatted into a lie, and a blank name is `None` — the
+/// rather than reformatted into a lie, and a blank name is `None`: the
 /// same "absent, never guessed" rule the rest of the record follows.
 ///
 /// Deliberately *not* the monitor's marketing name. Resolving that costs
 /// a `DisplayConfig` round-trip and lands on strings like "Generic PnP
 /// Monitor" or "Unknown Monitor 65537", which are neither stable nor
-/// recognisable — the same argument ADR 0026 used for taking an
+/// recognisable: the same argument ADR 0026 used for taking an
 /// application's executable stem over its version-resource name.
 pub fn monitor_label(device_name: &str) -> Option<String> {
     let name = device_name.trim();
@@ -158,7 +158,7 @@ pub struct CaptureMetadata {
     pub version: u32,
     /// File name (with extension) of the capture this describes.
     pub file: String,
-    /// Capture-mode label — `CaptureSource::type_label`.
+    /// Capture-mode label: `CaptureSource::type_label`.
     pub mode: String,
     /// Wall-clock instant the capture was saved, epoch milliseconds.
     /// Distinct from the file's mtime, which any later touch rewrites.
@@ -171,7 +171,7 @@ pub struct CaptureMetadata {
     pub width: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub height: Option<u32>,
-    /// Display the pixels came from — `CaptureSource::monitor`.
+    /// Display the pixels came from: `CaptureSource::monitor`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub monitor: Option<String>,
     /// Name of the capture preset that ran, when one did.
@@ -204,7 +204,7 @@ pub fn build(source: &CaptureSource, file_name: &str, captured_at_ms: u128) -> C
     }
 }
 
-/// Trim and drop empties — see [`build`].
+/// Trim and drop empties; see [`build`].
 fn non_blank(s: Option<&str>) -> Option<String> {
     s.map(str::trim)
         .filter(|s| !s.is_empty())
@@ -245,7 +245,7 @@ mod tests {
         assert_eq!(m.source_window, None);
         assert_eq!((m.width, m.height), (None, None));
         // An interactive capture ran no preset, and an editor export has
-        // no screen of origin — both stay absent rather than guessed.
+        // no screen of origin: both stay absent rather than guessed.
         assert_eq!(m.monitor, None);
         assert_eq!(m.preset, None);
     }
@@ -283,7 +283,7 @@ mod tests {
 
     #[test]
     fn a_preset_name_is_recorded_verbatim() {
-        // Unlike the file name, the record is not a filesystem path — a
+        // Unlike the file name, the record is not a filesystem path: a
         // preset called "Region → Slack" keeps its punctuation.
         let src = CaptureSource::from_mode("Region").with_preset(Some("Region → Slack"));
         assert_eq!(

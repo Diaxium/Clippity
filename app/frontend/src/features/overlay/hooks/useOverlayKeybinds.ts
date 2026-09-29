@@ -61,7 +61,7 @@ export function useOverlayKeybinds() {
         setHelpOpen(!helpOpen);
         return;
       }
-      // When help is open it owns its own Esc — don't double-fire.
+      // When help is open it owns its own Esc: don't double-fire.
       if (helpOpen) return;
 
       const tag = document.activeElement?.tagName ?? "";
@@ -83,7 +83,7 @@ export function useOverlayKeybinds() {
           if (!hovered) return;
           e.preventDefault();
           if (s.mode === "record-window") {
-            // No flash — the commit starts a recording rather than
+            // No flash: the commit starts a recording rather than
             // taking a shot (see `recordWindow`).
             recordWindow(hovered, s.recordFormat, () => reset());
             return;
@@ -147,7 +147,7 @@ export function useOverlayKeybinds() {
       }
 
       // Arrow keys nudge the committed selection (1 px, or 10 px with
-      // Shift) — accessibility precision adjustment without grabbing
+      // Shift): accessibility precision adjustment without grabbing
       // a handle. Alt+Arrow resizes the rect from its bottom-right
       // corner instead of moving it.
       if (
@@ -181,7 +181,7 @@ export function useOverlayKeybinds() {
 
       const k = e.key.toLowerCase();
       if (k === "l") {
-        // Restore the previous session's rect. Rect-shaped modes only —
+        // Restore the previous session's rect. Rect-shaped modes only:
         // Freehand / Pen / Brush have no rect to restore into, and
         // Window / Object select whole targets rather than an area.
         const s = useOverlayStore.getState();
@@ -206,13 +206,13 @@ export function useOverlayKeybinds() {
       }
       if (k === "f") {
         // Capture the monitor under the cursor straight out of the
-        // cached snapshot — no overlay round-trip, no bounce back to the
+        // cached snapshot: no overlay round-trip, no bounce back to the
         // capture window.
         e.preventDefault();
         captureFullscreenFromOverlay();
         return;
       }
-      // C is not bound — the disabled tile cue is visible enough.
+      // C is not bound: the disabled tile cue is visible enough.
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

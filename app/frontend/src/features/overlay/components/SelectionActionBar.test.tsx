@@ -27,7 +27,7 @@ vi.mock("@services/tauri/clients/toast", () => ({
 import { useOverlayStore } from "../state/overlayStore";
 import { SelectionActionBar } from "./SelectionActionBar";
 
-/** A committed 60×80 selection at (20, 40) — the state the bar renders in. */
+/** A committed 60×80 selection at (20, 40): the state the bar renders in. */
 function selectRect() {
   act(() => {
     useOverlayStore.setState({
@@ -61,7 +61,7 @@ afterEach(() => {
   });
 });
 
-describe("SelectionActionBar — Save", () => {
+describe("SelectionActionBar: Save", () => {
   it("saves the file without touching the clipboard or the editor", async () => {
     // The regression this guards: Save rendered enabled but fell into the
     // placeholder branch and only raised a "coming soon" toast.
@@ -103,7 +103,7 @@ describe("SelectionActionBar — Save", () => {
   });
 });
 
-describe("SelectionActionBar — OCR", () => {
+describe("SelectionActionBar: OCR", () => {
   it("reads the region instead of saving an image", async () => {
     selectRect();
     render(<SelectionActionBar />);
@@ -148,7 +148,7 @@ describe("SelectionActionBar — OCR", () => {
   });
 });
 
-describe("SelectionActionBar — Share", () => {
+describe("SelectionActionBar: Share", () => {
   it("opens a target menu rather than capturing straight away", () => {
     selectRect();
     render(<SelectionActionBar />);
@@ -166,7 +166,7 @@ describe("SelectionActionBar — Share", () => {
     fireEvent.click(screen.getByText("Show in folder"));
 
     await waitFor(() => expect(shareCaptureMock).toHaveBeenCalled());
-    // The path comes from the capture result — sharing can't precede the
+    // The path comes from the capture result: sharing can't precede the
     // file existing.
     expect(shareCaptureMock).toHaveBeenCalledWith(
       "C:\\shots\\Region.png",
@@ -174,7 +174,7 @@ describe("SelectionActionBar — Share", () => {
     );
   });
 
-  it("never opens the editor — the user asked to send it, not edit it", async () => {
+  it("never opens the editor: the user asked to send it, not edit it", async () => {
     act(() => {
       useOverlayStore.getState().setToggles({ preview: true });
     });

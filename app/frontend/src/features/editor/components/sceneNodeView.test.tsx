@@ -128,7 +128,7 @@ describe("SceneNodeView sample regions", () => {
   });
 
   it("pixelate region shows a privacy placeholder until the mosaic is ready", () => {
-    // jsdom never fires the image decode, so the async mosaic never resolves —
+    // jsdom never fires the image decode, so the async mosaic never resolves:
     // the region must paint the neutral block, never the original pixels.
     __resetNodeIdForTests();
     const img = makeImage(
@@ -279,7 +279,7 @@ describe("SceneNodeView sample regions", () => {
         <SceneNodeView node={blur} nodes={{ [img.id]: img, [blur.id]: blur }} />
       </svg>
     );
-    // No sampled image and no blur filter — the region reveals the capture.
+    // No sampled image and no blur filter: the region reveals the capture.
     expect(container.querySelector("image")).toBeNull();
     expect(container.innerHTML.toLowerCase()).not.toContain("fegaussianblur");
   });
@@ -514,7 +514,7 @@ describe("SceneNodeView measurement", () => {
     );
     const text = container.querySelector("text");
     expect(text?.textContent).toBe("600 px");
-    // The pill rotates with the shaft about the midpoint — the SVG spelling of
+    // The pill rotates with the shaft about the midpoint: the SVG spelling of
     // the Canvas translate+rotate in `render.ts`'s `drawMeasure`.
     const rotated = Array.from(container.querySelectorAll("g")).find((g) =>
       (g.getAttribute("transform") ?? "").startsWith("rotate(")
@@ -645,7 +645,7 @@ describe("SceneNodeView spotlight", () => {
 });
 
 describe("SceneNodeView stamp", () => {
-  /** A 48px stamp with red ink and a white halo — the tool's own seeds. */
+  /** A 48px stamp with red ink and a white halo: the tool's own seeds. */
   function stampNode(kind: StampKind = "check"): RectangleNode {
     __resetNodeIdForTests();
     const n = makeRectangle(
@@ -670,7 +670,7 @@ describe("SceneNodeView stamp", () => {
     const ds = Array.from(container.querySelectorAll("path")).map((p) =>
       p.getAttribute("d")
     );
-    // Exactly the module's string — this and `render.ts`'s `drawStamp` fill the
+    // Exactly the module's string: this and `render.ts`'s `drawStamp` fill the
     // same `d`, which is what makes the two renderers unable to drift.
     expect(ds).toContain(geo.strokeD);
     // …and no box outline left behind it (a check has no filled sub-path).
@@ -722,7 +722,7 @@ describe("SceneNodeView stamp", () => {
         <SceneNodeView node={plain} nodes={{ [plain.id]: plain }} />
       </svg>
     );
-    // The rect view draws its outline as one `cornerPath` — a closed box, not
+    // The rect view draws its outline as one `cornerPath`: a closed box, not
     // the glyph's open polyline.
     const d = container.querySelector("path")?.getAttribute("d") ?? "";
     expect(d.endsWith("Z")).toBe(true);

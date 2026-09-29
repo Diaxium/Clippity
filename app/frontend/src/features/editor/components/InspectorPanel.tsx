@@ -52,7 +52,7 @@ function ResizeHandle({ side }: { side: DockSide }) {
 
 /**
  * The inspector in its docked form: a rail attached to one edge of the
- * workspace. Its header doubles as an undock grip — pulling it inward past
+ * workspace. Its header doubles as an undock grip: pulling it inward past
  * {@link shouldUndock}'s threshold floats the panel, which is the return trip
  * for the snap-to-dock gesture in `FloatingInspector`.
  *
@@ -99,7 +99,7 @@ export function InspectorPanel({
       )}
     >
       <ResizeHandle side={side} />
-      {/* The selection header doubles as the undock grip — the panel already
+      {/* The selection header doubles as the undock grip: the panel already
           spends a full row naming what's selected, and a second row whose only
           job was to be draggable was pure chrome. With nothing selected it
           falls back to the mode label so the grip never disappears. */}

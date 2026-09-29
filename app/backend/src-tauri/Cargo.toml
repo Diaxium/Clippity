@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
-description = "Clippity — modern screen capture, recording, annotation, and workflow automation"
+description = "Clippity: modern screen capture, recording, annotation, and workflow automation"
 
 [lib]
 name = "clippity_lib"
@@ -14,7 +14,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 # On by default so a shipped build can open the WebView inspector from
 # Settings → Advanced. Tauri gates `open_devtools()` behind its own
 # `devtools` feature outside debug builds, so without this the button
-# would work only in a development run — the build where it is least
+# would work only in a development run: the build where it is least
 # needed. Turn it off (`--no-default-features`) for a build that must
 # not carry the inspector at all.
 default = ["devtools"]

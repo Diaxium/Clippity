@@ -13,8 +13,8 @@ import { useLibraryStore } from "../state/libraryStore";
  * leave a third state ("in selection mode, nothing selected") that means
  * nothing.
  *
- * Hidden until hover or focus while unchecked — a permanent checkbox on
- * every card would read as a form, not a gallery — and always visible
+ * Hidden until hover or focus while unchecked (a permanent checkbox on
+ * every card would read as a form, not a gallery) and always visible
  * once checked, since a selection you can't see is a selection you'll
  * act on by accident.
  */

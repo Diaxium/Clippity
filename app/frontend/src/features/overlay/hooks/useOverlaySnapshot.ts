@@ -28,7 +28,7 @@ import { useOverlayStore } from "../state/overlayStore";
  * `OVERLAY_SHOWN` fires. We listen for the dedicated
  * `OVERLAY_SNAPSHOT_READY` event for the late case, and still attempt
  * a load on `SHOWN` for the fast-path case (small monitors where the
- * encode finishes before the show event reaches us). Best-effort —
+ * encode finishes before the show event reaches us). Best-effort:
  * failures are swallowed (the loupe just won't render until the next
  * successful fetch).
  */
@@ -43,13 +43,13 @@ export function useOverlaySnapshot() {
       if (id === null) return;
       const url = desktopSnapshotUrl(id);
       // `show` fires both OVERLAY_SHOWN (with `snapshotOk`) and, slightly
-      // later, OVERLAY_SNAPSHOT_READY — on a fast monitor both can resolve a
+      // later, OVERLAY_SNAPSHOT_READY: on a fast monitor both can resolve a
       // `load()` against the same snapshot. Skip the re-decode when the store
       // already holds exactly this one.
       if (useOverlayStore.getState().snapshot.url === url) return;
       await loadIntoCanvas(url, setSnapshot);
     } catch {
-      /* swallow — see hook doc comment */
+      /* swallow: see hook doc comment */
     }
   }, [setSnapshot]);
 
@@ -66,7 +66,7 @@ export function useOverlaySnapshot() {
     });
   }, [reset, setMode]);
 
-  // SHOWN fires immediately after the overlay window appears — the
+  // SHOWN fires immediately after the overlay window appears: the
   // snapshot might already be ready (fast path) or might still be
   // encoding. Attempt a load either way; the backend returns null
   // until the encoder thread lands the URI, and SNAPSHOT_READY below
@@ -98,7 +98,7 @@ function toLogicalPoint(position: [number, number] | null) {
  * frequent reads, so the loupe can `getImageData` a pixel per pointer
  * move.
  *
- * `fetch` + `blob()` keeps the bytes native the whole way — they are
+ * `fetch` + `blob()` keeps the bytes native the whole way: they are
  * never a JS string, which is what the base64 data URI forced (an `atob`
  * of ~11 MiB plus a typed-array copy, on the main thread, before the
  * decode could even start). `createImageBitmap` then decodes off-thread

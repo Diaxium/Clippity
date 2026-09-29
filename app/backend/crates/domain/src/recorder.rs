@@ -1,4 +1,4 @@
-//! Screen-recording domain types — the pure shape of a recording
+//! Screen-recording domain types: the pure shape of a recording
 //! request, the live session status the HUD renders, and the timing /
 //! sizing math both output encoders depend on.
 //!
@@ -7,15 +7,15 @@
 //! stitcher, whose worker emits `clippity://recording/*` and whose HUD
 //! is `RecordingToastBody`. That session produces a *still image* from
 //! many frames. This module produces a *video* (or GIF) from many
-//! frames. They share a silhouette — start, tick, stop-or-discard — and
+//! frames. They share a silhouette (start, tick, stop-or-discard) and
 //! nothing else, so they get separate names, separate events
 //! (`clippity://recorder/*`) and separate services rather than one
 //! overloaded pipeline.
 //!
 //! One session, two outputs: a recording is captured once and encoded
 //! as either MP4/H.264 (via Media Foundation) or GIF, chosen up front
-//! by [`RecorderFormat`]. Everything that differs between the two —
-//! frame-rate range, duration ceiling, whether audio means anything —
+//! by [`RecorderFormat`]. Everything that differs between the two
+//! (frame-rate range, duration ceiling, whether audio means anything)
 //! is answered here so neither encoder has to re-derive it.
 //!
 //! No I/O, no Tauri, no platform code.
@@ -43,7 +43,7 @@ pub const MP4_FPS_DEFAULT: u32 = 30;
 /// Frame-rate bounds for a GIF. The ceiling is deliberately low: GIF
 /// stores a delay per frame in **centiseconds**, so above 50 fps the
 /// delay rounds to zero and viewers substitute their own (usually
-/// 10 cs) — the animation would play at a speed nobody asked for. It
+/// 10 cs): the animation would play at a speed nobody asked for. It
 /// is also the single biggest lever on output size.
 pub const GIF_FPS_MIN: u32 = 5;
 pub const GIF_FPS_MAX: u32 = 30;
@@ -57,11 +57,11 @@ pub const GIF_FPS_DEFAULT: u32 = 15;
 /// than discarding it.
 pub const MP4_MAX_DURATION_MS: u64 = 3 * 60 * 60 * 1_000;
 
-/// Hard ceiling on a GIF session — two orders of magnitude shorter than
+/// Hard ceiling on a GIF session: two orders of magnitude shorter than
 /// MP4's, and for a different reason. GIF quantization needs the frames
 /// in memory to build one global palette, so the session's peak RSS
 /// grows linearly with duration. A minute at [`GIF_FPS_DEFAULT`] and
-/// [`GIF_MAX_EDGE`] is a few hundred MB of RGBA — already generous for
+/// [`GIF_MAX_EDGE`] is a few hundred MB of RGBA: already generous for
 /// the format's actual use (a short loop), and the point past which
 /// users would be better served by MP4.
 pub const GIF_MAX_DURATION_MS: u64 = 60 * 1_000;
@@ -73,7 +73,7 @@ pub const GIF_MAX_DURATION_MS: u64 = 60 * 1_000;
 ///
 /// **An area budget, not an edge cap**, because an edge cap punishes
 /// wide aspect ratios in proportion to how wide they are. A 32:9
-/// ultrawide clip under an 800 px longest-edge rule lands at 800×225 —
+/// ultrawide clip under an 800 px longest-edge rule lands at 800×225:
 /// the same pixel count as a postage stamp, spread so thin that text is
 /// gone. Budgeting area instead gives that clip 1132×318 for the same
 /// bytes. 360 000 is exactly what the old 800 px edge cap produced for
@@ -95,14 +95,14 @@ pub const MIN_RECORD_PX: u32 = 32;
 
 // ---- Output resolution ----
 //
-// A recording's *capture* size is whatever the user pointed at — a
+// A recording's *capture* size is whatever the user pointed at: a
 // monitor, a window, a dragged rectangle. Its *output* size is a
 // separate question, and on a 4K panel the honest answer is usually
 // "smaller": the file is four times the size of a 1080p one, the
 // encoder works four times as hard, and the clip is going into a chat
 // window that will scale it down anyway.
 
-/// Sentinel for "encode at whatever was captured" — the default, and
+/// Sentinel for "encode at whatever was captured": the default, and
 /// what [`RecorderResolution`] falls back to.
 ///
 /// Zero rather than an `Option` because this value is stored in
@@ -112,8 +112,8 @@ pub const MIN_RECORD_PX: u32 = 32;
 /// already travels (loosely stored, clamped by the reader).
 pub const RESOLUTION_SOURCE: u32 = 0;
 
-/// The heights the UI offers, high to low. Not a closed set — any value
-/// is accepted and clamped (see [`clamp_max_height`]) — so a settings
+/// The heights the UI offers, high to low. Not a closed set: any value
+/// is accepted and clamped (see [`clamp_max_height`]), so a settings
 /// file naming 900 keeps working and a future preset can pick one the
 /// menu doesn't list.
 pub const RESOLUTION_CHOICES: [u32; 5] = [2160, 1440, 1080, 720, 480];
@@ -127,7 +127,7 @@ pub const MAX_RESOLUTION_HEIGHT: u32 = 4320;
 //
 // Two sources summed at unity is only the right mix by accident. A
 // headset mic sits well below the system mix on most machines, and the
-// imbalance is unfixable after the fact — the tracks are muxed into one
+// imbalance is unfixable after the fact: the tracks are muxed into one
 // AAC stream. Gain is therefore a record-time control, not an edit-time
 // one.
 
@@ -135,7 +135,7 @@ pub const MAX_RESOLUTION_HEIGHT: u32 = 4320;
 /// every recording before this setting existed was made at.
 pub const GAIN_PCT_DEFAULT: u16 = 100;
 
-/// Loudest a source may be boosted, as a percentage of unity — +6 dB.
+/// Loudest a source may be boosted, as a percentage of unity: +6 dB.
 ///
 /// Higher would be false advertising: the mix is clamped to full scale
 /// on the way to 16-bit PCM (`platform::pcm::to_i16_bytes`), so past a
@@ -148,7 +148,7 @@ pub const GAIN_PCT_MAX: u16 = 200;
 /// unit the slider shows, it round-trips through JSON exactly, it keeps
 /// [`AudioSelection`] `Eq`, and there is no NaN to defend against.
 ///
-/// Zero is legal and means silence — which is what a muted source sends,
+/// Zero is legal and means silence, which is what a muted source sends,
 /// so mute needs no separate field.
 pub fn clamp_gain_pct(requested: u16) -> u16 {
     requested.min(GAIN_PCT_MAX)
@@ -171,7 +171,7 @@ pub const HNS_PER_SECOND: i64 = 10_000_000;
 ///
 /// The ceiling is 60 rather than 40 Mbps because 40 was low enough to
 /// bind on displays people actually own: a 5120×2160 ultrawide at 60 fps
-/// computes to ~46 Mbps, so the clamp — meant as a runaway guard —
+/// computes to ~46 Mbps, so the clamp, meant as a runaway guard,
 /// was silently degrading the format it was sized for. 60 clears every
 /// current desktop panel at 60 fps while still refusing the genuinely
 /// absurd.
@@ -185,8 +185,8 @@ pub const BITRATE_MAX_BPS: u32 = 60_000_000;
 /// Not a cosmetic setting: a decoder can only start at a keyframe, so
 /// the interval *is* the granularity Studio's scrubber can seek to, and
 /// it is what a player has to chew through before it can show the first
-/// frame of a seek. Long GOPs compress screen content better — a static
-/// desktop is nearly free between keyframes — so this is a real trade
+/// frame of a seek. Long GOPs compress screen content better (a static
+/// desktop is nearly free between keyframes) so this is a real trade
 /// rather than a "bigger is better" dial.
 ///
 /// The floor is 1 s because below that the keyframes themselves start
@@ -194,7 +194,7 @@ pub const BITRATE_MAX_BPS: u32 = 60_000_000;
 /// in Studio feels broken on a recording the user just made.
 pub const KEYFRAME_SECONDS_MIN: u32 = 1;
 pub const KEYFRAME_SECONDS_MAX: u32 = 10;
-/// Two seconds — short enough that a seek lands where it looks like it
+/// Two seconds: short enough that a seek lands where it looks like it
 /// should, long enough not to spend the bitrate on I-frames.
 pub const KEYFRAME_SECONDS_DEFAULT: u32 = 2;
 
@@ -202,14 +202,14 @@ pub const KEYFRAME_SECONDS_DEFAULT: u32 = 2;
 /// bits-per-pixel-per-frame target [`video_bitrate_bps`] derives from.
 ///
 /// Three named steps rather than a raw bitrate box, because the right
-/// bitrate depends on the frame size and rate — the same 8 Mbps that is
+/// bitrate depends on the frame size and rate: the same 8 Mbps that is
 /// generous for a 720p region starves a 4K desktop, so a number the user
 /// types is only meaningful for the one recording they typed it for.
 /// [`RecorderEncoding::bitrate_bps`] is still there for the case where
 /// somebody genuinely needs a fixed number.
 ///
 /// The values are tuned for **screen content**, which is mostly static
-/// between frames and compresses far better than camera footage — the
+/// between frames and compresses far better than camera footage: the
 /// usual 0.1 bpp camera heuristic overshoots badly for a desktop
 /// recording.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -219,7 +219,7 @@ pub enum RecorderQuality {
     /// busy screen will soften.
     Efficient,
     /// The shipped default, and what every recording made before this
-    /// setting existed used — so choosing it changes nothing.
+    /// setting existed used, so choosing it changes nothing.
     #[default]
     Balanced,
     /// For recordings that will be scrutinised or re-encoded later.
@@ -243,7 +243,7 @@ impl RecorderQuality {
 /// **Variable is the default, and it is a change from what the encoder
 /// used to do on its own.** Before this setting the code declared only
 /// an average bitrate and let the MFT pick, which is constant-rate on
-/// every encoder we have seen — meaning a recording of a motionless
+/// every encoder we have seen, meaning a recording of a motionless
 /// desktop spent the full bitrate padding frames where nothing happened.
 /// Screen capture is the definitional case for variable rate: long
 /// static stretches cost almost nothing, and the saving shows up as a
@@ -267,7 +267,7 @@ pub enum RateControl {
 /// has any use for them.
 ///
 /// **Ignored entirely by GIF**, which has no bitrate, no keyframes and
-/// no rate control — it is a palettized per-frame format. Unlike
+/// no rate control: it is a palettized per-frame format. Unlike
 /// [`AudioSelection`], validation does *not* empty this for GIF: an
 /// emptied audio selection prevents a misleading microphone indicator,
 /// whereas encoder settings have no UI of their own on a GIF session and
@@ -279,7 +279,7 @@ pub struct RecorderEncoding {
     #[serde(default)]
     pub quality: RecorderQuality,
     /// Fixed average bitrate in bits per second, overriding what
-    /// `quality` would derive. `None` or `0` derives — see
+    /// `quality` would derive. `None` or `0` derives; see
     /// [`resolve_bitrate_bps`].
     #[serde(default)]
     pub bitrate_bps: Option<u32>,
@@ -292,8 +292,8 @@ pub struct RecorderEncoding {
     /// Prefer the GPU's encoder when there is one.
     ///
     /// **On by default and worth being able to turn off.** Hardware
-    /// encoders are far cheaper — a software 4K60 encode does not keep
-    /// up — but a few drivers produce visibly worse output than the
+    /// encoders are far cheaper (a software 4K60 encode does not keep
+    /// up) but a few drivers produce visibly worse output than the
     /// software encoder at the same bitrate, and there is no way to
     /// detect that from here. This is the escape hatch for a user
     /// looking at a bad recording.
@@ -344,7 +344,7 @@ impl RecorderEncoding {
 
 /// What surface the session records. The rectangle itself is resolved
 /// by the service (a window moves; a monitor is enumerated), so this
-/// carries only the user's *intent* — which is what a preset should
+/// carries only the user's *intent*, which is what a preset should
 /// store and what the HUD should label.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -371,7 +371,7 @@ pub enum RecorderFormat {
 }
 
 impl RecorderFormat {
-    /// File extension for this format — the one place the mapping
+    /// File extension for this format: the one place the mapping
     /// lives, so the save path and the library's extension-based
     /// [`crate::library::kind_of`] classification can't drift apart.
     pub fn extension(self) -> &'static str {
@@ -383,7 +383,7 @@ impl RecorderFormat {
 
     /// Whether this format can carry an audio track at all. GIF cannot,
     /// which is why [`AudioSelection`] is silently emptied for it during
-    /// validation rather than rejected — a user switching format
+    /// validation rather than rejected: a user switching format
     /// shouldn't have their recording refused over a toggle the new
     /// format simply ignores.
     pub fn supports_audio(self) -> bool {
@@ -419,8 +419,8 @@ impl RecorderFormat {
 /// Which audio inputs to mix into the recording.
 ///
 /// Two independent booleans rather than one enum because both can be on
-/// at once — narrating over system sound is the common case for a demo
-/// recording — and each fails independently (a missing mic must not
+/// at once (narrating over system sound is the common case for a demo
+/// recording) and each fails independently (a missing mic must not
 /// cost the user their system audio). The optional device ids pin a
 /// specific endpoint; `None` follows the OS default, including when the
 /// user changes it mid-session.
@@ -468,13 +468,13 @@ impl Default for AudioSelection {
 }
 
 impl AudioSelection {
-    /// Whether any audio at all was asked for — the sink writer only
+    /// Whether any audio at all was asked for: the sink writer only
     /// declares an audio stream when this is true, and a muxed file with
     /// an empty audio track is worse than one with no track.
     ///
     /// **Gain of zero does not count as "off".** A silenced source still
     /// opens its endpoint, so unmuting mid-session is instant and the
-    /// meter keeps reading — which is the whole point of a mute button
+    /// meter keeps reading, which is the whole point of a mute button
     /// as opposed to a toggle.
     pub fn any(&self) -> bool {
         self.microphone || self.system
@@ -506,7 +506,7 @@ pub enum AudioSource {
 /// on `clippity://recorder/levels` for the HUD's meters.
 ///
 /// **Peak, not RMS.** The question a recording meter answers is "is this
-/// input live, and is it about to clip" — both of which are peak
+/// input live, and is it about to clip", both of which are peak
 /// questions. RMS reads better for loudness matching, which is not a
 /// decision anyone makes mid-recording.
 ///
@@ -532,7 +532,7 @@ pub struct RecorderToggles {
     #[serde(default)]
     pub cursor: bool,
     /// Draw a click highlight when a mouse button goes down. Implies
-    /// `cursor` — a click ring with no pointer under it reads as a
+    /// `cursor`: a click ring with no pointer under it reads as a
     /// rendering bug, so validation turns `cursor` on rather than
     /// rejecting the combination.
     #[serde(default)]
@@ -545,7 +545,7 @@ pub struct RecorderToggles {
     /// Put the finished clip on the system clipboard, so it can be
     /// pasted straight into a chat, an email, or a folder.
     ///
-    /// Copies the file **by reference** (`CF_HDROP`), not by value —
+    /// Copies the file **by reference** (`CF_HDROP`), not by value,
     /// which is what makes this viable for a video at all, and what
     /// separates it from the stills toggle of the same name, where the
     /// pixels themselves go on the clipboard. The cost is constant in
@@ -554,7 +554,7 @@ pub struct RecorderToggles {
     ///
     /// The trade-off is the one Explorer's own Copy has: the clipboard
     /// names a path, so moving or deleting the clip before pasting
-    /// breaks it. Worth it — the alternative is no clipboard support
+    /// breaks it. Worth it: the alternative is no clipboard support
     /// for recordings at all, since no app reads a raw MP4 blob.
     #[serde(default)]
     pub clipboard: bool,
@@ -566,7 +566,7 @@ pub struct RecorderToggles {
 pub struct RecorderRequest {
     pub target: RecorderTarget,
     /// The rectangle to record, in physical pixels on the virtual
-    /// desktop — the same space as [`Region`] everywhere else. Required
+    /// desktop: the same space as [`Region`] everywhere else. Required
     /// for [`RecorderTarget::Region`] and [`RecorderTarget::Window`];
     /// for [`RecorderTarget::Fullscreen`] it is `None` and the service
     /// resolves the monitor.
@@ -589,7 +589,7 @@ pub struct RecorderRequest {
     /// Cap on the encoded frame's height, in pixels. `None` or
     /// [`RESOLUTION_SOURCE`] encodes at the captured size; a smaller
     /// value scales the frame down on the way into the encoder,
-    /// preserving the aspect ratio. Never upscales — see
+    /// preserving the aspect ratio. Never upscales; see
     /// [`scale_to_max_height`].
     #[serde(default)]
     pub max_height: Option<u32>,
@@ -598,7 +598,7 @@ pub struct RecorderRequest {
     /// H.264 encoder settings. Ignored by the GIF path.
     #[serde(default)]
     pub encoding: RecorderEncoding,
-    /// Things composited over the captured frame — a webcam, a logo
+    /// Things composited over the captured frame: a webcam, a logo
     /// (ADR 0033). Order is meaningful: later sources draw over earlier
     /// ones. Empty for an ordinary recording, which is every recording
     /// made before sources existed.
@@ -623,7 +623,7 @@ pub struct RecorderRequest {
 ///
 /// `PartialEq` but not `Eq`: a source's position is a `NormRect` of
 /// `f32`s (`domain::annotation`), and float equality is partial by
-/// definition. Nothing needs total equality here — the tests compare
+/// definition. Nothing needs total equality here: the tests compare
 /// with `assert_eq!`, which does not.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ValidatedRecorderRequest {
@@ -635,13 +635,13 @@ pub struct ValidatedRecorderRequest {
     pub fps: u32,
     /// Clamped output-height cap, or [`RESOLUTION_SOURCE`]. Resolve it
     /// against the region with [`ValidatedRecorderRequest::output_size`]
-    /// rather than reading it directly — the format has a say too.
+    /// rather than reading it directly: the format has a say too.
     pub max_height: u32,
     pub audio: AudioSelection,
     /// Clamped encoder settings. Meaningful only for
     /// [`RecorderFormat::Mp4`].
     pub encoding: RecorderEncoding,
-    /// Clamped source list — see [`crate::composition`]. Applies to
+    /// Clamped source list; see [`crate::composition`]. Applies to
     /// **both** formats: a GIF is still a picture of the screen, and a
     /// webcam in the corner is as meaningful there as in a video.
     pub sources: Vec<crate::composition::Source>,
@@ -668,7 +668,7 @@ impl ValidatedRecorderRequest {
 }
 
 /// Where a live session is. Drives the HUD's controls (a paused session
-/// shows Resume, not Pause) and gates the commands — `pause` on an idle
+/// shows Resume, not Pause) and gates the commands: `pause` on an idle
 /// session is a caller bug, not a no-op.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -696,7 +696,7 @@ pub struct RecorderStatus {
     /// the one signal that tells a user to lower the frame rate.
     pub dropped: u64,
     /// Bytes committed to the on-disk file so far. Zero for GIF until
-    /// the encode runs — GIF has nothing on disk until quantization, and
+    /// the encode runs: GIF has nothing on disk until quantization, and
     /// claiming otherwise would make the HUD lie.
     pub bytes: u64,
 }
@@ -728,7 +728,7 @@ pub struct RecorderResult {
     pub path: String,
     pub duration_ms: u64,
     pub frames: u64,
-    /// Whether an audio track was actually written — not merely
+    /// Whether an audio track was actually written, not merely
     /// requested. A denied microphone yields `false`, and the toast says
     /// so, rather than the user discovering the silence on playback.
     pub has_audio: bool,
@@ -746,7 +746,7 @@ pub struct RecorderResult {
 pub enum RecorderStopReason {
     /// The user pressed Stop.
     Committed,
-    /// The user pressed Discard — the partial file is deleted.
+    /// The user pressed Discard: the partial file is deleted.
     Discarded,
     /// The session hit [`RecorderFormat::max_duration_ms`]. Committed,
     /// not discarded: an over-long recording is still the user's
@@ -785,7 +785,7 @@ pub fn clamp_fps(requested: Option<u32>, format: RecorderFormat) -> u32 {
 
 /// Clamp a requested output-height cap into something encodable.
 ///
-/// [`RESOLUTION_SOURCE`] passes through untouched — it is not a height,
+/// [`RESOLUTION_SOURCE`] passes through untouched: it is not a height,
 /// it is the absence of one. Anything else is pulled into
 /// `MIN_RECORD_PX..=MAX_RESOLUTION_HEIGHT`, so a hand-edited settings
 /// file asking for 4 lines gets the smallest legal frame instead of a
@@ -804,7 +804,7 @@ pub fn clamp_max_height(requested: u32) -> u32 {
 /// Fit `(width, height)` under a height cap, preserving the aspect
 /// ratio and rounding to even dimensions.
 ///
-/// **A height cap, not an area budget** — deliberately unlike
+/// **A height cap, not an area budget**: deliberately unlike
 /// [`gif_target_size`], which sits a few lines below and argues the
 /// opposite. The two answer different questions. GIF's budget is a
 /// promise about *file size*, and area is what file size tracks, so
@@ -848,7 +848,7 @@ pub fn output_size(format: RecorderFormat, width: u32, height: u32, max_height: 
 /// Round a rectangle down to even width and height, keeping its origin.
 ///
 /// H.264's 4:2:0 chroma planes are half-resolution in both axes, so an
-/// odd dimension has no representation — Media Foundation either rejects
+/// odd dimension has no representation: Media Foundation either rejects
 /// the media type or silently pads, which shifts every subsequent row
 /// and produces the classic diagonal-smear frame. Rounding *down* (and
 /// losing at most one pixel row/column) is invisible; padding up would
@@ -950,7 +950,7 @@ pub fn validate(
 
 /// Clip a rectangle to the virtual desktop. Same shape as
 /// [`crate::overlay::validate_region`] but with the recorder's own
-/// minimum — a 32 px floor is meaningful for a video where an 8 px one
+/// minimum: a 32 px floor is meaningful for a video where an 8 px one
 /// is meaningful for a still.
 fn clamp_region(region: Region, virtual_w: u32, virtual_h: u32) -> Result<Region, &'static str> {
     let x = region.x.min(virtual_w.saturating_sub(1));
@@ -968,7 +968,7 @@ fn clamp_region(region: Region, virtual_w: u32, virtual_h: u32) -> Result<Region
     })
 }
 
-/// Nominal gap between frames, in milliseconds — what the capture
+/// Nominal gap between frames, in milliseconds: what the capture
 /// worker paces itself against.
 pub fn frame_interval_ms(fps: u32) -> u64 {
     let fps = fps.max(1) as u64;
@@ -982,7 +982,7 @@ pub fn frame_interval_ms(fps: u32) -> u64 {
 ///
 /// Presentation timestamps come from the *wall clock* (minus paused
 /// time), not from `frame_index × frame_duration`. Screen capture is
-/// inherently variable-rate — a frame the compositor never produced
+/// inherently variable-rate: a frame the compositor never produced
 /// (nothing on screen changed) or one the encoder had to drop must not
 /// shift every later frame earlier, which is exactly what an index-derived
 /// timeline does. Deriving from elapsed time instead keeps the video's
@@ -998,7 +998,7 @@ pub fn frame_duration_hns(fps: u32) -> i64 {
 }
 
 /// Where a captured frame sits on the recording's timeline, and how long
-/// it stays there — as `(timestamp_hns, duration_hns)`.
+/// it stays there, as `(timestamp_hns, duration_hns)`.
 ///
 /// **Both halves of this are corrections to bugs that made a recording
 /// look broken in Studio**, and neither is obvious from the capture loop
@@ -1009,7 +1009,7 @@ pub fn frame_duration_hns(fps: u32) -> i64 {
 /// successor arrives. Declaring the nominal `1/fps` instead is only true
 /// when the capture keeps up; at 5120x1440 a grab can take half a
 /// second, so each sample claimed 33 ms and the next began 500 ms later.
-/// Everything in between was a hole with no frame in it — a player
+/// Everything in between was a hole with no frame in it: a player
 /// cannot seek into one, so the playhead skids to its far edge and
 /// playback runs out of pictures long before the clip's stated end.
 ///
@@ -1017,7 +1017,7 @@ pub fn frame_duration_hns(fps: u32) -> i64 {
 /// first grab otherwise leaves the clip starting on nothing, and no
 /// player can position before its first picture: "go to start" and
 /// "previous frame" both stop at that offset and never reach 0:00.00.
-/// Stretching it back is also the honest reading — that image is the
+/// Stretching it back is also the honest reading: that image is the
 /// best record of what was on screen for the interval before it was
 /// taken. Anchoring the first frame rather than shifting every timestamp
 /// is deliberate: audio starts its own clock at zero, and moving the
@@ -1036,7 +1036,7 @@ pub fn frame_placement(captured_at_ms: u64, next_ms: u64, is_first: bool) -> (i6
     (hns_from_millis(start_ms), hns_from_millis(span_ms))
 }
 
-/// Per-frame delay for a GIF, in centiseconds — the only time unit the
+/// Per-frame delay for a GIF, in centiseconds: the only time unit the
 /// format has.
 ///
 /// Clamped to a floor of 2 cs because a 0 or 1 cs delay is the one case
@@ -1054,7 +1054,7 @@ pub fn gif_frame_delay_cs(fps: u32) -> u16 {
 ///
 /// A resolution-aware target rather than a fixed one: the same 8 Mbps
 /// that is generous for a 720p region starves a 4K desktop, and Media
-/// Foundation's encoder does not pick for you — an unset bitrate lands
+/// Foundation's encoder does not pick for you: an unset bitrate lands
 /// on a conservative default that makes text mushy.
 pub fn video_bitrate_bps(quality: RecorderQuality, width: u32, height: u32, fps: u32) -> u32 {
     let pixels = width as f64 * height as f64;
@@ -1063,7 +1063,7 @@ pub fn video_bitrate_bps(quality: RecorderQuality, width: u32, height: u32, fps:
 }
 
 /// Pull a bitrate into the encodable range. Applied to a user-supplied
-/// number as well as a derived one — the floor and ceiling exist for
+/// number as well as a derived one: the floor and ceiling exist for
 /// reasons that don't stop applying because somebody typed the value.
 pub fn clamp_bitrate_bps(requested: u32) -> u32 {
     requested.clamp(BITRATE_MIN_BPS, BITRATE_MAX_BPS)
@@ -1074,7 +1074,7 @@ pub fn clamp_bitrate_bps(requested: u32) -> u32 {
 /// target.
 ///
 /// `Some(0)` is treated as "no override" rather than as a request for
-/// zero bits — it is what an emptied number field sends, and refusing a
+/// zero bits: it is what an emptied number field sends, and refusing a
 /// recording over it would be absurd.
 pub fn resolve_bitrate_bps(
     quality: RecorderQuality,
@@ -1091,7 +1091,7 @@ pub fn resolve_bitrate_bps(
 
 /// Clamp a keyframe interval, in seconds, into
 /// `KEYFRAME_SECONDS_MIN..=KEYFRAME_SECONDS_MAX`. Zero means "not set"
-/// and lands on the default rather than on the floor — an interval of
+/// and lands on the default rather than on the floor: an interval of
 /// nothing is a malformed value, not a request for every frame to be a
 /// keyframe.
 pub fn clamp_keyframe_seconds(requested: u32) -> u32 {
@@ -1114,7 +1114,7 @@ pub fn keyframe_interval_frames(seconds: u32, fps: u32) -> u32 {
 }
 
 /// Downscale `(width, height)` into GIF's pixel budget, preserving the
-/// aspect ratio. Returns the input unchanged when it already fits —
+/// aspect ratio. Returns the input unchanged when it already fits:
 /// upscaling a small recording would only add weight.
 ///
 /// Two bounds apply and the tighter one wins: [`GIF_MAX_PIXELS`] caps
@@ -1152,14 +1152,14 @@ pub fn gif_target_size(width: u32, height: u32) -> (u32, u32) {
 /// ultrawide sizes.** Media Foundation infers a level from the frame
 /// size when the caller doesn't state one, and several hardware
 /// encoders infer one too small for a >4096-px-wide frame and then
-/// refuse the media type outright — which surfaces as "no H.264 encoder
+/// refuse the media type outright, which surfaces as "no H.264 encoder
 /// available" at the moment the user pressed Record. Stating the level
 /// removes the guess.
 ///
 /// Bounds come from the H.264 spec's Table A-1: `MaxFS` (frame size in
 /// macroblocks), `MaxMBPS` (macroblocks per second), and `MaxBR` (bits
 /// per second, at Main profile's VCL factor). The lowest level that
-/// satisfies all three wins, floored at 4.2 — below that the levels
+/// satisfies all three wins, floored at 4.2: below that the levels
 /// start capping bitrate tightly enough to hurt a small region, and
 /// nothing that plays H.264 at all is short of 4.2 support.
 ///
@@ -1193,7 +1193,7 @@ pub fn h264_level(width: u32, height: u32, fps: u32, bitrate_bps: u32) -> u32 {
 /// Thickness of the recording outline, in physical pixels.
 ///
 /// Thin enough not to crowd the recorded area, thick enough to read as
-/// deliberate at any DPI — a 1 px hairline reads as a rendering artefact
+/// deliberate at any DPI: a 1 px hairline reads as a rendering artefact
 /// on a high-DPI display.
 pub const OUTLINE_PX: u32 = 3;
 
@@ -1392,7 +1392,7 @@ mod tests {
     fn gain_clamps_at_the_ceiling_but_not_at_the_floor() {
         assert_eq!(clamp_gain_pct(500), GAIN_PCT_MAX);
         assert_eq!(clamp_gain_pct(150), 150);
-        // Zero is legal — it is what a muted source sends.
+        // Zero is legal: it is what a muted source sends.
         assert_eq!(clamp_gain_pct(0), 0);
         assert_eq!(gain_scalar(0), 0.0);
         assert_eq!(gain_scalar(200), 2.0);
@@ -1454,7 +1454,7 @@ mod tests {
 
     #[test]
     fn max_height_clamps_instead_of_snapping_to_the_menu() {
-        // Not one of RESOLUTION_CHOICES, and kept anyway — the menu is a
+        // Not one of RESOLUTION_CHOICES, and kept anyway: the menu is a
         // convenience, not the contract.
         assert_eq!(clamp_max_height(900), 900);
         assert_eq!(clamp_max_height(4), MIN_RECORD_PX);
@@ -1486,7 +1486,7 @@ mod tests {
 
     #[test]
     fn capped_dimensions_stay_even() {
-        // 1366×768 capped to 480 is 853.75 wide — odd before rounding,
+        // 1366×768 capped to 480 is 853.75 wide: odd before rounding,
         // and an odd width has no 4:2:0 representation.
         let (w, h) = scale_to_max_height(1366, 768, 480);
         assert_eq!(h, 480);
@@ -1522,7 +1522,7 @@ mod tests {
         req.max_height = Some(1080);
         let v = validate(req, 3840, 2160, None).unwrap();
         assert_eq!(v.max_height, 1080);
-        // The region is untouched — capture still grabs every pixel; only
+        // The region is untouched: capture still grabs every pixel; only
         // the encoder sees fewer.
         assert_eq!((v.region.width, v.region.height), (3840, 2160));
         assert_eq!(v.output_size(), (1920, 1080));
@@ -1534,7 +1534,7 @@ mod tests {
     fn odd_dimensions_round_down_for_chroma_subsampling() {
         assert_eq!(even_dimensions(1921, 1081), (1920, 1080));
         assert_eq!(even_dimensions(1920, 1080), (1920, 1080));
-        // Never rounds up — that would invent an edge pixel.
+        // Never rounds up: that would invent an edge pixel.
         assert_eq!(even_dimensions(3, 3), (2, 2));
     }
 
@@ -1615,7 +1615,7 @@ mod tests {
     fn fullscreen_takes_its_rectangle_from_the_resolved_monitor() {
         let mut req = request(RecorderTarget::Fullscreen, RecorderFormat::Mp4);
         // A stale region on the request is ignored for a fullscreen
-        // session — the monitor is the source of truth.
+        // session: the monitor is the source of truth.
         req.region = Some(region(0, 0, 100, 100));
         let v = validate(req, 3840, 2160, Some(region(1920, 0, 1920, 1080))).unwrap();
         assert_eq!(v.region, region(1920, 0, 1920, 1080));
@@ -1756,7 +1756,7 @@ mod tests {
         assert_eq!(gif_target_size(640, 480), (640, 480));
         let (w, h) = gif_target_size(3840, 2160);
         // The area budget was chosen so a 16:9 recording lands exactly
-        // where the old longest-edge rule put it — this is the
+        // where the old longest-edge rule put it: this is the
         // regression guard on "the common case didn't move".
         assert_eq!((w, h), (800, 450));
         assert_eq!(w % 2, 0);
@@ -1773,7 +1773,7 @@ mod tests {
     #[test]
     fn gif_downscale_does_not_flatten_an_ultrawide_clip() {
         // The ultrawide fix. Under a longest-edge cap a 32:9 clip came
-        // out 800×225 — the same pixel budget squeezed into a letterbox
+        // out 800×225: the same pixel budget squeezed into a letterbox
         // with no vertical resolution left for text. Budgeting area
         // instead spends those pixels on both axes.
         let (w, h) = gif_target_size(5120, 1440);
@@ -1817,7 +1817,7 @@ mod tests {
 
     #[test]
     fn a_frame_lasts_until_the_next_one_arrives() {
-        // Not the nominal 1/fps — that is only true when the capture
+        // Not the nominal 1/fps: that is only true when the capture
         // keeps up, and a hole is unseekable.
         assert_eq!(placement_ms(1_368, 1_919, false), (1_368, 551));
     }
@@ -1875,7 +1875,7 @@ mod tests {
 
     #[test]
     fn the_default_encoding_is_what_recordings_already_did() {
-        // Except for rate control, which is a deliberate change — see
+        // Except for rate control, which is a deliberate change; see
         // `RateControl`.
         let e = RecorderEncoding::default();
         assert_eq!(e.quality, RecorderQuality::Balanced);
@@ -2015,7 +2015,7 @@ mod tests {
     fn the_bitrate_ceiling_does_not_bind_on_a_real_ultrawide() {
         // The ceiling is a runaway guard. If it clamps a panel someone
         // owns, it has stopped being a guard and started being a
-        // quality cap — which is what 40 Mbps was doing to 5120×2160.
+        // quality cap, which is what 40 Mbps was doing to 5120×2160.
         for (w, h) in [(3440, 1440), (5120, 1440), (5120, 2160), (3840, 2160)] {
             assert!(
                 video_bitrate_bps(RecorderQuality::Balanced, w, h, 60) < BITRATE_MAX_BPS,
@@ -2028,7 +2028,7 @@ mod tests {
 
     #[test]
     fn h264_level_covers_ordinary_sizes_at_the_floor() {
-        // 1080p60 fits inside 4.2, and nothing should push it higher —
+        // 1080p60 fits inside 4.2, and nothing should push it higher:
         // a needlessly high level costs decoder compatibility.
         assert_eq!(h264_level(1920, 1080, 60, 8_000_000), 42);
     }
@@ -2046,7 +2046,7 @@ mod tests {
         );
         assert!(level > 42, "5120×1440@60 needs more than level 4.2");
 
-        // 5120×2160 is 43 200 macroblocks — past level 5.2's 36 864
+        // 5120×2160 is 43 200 macroblocks: past level 5.2's 36 864
         // MaxFS, so it has to reach level 6.
         assert!(
             h264_level(
@@ -2081,7 +2081,7 @@ mod tests {
     #[test]
     fn h264_level_never_gives_up_on_an_absurd_frame() {
         // Past the spec's largest level we hand over the top code
-        // rather than failing — the encoder can refuse with a real
+        // rather than failing: the encoder can refuse with a real
         // message, which beats us refusing to record at all.
         assert_eq!(h264_level(30_000, 30_000, 240, 900_000_000), 62);
     }
@@ -2101,7 +2101,7 @@ mod tests {
     #[test]
     fn an_outline_at_the_top_left_corner_clips_rather_than_shifts() {
         // A region flush to the origin cannot grow up or left. The frame
-        // must stay pinned there — pushing it inward would draw the ring
+        // must stay pinned there: pushing it inward would draw the ring
         // over the first rows of the recording and misreport where it
         // starts.
         let f = outline_frame(region(0, 0, 200, 150), 1920, 1080);
@@ -2125,7 +2125,7 @@ mod tests {
 
     #[test]
     fn a_fullscreen_outline_is_the_whole_display() {
-        // Nowhere to grow in any direction — the frame is the monitor,
+        // Nowhere to grow in any direction: the frame is the monitor,
         // and the ring reads as "this display is recording".
         let f = outline_frame(region(0, 0, 1920, 1080), 1920, 1080);
         assert_eq!(f, region(0, 0, 1920, 1080));
@@ -2156,7 +2156,7 @@ mod tests {
         for reason in [
             RecorderStopReason::Committed,
             RecorderStopReason::DurationLimit,
-            // A failure keeps what it has — the moment can't be re-recorded.
+            // A failure keeps what it has: the moment can't be re-recorded.
             RecorderStopReason::Failed,
         ] {
             assert!(reason.keeps_output(), "{reason:?} must keep its output");

@@ -1,7 +1,7 @@
 /**
  * The right-hand control for one rebindable shortcut: the current combo(s)
- * as key-caps, a record button that captures a new combo, and — when the
- * binding is customized — Reset (back to default) and Unbind (×) controls.
+ * as key-caps, a record button that captures a new combo, and, when the
+ * binding is customized, Reset (back to default) and Unbind (×) controls.
  *
  * Purely presentational over its props; the owning panel holds the combos
  * and persists changes. Reused by every catalog row and the global-capture
@@ -24,7 +24,7 @@ interface KeyRecorderFieldProps {
   overridden: boolean;
   /** Whether the binding collides with another in its scope + context. */
   conflict?: boolean;
-  /** Capture a new combo — replaces the binding. */
+  /** Capture a new combo: replaces the binding. */
   onRecord(combo: string): void;
   /** Restore the registry default. */
   onReset(): void;
@@ -58,7 +58,7 @@ export function KeyRecorderField({
         onClick={recorder.recording ? recorder.cancel : recorder.start}
         aria-label={
           recorder.recording
-            ? `Recording ${actionLabel} — press Esc to cancel`
+            ? `Recording ${actionLabel}; press Esc to cancel`
             : `Record shortcut for ${actionLabel}`
         }
         aria-keyshortcuts={combos[0] ?? undefined}

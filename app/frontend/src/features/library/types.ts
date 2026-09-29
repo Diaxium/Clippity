@@ -38,12 +38,12 @@ export type LibrarySort = "newest" | "oldest" | "name" | "largest";
  * A smart collection: a **rule** over the listing, not a curated
  * document. Where a `Collection` remembers which captures the user put in
  * it and in what order, one of these is recomputed from the list every
- * render — "this week" means whatever this week means today.
+ * render: "this week" means whatever this week means today.
  */
 export type SmartId = "this-week" | "last-30-days" | "large" | "untagged";
 
 /**
- * What the sidebar is pointing at — the one destination the grid is
+ * What the sidebar is pointing at: the one destination the grid is
  * showing.
  *
  * Exactly one is active at a time, which is the difference between a

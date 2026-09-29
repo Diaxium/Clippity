@@ -1,8 +1,8 @@
 /**
- * Crop model — pure geometry, no React, no store.
+ * Crop model: pure geometry, no React, no store.
  *
  * This module owns the editor's **page** model, of which crop is the first
- * operation (device frames / backdrops are the next — Fork F4).
+ * operation (device frames / backdrops are the next, Fork F4).
  *
  * **How crop is modelled.** A capture opens as one root *page frame* with the
  * bitmap as its child (`lib/seed.ts`), and both renderers take the document's
@@ -10,13 +10,13 @@
  * frame*: children keep their absolute scene coordinates and the frame's
  * `clipContent` does the trimming. That makes a crop
  *
- *   - **non-destructive** — no pixels are discarded, so undo (and re-cropping
+ *   - **non-destructive**: no pixels are discarded, so undo (and re-cropping
  *     back outward) restores exactly what was there;
- *   - **one undo step** — a single doc transform, committed on Apply;
- *   - **format-agnostic** — nothing here touches the image data.
+ *   - **one undo step**: a single doc transform, committed on Apply;
+ *   - **format-agnostic**: nothing here touches the image data.
  *
  * The catch is that annotations don't all live *inside* the page (see
- * {@link absorbRootsIntoPage}), so committing folds the other roots in — that's
+ * {@link absorbRootsIntoPage}), so committing folds the other roots in: that's
  * what makes the crop reach the exported image rather than just the screen.
  *
  * The same frame-rect model carries the other half of Fork F4: dragging a crop
@@ -39,11 +39,11 @@ import {
  *  favicon out of a screenshot, large enough that the handles stay grabbable. */
 export const MIN_CROP = 16;
 
-/** Ratio comparisons are float math on user-dragged values — never `===`. */
+/** Ratio comparisons are float math on user-dragged values: never `===`. */
 const ASPECT_EPSILON = 1e-3;
 
 /** A selectable aspect lock. `ratio` is width ÷ height; `null` is freeform.
- *  "Original" isn't listed here because its ratio depends on the document —
+ *  "Original" isn't listed here because its ratio depends on the document:
  *  the crop bar derives it from the session's starting rect. */
 export interface CropAspect {
   label: string;
@@ -60,16 +60,16 @@ export const CROP_ASPECTS: readonly CropAspect[] = [
 ];
 
 /**
- * The document's page frame — the node a crop resizes.
+ * The document's page frame: the node a crop resizes.
  *
  * It's the **backmost root**, and only when that root is a frame: that's what
  * `sceneFromImage` builds (the capture's clipping frame, with the bitmap
  * inside) and what a saved sidecar restores. Annotations may sit either inside
- * it (anything drawn over the image — see `editorStore.frameAt`) or as later
+ * it (anything drawn over the image; see `editorStore.frameAt`) or as later
  * sibling roots (anything drawn past the edge, pasted, or ungrouped), but the
  * capture is always at the back.
  *
- * Requiring index 0 isn't fussiness — {@link absorbRootsIntoPage} relies on it
+ * Requiring index 0 isn't fussiness: {@link absorbRootsIntoPage} relies on it
  * to preserve paint order. A document whose backmost root isn't a frame has no
  * well-defined page, so this returns `null` and the crop tool stays inert
  * rather than guessing at an extent.
@@ -92,7 +92,7 @@ export function pageFrameId(
  * the **root** nodes, so as long as annotations sit beside the page rather than
  * inside it, shrinking the page alone would leave the exported image the same
  * size. Absorbing them makes the page the sole root, so the union collapses to
- * the crop rect and the frame's `clipContent` trims the overflow — the live SVG
+ * the crop rect and the frame's `clipContent` trims the overflow: the live SVG
  * canvas and the Canvas2D export then agree by construction, with no change to
  * either renderer.
  *
@@ -137,7 +137,7 @@ export function moveCrop(start: Rect, dx: number, dy: number): Rect {
 /**
  * Resize a crop rect by dragging `handle` to `pointer`.
  *
- * A dragged edge never crosses its opposite — it clamps at {@link MIN_CROP}
+ * A dragged edge never crosses its opposite: it clamps at {@link MIN_CROP}
  * instead of inverting, so the rect stays positive and the handles keep their
  * compass meaning through the whole drag. With `aspect` locked, a corner drag
  * follows whichever axis the pointer pushed further (so the crop tracks the
@@ -188,7 +188,7 @@ export function resizeCrop(
   } else {
     w = h * aspect;
   }
-  // Re-assert the minimum once the ratio is locked — the driven axis was
+  // Re-assert the minimum once the ratio is locked: the driven axis was
   // already clamped, but the derived one may have fallen under it.
   const grow = Math.max(1, MIN_CROP / w, MIN_CROP / h);
   w *= grow;
@@ -222,7 +222,7 @@ export function applyCropAspect(rect: Rect, ratio: number): Rect {
   };
 }
 
-/** Snap a live crop rect to whole scene pixels for commit — a page frame with
+/** Snap a live crop rect to whole scene pixels for commit: a page frame with
  *  fractional bounds would land on half-pixel edges in the exported bitmap. */
 export function roundCrop(rect: Rect): Rect {
   const x = Math.round(rect.x);

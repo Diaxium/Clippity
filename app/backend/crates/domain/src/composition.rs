@@ -1,11 +1,11 @@
-//! Recorder sources — the things composited over a captured frame, and
+//! Recorder sources: the things composited over a captured frame, and
 //! the blend that puts them there (ADR 0033).
 //!
 //! A recording's geometry is whatever the user pointed at: a region, a
 //! window, a monitor. Sources are drawn **into** that rectangle at a
 //! normalized position; they do not build a canvas of their own. That is
 //! the difference between a capture tool that can put a webcam in the
-//! corner and a compositor that happens to capture — the second one has
+//! corner and a compositor that happens to capture: the second one has
 //! to answer "what size is the canvas" before anything can be recorded,
 //! and turns the region the user dragged into content to be letterboxed
 //! inside something else.
@@ -26,13 +26,13 @@ use crate::pixels::PixelOrder;
 
 /// Most sources one recording may carry.
 ///
-/// Not a technical limit — the blend is linear in total overlay area, so
+/// Not a technical limit: the blend is linear in total overlay area, so
 /// ten small sources cost what one large one does. It is a bound on
 /// *nonsense*: a list this long is a corrupted settings file or a UI bug,
 /// and refusing to iterate it forever is cheaper than discovering why.
 pub const MAX_SOURCES: usize = 8;
 
-/// Fully opaque, as a percentage — the default for every source.
+/// Fully opaque, as a percentage: the default for every source.
 pub const OPACITY_PCT_DEFAULT: u16 = 100;
 
 /// Percentages rather than a float, for the reasons
@@ -47,7 +47,7 @@ pub fn clamp_opacity_pct(requested: u16) -> u16 {
 ///
 /// Deliberately small. A webcam and a still image are the two things
 /// people actually put over a screen recording, and both are "some
-/// pixels, positioned" — which is what makes one blend serve both.
+/// pixels, positioned", which is what makes one blend serve both.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum SourceKind {
@@ -55,7 +55,7 @@ pub enum SourceKind {
     /// how `recorder::AudioSelection` pins its endpoints.
     #[serde(rename_all = "camelCase")]
     Webcam { device_id: Option<String> },
-    /// A still image on disk — a logo, a watermark, a frame.
+    /// A still image on disk: a logo, a watermark, a frame.
     #[serde(rename_all = "camelCase")]
     Image { path: String },
 }
@@ -69,7 +69,7 @@ pub struct Source {
     /// Position and size as a fraction of the recorded frame.
     ///
     /// Normalized so the same source lands correctly on a different
-    /// region or a different monitor — which is what lets a recording
+    /// region or a different monitor, which is what lets a recording
     /// preset carry a source list at all.
     pub rect: NormRect,
     #[serde(default = "default_opacity_pct")]
@@ -104,7 +104,7 @@ impl Source {
 
 /// Normalise a whole source list: drop the excess, clamp what remains.
 ///
-/// **Order is preserved and meaningful** — later sources draw over
+/// **Order is preserved and meaningful**: later sources draw over
 /// earlier ones, so two overlapping sources have a defined result rather
 /// than one that depends on how the list happened to be iterated.
 pub fn clamp_sources(sources: Vec<Source>) -> Vec<Source> {
@@ -117,7 +117,7 @@ pub fn clamp_sources(sources: Vec<Source>) -> Vec<Source> {
 
 /// A source's pixels, already in the destination's channel order.
 ///
-/// **Order is resolved when the source is opened, not per frame** — the
+/// **Order is resolved when the source is opened, not per frame**: the
 /// same argument `SinkFrame` makes for the encoder path, one layer up. A
 /// webcam delivering BGRA into a BGRA capture then costs nothing at all,
 /// and one that disagrees pays for the swap once per delivered camera
@@ -164,7 +164,7 @@ pub struct Placement {
 }
 
 impl Placement {
-    /// Bytes this placement occupies in a frame of `frame_w` — the size
+    /// Bytes this placement occupies in a frame of `frame_w`: the size
     /// of the backdrop that has to be kept for it.
     pub fn backdrop_len(&self, _frame_w: u32) -> usize {
         self.width as usize * self.height as usize * 4
@@ -176,8 +176,8 @@ impl Placement {
 /// **Why a backdrop exists at all:** the recorder re-writes a *held*
 /// frame in place every `MAX_HELD_MS` while the screen is motionless
 /// (ADR 0031). A source blended once and left would freeze exactly when
-/// it matters most — the face is the part still moving when the screen is
-/// not — and blending a semi-transparent source over its own previous
+/// it matters most (the face is the part still moving when the screen is
+/// not) and blending a semi-transparent source over its own previous
 /// output compounds, darkening it on every re-write until it smears.
 ///
 /// Restoring the covered pixels before each blend makes the blend
@@ -232,7 +232,7 @@ pub fn restore_backdrop(
 /// the file gave, the destination is where the user dragged it, and they
 /// will rarely match. Nearest rather than bilinear because this runs
 /// inside a frame budget and a webcam thumbnail is not a place anyone
-/// looks for resampling quality — the same trade `gif_sink` makes with
+/// looks for resampling quality: the same trade `gif_sink` makes with
 /// its encoder speed.
 ///
 /// `opacity_pct` scales the source's own alpha, so a source with
@@ -241,7 +241,7 @@ pub fn restore_backdrop(
 /// Both buffers must be in the **same** channel order; that is resolved
 /// when the source is opened (see [`SourceFrame`]). Green and alpha sit
 /// at the same indices in both orders and red/blue are symmetric under
-/// the blend, so this needs no [`PixelOrder`] itself — which is asserted
+/// the blend, so this needs no [`PixelOrder`] itself, which is asserted
 /// by `a_matched_order_blend_is_order_agnostic`.
 pub fn blend(
     frame: &mut [u8],
@@ -316,7 +316,7 @@ pub fn blend(
 
 /// Convert a source's pixels into `want` order, in place.
 ///
-/// Called once when a source frame is delivered, not per recorded frame —
+/// Called once when a source frame is delivered, not per recorded frame:
 /// a 30 fps camera into a 60 fps recording pays half as often as a
 /// per-frame swap would, and a camera whose order already matches pays
 /// nothing.
@@ -440,7 +440,7 @@ mod tests {
         // Inside the placement: row 1, column 1, of a 4-wide frame.
         let inside = (4 + 1) * 4;
         assert_eq!(&frame[inside..inside + 3], &[200, 100, 50]);
-        // Outside is untouched — the bound that makes this affordable.
+        // Outside is untouched: the bound that makes this affordable.
         assert_eq!(&frame[0..3], &[10, 20, 30]);
     }
 

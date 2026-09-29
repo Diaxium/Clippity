@@ -86,7 +86,7 @@ describe("useLibraryQuery", () => {
     });
     expect(result.current.hasMore).toBe(false);
 
-    // Nothing left to load — loadMore is a no-op.
+    // Nothing left to load: loadMore is a no-op.
     act(() => result.current.loadMore());
     expect(libraryQueryMock).toHaveBeenCalledTimes(2);
   });

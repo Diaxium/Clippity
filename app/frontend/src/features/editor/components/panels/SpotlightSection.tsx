@@ -13,13 +13,13 @@ const SUB = FIELD_LABEL;
 
 /**
  * Controls for a spotlight region: how strongly to dim the rest of the page
- * (Dim) and which way the dim leans (Tint — dark for a light capture, light for
+ * (Dim) and which way the dim leans (Tint: dark for a light capture, light for
  * a dark one). Shown in both editor modes whenever the selection contains a
  * spotlight.
  *
  * Multi-select (P3) dims every selected spotlight together; non-spotlights
  * caught in the same marquee sit out. The write goes through `updateEach` so
- * each region keeps the *rest* of its own spec — a shared patch would stamp the
+ * each region keeps the *rest* of its own spec: a shared patch would stamp the
  * primary's color *and* opacity onto all of them (the same reasoning as
  * `CalloutSection`).
  */

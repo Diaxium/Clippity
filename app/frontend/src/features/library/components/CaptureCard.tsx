@@ -23,7 +23,7 @@ import { PalettePreview } from "./PalettePreview";
 import { SelectCheckbox } from "./SelectCheckbox";
 
 /** Kinds that get a chip over their preview, and the glyph it carries.
- *  Everything else is left bare — see the badge's comment below. */
+ *  Everything else is left bare; see the badge's comment below. */
 const BADGED_KINDS: Partial<Record<CaptureMeta["kind"], ReactNode>> = {
   video: <Clapperboard size={10} strokeWidth={2} />,
   gif: <Images size={10} strokeWidth={2} />,
@@ -35,7 +35,7 @@ interface CaptureCardProps {
   mode: LibraryMode;
   /** Show this capture in the inspector. */
   onFocus: (m: CaptureMeta) => void;
-  /** Open it for real — the editor, or the large palette view. Not
+  /** Open it for real: the editor, or the large palette view. Not
    *  called for the kinds whose "open" is a clipboard write; the card
    *  handles those itself so it can acknowledge them. */
   onOpen: (m: CaptureMeta) => void;
@@ -48,8 +48,8 @@ interface CaptureCardProps {
  * Grid-variant capture card.
  *
  * **One click focuses, two clicks open.** The card is the handle for a
- * capture, not a link: the common gesture is "show me this one" — which
- * fills the inspector and costs nothing to undo — and opening the editor
+ * capture, not a link: the common gesture is "show me this one" (which
+ * fills the inspector and costs nothing to undo) and opening the editor
  * is the deliberate second click. Ctrl/⌘-click adds one to the
  * multi-select and Shift-click takes the whole run since the last card
  * touched, so a selection can be built without ever hitting the
@@ -64,7 +64,7 @@ interface CaptureCardProps {
  * **"Open" means the terminal act for the kind**, not one fixed
  * destination. A screenshot opens in the editor and a palette opens its
  * full-size view, but a color and a text run have no view worth showing
- * — their whole content already fits on the card — so opening one copies
+ * (their whole content already fits on the card) so opening one copies
  * it. That is what a person does with a sampled color next, and routing
  * it through a no-op "open" would leave two of the six kinds with a
  * double-click that does nothing.
@@ -92,8 +92,8 @@ export function CaptureCard({
   const thumb = useThumbnail(cardRef, isAux ? null : meta.id, width);
   const { copied, copy } = useCopyFeedback();
 
-  // A color or a text run has no larger view to open — its content is
-  // already fully on the card — so opening it puts it on the clipboard.
+  // A color or a text run has no larger view to open (its content is
+  // already fully on the card) so opening it puts it on the clipboard.
   const opensByCopying = meta.kind === "color" || meta.kind === "text";
   const subtitle = captureSubtitle(meta);
 
@@ -158,7 +158,7 @@ export function CaptureCard({
 
         {/* Only the kinds whose preview misrepresents them get a badge.
             A "PNG" chip on a screenshot repeats the line below, and a
-            swatch is unmistakably a color — but a motionless video
+            swatch is unmistakably a color, but a motionless video
             thumbnail and a paragraph of grabbed text both look exactly
             like a screenshot until something says otherwise. */}
         {BADGED_KINDS[meta.kind] && (
@@ -168,7 +168,7 @@ export function CaptureCard({
           </span>
         )}
 
-        {/* A clipboard write is invisible — without this the double-click
+        {/* A clipboard write is invisible: without this the double-click
             that copied a color looks like a double-click that did
             nothing. */}
         {copied && (

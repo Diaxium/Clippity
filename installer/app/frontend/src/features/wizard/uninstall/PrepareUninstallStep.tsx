@@ -25,7 +25,7 @@ const ICON: Record<string, IconComponent> = {
   content: FolderGit2,
 };
 
-/** Uninstall step 2 — the storage summary before choosing what to remove. */
+/** Uninstall step 2: the storage summary before choosing what to remove. */
 export function PrepareUninstallStep() {
   const back = useWizardStore((s) => s.back);
   const goToStep = useWizardStore((s) => s.goToStep);

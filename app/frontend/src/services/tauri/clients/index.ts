@@ -1,5 +1,5 @@
 /**
- * Typed IPC clients — one file per backend service domain.
+ * Typed IPC clients: one file per backend service domain.
  *
  * Per [ADR 0001](../../../../docs/decisions/0001-capture-overlay-dispatch.md),
  * cross-feature IPC wrappers live here (not under

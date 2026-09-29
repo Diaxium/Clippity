@@ -56,7 +56,7 @@ describe("runPreset", () => {
   });
 
   it("stamps the preset's name onto a fullscreen capture", async () => {
-    // The backend can't observe which preset is running — this is the
+    // The backend can't observe which preset is running: this is the
     // only place the provenance record can learn it.
     await runPreset(preset());
     expect(captureFullscreenMock).toHaveBeenCalledWith(

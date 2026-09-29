@@ -1,5 +1,5 @@
 /**
- * Windows, the global hotkey, and storage — the "why is nothing
+ * Windows, the global hotkey, and storage: the "why is nothing
  * happening?" card, plus the destructive corner that clears caches and
  * rebuilds the library index.
  *
@@ -117,8 +117,8 @@ export function RuntimeCard({
               label="Global capture hotkey"
               value={
                 status.globalCapture.registered
-                  ? `${status.globalCapture.combo} — registered`
-                  : `${status.globalCapture.combo || "none"} — ${
+                  ? `${status.globalCapture.combo}, registered`
+                  : `${status.globalCapture.combo || "none"}, ${
                       status.globalCapture.detail ?? "not registered"
                     }`
               }
@@ -127,7 +127,7 @@ export function RuntimeCard({
             {!status.globalHotkeysInstalled && (
               <StatLine
                 label="Capture integration"
-                value="not installed — no global hotkey is registered"
+                value="not installed: no global hotkey is registered"
                 tone="warn"
               />
             )}
@@ -135,8 +135,8 @@ export function RuntimeCard({
               label="Capture shield"
               value={
                 status.captureShielded
-                  ? "on — Clippity's windows are excluded from captures"
-                  : "off — Clippity's windows can appear in a capture"
+                  ? "on: Clippity's windows are excluded from captures"
+                  : "off: Clippity's windows can appear in a capture"
               }
               tone={status.captureShielded ? "normal" : "warn"}
             />
@@ -214,7 +214,7 @@ export function RuntimeCard({
         ))}
         <ActionRow
           label="Rebuild library index"
-          description="Re-reads every capture and its sidecar. Safe — the index is a cache over the files, never the source of truth."
+          description="Re-reads every capture and its sidecar. Safe: the index is a cache over the files, never the source of truth."
         >
           <DangerButton
             label="Rebuild"

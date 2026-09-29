@@ -1,4 +1,4 @@
-//! Media Foundation source reader — the decode half of the recorder's
+//! Media Foundation source reader: the decode half of the recorder's
 //! pipeline, used by Studio to describe and re-cut a saved clip.
 //!
 //! The counterpart to [`super::media_foundation`], and deliberately the
@@ -13,7 +13,7 @@
 //! lifetime. Nothing about a reader crosses a thread boundary.
 //!
 //! **Only what Studio needs.** This is not a general demuxer: it answers
-//! "how long, how big, how fast, is there sound" and — for a trim —
+//! "how long, how big, how fast, is there sound" and, for a trim,
 //! "give me the frames between these two times". Anything that needs
 //! more than that should get its own module rather than growing this
 //! one into a media framework.
@@ -73,7 +73,7 @@ impl ProbedMedia {
 
 /// Read a media file's shape without decoding any of it.
 ///
-/// Cheap — the source reader parses the container's headers and stops.
+/// Cheap: the source reader parses the container's headers and stops.
 /// That is what lets Studio open a two-hour recording as fast as a
 /// two-second one, which is the whole reason the duration and frame
 /// count come from metadata rather than from counting frames.
@@ -111,7 +111,7 @@ pub fn probe(path: &Path) -> AppResult<ProbedMedia> {
         width,
         height,
         // 100 ns ticks → ms. Rounds down, so a clip never claims to be
-        // longer than it is — a timeline that can seek past the last
+        // longer than it is: a timeline that can seek past the last
         // frame shows a black stall the user reads as a broken file.
         duration_ms: (duration_hns / 10_000).max(0) as u64,
         fps_numerator,
@@ -123,7 +123,7 @@ pub fn probe(path: &Path) -> AppResult<ProbedMedia> {
 /// A clip open for decoding, positioned somewhere on its timeline.
 ///
 /// Produced by [`Decoder::open`] and driven by pulling samples. Holds
-/// COM interfaces, so — like the writer — it is created and used on one
+/// COM interfaces, so, like the writer, it is created and used on one
 /// thread that owns a [`ComThread`] guard.
 pub struct Decoder {
     reader: IMFSourceReader,
@@ -133,7 +133,7 @@ pub struct Decoder {
     ///
     /// Not assumed to be `width * 4`, and not assumed to be positive.
     /// An uncompressed RGB surface follows the GDI convention where a
-    /// **negative** stride means the rows arrive bottom-up — the exact
+    /// **negative** stride means the rows arrive bottom-up: the exact
     /// trap ADR 0031 avoided on the writing side by feeding NV12. On the
     /// reading side there is no such escape (the caller wants RGBA), so
     /// the orientation is read from the media type and honoured rather
@@ -233,7 +233,7 @@ impl Decoder {
     /// the request and decodes forward from there, so the first frames
     /// out may predate the target. That is correct and is why the caller
     /// discards samples before its in-point rather than trusting the
-    /// first one it gets — the alternative, seeking exactly, would mean
+    /// first one it gets: the alternative, seeking exactly, would mean
     /// cutting mid-GOP and producing a clip that starts with a smear.
     pub fn seek(&mut self, position_hns: i64) -> AppResult<()> {
         let mut position = PROPVARIANT::default();
@@ -306,7 +306,7 @@ impl Decoder {
             }
             match sample {
                 // A null sample with no end-of-stream flag is a gap or a
-                // format change — ask again rather than treating it as
+                // format change: ask again rather than treating it as
                 // the end of the clip.
                 None => continue,
                 Some(sample) => return Ok(Some((sample, timestamp))),
@@ -481,7 +481,7 @@ fn current_media_type(reader: &IMFSourceReader, stream: u32) -> Option<IMFMediaT
 }
 
 /// Read one of Media Foundation's packed `(high, low)` `UINT64`
-/// attributes — the encoding it uses for frame size and frame rate.
+/// attributes: the encoding it uses for frame size and frame rate.
 ///
 /// The inverse of the writer's `pack`. Kept here rather than shared
 /// because the two modules are on opposite sides of the pipeline and a
@@ -501,16 +501,16 @@ mod tests {
 
     /// Report how a real clip is actually laid out on its timeline.
     ///
-    /// Not an assertion — a tool. It answers the question no unit test
+    /// Not an assertion, a tool. It answers the question no unit test
     /// can, because it needs a file that came off this machine: *are the
     /// frames where the container says they are?*
     ///
     /// It exists because they once were not. A recording whose grabs
     /// could not keep up carried samples that each claimed the nominal
     /// `1/fps` while the next began hundreds of milliseconds later, so
-    /// the timeline was mostly holes. Studio looked broken — the
+    /// the timeline was mostly holes. Studio looked broken (the
     /// playhead would not approach the start, and playback stopped well
-    /// short of the stated end — and every frontend measurement agreed
+    /// short of the stated end) and every frontend measurement agreed
     /// with the file rather than with reality. This is what found it:
     ///
     /// ```text
@@ -590,14 +590,14 @@ mod tests {
 
     #[test]
     fn a_broadcast_frame_rate_rounds_to_the_nearest_whole() {
-        // 30000/1001 is "29.97" — a rate real files carry.
+        // 30000/1001 is "29.97": a rate real files carry.
         assert_eq!(probed(30_000, 1_001).fps(), Some(30));
         assert_eq!(probed(60_000, 1_001).fps(), Some(60));
     }
 
     #[test]
     fn an_undeclared_frame_rate_is_none_rather_than_a_guess() {
-        // The domain layer owns the fallback — see `ProbedMedia::fps`.
+        // The domain layer owns the fallback; see `ProbedMedia::fps`.
         assert_eq!(probed(0, 0).fps(), None);
         assert_eq!(probed(30, 0).fps(), None);
         assert_eq!(probed(0, 1).fps(), None);
@@ -606,7 +606,7 @@ mod tests {
     #[test]
     fn a_sub_one_frame_rate_never_rounds_down_to_zero() {
         // A rate below one frame per second is a timelapse, not a
-        // recording, but it must still not produce a zero — every
+        // recording, but it must still not produce a zero: every
         // frame-step calculation downstream divides by this.
         assert_eq!(probed(1, 2).fps(), Some(1), "half a frame per second");
         // Below the point where rounding would reach zero, the honest

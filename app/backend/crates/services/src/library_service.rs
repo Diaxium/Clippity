@@ -1,11 +1,11 @@
-//! Library orchestration — filesystem-backed capture inventory with
+//! Library orchestration: filesystem-backed capture inventory with
 //! thumbnail decode, trash/restore, and storage stats.
 //!
 //! **The filesystem is the source of truth.** A capture is its file;
 //! its description is the `.meta` sidecar beside it (ADR 0026). A
 //! SQLite index (`services::library_index`) caches the rows those two
-//! produce, but it is reconciled against disk before every read — see
-//! [`LibraryService::list`] — so it can only ever make listing *faster*,
+//! produce, but it is reconciled against disk before every read, see
+//! [`LibraryService::list`], so it can only ever make listing *faster*,
 //! never make it disagree with what's on disk. With no index (it failed
 //! to open, or the caller didn't ask for one) [`LibraryService::list`]
 //! falls back to scanning, which is what it always did.
@@ -70,8 +70,8 @@ pub struct LibraryService {
     /// Serializes read-modify-write of the aux catalog so concurrent
     /// color / palette saves don't clobber each other.
     aux_lock: Mutex<()>,
-    /// The listing cache. `None` when the database could not be opened
-    /// — the library then scans, exactly as it did before the index
+    /// The listing cache. `None` when the database could not be opened:
+    /// the library then scans, exactly as it did before the index
     /// existed. A cache is never allowed to be the reason a user can't
     /// see their captures.
     index: Option<LibraryIndex>,
@@ -79,7 +79,7 @@ pub struct LibraryService {
     /// the same instance. It is held *here* because a capture's id
     /// changes inside [`Self::delete`] / [`Self::restore`] / [`Self::purge`],
     /// and the collections that reference it have to be carried across
-    /// at that choke point — the same argument that put `sidecar::relocate`
+    /// at that choke point: the same argument that put `sidecar::relocate`
     /// there (ADR 0029).
     collections: Arc<CollectionsService>,
 }
@@ -124,7 +124,7 @@ impl LibraryService {
 
     /// The captures dir (+ `.trash` if requested) as a newest-first
     /// vector of `CaptureMeta`. A missing dir is silent (empty result),
-    /// not an error — it may not exist on first launch.
+    /// not an error: it may not exist on first launch.
     ///
     /// Served from the index when there is one, after reconciling it
     /// against disk ([`Self::reconcile`]); by scanning when there
@@ -150,14 +150,14 @@ impl LibraryService {
         }
     }
 
-    /// One filtered, searched, sorted *page* of the listing — the same
+    /// One filtered, searched, sorted *page* of the listing: the same
     /// reconcile-then-read contract as [`Self::list`], but with the grid's
     /// narrowing pushed into SQL so a large library materializes only the
     /// page a caller shows (performance roadmap P5). Falls back to a full
     /// scan + the in-memory twin of the query when there is no index or it
     /// fails, so the answer is identical either way.
     pub fn query(&self, q: &LibraryQuery) -> AppResult<QueryPage> {
-        // The scan's flag is still a superset — the trash *view* narrows
+        // The scan's flag is still a superset: the trash *view* narrows
         // to the deleted half inside `apply_in_memory`, which can only do
         // that if the scan walked the trash directory in the first place.
         let scan_trashed = q.trash.needs_trash();
@@ -174,13 +174,13 @@ impl LibraryService {
     }
 
     /// Every count the destination rail shows, aggregated over the whole
-    /// library — same reconcile-then-read contract as [`Self::list`].
+    /// library; same reconcile-then-read contract as [`Self::list`].
     ///
     /// This is the other half of what a paged grid needs: [`Self::query`]
     /// answers "what is on this page", and a rail cannot be built from
     /// that answer, because its counts span every row the page left
     /// behind. Without this the client would have to load the full
-    /// listing to label its own navigation — the exact cost P5 removes.
+    /// listing to label its own navigation: the exact cost P5 removes.
     pub fn facets(&self, q: &FacetsQuery) -> AppResult<LibraryFacets> {
         let Some(index) = self.index.as_ref() else {
             return Ok(q.apply_in_memory(&self.scan(true)));
@@ -196,7 +196,7 @@ impl LibraryService {
 
     /// Bring the index in line with what is on disk *right now*.
     ///
-    /// One `read_dir` + `stat` per capture (and per `.meta` record) —
+    /// One `read_dir` + `stat` per capture (and per `.meta` record);
     /// no file contents are read for a capture whose [`Stamp`] is
     /// unchanged, which is the whole saving: an unchanged library costs
     /// stats instead of N JSON parses. Rows whose files are gone are
@@ -238,7 +238,7 @@ impl LibraryService {
     /// aux row still carries it, the file hasn't moved and the rows
     /// stand. Otherwise it is re-parsed and every entry re-inserted,
     /// which also lets [`Self::reconcile`] prune entries that were
-    /// removed from it. An empty catalog re-reads each listing — one
+    /// removed from it. An empty catalog re-reads each listing: one
     /// small file, and the alternative is a stamp row for a file with
     /// no rows.
     fn collect_aux(
@@ -284,7 +284,7 @@ impl LibraryService {
                 out.push(entry);
             }
         }
-        // Newest first, ties broken on id — the index orders the same
+        // Newest first, ties broken on id: the index orders the same
         // way, and the two paths must not disagree about anything a
         // caller can observe.
         out.sort_by(|a, b| b.created_at_ms.cmp(&a.created_at_ms).then(a.id.cmp(&b.id)));
@@ -294,8 +294,8 @@ impl LibraryService {
     /// Throw the cached listing away; the next [`Self::list`] refills
     /// it from disk. Returns the number of rows rebuilt.
     ///
-    /// Nothing in normal operation needs this — reconciliation already
-    /// keeps the index true — but "rebuildable at any time" is only a
+    /// Nothing in normal operation needs this, reconciliation already
+    /// keeps the index true, but "rebuildable at any time" is only a
     /// real property if something exercises it.
     pub fn reindex(&self) -> AppResult<u64> {
         let Some(index) = self.index.as_ref() else {
@@ -314,8 +314,8 @@ impl LibraryService {
         // A video is not a decodable image, so a recording's row is
         // drawn from the poster frame the recorder wrote beside it
         // (ADR 0031). Falling back on *decode failure* rather than
-        // branching on extension means a GIF — which `image` decodes
-        // natively, first frame and all — keeps using the real file,
+        // branching on extension means a GIF (which `image` decodes
+        // natively, first frame and all) keeps using the real file,
         // and a future container needs no change here.
         let source = sidecar::poster_path(Path::new(id))
             .filter(|_| !Self::can_decode_directly(id))
@@ -366,7 +366,7 @@ impl LibraryService {
     /// restore comes back with its provenance and its editable scene
     /// intact rather than as a bare image.
     pub fn delete(&self, id: &str) -> AppResult<String> {
-        // Aux entries live in the catalog, not on disk — soft-delete is
+        // Aux entries live in the catalog, not on disk: soft-delete is
         // a flag flip and keeps the same id (unlike a file rename).
         if library::is_aux_id(id) {
             return self.aux_set_trashed(id, true);
@@ -390,7 +390,7 @@ impl LibraryService {
 
     /// Move `id` from captures/.trash/ back to captures/. Returns
     /// the new path (which is the new id). Carries the capture's
-    /// sidecars back with it — see [`Self::delete`].
+    /// sidecars back with it; see [`Self::delete`].
     pub fn restore(&self, id: &str) -> AppResult<String> {
         if library::is_aux_id(id) {
             return self.aux_set_trashed(id, false);
@@ -410,7 +410,7 @@ impl LibraryService {
     }
 
     /// Permanently delete the file at `id` from disk, along with its
-    /// sidecars — otherwise emptying the trash would leave orphaned
+    /// sidecars, otherwise emptying the trash would leave orphaned
     /// records behind in the hidden dirs forever.
     pub fn purge(&self, id: &str) -> AppResult<()> {
         if library::is_aux_id(id) {
@@ -436,7 +436,7 @@ impl LibraryService {
     /// grows a second code path for the plural case.
     ///
     /// An id whose capture has since vanished is skipped rather than
-    /// failing the batch — the selection was made against a listing that
+    /// failing the batch: the selection was made against a listing that
     /// another window may have moved on from. An id that escapes the
     /// captures root still fails loudly: that is a malformed request, not
     /// a race.
@@ -459,7 +459,7 @@ impl LibraryService {
     /// One file-backed capture's `.labels` record: read, apply, write
     /// back only if something moved. Returns whether it did.
     ///
-    /// Skipping the no-op write matters beyond saving a syscall — the
+    /// Skipping the no-op write matters beyond saving a syscall: the
     /// record's mtime is part of the index's stamp, so an idle write
     /// would invalidate the row and cost a rebuild for a change nobody
     /// made.
@@ -485,7 +485,7 @@ impl LibraryService {
 
     /// The aux catalog's half of [`Self::update_labels`]. Aux entries
     /// have no file to hang a sidecar off, so their labels live on the
-    /// row itself inside `history.json` — one load/save for the whole
+    /// row itself inside `history.json`: one load/save for the whole
     /// batch, under the same write lock every other aux mutation takes.
     fn aux_update_labels(&self, ids: &[String], edit: LabelEdit<'_>) -> AppResult<u64> {
         let _guard = self
@@ -535,7 +535,7 @@ impl LibraryService {
     }
 
     /// Load the aux catalog. A missing or unparseable file yields an
-    /// empty list — the catalog is best-effort metadata; a corrupt file
+    /// empty list: the catalog is best-effort metadata; a corrupt file
     /// must not break the whole library listing.
     fn load_aux(&self) -> Vec<CaptureMeta> {
         let Ok(bytes) = fs::read(self.aux_path()) else {
@@ -622,7 +622,7 @@ impl LibraryService {
         })
     }
 
-    /// Flip an aux entry's `trashed` flag. Returns the (unchanged) id —
+    /// Flip an aux entry's `trashed` flag. Returns the (unchanged) id:
     /// aux soft-delete keeps the same id, unlike a file rename.
     fn aux_set_trashed(&self, id: &str, trashed: bool) -> AppResult<String> {
         let _guard = self
@@ -660,7 +660,7 @@ impl LibraryService {
 /// The catalogs that live among the captures but are not captures: the
 /// aux entries' `history.json` and the collections document. Both are
 /// user data, which is why they sit in the captures dir rather than the
-/// app data dir — and both would otherwise list as a stray `.json` row.
+/// app data dir, and both would otherwise list as a stray `.json` row.
 fn is_catalog_file(name: &str) -> bool {
     name == AUX_CATALOG_FILE || name == collections_service::CATALOG_FILE_NAME
 }
@@ -670,7 +670,7 @@ fn is_catalog_file(name: &str) -> bool {
 ///
 /// Non-recursive by design. Hidden files (`.foo`) and the catalogs
 /// are not captures, and the hidden sub-directories (`.trash` and the
-/// sidecar families) are never descended into — `.trash` gets its own
+/// sidecar families) are never descended into: `.trash` gets its own
 /// explicit walk so its rows can be marked trashed.
 ///
 /// The metadata is `Option` because a file can vanish between the
@@ -700,8 +700,8 @@ fn capture_files(dir: &Path) -> Vec<(PathBuf, Option<fs::Metadata>)> {
 /// One library row for one capture file, reading its `.meta` and
 /// `.labels` sidecars.
 ///
-/// The sidecars are strictly additive: a capture without one —
-/// everything saved before sidecars shipped — lists exactly as it did
+/// The sidecars are strictly additive: a capture without one,
+/// everything saved before sidecars shipped, lists exactly as it did
 /// before. Notably `created_at_ms` prefers the recorded capture instant
 /// over the file's mtime, so editing or copying a capture no longer
 /// moves it in the timeline.
@@ -753,7 +753,7 @@ fn read_dir_metas(dir: &Path, trashed: bool, out: &mut Vec<CaptureMeta>) {
 /// Reconcile one directory against `cached`: record every id as seen,
 /// and rebuild the row for any capture whose stamp has moved.
 ///
-/// This is where the saving happens — a capture whose stamp matches
+/// This is where the saving happens: a capture whose stamp matches
 /// costs two `stat`s and nothing else, while a changed one pays the
 /// same sidecar read the scanning path always paid.
 fn collect_dir(
@@ -776,13 +776,13 @@ fn collect_dir(
 }
 
 /// The disk state a capture's row is built from: the file's mtime and
-/// size, plus the mtime of each record that feeds the row — `.meta`
+/// size, plus the mtime of each record that feeds the row: `.meta`
 /// provenance and `.labels`.
 ///
 /// The records are in here because they are half the row: a provenance
 /// rewrite, or a tag added, that left the pixels alone would otherwise
 /// never reach the cache. An absent record stamps as `0`, which is a
-/// stable answer rather than a missing one — a capture that never had
+/// stable answer rather than a missing one: a capture that never had
 /// labels and one whose last tag was just removed (which *deletes* the
 /// record, see `sidecar::write_labels`) compare equal, as they should.
 fn stamp_for(path: &Path, fs_meta: Option<&fs::Metadata>) -> Stamp {
@@ -801,7 +801,7 @@ fn sidecar_mtime_ms(path: &Path, dirname: &str) -> i64 {
         .unwrap_or(0)
 }
 
-/// Stamp for a standalone file that has no sidecars of its own — the
+/// Stamp for a standalone file that has no sidecars of its own: the
 /// aux catalog, which carries its entries' labels inline. `None` when
 /// the file isn't there at all.
 fn file_stamp(path: &Path) -> Option<Stamp> {
@@ -843,7 +843,7 @@ fn walk_size(dir: &Path) -> u64 {
 
 /// On-disk wrapper for the aux catalog. The object shape (rather than a
 /// bare array) leaves room for a future field without re-shaping the
-/// file — the same reason `collections.json` is an object.
+/// file: the same reason `collections.json` is an object.
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 struct AuxCatalog {
     #[serde(default)]
@@ -894,7 +894,7 @@ mod tests {
 
     /// Build a `LibraryService` rooted at a unique temporary
     /// directory so the tests are hermetic. The guard removes the
-    /// temp tree on Drop — matches the `capture_io.rs` pattern (no
+    /// temp tree on Drop; matches the `capture_io.rs` pattern (no
     /// `tempfile` / `tempdir` crate dep).
     ///
     /// [`harness`] wires an index in, so the whole suite below asserts
@@ -922,7 +922,7 @@ mod tests {
         build_harness(true)
     }
 
-    /// The same library with no index — the path taken when the
+    /// The same library with no index: the path taken when the
     /// database can't be opened.
     fn scanning_harness() -> TestHarness {
         build_harness(false)
@@ -1103,7 +1103,7 @@ mod tests {
         let h = harness();
         let p = write_capture(&h.captures, "Round.png", b"\x89PNG");
         write_provenance(&p, "Figma", "Window", 42);
-        // A scene document too — trash must not strip the edits either.
+        // A scene document too: trash must not strip the edits either.
         let scene = sidecar::path_for(&p, sidecar::SCENES_DIRNAME).unwrap();
         fs::create_dir_all(scene.parent().unwrap()).unwrap();
         fs::write(&scene, r#"{"version":1}"#).unwrap();
@@ -1210,7 +1210,7 @@ mod tests {
     #[test]
     fn a_gif_thumbnails_from_the_file_itself_not_a_poster() {
         // `image` decodes a GIF's first frame, so a recorded GIF needs
-        // no poster — and must not be diverted to one.
+        // no poster, and must not be diverted to one.
         let h = harness();
         let mut gif = Vec::new();
         {
@@ -1503,7 +1503,7 @@ mod tests {
 
     #[test]
     fn one_edit_covers_a_whole_selection() {
-        // Bulk is the same call as single — that is the reason the API
+        // Bulk is the same call as single: that is the reason the API
         // takes a list rather than the UI fanning out N round trips.
         let h = harness();
         let ids: Vec<String> = ["A.png", "B.png", "C.png"]
@@ -1605,7 +1605,7 @@ mod tests {
 
     #[test]
     fn aux_entries_carry_labels_on_their_catalog_row() {
-        // No file, no sidecar — the labels live on the row itself, and
+        // No file, no sidecar: the labels live on the row itself, and
         // the caller cannot tell the difference.
         let h = harness();
         let id = h.service.add_color(sample_color()).unwrap().id;
@@ -1707,7 +1707,7 @@ mod tests {
     // These pin the properties that make that safe: the two listing
     // paths agree, the cache follows disk, and nothing stale survives.
 
-    /// Both listings, as `(id, created_at_ms, trashed)` triples — the
+    /// Both listings, as `(id, created_at_ms, trashed)` triples: the
     /// observable shape a caller sorts and renders.
     fn shape(items: &[CaptureMeta]) -> Vec<(String, u128, bool)> {
         items
@@ -1733,7 +1733,7 @@ mod tests {
             let mut a = indexed.service.list(include_trashed).unwrap();
             let mut b = scanned.service.list(include_trashed).unwrap();
             // Both paths order by `created_at_ms DESC, id ASC`, and in a
-            // real library that is fully determined — one root, one set of
+            // real library that is fully determined: one root, one set of
             // ids. Here the two trees sit under *different* temp roots, so
             // rows written in the same millisecond (a fast machine writes
             // the trashed file and the colour entry within one) can break
@@ -1752,7 +1752,7 @@ mod tests {
                 assert_eq!(x.mode, y.mode);
                 assert_eq!(x.color, y.color);
                 // Only a recorded instant is comparable across the two
-                // harnesses — the rest of the rows date from their own
+                // harnesses: the rest of the rows date from their own
                 // file's mtime, and the two trees were written
                 // milliseconds apart.
                 if x.mode.is_some() {
@@ -1878,7 +1878,7 @@ mod tests {
         let first = h.service.list(false).unwrap();
 
         // A second service over the same captures dir *and* the same
-        // database — what relaunching the app looks like.
+        // database: what relaunching the app looks like.
         let db = h.root.join(crate::library_index::DB_FILE_NAME);
         let captures_src: Arc<dyn CapturesDirSource> =
             Arc::new(StaticCapturesDir(h.captures.clone()));

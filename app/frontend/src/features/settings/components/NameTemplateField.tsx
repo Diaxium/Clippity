@@ -15,7 +15,7 @@ interface NameTemplateFieldProps {
 /**
  * Capture file-name pattern editor: a monospace template input, a live
  * example of the resulting filename, and the available token legend.
- * Empty value means "use the backend default" — the placeholder shows it.
+ * Empty value means "use the backend default": the placeholder shows it.
  */
 export function NameTemplateField({ value, onChange }: NameTemplateFieldProps) {
   return (
@@ -43,8 +43,8 @@ export function NameTemplateField({ value, onChange }: NameTemplateFieldProps) {
           <li key={t.token}>
             <code className="font-mono text-[var(--color-slate)]">
               {t.token}
-            </code>{" "}
-            — {t.description}
+            </code>
+            : {t.description}
           </li>
         ))}
       </ul>

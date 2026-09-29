@@ -18,7 +18,7 @@ interface PerformancePanelProps {
  * The GPU-acceleration value the running WebView2 actually booted with.
  * Captured once per window (each Tauri window has its own JS realm) on
  * the first render that has live settings, so the "restart to apply"
- * prompt survives the user navigating away from + back to this tab —
+ * prompt survives the user navigating away from + back to this tab:
  * the browser arg is fixed at webview-environment creation, so only a
  * fresh process picks up a change.
  */

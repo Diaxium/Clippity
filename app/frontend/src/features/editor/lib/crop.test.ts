@@ -56,7 +56,7 @@ describe("pageFrameId", () => {
     const loose = makeRectangle({ x: 0, y: 0, width: 10, height: 10 });
     expect(pageFrameId([], s.nodes)).toBeNull();
     expect(pageFrameId([loose.id], { [loose.id]: loose })).toBeNull();
-    // A frame exists, but something paints behind it — no well-defined page,
+    // A frame exists, but something paints behind it: no well-defined page,
     // and absorbing roots into it would reorder the scene.
     expect(
       pageFrameId([loose.id, ...s.rootIds], { ...s.nodes, [loose.id]: loose })
@@ -92,7 +92,7 @@ describe("absorbRootsIntoPage", () => {
     ]);
   });
 
-  it("is a no-op — same object — when the page is already the only root", () => {
+  it("is a no-op (same object) when the page is already the only root", () => {
     const s = scene();
     const doc = { rootIds: s.rootIds, nodes: s.nodes };
     expect(absorbRootsIntoPage(doc, s.rootIds[0]!)).toBe(doc);
@@ -186,7 +186,7 @@ describe("resizeCrop", () => {
   });
 
   it("honours the minimum on the derived axis of an aspect lock", () => {
-    // A very wide ratio would push height under the minimum — both scale up.
+    // A very wide ratio would push height under the minimum: both scale up.
     const r = resizeCrop(BOX, "e", { x: MIN_CROP, y: 0 }, 8);
     expect(r.height).toBeGreaterThanOrEqual(MIN_CROP);
     expect(r.width / r.height).toBeCloseTo(8);
@@ -195,7 +195,7 @@ describe("resizeCrop", () => {
 
 describe("moveCrop", () => {
   it("translates without resizing, and is not clamped to the image", () => {
-    // Sliding the window off the page is legitimate — outward crop is how page
+    // Sliding the window off the page is legitimate: outward crop is how page
     // padding gets authored.
     expect(moveCrop(BOX, -50, 25)).toEqual({
       x: -50,

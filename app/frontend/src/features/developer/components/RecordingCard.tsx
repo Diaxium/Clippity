@@ -1,10 +1,10 @@
 /**
- * Recorder statistics — the live session while one is running, and what
+ * Recorder statistics: the live session while one is running, and what
  * the last one actually did once it has finished.
  *
  * Both halves matter and neither replaces the other: the live numbers
  * answer "is this recording going wrong right now", and the post-session
- * ones answer "why did that clip come out like that" — which is the
+ * ones answer "why did that clip come out like that", which is the
  * question people actually ask, minutes later, in Settings.
  */
 
@@ -123,7 +123,7 @@ export function RecordingCard() {
                 ? `${((last.frames * 1000) / last.durationMs).toFixed(1)} fps of ${
                     last.targetFps
                   } requested`
-                : "—"
+                : "-"
             }
           />
           <StatLine label="File size" value={formatBytes(last.bytes)} />
@@ -132,7 +132,7 @@ export function RecordingCard() {
             value={
               avgBitrateKbps(last)
                 ? `${(avgBitrateKbps(last) as number).toLocaleString()} kbit/s`
-                : "—"
+                : "-"
             }
           />
           <StatLine
@@ -151,7 +151,7 @@ export function RecordingCard() {
   );
 }
 
-/** The copyable block — the same numbers, as text for a bug report. */
+/** The copyable block: the same numbers, as text for a bug report. */
 function summarize(d: RecorderDiagnostics): string {
   const bitrate = avgBitrateKbps(d);
   return [

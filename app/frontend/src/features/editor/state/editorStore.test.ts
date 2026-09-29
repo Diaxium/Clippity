@@ -135,7 +135,7 @@ describe("modes", () => {
   });
 
   it("carries the current viewport into a mode that hasn't been visited", () => {
-    // No snap-to-fit on first entry — the user keeps the framing they had.
+    // No snap-to-fit on first entry: the user keeps the framing they had.
     const st = () => useEditorStore.getState();
     st().setPan(42, 84);
     const before = st().viewport;
@@ -212,7 +212,7 @@ describe("addNode", () => {
     expect(node(second.id).name).toBe("Warning");
   });
 
-  it("does not seal the page for a stamp — it is a local mark", () => {
+  it("does not seal the page for a stamp: it is a local mark", () => {
     // Unlike a spotlight (whose scrim covers the page) or a crop, a stamp paints
     // only inside its own frame, so there is no export region to reconcile.
     const before = useEditorStore.getState().rootIds.length;
@@ -229,7 +229,7 @@ describe("addNode", () => {
 
   it("seals the page when a spotlight is added (no undimmed export band)", () => {
     // Seed has a stray root `c` beside the page frame. A spotlight dims the page
-    // frame's rect, so that rect must be the whole document — adding one absorbs
+    // frame's rect, so that rect must be the whole document: adding one absorbs
     // the stray so `unionBounds(rootIds) === pageRect` (see lib/spotlight.ts).
     const spot = createNodeForTool("spotlight", {
       x: 20,
@@ -389,7 +389,7 @@ describe("undo / redo", () => {
     for (let i = 1; i <= 150; i++) {
       useEditorStore.getState().updateNode(seed.a.id, { x: i });
     }
-    // Oldest snapshots are dropped — the stack is bounded, not 150 deep.
+    // Oldest snapshots are dropped: the stack is bounded, not 150 deep.
     expect(useEditorStore.getState().past.length).toBe(100);
     // The most recent edits still undo correctly.
     expect(node(seed.a.id).x).toBe(150);
@@ -930,7 +930,7 @@ describe("inspector chrome", () => {
   it("force-opens a section so an added row isn't created out of sight", () => {
     st().setSectionOpen("effects", true);
     expect(st().sectionsOpen.effects).toBe(true);
-    // Idempotent — setting the value it already has is a no-op.
+    // Idempotent: setting the value it already has is a no-op.
     const before = st().sectionsOpen;
     st().setSectionOpen("effects", true);
     expect(st().sectionsOpen).toBe(before);
@@ -1016,7 +1016,7 @@ describe("crop session", () => {
     st().setCropRect({ x: 0, y: 0, width: 200, height: 150 });
     st().commitCrop();
 
-    // One root — so `unionBounds` (the export + fit region) is the crop rect.
+    // One root, so `unionBounds` (the export + fit region) is the crop rect.
     expect(st().rootIds).toEqual([page.id]);
     const children = (node(page.id) as FrameNode).children;
     expect(children[children.length - 1]).toBe(note.id);
@@ -1039,7 +1039,7 @@ describe("crop session", () => {
     st().addNode(note, null);
     st().beginCrop();
     st().commitCrop();
-    // No crop means no restructure — applying an untouched session is inert.
+    // No crop means no restructure: applying an untouched session is inert.
     expect(st().rootIds).toEqual([page.id, note.id]);
   });
 
@@ -1084,7 +1084,7 @@ describe("crop session", () => {
     });
   });
 
-  it("keeps the page's children in place — crop discards no pixels", () => {
+  it("keeps the page's children in place: crop discards no pixels", () => {
     const page = loadPage();
     const photoId = (node(page.id) as FrameNode).children[0]!;
     const before = node(photoId);

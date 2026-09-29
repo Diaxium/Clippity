@@ -6,7 +6,7 @@
 //! # Why a capture needs this at all
 //!
 //! On an HDR display the desktop is composed in scRGB: linear,
-//! half-float, and *unbounded* — `1.0` is not "white", it is the
+//! half-float, and *unbounded*; `1.0` is not "white", it is the
 //! reference SDR white point of 80 nits, and a specular highlight in a
 //! game or a video legitimately sits at 8.0. Asking the compositor for
 //! an 8-bit buffer instead makes it hand back that scene squeezed into
@@ -19,8 +19,8 @@
 //! # The conversion, in order
 //!
 //! 1. **Normalise to SDR white.** Windows reports the display's SDR
-//!    white level in nits — usually 200 on an HDR desktop, not the 80
-//!    of the scRGB reference — so dividing by it puts ordinary desktop
+//!    white level in nits (usually 200 on an HDR desktop, not the 80
+//!    of the scRGB reference) so dividing by it puts ordinary desktop
 //!    white at exactly `1.0`. This step is the fix. Skipping it is
 //!    precisely what makes an HDR screenshot look wrong.
 //! 2. **Clamp to the SDR range.** See the trade-off below.
@@ -35,15 +35,15 @@
 //! A soft highlight roll-off and an exact SDR range are mutually
 //! exclusive in 8 bits, and not by a little. Roll-off has to start
 //! below white to have anywhere to compress *into*, which drags white
-//! itself down — a knee at 0.75 lands SDR white on 248 instead of 255,
+//! itself down: a knee at 0.75 lands SDR white on 248 instead of 255,
 //! reintroducing exactly the washed-out grey this module exists to
 //! remove. Tightening the knee until white survives quantisation (it
 //! has to clear 0.9956 linear) leaves so little headroom that a 2×
-//! highlight and a 10× one both quantise to 255 regardless — the
+//! highlight and a 10× one both quantise to 255 regardless: the
 //! roll-off stops doing anything before it stops costing anything.
 //!
 //! Given the choice, an SDR screenshot wants its reference range exact.
-//! Almost everything anyone captures — windows, text, UI — lives there,
+//! Almost everything anyone captures (windows, text, UI) lives there,
 //! and a whole image being subtly wrong is far worse than the brightest
 //! few percent of a highlight being flat. The opt-in preservation path
 //! below keeps that headroom by writing BT.2020/PQ with more than 8 bits
@@ -58,7 +58,7 @@
 //! is invisible next to the failure this module *does* fix.
 
 /// scRGB's reference white, in nits. `1.0` in an scRGB buffer means
-/// exactly this much light — the fixed point the format is defined
+/// exactly this much light: the fixed point the format is defined
 /// against, not a display characteristic.
 pub const SCRGB_REFERENCE_WHITE_NITS: f32 = 80.0;
 
@@ -95,7 +95,7 @@ pub struct Hdr10Rgb16 {
 /// rather than being clamped into range. Clamping looks safer and isn't:
 /// flooring the *nits* at some small number produces a correspondingly
 /// enormous scale factor, so a display reporting zero would hand back a
-/// solid white capture — a failure that is much harder to recognise
+/// solid white capture: a failure that is much harder to recognise
 /// than a slightly mis-normalised one. Anything below the scRGB
 /// reference white is treated as not-reported, because no desktop is
 /// configured with an SDR white point dimmer than 80 nits.
@@ -267,7 +267,7 @@ mod tests {
     fn sdr_white_maps_to_full_white() {
         // The anchor the whole conversion hangs off. If this drifts,
         // every capture off an HDR display is uniformly too dark or too
-        // bright — which is the exact bug being fixed, so it is worth
+        // bright, which is the exact bug being fixed, so it is worth
         // pinning at several reported white levels.
         for nits in [80.0, 200.0, 240.0, 480.0] {
             let w = sdr_white_at(nits);
@@ -331,9 +331,9 @@ mod tests {
     #[test]
     fn extreme_values_saturate_rather_than_wrapping() {
         // The failure being guarded is a float→int cast of an
-        // out-of-range value, which is not simply "too bright" — it
+        // out-of-range value, which is not simply "too bright": it
         // wraps, so a blown-out highlight can come back *black*.
-        // All at or above SDR white for a 200-nit display (scRGB 2.5) —
+        // All at or above SDR white for a 200-nit display (scRGB 2.5);
         // scRGB 1.0 is a *midtone* there, not a highlight.
         for v in [2.5f32, 10.0, 100.0, 10_000.0, f32::MAX, f32::INFINITY] {
             assert_eq!(

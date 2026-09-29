@@ -30,7 +30,7 @@ import { ToastChrome } from "./ToastChrome";
  * the OS window from any non-interactive surface. On a
  * `transparent: true` + `focus: false` window like the toast, that
  * drag-region attribute swallows the `mouseleave` events React's
- * synthetic-event system needs to fire `onMouseLeave` reliably — so
+ * synthetic-event system needs to fire `onMouseLeave` reliably, so
  * `hovered` got stuck at `true` after the first hover. Mirrors the
  * legacy `ToastWindow.tsx`'s bare-div approach. Toasts aren't
  * draggable + don't need the tint/padding.
@@ -39,7 +39,7 @@ export function ToastLayout() {
   const { event, exiting, dismiss, canAnimate } = useToastContent();
   const [hovered, setHovered] = useState(false);
   // A callback ref (state, not `useRef`) so `useToastResize` re-runs when
-  // the body mounts — the body only exists while a toast is on screen,
+  // the body mounts: the body only exists while a toast is on screen,
   // and a ref object's stable identity never signals that arrival.
   const [bodyEl, setBodyEl] = useState<HTMLDivElement | null>(null);
 
@@ -48,7 +48,7 @@ export function ToastLayout() {
   // lifecycle. Even with mouseleave firing reliably (post-
   // `WindowFrame`-removal fix), a relaunch while the cursor is
   // somewhere on the toast position would still carry the old
-  // hovered=true forward — and the auto-dismiss timer would never
+  // hovered=true forward, and the auto-dismiss timer would never
   // start. This effect makes the contract loud: every new event
   // begins with `hovered=false`; the user can re-hover to pause.
   useEffect(() => {
@@ -56,7 +56,7 @@ export function ToastLayout() {
   }, [event]);
 
   // Auto-dismiss reads the live event's durationMs (0 = sticky). The
-  // expire callback is the same path as the user clicking ✕ — flips
+  // expire callback is the same path as the user clicking ✕: flips
   // exiting=true, the rest of the lifecycle runs in useToastContent.
   const handleExpire = useCallback(() => {
     dismiss();
@@ -70,7 +70,7 @@ export function ToastLayout() {
   });
 
   // A session HUD brings its own cards and controls, so the standard
-  // toast card, padding and chrome are dropped for it — see
+  // toast card, padding and chrome are dropped for it; see
   // `rendersOwnChrome`, which owns that list next to the body dispatch.
   const isSessionHud = !!event && rendersOwnChrome(event.kind);
   useToastResize(bodyEl, isSessionHud ? 0 : CHROME_HEIGHT);

@@ -19,7 +19,7 @@ import { toolInMode, type ToolId } from "../types";
 import { ExportSection } from "./panels/ExportSection";
 
 /** Square icon button in the bar's neutral chrome. Active state is a raised
- *  slab, never the accent — see the accent budget note on {@link EditorTopBar}. */
+ *  slab, never the accent; see the accent budget note on {@link EditorTopBar}. */
 const ICON_BTN =
   "flex h-8 w-8 items-center justify-center rounded-[8px] text-[var(--ed-text-dim)] transition-colors hover:bg-[var(--ed-elev)] hover:text-[var(--ed-text)]";
 
@@ -59,7 +59,7 @@ function IconButton({
 }
 
 /**
- * Export cluster — a split button. The face exports with the current settings
+ * Export cluster: a split button. The face exports with the current settings
  * (the common case, and the same thing Mod+E does); the caret opens the format
  * and scale options.
  *
@@ -236,11 +236,11 @@ function ToolOverflow({
  * **Accent budget.** Selection chrome here is neutral (`--ed-active-bg`) even
  * though it used to be accent-filled. The canvas below already spends the
  * accent on the selection outline and its handles, and a matching accent block
- * in the bar competed with it — at a glance you couldn't tell which highlight
+ * in the bar competed with it: at a glance you couldn't tell which highlight
  * meant "this is selected". The accent is now spent in three places only: the
  * Export button, the inspector's active tab, and the on-canvas selection.
  *
- * Self-contained — reads the scene store directly.
+ * Self-contained: reads the scene store directly.
  */
 export function EditorTopBar() {
   const tool = useEditorStore((s) => s.tool);
@@ -255,7 +255,7 @@ export function EditorTopBar() {
   const { copyPng, busy } = useEditorExport();
   const { save } = useEditorSave();
 
-  // Each group's last-used sub-tool — the icon its button shows, Figma-style.
+  // Each group's last-used sub-tool: the icon its button shows, Figma-style.
   const [lastByGroup, setLastByGroup] = useState<Record<string, ToolId>>(() =>
     Object.fromEntries(TOOL_MENU.map((g) => [g.id, g.toolIds[0]!]))
   );
@@ -333,7 +333,7 @@ export function EditorTopBar() {
 
       <div className="ml-auto flex items-center gap-2">
         {/* Undo and redo read as one control because they are one control used
-            in two directions — grouping them also keeps the disabled halves
+            in two directions: grouping them also keeps the disabled halves
             from looking like dead buttons scattered along the bar. */}
         <div className="flex items-center overflow-hidden rounded-[8px] border border-[color:var(--ed-hairline-strong)]">
           <IconButton label="Undo" disabled={!canUndo} onClick={() => undo()}>

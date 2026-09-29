@@ -1,5 +1,5 @@
 /**
- * The facts that override what settings say — safe mode, a log level
+ * The facts that override what settings say: safe mode, a log level
  * pinned by an environment variable, whether this build carries the
  * WebView inspector.
  *

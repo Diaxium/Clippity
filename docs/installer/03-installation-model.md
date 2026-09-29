@@ -1,6 +1,6 @@
 # Installation Model, Directory & Registry Ownership
 
-Status: Implemented (core) — 2026-07-24
+Status: Implemented (core), 2026-07-24
 Covers task Phases 3, 4, 5, 11.
 
 ## The authoritative manifest
@@ -39,7 +39,7 @@ Design points that make it safe and MSI-adjacent:
   uninstaller reverses *exactly* what is recorded and nothing else.
 - **`sha256` per immutable file** backs repair's corruption detection;
   `mutable: true` marks files the app rewrites at runtime, excluded from repair.
-- **`schemaVersion`** — a reader that finds a higher version than it understands
+- **`schemaVersion`**: a reader that finds a higher version than it understands
   refuses to act (routes to a newer wizard) rather than guessing. Detection has
   a `peek_schema_version` that recognises this even when the rest of the shape
   changed incompatibly.
@@ -106,13 +106,13 @@ via the audited helpers in `regutil.rs`.
   `NoRepair=0`, plus the private `ClippityInstallerSchema` marker.
 - **Uninstall/Modify strings point at the maintenance exe**
   (`clippity-maintenance.exe --uninstall` / `--modify`), which is placed on disk
-  *before* the entry is written — so the Settings buttons actually work.
+  *before* the entry is written, so the Settings buttons actually work.
 - **We deliberately do NOT set `WindowsInstaller` or `SystemComponent`.** This is
   not an MSI; claiming so would mislead Windows and could hide the entry. This
-  respects the task's "do not duplicate MSI-owned registration manually" rule —
+  respects the task's "do not duplicate MSI-owned registration manually" rule:
   we register as a plain, honest ARP entry, not a fake MSI.
 - **Start-at-login** is a single per-user value under
-  `…\CurrentVersion\Run\Clippity` (always HKCU — a user preference, never
+  `…\CurrentVersion\Run\Clippity` (always HKCU: a user preference, never
   machine policy), added/removed by the toggle and recorded in the manifest.
 
 ## Integrations installed conditionally (Phase 11)
@@ -125,9 +125,9 @@ Only integrations Clippity actually uses are created:
 | Desktop shortcut | **Implemented** (opt-in) |
 | Start-at-login (`Run` key) | **Implemented** (opt-in, per-user) |
 | Add/Remove Programs registration | **Implemented** |
-| URL protocol (`clippity://`) | Documented, not yet wired — must treat protocol data as untrusted |
-| File associations | Modelled in the Options step; registration not yet wired — must not force default-app |
-| App Paths / context menu / scheduled tasks / services / firewall / env vars | **Not created** — Clippity has no current need; adding registry noise "because we can" is explicitly avoided |
+| URL protocol (`clippity://`) | Documented, not yet wired; must treat protocol data as untrusted |
+| File associations | Modelled in the Options step; registration not yet wired; must not force default-app |
+| App Paths / context menu / scheduled tasks / services / firewall / env vars | **Not created**: Clippity has no current need; adding registry noise "because we can" is explicitly avoided |
 
 Anything added later must record a matching manifest entry with a reversal, per
 the model above.

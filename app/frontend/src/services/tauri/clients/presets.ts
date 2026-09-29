@@ -4,7 +4,7 @@
  * Per [ADR 0001](../../../../docs/decisions/0001-capture-overlay-dispatch.md),
  * typed IPC wrappers live here. A preset is a saved `CaptureRequest` plus
  * output steps; `runPreset` dispatches it through the existing capture /
- * overlay clients and handles the post-capture "open editor" step — so both
+ * overlay clients and handles the post-capture "open editor" step, so both
  * the tray and the dashboard manager run a preset the same way. See
  * [ADR 0004](../../../../docs/decisions/0004-capture-presets.md). The
  * wire-format types live in `@clippity/shared` and are re-exported here.
@@ -63,7 +63,7 @@ export function presetsDelete(id: string): Promise<void> {
 /**
  * Subscribe to `clippity://presets/changed`. The backend emits the full
  * `CapturePreset[]` after any create / update / delete. Returns a sync
- * unsubscribe — return it directly from a `useEffect`.
+ * unsubscribe; return it directly from a `useEffect`.
  */
 export function onPresetsChanged(
   handler: (presets: CapturePreset[]) => void
@@ -75,7 +75,7 @@ export function onPresetsChanged(
 
 /**
  * Run a preset: dispatch its capture (reusing the capture / overlay
- * clients). `output.openEditor` is the preset's editor intent — it's
+ * clients). `output.openEditor` is the preset's editor intent: it's
  * folded into the capture's `preview` flag so the backend stamps it onto
  * `capture/finished` and the main window's persistent listener
  * ({@link useOpenEditorOnPreview}) opens the editor, the same path
@@ -93,7 +93,7 @@ export function onPresetsChanged(
  * dispatch rather than stored on `preset.request`, so a renamed preset
  * records its new name rather than whatever it was called when saved.
  *
- * No delay branch in v1 (a "timed preset" is a deferred non-goal — see
+ * No delay branch in v1 (a "timed preset" is a deferred non-goal; see
  * ADR 0004).
  */
 export async function runPreset(preset: CapturePreset): Promise<void> {
@@ -104,7 +104,7 @@ export async function runPreset(preset: CapturePreset): Promise<void> {
   const request = preset.request;
 
   // Either the explicit preview toggle or the preset's openEditor output
-  // means "open the editor afterwards" — collapse them into one flag.
+  // means "open the editor afterwards": collapse them into one flag.
   const preview = request.toggles.preview || preset.output.openEditor;
 
   try {
@@ -132,7 +132,7 @@ export async function runPreset(preset: CapturePreset): Promise<void> {
         await beginRegionCapture(request.type, saveDir, preset.name);
         break;
       default:
-        // `custom` isn't a valid preset target in v1 — nothing emits
+        // `custom` isn't a valid preset target in v1: nothing emits
         // `capture/finished`, so there's nothing to open.
         break;
     }
@@ -144,7 +144,7 @@ export async function runPreset(preset: CapturePreset): Promise<void> {
 }
 
 /**
- * Run a recording preset — Clippity's answer to switching OBS scenes.
+ * Run a recording preset: Clippity's answer to switching OBS scenes.
  *
  * Fullscreen starts immediately. Region and Window go through the
  * overlay first, and **the whole request is mirrored across**, not just
@@ -163,7 +163,7 @@ async function runRecordingPreset(
   request: RecorderRequest
 ): Promise<void> {
   // Stamped at dispatch, not stored, so a renamed preset records its new
-  // name — exactly as the capture path does.
+  // name: exactly as the capture path does.
   const stamped: RecorderRequest = {
     ...request,
     outputDir: preset.output.saveDir,

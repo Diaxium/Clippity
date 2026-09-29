@@ -5,7 +5,7 @@
  * desktop snapshot (`get_desktop_snapshot`) before the magnifier loupe + RGB
  * HUD can render anything. This standalone entry seeds the overlay store with a
  * synthetic snapshot canvas and a cursor so the crosshair, loupe, region drag,
- * and chrome can be exercised — and their per-pointer-move cost measured — in a
+ * and chrome can be exercised, and their per-pointer-move cost measured, in a
  * plain browser via the dev server, with no Tauri runtime.
  *
  * Mirrors `editor-smoke.tsx`. Referenced by `overlay-smoke.html`; not part of

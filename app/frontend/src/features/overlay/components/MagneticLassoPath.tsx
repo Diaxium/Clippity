@@ -38,7 +38,7 @@ export function MagneticLassoPath() {
           fillOpacity: selected ? 0.12 : 1,
         }}
       />
-      {/* Snapped anchor dots — light while tracing, hidden once closed to
+      {/* Snapped anchor dots: light while tracing, hidden once closed to
           keep the final selection clean. */}
       {!selected &&
         path.map((p, i) => (

@@ -2,12 +2,12 @@
 //! pipeline (`capture_service`) and the region-overlay pipeline
 //! (`overlay_service`).
 //!
-//! Each helper is service-agnostic — it knows how to persist encoded
+//! Each helper is service-agnostic: it knows how to persist encoded
 //! image bytes to disk, push image bytes to the system clipboard, and
 //! mint a per-capture identifier, but nothing about the caller's domain.
 //! Promoted from byte-identical inline copies that lived in both
 //! services during the overlay port's Phase 1; collapsed here once a
-//! second consumer existed (per `FEATURE_RULES.md` — promote on the
+//! second consumer existed (per `FEATURE_RULES.md`: promote on the
 //! second consumer, never on the first).
 
 use std::io::Cursor;
@@ -27,11 +27,11 @@ use clippity_infra::error::{AppError, AppResult};
 /// point every *capture* pipeline (fullscreen, overlay, scroll) uses so
 /// the naming scheme stays consistent across modes. The editor's export
 /// path, which can also write JPEG/WebP, goes through
-/// [`save_capture_image`] — this is the PNG-shaped shorthand for it.
+/// [`save_capture_image`]: this is the PNG-shaped shorthand for it.
 ///
 /// `template` is the raw `general.name_template` (blank = the built-in
 /// default). Returns the absolute path actually written (which may carry
-/// a ` (2)` collision suffix — see [`save_image`]).
+/// a ` (2)` collision suffix; see [`save_image`]).
 pub fn save_capture_png(
     dir: &Path,
     bytes: &[u8],
@@ -42,14 +42,14 @@ pub fn save_capture_png(
 }
 
 /// [`save_capture_png`] with a caller-chosen extension. `bytes` must
-/// already be encoded in that format — nothing here transcodes; the
+/// already be encoded in that format: nothing here transcodes; the
 /// extension only names what the caller produced.
 ///
 /// **This is where a capture's provenance record is written**, not in
 /// any individual pipeline. Naming and metadata read the same
 /// [`CaptureSource`] and the same clock instant, so a capture's file
 /// name and its `.meta` sidecar can never describe different origins;
-/// and every mode — including ones added later — records provenance by
+/// and every mode, including ones added later, records provenance by
 /// construction rather than by remembering to. Same reasoning that put
 /// smart-enhance and the PNG encode in `overlay_service::persist_and_emit`.
 ///
@@ -83,13 +83,13 @@ pub fn save_capture_image(
 ///
 /// The recorder's counterpart to [`save_capture_image`]. A recording is
 /// streamed to disk over minutes and can be gigabytes, so it is never
-/// held in memory as `bytes` — it is written to a working file and
+/// held in memory as `bytes`: it is written to a working file and
 /// promoted here once the session commits. The provenance sidecar is
 /// still written at this one choke point, so a recording describes
 /// itself exactly the way a screenshot does.
 ///
 /// `temp` must already live in `dir` (the caller writes it there), so
-/// the promotion is a rename within one volume — atomic, and free
+/// the promotion is a rename within one volume: atomic, and free
 /// regardless of the recording's size.
 pub fn promote_capture_file(
     temp: &Path,
@@ -163,7 +163,7 @@ fn unique_image_path(dir: &Path, stem: &str, ext: &str) -> PathBuf {
     dir.join(format!("{stem} {ts}.{ext}"))
 }
 
-/// Milliseconds since the Unix epoch — the metadata record's
+/// Milliseconds since the Unix epoch: the metadata record's
 /// `captured_at_ms`. Deliberately not derived from [`local_now`]: this
 /// is an absolute instant, while that is a zone-adjusted wall clock for
 /// display in a file name.
@@ -207,7 +207,7 @@ pub fn local_now() -> LocalTime {
 /// Push an already-decoded RGBA image straight to the system clipboard,
 /// skipping the PNG round-trip. The fullscreen capture pipeline still
 /// holds the `RgbaImage` in memory at the clipboard step, so it uses
-/// this instead of `copy_png_to_clipboard` — which would re-decode the
+/// this instead of `copy_png_to_clipboard`, which would re-decode the
 /// PNG it just encoded (a full multi-megapixel decode per capture).
 /// Errors surface as `String` for the same log-and-continue ergonomics.
 pub fn copy_rgba_to_clipboard(img: &image::RgbaImage) -> Result<(), String> {
@@ -245,7 +245,7 @@ pub fn copy_png_to_clipboard(bytes: &[u8]) -> Result<(), String> {
 /// Push plain text to the system clipboard via `arboard`. Used by the
 /// Color-Picker overlay mode (copies the sampled `#RRGGBB`). Returns the
 /// error as `String` so callers can log + continue without leaking the
-/// `arboard` types — same log-and-continue ergonomics as the image
+/// `arboard` types: same log-and-continue ergonomics as the image
 /// variants above.
 pub fn copy_text_to_clipboard(text: &str) -> Result<(), String> {
     let mut cb = arboard::Clipboard::new().map_err(|e| e.to_string())?;
@@ -264,7 +264,7 @@ pub fn resolve_save_dir(override_dir: Option<&str>, fallback: PathBuf) -> PathBu
         .unwrap_or(fallback)
 }
 
-/// Per-capture identifier — millisecond epoch with a `cap_` prefix.
+/// Per-capture identifier: millisecond epoch with a `cap_` prefix.
 /// Stable enough for in-session correlation; the on-disk PNG path
 /// carries cross-process uniqueness.
 pub fn next_id() -> String {
@@ -276,7 +276,7 @@ pub fn next_id() -> String {
 }
 
 /// What the system clipboard currently holds, decoded for ingest.
-/// Image wins over text — `arboard` (like the OS) prefers the bitmap
+/// Image wins over text: `arboard` (like the OS) prefers the bitmap
 /// channel when both are present. Not serialized; the command maps it to
 /// the wire `ClipboardIngest`.
 pub enum ClipboardContent {
@@ -287,7 +287,7 @@ pub enum ClipboardContent {
 
 /// Read the system clipboard for the Clipboard custom mode. Returns
 /// [`ClipboardContent::Empty`] when the clipboard holds neither an image
-/// nor non-blank text — that's an expected outcome, not an error. A
+/// nor non-blank text: that's an expected outcome, not an error. A
 /// genuine access failure (clipboard locked/unavailable, or a bitmap
 /// whose declared dimensions don't match its buffer) is an
 /// `AppError::Capture`.
@@ -321,7 +321,7 @@ fn normalize_clipboard_text(text: &str) -> Option<String> {
 /// as PNG, and return a `data:image/png;base64,…` URI for a toast
 /// preview thumbnail. Returns an empty string if encoding fails (the
 /// toast simply shows no preview). Shared by the Palette-Capture and
-/// Clipboard previews — promoted here on the second consumer.
+/// Clipboard previews: promoted here on the second consumer.
 pub fn thumbnail_data_uri(img: &RgbaImage, max_edge: u32) -> String {
     let (w, h) = (img.width(), img.height());
     let longest = w.max(h);
@@ -368,14 +368,14 @@ mod tests {
             id.starts_with("cap_"),
             "expected cap_-prefixed id, got {id}"
         );
-        // The suffix is millis-since-epoch — at minimum a few digits.
+        // The suffix is millis-since-epoch: at minimum a few digits.
         assert!(id.len() > "cap_".len() + 4);
     }
 
     #[test]
     fn save_png_writes_to_stem_named_file() {
         let dir = std::env::temp_dir().join(format!("clippity-capture-io-{}", next_id()));
-        // Arbitrary bytes — the helper does not validate PNG content,
+        // Arbitrary bytes: the helper does not validate PNG content,
         // it just persists what it was given.
         let payload: &[u8] = b"\x89PNG\r\n\x1a\n-not-actually-a-png";
         let path = save_png(&dir, payload, "My Capture").expect("save_png ok");
@@ -399,7 +399,7 @@ mod tests {
         assert_eq!(a.file_name().unwrap().to_string_lossy(), "Shot.png");
         assert_eq!(b.file_name().unwrap().to_string_lossy(), "Shot (2).png");
         assert_eq!(c.file_name().unwrap().to_string_lossy(), "Shot (3).png");
-        // Each kept its own bytes — no clobber.
+        // Each kept its own bytes: no clobber.
         assert_eq!(std::fs::read(&a).unwrap(), b"a");
         assert_eq!(std::fs::read(&b).unwrap(), b"b");
 
@@ -421,7 +421,7 @@ mod tests {
         let webp = save_image(&dir, b"w", "Shot", "webp").expect("webp ok");
 
         assert_eq!(jpg.file_name().unwrap().to_string_lossy(), "Shot.jpg");
-        // A different extension is a different file — no collision suffix.
+        // A different extension is a different file: no collision suffix.
         assert_eq!(webp.file_name().unwrap().to_string_lossy(), "Shot.webp");
         assert_eq!(std::fs::read(&jpg).unwrap(), b"j");
         assert_eq!(std::fs::read(&webp).unwrap(), b"w");
@@ -491,7 +491,7 @@ mod tests {
         assert_eq!(meta.source_window.as_deref(), Some("GitHub - Chrome"));
         assert_eq!((meta.width, meta.height), (Some(1920), Some(1080)));
         // The record names the file actually written, collision suffix
-        // included — not the stem the template rendered.
+        // included, not the stem the template rendered.
         assert_eq!(
             meta.file,
             path.file_name().unwrap().to_string_lossy().into_owned()

@@ -11,7 +11,7 @@ import heroDark from "@assets/heros/Hero-dark.png";
 import heroLight from "@assets/heros/Hero-light.png";
 
 /**
- * Setup step 1 — a hero welcome. Product art, a one-line pitch, the
+ * Setup step 1: a hero welcome. Product art, a one-line pitch, the
  * version badge, and the single call to action that opens the flow.
  */
 export function WelcomeStep() {

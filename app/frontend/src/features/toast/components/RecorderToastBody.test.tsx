@@ -104,7 +104,7 @@ describe("RecorderToastBody", () => {
   });
 
   it("reaps the session when it ends on its own", () => {
-    // A session can end without anyone pressing Stop — a duration
+    // A session can end without anyone pressing Stop: a duration
     // ceiling, or a failed encoder. If the HUD ignored the event it
     // would sit on screen forever over a session that already finished.
     render(

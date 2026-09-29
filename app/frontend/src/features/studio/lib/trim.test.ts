@@ -116,7 +116,7 @@ describe("nextPlayheadWithinRange", () => {
   });
 
   it("loops back to the in-point at the out-point", () => {
-    // Playing a trim should preview the trim — running past the
+    // Playing a trim should preview the trim: running past the
     // out-point shows footage the export will not contain.
     expect(nextPlayheadWithinRange(5_000, range)).toBe(2_000);
     expect(nextPlayheadWithinRange(9_000, range)).toBe(2_000);

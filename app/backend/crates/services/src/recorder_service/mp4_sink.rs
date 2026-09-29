@@ -1,4 +1,4 @@
-//! MP4 sink — wraps the platform's Media Foundation writer.
+//! MP4 sink: wraps the platform's Media Foundation writer.
 //!
 //! Thin by design: everything hard about H.264/AAC lives in
 //! `clippity_platform::windows::media_foundation`, and this only
@@ -65,8 +65,8 @@ pub fn open(_path: &Path, _config: SinkConfig) -> AppResult<Box<dyn RecordingSin
 struct Mp4Sink {
     writer: clippity_platform::windows::media_foundation::Mp4Writer,
     path: PathBuf,
-    /// Frame size the writer negotiated. Normally the captured size —
-    /// Media Foundation's video processor does any scaling — so this
+    /// Frame size the writer negotiated. Normally the captured size
+    /// (Media Foundation's video processor does any scaling) so this
     /// matches incoming frames and no resize happens. It differs only on
     /// a machine with no usable processor, where the writer falls back
     /// to taking already-scaled frames and this sink has to produce
@@ -76,8 +76,8 @@ struct Mp4Sink {
 
 // The writer holds COM interfaces, which `windows-rs` leaves `!Send`.
 // The session's worker thread creates this sink and is the only thread
-// that ever touches it — it is moved into that thread at construction
-// and dropped there — so the marker is sound, and asserting it is what
+// that ever touches it (it is moved into that thread at construction
+// and dropped there) so the marker is sound, and asserting it is what
 // lets the sink be a boxed trait object.
 #[cfg(target_os = "windows")]
 unsafe impl Send for Mp4Sink {}
@@ -114,7 +114,7 @@ impl RecordingSink for Mp4Sink {
 
         // The ordinary path: the encoder chain negotiated the captured
         // size, so the frame goes to the NV12 conversion exactly as it
-        // came off the capture surface — in whatever channel order that
+        // came off the capture surface, in whatever channel order that
         // surface produced. Stating the order rather than normalising to
         // one is what keeps red and blue the right way round without a
         // pass over the frame to do it.
@@ -124,7 +124,7 @@ impl RecordingSink for Mp4Sink {
                 .write_video(frame.pixels, frame.order, timestamp_hns, duration_hns);
         }
 
-        // The CPU fallback — see `input`. Only reached on a machine with
+        // The CPU fallback; see `input`. Only reached on a machine with
         // no usable video processor, where the resolution cap has to be
         // applied here instead. `image` needs RGBA, so this is also
         // where a BGRA capture gets swapped; it is the slow path either

@@ -8,10 +8,10 @@ and 14.
 > **Second pass (2026-07-24).** The journal, the rollback executor, the real
 > repair flow, startup recovery, and honest reboot reporting described below
 > were added after the first pass. See
-> [08-changelog.md](08-changelog.md#second-pass--2026-07-24) for the file-level
+> [08-changelog.md](08-changelog.md#second-pass-2026-07-24) for the file-level
 > list.
 
-## Detection (Phase 6) — implemented
+## Detection (Phase 6): implemented
 
 [`installer_services::detect::detect`](../../installer/app/backend/crates/services/src/detect.rs)
 gathers three independent signals and reconciles them with the pure
@@ -36,12 +36,12 @@ Resolved `InstallState`s and their routing:
 | `partial`                  | manifest XOR registry present (interrupted op), or schema too new | Recovery                    |
 | `legacy-unmanaged`         | foreign `Uninstall\Clippity` with no manifest (MSI/NSIS legacy)   | Migration                   |
 
-**The rule prefers recovery when sources disagree** — a manifest whose schema is
+**The rule prefers recovery when sources disagree**: a manifest whose schema is
 too new, or a manifest-without-registry, becomes `partial`, never `healthy`.
 Exposed to the UI via the `detect_installation` command; the maintenance hub
 renders the state badge, version, and install location from it.
 
-## Fresh install (Phase 7) — implemented (core)
+## Fresh install (Phase 7): implemented (core)
 
 The install service walks the domain checklist performing real work at each step:
 verify payload (size + SHA-256) → write `Clippity.exe` (renaming a locked
@@ -90,7 +90,7 @@ private bundled-update entry point. That entry point uses the same install
 transaction and carries forward the committed scope, location, components,
 preferences, and installation identity.
 
-## Uninstall (Phase 7) — implemented (safe)
+## Uninstall (Phase 7): implemented (safe)
 
 Manifest-driven and conservative (see
 [03-installation-model.md](03-installation-model.md) for the safety rules):
@@ -101,7 +101,7 @@ Cache, settings/presets, and content are independent choices; settings export
 is written before deletion. Unknown install-directory files are preserved and
 recursive user-data deletion rejects broad or unsafe roots.
 
-## Transactions & rollback (Phase 13) — implemented
+## Transactions & rollback (Phase 13): implemented
 
 Every mutating operation now runs through a persisted **operation journal**
 ([`installer_domain::journal`](../../installer/app/backend/crates/domain/src/journal.rs),
@@ -125,13 +125,13 @@ Realised:
 - **Stage-before-commit** for the payload (verify before any disk write; rename
   the old exe aside as a restorable `ReplaceFile` backup rather than overwrite in
   place).
-- **The manifest write is the commit boundary** — recorded, and reversed on
+- **The manifest write is the commit boundary**: recorded, and reversed on
   rollback like any other action.
 - **Automatic rollback on failure.** `install_service::run` wraps its mutating
   steps; any error triggers
   [`rollback::roll_back`](../../installer/app/backend/crates/services/src/rollback.rs),
   which walks the journal's applied actions **newest-first** and reverses each by
-  its kind, then marks the journal `RolledBack`. Reversal is conservative — a
+  its kind, then marks the journal `RolledBack`. Reversal is conservative: a
   replace/delete with no surviving backup is logged and skipped, never
   fabricated, so rollback can't destroy data it can't put back. (Unit-tested with
   real temp-fs: create-file reversal deletes, replace-file reversal restores the
@@ -139,9 +139,9 @@ Realised:
   removed only when empty.)
 - **`.old` cleanup** after a committed install.
 
-The pure recovery decision —
-[`installer_domain::journal::recover`](../../installer/app/backend/crates/domain/src/journal.rs)
-— encodes the safety boundary and is fully unit-tested:
+The pure recovery decision,
+[`installer_domain::journal::recover`](../../installer/app/backend/crates/domain/src/journal.rs),
+encodes the safety boundary and is fully unit-tested:
 
 | Journal state                               | Decision                  | Why                                                                                         |
 | ------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
@@ -152,7 +152,7 @@ The pure recovery decision —
 | `Failed`                                    | `RollBack`                | reverse what was applied                                                                    |
 | unreadable schema                           | `ManualRecovery`          | never auto-act on a shape we don't understand                                               |
 
-## Recovery (Phase 13/14) — implemented
+## Recovery (Phase 13/14): implemented
 
 On launch,
 [`detect::scan_pending_operation`](../../installer/app/backend/crates/services/src/detect.rs)
@@ -171,7 +171,7 @@ mount). Verified end-to-end by a temp-fs test: a journal that died mid-`Apply`
 having created one file is rolled back (the file is deleted) and the journal is
 cleared.
 
-## User-data protection (Phase 14) — implemented at the policy layer
+## User-data protection (Phase 14): implemented at the policy layer
 
 The uninstall data model separates mandatory application machinery from cache,
 settings/presets, and personal content. Personal content is kept unless the

@@ -1,9 +1,9 @@
-//! Capture **file-naming** engine — pure, no I/O, no platform code.
+//! Capture **file-naming** engine: pure, no I/O, no platform code.
 //!
 //! Turns a user-configurable template (Settings → General) plus the
 //! capture's [`CaptureSource`] into a filesystem-safe file *stem* (the
 //! part before `.png`). Replaces the old opaque `clippity-{epoch_ms}`
-//! name with something a user can recognise at a glance — the capture
+//! name with something a user can recognise at a glance: the capture
 //! mode, the dominant window when known, plus a readable local date/time.
 //!
 //! The template reads the *same* [`CaptureSource`] the metadata sidecar
@@ -11,20 +11,20 @@
 //! recorded provenance can never disagree about where it came from.
 //!
 //! Tokens supported in a template:
-//!   `{label}`  — the capture type plus the window title when known, else
+//!   `{label}`:   the capture type plus the window title when known, else
 //!                just the capture type. This is the "smart" token the
 //!                default template uses so a name reads
 //!                "Region - GitHub - PR #42 - Chrome - …" when we know the
 //!                source window and "Region - …" when we don't.
-//!   `{window}` — the sanitised dominant-window title, or empty when unknown.
-//!   `{app}`    — the sanitised source application name (`Chrome`,
+//!   `{window}`: the sanitised dominant-window title, or empty when unknown.
+//!   `{app}`:     the sanitised source application name (`Chrome`,
 //!                `Code`, …), or empty when the owning process could not
 //!                be resolved. Shorter and far more stable than
 //!                `{window}`, whose title changes with every tab.
-//!   `{type}`   — the capture-type label (Fullscreen / Region / Window /
+//!   `{type}`:    the capture-type label (Fullscreen / Region / Window /
 //!                Freehand / Multi-Area / Scrolling / Panoramic / …).
-//!   `{date}`   — local calendar date, `YYYY-MM-DD`.
-//!   `{time}`   — local wall-clock time, `h.mm.ss AM/PM` (colon-free so it
+//!   `{date}`:    local calendar date, `YYYY-MM-DD`.
+//!   `{time}`:    local wall-clock time, `h.mm.ss AM/PM` (colon-free so it
 //!                is a legal Windows filename).
 //! Unknown `{tokens}` expand to empty so a typo can't leak braces into a
 //! filename. The clock itself is impure and lives in
@@ -115,7 +115,7 @@ pub fn render(template: &str, source: &CaptureSource, time_of: LocalTime) -> Str
                 out.push_str(&rest[..open]);
                 let after = &rest[open + 1..];
                 match after.find('}') {
-                    // Unterminated `{` — emit it literally and continue
+                    // Unterminated `{`: emit it literally and continue
                     // scanning the remainder.
                     None => {
                         out.push('{');
@@ -148,7 +148,7 @@ fn format_date(t: &LocalTime) -> String {
     format!("{:04}-{:02}-{:02}", t.year, t.month, t.day)
 }
 
-/// `h.mm.ss AM/PM` — 12-hour, colon-free (colons are illegal in Windows
+/// `h.mm.ss AM/PM`: 12-hour, colon-free (colons are illegal in Windows
 /// filenames). Seconds are included so two captures in the same minute
 /// don't immediately collide.
 fn format_time(t: &LocalTime) -> String {
@@ -220,7 +220,7 @@ fn strip_dots_spaces(s: &str) -> String {
     s.trim_matches(|c| c == '.' || c == ' ').to_string()
 }
 
-/// Truncate to at most `max` characters (not bytes — never split a
+/// Truncate to at most `max` characters (not bytes; never split a
 /// multi-byte char), trimming any trailing space the cut exposes.
 fn truncate_chars(s: &str, max: usize) -> String {
     if s.chars().count() <= max {
@@ -291,7 +291,7 @@ mod tests {
         }
     }
 
-    /// A source that knows the window but not the owning app — the
+    /// A source that knows the window but not the owning app: the
     /// shape every pre-{app} test was written against.
     fn src<'a>(window: Option<&'a str>, type_label: &'a str) -> CaptureSource<'a> {
         CaptureSource::from_mode(type_label).with_window(window, None)
@@ -406,7 +406,7 @@ mod tests {
 
     #[test]
     fn trailing_dots_and_spaces_are_stripped() {
-        // Windows silently drops trailing dots/spaces — strip them so the
+        // Windows silently drops trailing dots/spaces; strip them so the
         // on-disk name matches what we computed.
         let s = render(
             "{window}",
@@ -446,7 +446,7 @@ mod tests {
             ),
             "_com1"
         );
-        // Not actually reserved — COM0 / a longer name pass through.
+        // Not actually reserved: COM0 / a longer name pass through.
         assert_eq!(
             render(
                 "{window}",
@@ -485,7 +485,7 @@ mod tests {
 
     #[test]
     fn app_token_is_empty_when_the_process_is_unresolved() {
-        // `src` never sets an app — the template must collapse cleanly
+        // `src` never sets an app: the template must collapse cleanly
         // rather than leaving a stray separator or a literal brace.
         let s = render(
             "{app}-{type}",

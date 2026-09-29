@@ -4,7 +4,7 @@
  * Subscribes to `clippity://countdown/start` and owns the tick: the
  * per-second decrement + the smooth progress interpolation + the
  * tick-to-zero `finish` dispatch all live here. Cancellation is owned
- * by the BACKEND — the countdown window is click-through and never
+ * by the BACKEND: the countdown window is click-through and never
  * focused (design spec: "do not steal focus", "do not prevent
  * interaction"), so it can't receive a keydown. Instead the backend
  * registers a global Escape shortcut while the strip is visible; when
@@ -12,10 +12,10 @@
  * which this hook listens for to stop the tick.
  *
  * Returned state shape:
- * - `total`     — seconds the timer started with (used by the
+ * - `total`    : seconds the timer started with (used by the
  *                 progress bar's full-width baseline).
- * - `remaining` — seconds left, integer; null while idle.
- * - `progress`  — 0..1 fraction of time consumed; smoothly
+ * - `remaining`: seconds left, integer; null while idle.
+ * - `progress` : 0..1 fraction of time consumed; smoothly
  *                 interpolated each animation frame so the bar
  *                 shrinks continuously instead of jumping each
  *                 whole second.
@@ -31,7 +31,7 @@ import {
 } from "@services/tauri/clients/countdown";
 
 export interface CountdownState {
-  /** Seconds the timer started with — 0 while idle. */
+  /** Seconds the timer started with: 0 while idle. */
   total: number;
   /** Whole seconds remaining; null while idle. */
   remaining: number | null;
@@ -76,7 +76,7 @@ export function useCountdown(): CountdownState {
     void finishCountdown();
   }, [stopRaf]);
 
-  // rAF tick — runs while a countdown is active. Re-reads the wall
+  // rAF tick: runs while a countdown is active. Re-reads the wall
   // clock each frame so a throttled webview catches up to wall-time on
   // resume instead of accumulating dropped frames.
   useEffect(() => {
@@ -113,7 +113,7 @@ export function useCountdown(): CountdownState {
     return stopRaf;
   }, [state.total, finish, stopRaf]);
 
-  // Subscribe to the start event — Rust positions + shows the window
+  // Subscribe to the start event: Rust positions + shows the window
   // then emits, so by the time this fires the strip is visible.
   useEffect(() => {
     const handler = (event: CountdownStartEvent) => {
@@ -132,7 +132,7 @@ export function useCountdown(): CountdownState {
 
   // Backend-initiated cancel (global Esc). Stop the tick and reset so
   // a near-zero tick can't still fire `finish` after the user aborted.
-  // We do NOT call `cancelCountdown()` back — the backend already ran
+  // We do NOT call `cancelCountdown()` back: the backend already ran
   // cancel (that's what emitted this event); echoing it would loop.
   useEffect(() => {
     return onCountdownCancelled(() => {

@@ -6,7 +6,7 @@ import { useOverlayStore } from "../state/overlayStore";
 /**
  * Centered "Drag to select" placeholder shown only in the `empty`
  * phase. Disappears on first pointer-move (which transitions to
- * `idle`). Region mode only — other modes have their own affordances.
+ * `idle`). Region mode only: other modes have their own affordances.
  */
 export function EmptyHint() {
   const phase = useOverlayStore((s) => s.phase);

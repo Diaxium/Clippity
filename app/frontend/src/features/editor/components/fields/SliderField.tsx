@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
-/** Thumb diameter — mirrors `.clippity-editor .ed-slider` in theme.css. The
+/** Thumb diameter: mirrors `.clippity-editor .ed-slider` in theme.css. The
  *  thumb centre is inset half this from each rail end, so the fill uses the
  *  same inset and can't run ahead of (or trail) the thumb. */
 const THUMB_PX = 13;
@@ -10,7 +10,7 @@ interface SliderFieldProps {
   min: number;
   max: number;
   step?: number;
-  /** Commit handler — fires once the interaction settles (pointer-up, key-up,
+  /** Commit handler: fires once the interaction settles (pointer-up, key-up,
    *  blur), not on every intermediate value. */
   onChange: (next: number) => void;
   ariaLabel: string;

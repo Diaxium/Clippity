@@ -1,4 +1,4 @@
-//! Palette quantization — pure, no I/O.
+//! Palette quantization: pure, no I/O.
 //!
 //! Extracts a small set of representative colors from an image via
 //! k-means clustering with a perceptual (CIE-LAB ΔE76) distance metric,
@@ -16,7 +16,7 @@ use crate::library::AuxColor;
 /// Default swatch count for a palette capture.
 pub const DEFAULT_PALETTE_COUNT: usize = 6;
 
-/// Bounds for a user-chosen swatch count — clamps the persisted settings
+/// Bounds for a user-chosen swatch count: clamps the persisted settings
 /// value and any explicit IPC override. Two is the fewest that reads as a
 /// "palette"; past ~16 the extra clusters stop being perceptually distinct
 /// on a typical region and the dedup pass collapses them anyway.
@@ -30,7 +30,7 @@ pub fn clamp_count(n: usize) -> usize {
     n.clamp(MIN_PALETTE_COUNT, MAX_PALETTE_COUNT)
 }
 
-/// Longest-edge cap for analysis — downsample bigger crops so the
+/// Longest-edge cap for analysis: downsample bigger crops so the
 /// histogram + k-means stay cheap regardless of region size.
 const ANALYSIS_MAX_EDGE: u32 = 256;
 /// k-means refinement iterations.
@@ -75,7 +75,7 @@ pub fn quantize(img: &RgbaImage, count: usize) -> Vec<AuxColor> {
     let refined = kmeans(&pixels, seeds);
     let kept = dedup_take(refined, count);
     // Each swatch's proportion is its share of the total *kept* weight, so
-    // the returned proportions sum to ~1.0 — they drive proportional swatch
+    // the returned proportions sum to ~1.0: they drive proportional swatch
     // widths and the "% of region" labels. Saturation-weighted (see
     // `collect_pixels`), so the share reflects visual prominence rather
     // than a raw opaque-pixel count.
@@ -270,7 +270,7 @@ mod tests {
     }
 
     /// Find a returned swatch whose dominant channel is `dom` and others
-    /// are low — i.e. "this primary color is represented".
+    /// are low, i.e. "this primary color is represented".
     fn has_primary(colors: &[AuxColor], dom: char) -> bool {
         colors.iter().any(|c| match dom {
             'r' => c.r > 200 && c.g < 70 && c.b < 70,

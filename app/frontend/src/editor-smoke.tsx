@@ -5,7 +5,7 @@
  * to render anything but the empty state. This standalone entry seeds the scene
  * store with a representative annotated screenshot so the editor's chrome,
  * panels, canvas, and overlays can be reviewed (and design changes verified) in
- * a plain browser via the dev server — no Tauri runtime required.
+ * a plain browser via the dev server: no Tauri runtime required.
  *
  * Referenced by `editor-smoke.html`. Not part of the production bundle.
  *
@@ -96,14 +96,14 @@ function seedScene(): SceneInit {
   );
   blur.sample = { mode: "blur", amount: 8 };
 
-  // "Redaction" is now just a black-filled rectangle — the dedicated redact tool
+  // "Redaction" is now just a black-filled rectangle: the dedicated redact tool
   // was removed (a redaction is a black fill; see ADR 0015).
   const redact = makeRectangle(
     { x: 380, y: 78, width: 200, height: 24 },
     { name: "Redaction", fills: [makeSolidPaint("#000000", 1)] }
   );
 
-  // Magnifier loupe over the chart's rising line — exercises the clip fix: the
+  // Magnifier loupe over the chart's rising line: exercises the clip fix: the
   // zoomed image must stay inside the ellipse, with the ring as its edge (ADR 0015).
   const magnify = makeEllipse(
     { x: 690, y: 520, width: 150, height: 150 },

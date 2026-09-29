@@ -1,7 +1,7 @@
 /**
  * Left-aligned cancel hint: "Press Esc to cancel" with the Esc key
  * rendered as a small keycap chip. Matches the bottom-left placement
- * in the design — the user's eye lands on the number first (right
+ * in the design: the user's eye lands on the number first (right
  * side) and the dismissal affordance reads next.
  */
 export function CountdownCancelHint() {

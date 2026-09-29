@@ -22,7 +22,7 @@ function isAction(entry: ContextMenuEntry): entry is ContextMenuAction {
 }
 
 /**
- * The app-wide right-click menu — one host per window, mounted by
+ * The app-wide right-click menu: one host per window, mounted by
  * `Providers`, fed by `useContextMenu` regions and by the global
  * fallback in `useNativeContextMenu`.
  *
@@ -121,7 +121,7 @@ export function ContextMenuHost() {
         // then typing does nothing at all, with no hint as to why. Typing
         // means "I'm done with the menu", so the character has to reach
         // the field it was aimed at. Bare modifiers are not a keystroke
-        // yet — Shift on its own must not close a menu the user is about
+        // yet: Shift on its own must not close a menu the user is about
         // to Shift-click in.
         case "Shift":
         case "Control":

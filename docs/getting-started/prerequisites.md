@@ -1,8 +1,8 @@
 # Prerequisites
 
-- **[Node.js](https://nodejs.org/) 22.13+** — the floor is set by pnpm 11,
+- **[Node.js](https://nodejs.org/) 22.13+**: the floor is set by pnpm 11,
   which imports `node:sqlite`.
-- **[pnpm](https://pnpm.io/) 11+** — the only supported package manager (a
+- **[pnpm](https://pnpm.io/) 11+**: the only supported package manager (a
   single root lockfile; npm/yarn are not used). Enable via
   `corepack enable` or install standalone.
 - **[Rust](https://rustup.rs/) 1.78+** (stable toolchain), with `cargo`,

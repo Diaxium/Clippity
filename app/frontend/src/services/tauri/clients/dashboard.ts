@@ -1,7 +1,7 @@
 /**
  * Dashboard cross-window handoff client.
  *
- * The "dashboard" is the main window's internal-routing concept —
+ * The "dashboard" is the main window's internal-routing concept:
  * Library / Editor / Settings are views rendered inside one window.
  * Other windows (capture settings links, library items, future toast
  * actions) call `openDashboard(view, captureId)` to focus the main
@@ -9,7 +9,7 @@
  *
  * Race avoidance: when the main window is shown for the first time,
  * its `listen` registers AFTER `emit` fires, so we'd lose the event.
- * Backend `pending_dashboard_view` stash solves it — the dashboard
+ * Backend `pending_dashboard_view` stash solves it: the dashboard
  * drains it on mount via `consumePendingDashboardView`. We still
  * emit the event for the already-shown case so the dashboard switches
  * view immediately when the user clicks Open while it's open.
@@ -56,7 +56,7 @@ export function consumePendingDashboardView(): Promise<DashboardRequest | null> 
  * pass the `captureId` to load. Used by capture-window settings links and
  * the library card's "Open in editor" button.
  *
- * Thin wrapper around `requestDashboardView` — the backend does the
+ * Thin wrapper around `requestDashboardView`: the backend does the
  * stash + hide-other-primaries + show + emit work atomically.
  */
 export async function openDashboard(

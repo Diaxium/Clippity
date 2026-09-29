@@ -7,15 +7,15 @@ authors.workspace = true
 publish = false
 
 # The benchmark harness (performance roadmap P2). The library half holds
-# the deterministic, synthetic corpora generators — no real capture
-# content ever touches a benchmark — so they can be unit-tested for
+# the deterministic, synthetic corpora generators (no real capture
+# content ever touches a benchmark) so they can be unit-tested for
 # reproducibility. The `benches/` half is the Criterion suite.
 
 [dependencies]
 clippity-domain = { workspace = true }
 clippity-services = { workspace = true }
-# The recorder's per-frame work — the colour conversion and the
-# duplication read-back — lives in the platform crate, and it is the one
+# The recorder's per-frame work (the colour conversion and the
+# duplication read-back) lives in the platform crate, and it is the one
 # budget on this list that a recording either meets or visibly drops
 # frames against.
 clippity-platform = { workspace = true }

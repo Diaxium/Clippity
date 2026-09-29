@@ -9,7 +9,7 @@ import { useWizardStore } from "@state/wizardStore";
 
 import { StepShell } from "../components/StepShell";
 
-/** Maintenance step 3 — the found update, its notes, and the CTA. */
+/** Maintenance step 3: the found update, its notes, and the CTA. */
 export function UpdateAvailableStep() {
   const back = useWizardStore((s) => s.back);
   const goToStep = useWizardStore((s) => s.goToStep);

@@ -32,8 +32,8 @@ crate downloads its ONNX binaries during the first vision-crate compile).
 | Frontend production build | `pnpm build` (Vite, 2472 modules) | ~13 s |
 | Frontend dev server ready | `pnpm dev` | ~1 s |
 | Reproducible install (warm) | `pnpm install --frozen-lockfile` | <1 s |
-| Rust check — 5 lower crates, cold target | `cargo check` (incl. ONNX download) | ~2 min |
-| Rust check — add `src-tauri`, deps cached | `cargo check --workspace` | ~20 s |
+| Rust check: 5 lower crates, cold target | `cargo check` (incl. ONNX download) | ~2 min |
+| Rust check: add `src-tauri`, deps cached | `cargo check --workspace` | ~20 s |
 | Rust **release** build + bundle (MSI + NSIS) | `pnpm tauri:build` | ~9.5 min (≈9m release compile + frontend build + bundling) |
 
 The dev-vs-release gap is expected: the release profile trades compile time
@@ -43,7 +43,7 @@ inner loop and reserve `tauri:build` for producing artifacts.
 
 ## Removed / pruned dependencies
 
-- **`zip`** — declared in the old single-crate `Cargo.toml` but unused in the
+- **`zip`**: declared in the old single-crate `Cargo.toml` but unused in the
   source; dropped. Confirmed by a clean workspace `cargo check` without it.
 
 Per-crate dependency sets were derived from actual usage, so each crate pulls

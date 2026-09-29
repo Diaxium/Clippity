@@ -2,7 +2,7 @@
  * The running app version for the Home "What's new" card.
  *
  * Reads it from the Tauri runtime (`@tauri-apps/api/app`). In a
- * browser-only preview the call rejects — we resolve to `null` and the
+ * browser-only preview the call rejects: we resolve to `null` and the
  * card hides the version line rather than showing a fake number.
  */
 

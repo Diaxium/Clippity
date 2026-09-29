@@ -1,7 +1,7 @@
 /**
  * Live-preview renderer for the capture file-name template (Settings →
- * General). A deliberately small mirror of Rust `domain::naming::render`
- * — enough to show the user a realistic example filename as they type.
+ * General). A deliberately small mirror of Rust `domain::naming::render`:
+ * enough to show the user a realistic example filename as they type.
  * The backend remains the source of truth at capture time; this only has
  * to *look* right, so it expands tokens against a fixed sample and applies
  * the same key sanitisation rules (illegal chars, whitespace collapse,

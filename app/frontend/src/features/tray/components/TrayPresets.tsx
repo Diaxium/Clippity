@@ -18,7 +18,7 @@ interface TrayPresetsProps {
 const TRAY_PRESET_LIMIT = 4;
 
 /**
- * The tray's Presets section — quick-launch rows for saved presets, with
+ * The tray's Presets section: quick-launch rows for saved presets, with
  * a "Manage" link into the dashboard manager. Empty state nudges the
  * user to create one. Mirrors `clippity://presets/changed` via the
  * shared `usePresets` hook.

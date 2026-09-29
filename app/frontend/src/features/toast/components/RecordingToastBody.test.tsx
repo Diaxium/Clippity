@@ -89,7 +89,7 @@ describe("RecordingToastBody", () => {
   it("reserves the preview box and swaps the placeholder for the frame", () => {
     render(<RecordingToastBody mode="scrolling" frames={0} />);
     // Before any frame a placeholder holds the fixed-height preview box,
-    // so the window — and the controls below — never shift later.
+    // so the window, and the controls below, never shift later.
     expect(screen.getByText("Scroll to capture")).toBeInTheDocument();
     expect(screen.queryByAltText("Live stitch preview")).toBeNull();
 
@@ -106,7 +106,7 @@ describe("RecordingToastBody", () => {
     const { container } = render(
       <RecordingToastBody mode="panoramic" frames={4} />
     );
-    // The placeholder (a standalone node) must NOT instruct scrolling —
+    // The placeholder (a standalone node) must NOT instruct scrolling;
     // the app drives it. (Scrolling mode says "Scroll to capture".)
     expect(screen.getByText("Auto-scrolling…")).toBeInTheDocument();
     expect(screen.queryByText("Scroll to capture")).toBeNull();
@@ -125,7 +125,7 @@ describe("RecordingToastBody", () => {
     const cards = container.querySelectorAll(".float-card");
     expect(cards).toHaveLength(2);
     // The controls (frame count + buttons) live in the second card, not
-    // alongside the preview — so the live preview can't shove them around.
+    // alongside the preview, so the live preview can't shove them around.
     const controls = cards[1];
     if (!(controls instanceof HTMLElement)) {
       throw new Error("expected a second .float-card for the controls");

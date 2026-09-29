@@ -6,7 +6,7 @@
 // lands here straight into the executable with `include_bytes!`, which is
 // what makes the shipped `Clippity Setup.exe` a single self-contained
 // file. Nothing else moves files between the two projects, so this script
-// is the single seam — it must run after `pnpm tauri:build` (which fills
+// is the single seam: it must run after `pnpm tauri:build` (which fills
 // build/) and before `pnpm installer:build`.
 //
 // Alongside the executable it writes payload.json, which the Rust side
@@ -49,7 +49,7 @@ async function main() {
   if (!info) {
     console.error(
       `[stage-payload] No application binary at ${sourceExe}.\n` +
-        `Run \`pnpm tauri:build\` first — the installer has nothing to bundle.`,
+        `Run \`pnpm tauri:build\` first; the installer has nothing to bundle.`,
     );
     process.exit(1);
   }
@@ -64,7 +64,7 @@ async function main() {
   );
 
   // Clear the staged files so a stale binary can never survive a failed
-  // copy and get compiled in. The folder's README is deliberately kept —
+  // copy and get compiled in. The folder's README is deliberately kept:
   // it documents the folder for anyone who opens it.
   await mkdir(payloadDir, { recursive: true });
   await rm(payloadExe, { force: true });

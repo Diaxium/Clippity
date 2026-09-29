@@ -33,7 +33,7 @@ export function imagePreserveAspectRatio(
   return `${imageAlignToken(align)} ${scale === "fit" ? "meet" : "slice"}`;
 }
 
-/** Draw `img` into `rect` honoring scale (fill/fit/stretch) + align — the
+/** Draw `img` into `rect` honoring scale (fill/fit/stretch) + align: the
  *  Canvas2D counterpart of {@link imagePreserveAspectRatio}. */
 export function drawImageFill(
   ctx: CanvasRenderingContext2D,

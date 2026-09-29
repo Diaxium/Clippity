@@ -1,7 +1,7 @@
 //! Preset domain types + pure rules.
 //!
-//! A preset is a saved, named configuration — a still capture *or* a
-//! recording — plus post-capture output steps (`output`). Persisted by
+//! A preset is a saved, named configuration, a still capture *or* a
+//! recording, plus post-capture output steps (`output`). Persisted by
 //! `services::presets_service`; executed by the frontend's `runPreset`
 //! orchestrator. No I/O here. See
 //! [ADR 0004](../../docs/decisions/0004-capture-presets.md).
@@ -11,7 +11,7 @@
 //! the concept and called it a preset, and it only ever held a
 //! `CaptureRequest` because the recorder was built afterwards (ADR
 //! 0031). Introducing a parallel "scenes" surface would have meant two
-//! managers, two editors and two run paths for one idea — so the preset
+//! managers, two editors and two run paths for one idea, so the preset
 //! grew a second request type instead.
 //!
 //! Wire format: camelCase fields (`openEditor` / `saveDir`). The matching
@@ -48,7 +48,7 @@ pub struct PresetOutput {
 /// and neither has a serde default. A payload can therefore satisfy at
 /// most one variant, so the declaration order below carries no meaning.
 /// `a_capture_payload_cannot_be_read_as_a_recording` and its twin pin
-/// that down — if a future refactor gives either side a default for one
+/// that down: if a future refactor gives either side a default for one
 /// of those fields, the disjointness quietly disappears and those tests
 /// are what will notice.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,7 +100,7 @@ pub struct CapturePreset {
     pub output: PresetOutput,
 }
 
-/// What the frontend sends to create a preset — everything but the `id`,
+/// What the frontend sends to create a preset: everything but the `id`,
 /// which the service mints.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -114,7 +114,7 @@ pub struct PresetInput {
 /// stores a clean string. Still the only invariant a preset carries:
 /// both request shapes are closed enums and bools, and a recording
 /// preset's loose numbers (frame rate, resolution, gains, bitrate) are
-/// read-clamped by `domain::recorder::validate` when it actually runs —
+/// read-clamped by `domain::recorder::validate` when it actually runs,
 /// so a preset saved under an older build with an out-of-range value
 /// records rather than being refused at save time.
 pub fn validate_name(name: &str) -> Result<String, &'static str> {
@@ -250,7 +250,7 @@ mod tests {
     #[test]
     fn a_capture_payload_cannot_be_read_as_a_recording() {
         // Disjointness guard. `RecorderRequest` requires `target` and
-        // `format`, neither of which a capture payload carries — if a
+        // `format`, neither of which a capture payload carries: if a
         // refactor ever defaults one of them, this catches it before a
         // user's still preset silently becomes a recording.
         let json = serde_json::to_string(&PresetRequest::Capture(sample_request())).unwrap();

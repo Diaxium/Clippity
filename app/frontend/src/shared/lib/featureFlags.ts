@@ -1,11 +1,11 @@
 /**
- * Feature-flag registry — the switches Settings → Advanced can override.
+ * Feature-flag registry: the switches Settings → Advanced can override.
  *
  * **Every flag in this catalogue has a real consumer.** A flag table
  * listing switches nothing reads is a lie the settings page tells on the
  * app's behalf, so the list is short by design and grows when a
  * consumer does. Each entry names where it is read, and the backend ids
- * are duplicated as constants in `services::settings_service` — the two
+ * are duplicated as constants in `services::settings_service`: the two
  * must not drift.
  *
  * Resolution is `override ?? build default`, so a user who has never
@@ -20,7 +20,7 @@ export type FlagConsumer = "backend" | "frontend";
 export interface FeatureFlagDef {
   id: string;
   label: string;
-  /** What turning it off actually does — written for the person
+  /** What turning it off actually does: written for the person
    *  debugging, not for a marketing page. */
   description: string;
   /** The shipped behaviour. Every flag here defaults on: they gate
@@ -50,7 +50,7 @@ export const FEATURE_FLAGS: readonly FeatureFlagDef[] = [
     id: "recorder.duplication",
     label: "Desktop Duplication recording",
     description:
-      "Hold one duplication of the output for the length of a recording. Off uses per-call grabs — slower, but the path to try when a recording tears, stalls, or comes back black.",
+      "Hold one duplication of the output for the length of a recording. Off uses per-call grabs: slower, but the path to try when a recording tears, stalls, or comes back black.",
     defaultOn: true,
     consumer: "backend",
     restartRequired: false,
@@ -73,7 +73,7 @@ let overrides: FlagOverrides = {};
 /**
  * Mirror the persisted overrides into the module registry. Called from
  * `Providers` on every settings change, the same way keybind overrides
- * are — so `isFeatureEnabled` can stay a plain function that any module
+ * are, so `isFeatureEnabled` can stay a plain function that any module
  * can call without a hook or a store subscription.
  */
 export function setFeatureFlagOverrides(next: FlagOverrides | undefined): void {
@@ -102,7 +102,7 @@ export function resolveFlags(from: FlagOverrides = overrides): ResolvedFlag[] {
 }
 
 /**
- * Whether `id` is on. An unknown id is `false` — a caller asking about
+ * Whether `id` is on. An unknown id is `false`: a caller asking about
  * a flag that isn't in the catalogue is asking about a code path that
  * doesn't exist, and answering "on" would be the dangerous direction to
  * guess in.
@@ -118,7 +118,7 @@ export function isFeatureEnabled(id: string): boolean {
  *
  * `"default"` *removes* the entry rather than writing the shipped
  * value, so a user who resets a flag keeps following the build if the
- * default later changes — which is the difference between "I don't have
+ * default later changes, which is the difference between "I don't have
  * an opinion" and "I want it on".
  */
 export function withOverride(
@@ -139,7 +139,7 @@ export function withOverride(
  * Pure: drop overrides for flags that are no longer in the catalogue.
  *
  * Applied when the page loads the persisted map, so a settings file
- * written by an older build doesn't carry dead ids forever — and so the
+ * written by an older build doesn't carry dead ids forever, and so the
  * "N overrides" count in the UI matches what the table shows.
  */
 export function pruneOverrides(from: FlagOverrides): FlagOverrides {

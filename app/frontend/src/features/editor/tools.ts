@@ -1,13 +1,13 @@
 /**
- * Editor toolbar metadata. Pure data, no React — the top bar walks {@link
+ * Editor toolbar metadata. Pure data, no React: the top bar walks {@link
  * TOOL_MENU} to render grouped tool buttons + submenus, and the canvas
  * dispatches gesture handlers off the active `ToolId`.
  *
  * Organization note: Clippity's editor is a capture-*annotation* tool first, so
  * the toolbar leads with an "annotate" group (blur, pixelate, magnify, highlight,
- * step, callout — growing per roadmap Workstream A), with text and the vector
+ * step, callout; growing per roadmap Workstream A), with text and the vector
  * design tools (shapes, frame, pen) following. Figma's "comment"/plugin/scale
- * tools stay absent (no backing node type). Redaction was removed — it's just a
+ * tools stay absent (no backing node type). Redaction was removed: it's just a
  * black-filled rectangle, so the rectangle + fill tools cover it (see ADR 0015).
  */
 
@@ -121,7 +121,7 @@ export const TOOLS: readonly ToolDef[] = [
     Icon: Focus,
     draws: true,
   },
-  // `M` was the one unbound letter in the map (docs/editor-keybinds.md) — and
+  // `M` was the one unbound letter in the map (docs/editor-keybinds.md), and
   // Illustrator's `M` is its rectangle, which Clippity already binds to `R`.
   { id: "measure", label: "Measure", shortcut: "M", Icon: Ruler, draws: true },
   // No letter left to bind (the map is full since Measure took `M`), so stamps
@@ -174,7 +174,7 @@ export const TOOL_MENU: readonly ToolMenuGroup[] = [
   // Crop acts on the page, not on a selection, so it stands alone next to the
   // pointer group rather than joining the markup tools.
   { id: "crop", toolIds: ["crop"] },
-  // Annotation-first: the markup group leads. Complete as of stamps — Workstream
+  // Annotation-first: the markup group leads. Complete as of stamps: Workstream
   // A's tool list has no gap left.
   {
     id: "annotate",

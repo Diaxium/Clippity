@@ -47,7 +47,7 @@ pub fn read(maintenance_dir: &Path) -> InstallerResult<Option<OperationJournal>>
     Ok(Some(journal))
 }
 
-/// Remove the journal file — the last step of a committed-and-cleaned or a
+/// Remove the journal file: the last step of a committed-and-cleaned or a
 /// fully-rolled-back operation. A missing file is success.
 pub fn remove(maintenance_dir: &Path) -> InstallerResult<()> {
     let path = journal_path(maintenance_dir);

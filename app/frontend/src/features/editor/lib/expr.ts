@@ -1,6 +1,6 @@
 /**
  * Tiny, safe arithmetic evaluator for numeric input fields. Supports `+ - * /`,
- * parentheses, unary signs, and decimals — enough to type "100/2" or "(8+2)*3"
+ * parentheses, unary signs, and decimals: enough to type "100/2" or "(8+2)*3"
  * into a {@link NumberField}. Deliberately NOT `eval`/`new Function`: a
  * hand-written recursive-descent parser, so the only thing that can ever run is
  * arithmetic on the numbers in the string.

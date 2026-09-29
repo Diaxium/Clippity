@@ -3,7 +3,7 @@ import { RECORD_FORMATS, RECORD_TARGETS } from "../recordModes";
 import { ModeTile } from "./ModeTile";
 
 /**
- * The recording-target tiles — the Record screen's counterpart to
+ * The recording-target tiles: the Record screen's counterpart to
  * `CaptureTypeGrid`. Reads + writes `recordTarget` directly from the
  * feature store.
  */

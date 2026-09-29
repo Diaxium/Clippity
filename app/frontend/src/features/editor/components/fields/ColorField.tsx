@@ -32,7 +32,7 @@ function toDisplay(hex: string): string {
  * input reverts to the current value.
  *
  * The swatch is its own square button beside the field rather than a chip
- * inside it — at inspector scale a 16px chip tucked behind a border is a hard
+ * inside it: at inspector scale a 16px chip tucked behind a border is a hard
  * target for the control that opens the color editor, which is the row's
  * primary action.
  */
@@ -47,7 +47,7 @@ export function ColorField({
   const [focused, setFocused] = useState(false);
   const pickerRef = useRef<HTMLInputElement>(null);
 
-  // Empty while mixed — `HEX6` rejects "", so blurring an untouched mixed field
+  // Empty while mixed: `HEX6` rejects "", so blurring an untouched mixed field
   // commits nothing and the selection keeps its individual colors.
   const resting = mixed ? "" : toDisplay(value);
 

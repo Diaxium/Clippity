@@ -9,7 +9,7 @@ import { isTinySelection } from "./SmallSelectionPreview";
 const HANDLE_SIZE = 10;
 const HIT_PAD = 8; // invisible hit-zone padding around each handle
 const EDGE_HANDLE_LEN = 22; // long axis of a full-size mid-edge pill
-/** Below this side length (logical px) a mid-edge handle is dropped — its edge
+/** Below this side length (logical px) a mid-edge handle is dropped: its edge
  *  is too short to keep it clear of the two corners. */
 const EDGE_HANDLE_MIN = 36;
 const RESIZE_CURSORS: Record<ResizeDir, string> = {
@@ -34,7 +34,7 @@ interface RegionSelectionProps {
 }
 
 /**
- * The selection rectangle — dual-layer border (crisp inner + soft glow
+ * The selection rectangle: dual-layer border (crisp inner + soft glow
  * outer), fade-in rule-of-thirds grid, size badge, and 8 resize handles
  * with active-edge highlighting.
  *
@@ -89,7 +89,7 @@ export function RegionSelection({
     { dir: "w", left: 0, top: renderRect.h / 2 },
   ];
 
-  // Shrink the resize handles — and shed the mid-edge ones — as the box gets
+  // Shrink the resize handles, and shed the mid-edge ones, as the box gets
   // small, so the eight of them stop piling on top of each other. The four
   // corners always stay (the primary resize grip); a mid-edge handle drops once
   // its edge is too short to seat it clear of the two corners. Scaling keys off
@@ -120,7 +120,7 @@ export function RegionSelection({
 
   // When the selection is small enough to trigger the magnified preview (which
   // carries its own px readout), suppress this badge so the size isn't shown
-  // twice. Gated on the snapshot being loaded — that's what the preview needs
+  // twice. Gated on the snapshot being loaded: that's what the preview needs
   // to render, so the badge stays as the fallback until then.
   const previewShown = snapshotReady && isTinySelection(renderRect);
 
@@ -161,7 +161,7 @@ export function RegionSelection({
         zIndex: 15,
       }}
     >
-      {/* Snap pulse — bumped by useRegionSelection when the rect snaps
+      {/* Snap pulse: bumped by useRegionSelection when the rect snaps
           to a viewport edge or aspect-locked corner. Keyed on the
           counter so React replays the animation every fire. */}
       {snapPulse > 0 && (
@@ -172,7 +172,7 @@ export function RegionSelection({
         />
       )}
 
-      {/* Rule-of-thirds grid — fades when idle to reduce visual noise. */}
+      {/* Rule-of-thirds grid: fades when idle to reduce visual noise. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -211,13 +211,13 @@ export function RegionSelection({
         ))}
       </div>
 
-      {/* Active-edge highlight stripes — rendered only for the edges /
+      {/* Active-edge highlight stripes: rendered only for the edges /
           corners the user is currently dragging. */}
       {editable && activeResize && (
         <ActiveEdgeHighlight dir={activeResize} rect={renderRect} />
       )}
 
-      {/* Size badge — physical pixels per legacy convention. Lifted
+      {/* Size badge: physical pixels per legacy convention. Lifted
           above the rect so it never blocks an active corner handle. Hidden
           when the magnified preview is up (it shows the size itself). */}
       {!previewShown && (
@@ -281,7 +281,7 @@ export function RegionSelection({
 
 /**
  * Bright accent stripes along the edge / corner currently being
- * resized. Renders inside the selection rect — coordinates are local.
+ * resized. Renders inside the selection rect: coordinates are local.
  */
 function ActiveEdgeHighlight({ dir, rect }: { dir: ResizeDir; rect: Rect }) {
   const thickness = 2;

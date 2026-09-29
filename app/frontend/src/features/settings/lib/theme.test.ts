@@ -48,7 +48,7 @@ describe("accentInk", () => {
   });
 
   it("flips to dark ink on the light brand presets (readability)", () => {
-    // Teal / Lavender / Gold / Mint — all light enough that white text
+    // Teal / Lavender / Gold / Mint: all light enough that white text
     // would be unreadable on a solid fill.
     for (const hex of ["#A8D5D8", "#E8D9F2", "#D4C5B0", "#24D1B5"]) {
       expect(accentInk(hex)).toBe(ACCENT_INK_DARK);

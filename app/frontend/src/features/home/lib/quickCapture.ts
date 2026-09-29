@@ -1,5 +1,5 @@
 /**
- * Quick-capture launcher definitions — the single source of truth for
+ * Quick-capture launcher definitions: the single source of truth for
  * the four cards on the Home view and their keyboard shortcuts.
  *
  * Each action carries an author combo (`Mod+1`, …) parsed through the
@@ -9,8 +9,8 @@
  *
  * All four map to a real backend capability: Screenshot and Window open
  * the region / window overlays, Record and GIF start a screen recording
- * (ADR 0031). The `available: false` path — a "Soon" pill and no
- * shortcut — is kept for whatever lands next rather than removed.
+ * (ADR 0031). The `available: false` path, a "Soon" pill and no
+ * shortcut, is kept for whatever lands next rather than removed.
  *
  * Record and GIF start on the monitor under the cursor. Recording a
  * chosen region goes through the overlay instead, so it is not a
@@ -30,7 +30,7 @@ export interface QuickCaptureAction {
   id: QuickCaptureId;
   title: string;
   description: string;
-  /** Rendered inside the tile — a lucide icon or a short text badge. */
+  /** Rendered inside the tile: a lucide icon or a short text badge. */
   icon?: IconComponent;
   badge?: string;
   tint: TileTint;
@@ -84,7 +84,7 @@ export const QUICK_CAPTURE_ACTIONS: readonly QuickCaptureAction[] = [
 
 /** Why a launcher action can't be used right now. */
 export type Unavailability =
-  /** The port hasn't landed — the card's historic "Soon" state. */
+  /** The port hasn't landed: the card's historic "Soon" state. */
   | "soon"
   /** The component was declined when Clippity was installed. Fixable by
    *  re-running the installer's Modify flow, which the card says. */
@@ -95,7 +95,7 @@ export type Unavailability =
  *
  * Pure, and the single place the two facts are combined: the card renders
  * from it and the hotkey map filters on it, so a key can never fire an
- * action whose card is disabled. `capabilities` only gates GIF today —
+ * action whose card is disabled. `capabilities` only gates GIF today:
  * everything else the launcher offers is part of `core`.
  */
 export function unavailabilityOf(

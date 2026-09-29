@@ -36,7 +36,7 @@ export function CaptureFooter({
     ? undefined
     : captureType === "custom"
       ? "Pick an available custom mode to enable Capture"
-      : "This capture mode isn't available yet — see the tooltip on its tile";
+      : "This capture mode isn't available yet; see the tooltip on its tile";
 
   return (
     <footer

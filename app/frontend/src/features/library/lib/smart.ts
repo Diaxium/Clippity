@@ -1,5 +1,5 @@
 /**
- * Smart collections — the sidebar's derived sets. Pure predicates, no
+ * Smart collections: the sidebar's derived sets. Pure predicates, no
  * React, no IPC.
  *
  * A smart collection is a rule evaluated against the listing the page
@@ -10,9 +10,9 @@
  * would be destroyed by re-deriving it.
  *
  * `now` is a parameter rather than a `Date.now()` call inside each
- * predicate so a screenful of rows shares one clock — a list that
+ * predicate so a screenful of rows shares one clock (a list that
  * straddled midnight mid-render would otherwise put two captures a
- * millisecond apart in different weeks — and so the tests can pin it.
+ * millisecond apart in different weeks) and so the tests can pin it.
  */
 
 import type { LibraryFacetsQuery } from "@services/tauri/clients/library";
@@ -44,7 +44,7 @@ export const SMART_COLLECTIONS: readonly SmartDef[] = [
  * The two time windows are anchored differently on purpose. "This week"
  * counts back seven *calendar days* from local midnight, so a capture
  * taken at 9am today and one taken at 11pm six days ago are both in it
- * regardless of the current hour — a rolling 168-hour window would drop
+ * regardless of the current hour: a rolling 168-hour window would drop
  * rows out of the set as the afternoon wore on. "Last 30 days" is a
  * plain rolling window, which is what a month-scale bucket is read as.
  */
@@ -65,11 +65,11 @@ export function matchesSmart(
   }
 }
 
-/** Start of "this week" — see [`matchesSmart`] for why it is anchored to
+/** Start of "this week"; see [`matchesSmart`] for why it is anchored to
  *  local midnight rather than a rolling 168 hours. */
 const thisWeekSince = (now: number) => startOfDay(now) - 6 * 86_400_000;
 
-/** Start of "last 30 days" — a plain rolling window. */
+/** Start of "last 30 days": a plain rolling window. */
 const last30DaysSince = (now: number) => now - 30 * 86_400_000;
 
 /**
@@ -77,7 +77,7 @@ const last30DaysSince = (now: number) => now - 30 * 86_400_000;
  * facet counts take.
  *
  * The rail's counts span the whole library, so they are aggregated in SQL
- * rather than by filtering a listing the client no longer holds — but the
+ * rather than by filtering a listing the client no longer holds, but the
  * *cut points* stay here, because they depend on the user's clock and
  * local midnight, which the backend cannot compute. Both readings of a
  * window therefore come from these two functions; a test pins the counts

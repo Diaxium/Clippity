@@ -36,7 +36,7 @@ const ROW_PX = 18;
 /** Narrowest a bar is drawn, whatever its duration.
  *
  *  A half-second annotation on a ten-minute clip is a fraction of a
- *  pixel wide, which is not a control — it is an invisible one. */
+ *  pixel wide, which is not a control: it is an invisible one. */
 const MIN_BAR_PX = 14;
 
 /** Icon per kind, so a bar is identifiable without reading it. */
@@ -54,7 +54,7 @@ const KIND_ICON: Record<AnnotationKind, typeof Square> = {
  * overlaps allow.
  *
  * A greedy first-fit: an annotation takes the first row whose last bar
- * has already ended. Exported for its test — the failure is bars drawn
+ * has already ended. Exported for its test: the failure is bars drawn
  * on top of each other, which looks like a rendering bug and is really a
  * packing one.
  */

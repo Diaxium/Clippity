@@ -21,19 +21,19 @@ import { LeftPanel } from "./LeftPanel";
 interface EditorLayoutProps {
   /** Capture id (= file path) to load. Null renders the empty state. */
   id: string | null;
-  /** Dashboard navigation to the Library — surfaces a CTA in the
+  /** Dashboard navigation to the Library: surfaces a CTA in the
    *  empty state so "open a capture" is a click, not a hunt. */
   onOpenLibrary?: () => void;
 }
 
 /**
- * Editor root — mounted by the dashboard when its view is "editor". Loads the
+ * Editor root: mounted by the dashboard when its view is "editor". Loads the
  * capture into the scene store, owns window-level keyboard shortcuts, and
  * composes the Figma-style surface (top bar · left panel · canvas · right
  * panel) inside the always-dark `.clippity-editor` token scope.
  */
 export function EditorLayout({ id, onOpenLibrary }: EditorLayoutProps) {
-  // Layers panel is Design-mode only — Annotation mode hides it (Workstream M2).
+  // Layers panel is Design-mode only: Annotation mode hides it (Workstream M2).
   const mode = useEditorStore((s) => s.mode);
   const dock = useEditorStore((s) => s.inspectorDock[mode]);
 

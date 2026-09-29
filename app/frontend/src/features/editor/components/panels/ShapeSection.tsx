@@ -13,7 +13,7 @@ const SUB = FIELD_LABEL;
  * creation: polygon sides, star point count + inner ratio, path closed. Both
  * renderers already read these fields, so edits update live + on export.
  *
- * Multi-select (P3) groups by **shape type** — the parameters aren't shared
+ * Multi-select (P3) groups by **shape type**: the parameters aren't shared
  * across types (a star's point count is not a polygon's side count), so the
  * panel follows the primary's type and edits every selected shape of that type.
  * Renders nothing when the primary isn't one of the three.

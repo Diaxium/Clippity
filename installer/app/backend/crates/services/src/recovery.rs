@@ -1,13 +1,13 @@
-//! Startup recovery — act on an operation journal left behind by an
+//! Startup recovery: act on an operation journal left behind by an
 //! install / repair / update / uninstall that did not finish.
 //!
 //! On launch the wizard scans the maintenance directories for a leftover
 //! [`installer_domain::journal::OperationJournal`]
 //! ([`crate::detect::scan_pending_operation`]) and hands it here. The pure
 //! [`installer_domain::journal::recover`] rule has already decided the
-//! disposition; this module performs the safe, automatable ones — reversing
+//! disposition; this module performs the safe, automatable ones (reversing
 //! a half-applied operation, or clearing the leftovers of one that actually
-//! finished — and reports the ones that need a human (resume a specific
+//! finished) and reports the ones that need a human (resume a specific
 //! plan, or manual recovery of an ambiguous state) rather than guessing.
 
 use serde::{Deserialize, Serialize};
@@ -69,7 +69,7 @@ fn resolve(pending: PendingOperation) -> InstallerResult<RecoveryOutcome> {
             Ok(RecoveryOutcome::RolledBack { reversed })
         }
 
-        // The operation finished; only leftovers remain — clear them.
+        // The operation finished; only leftovers remain: clear them.
         Recovery::Cleanup => {
             journal_store::remove(&maintenance_dir)?;
             tracing::info!("recovery: cleared a finished operation's leftovers");
@@ -87,7 +87,7 @@ fn resolve(pending: PendingOperation) -> InstallerResult<RecoveryOutcome> {
             Ok(RecoveryOutcome::ResumeNeeded(msg))
         }
 
-        // Ambiguous (e.g. an unreadable journal schema) — never auto-act.
+        // Ambiguous (e.g. an unreadable journal schema): never auto-act.
         Recovery::ManualRecovery => {
             let msg = format!(
                 "A previous {:?} left the installation in a state that needs manual recovery.",

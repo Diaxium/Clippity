@@ -1,5 +1,5 @@
 /**
- * Developer + diagnostics wire-format contracts — mirror Rust
+ * Developer + diagnostics wire-format contracts: mirror Rust
  * `domain::developer`.
  *
  * These back Settings → Advanced: the system-information card, the log
@@ -9,12 +9,12 @@
  */
 
 /** What an exported diagnostics bundle may contain. Every field
- *  defaults to the private answer — an unconfigured bundle is the
+ *  defaults to the private answer: an unconfigured bundle is the
  *  redacted one. Mirrors Rust `domain::developer::BundleOptions`. */
 export interface BundleOptions {
   /** Replace the account name + home directory in every included file. */
   redactPaths: boolean;
-  /** Replace capture file names with `<capture>.<ext>` — a capture is
+  /** Replace capture file names with `<capture>.<ext>`: a capture is
    *  routinely named after the window it came from. */
   redactCaptureNames: boolean;
   /** Copy the retained log files into the bundle. */
@@ -33,7 +33,7 @@ export interface BundleResult {
   redacted: boolean;
 }
 
-/** One monitor as the capture pipeline sees it — the numbers that
+/** One monitor as the capture pipeline sees it: the numbers that
  *  explain a mis-cropped multi-monitor or mixed-DPI capture. */
 export interface MonitorDiagnostics {
   id: number;
@@ -50,7 +50,7 @@ export interface MonitorDiagnostics {
   primary: boolean;
   /** Whether Windows reports this output presenting in HDR. */
   hdr: boolean;
-  /** SDR white level in nits when known — what an HDR tone-map anchors to. */
+  /** SDR white level in nits when known: what an HDR tone-map anchors to. */
   sdrWhiteNits: number | null;
 }
 
@@ -110,7 +110,7 @@ export interface WindowDiagnostics {
   height: number;
 }
 
-/** Live runtime state — the answer to "why is nothing happening?". */
+/** Live runtime state: the answer to "why is nothing happening?". */
 export interface RuntimeStatus {
   windows: WindowDiagnostics[];
   /** Whether every Clippity window is excluded from screen capture. */
@@ -124,7 +124,7 @@ export interface RuntimeStatus {
   monitors: MonitorDiagnostics[];
 }
 
-/** What the last recording session actually did — kept after the
+/** What the last recording session actually did: kept after the
  *  session ends, unlike the live `RecorderStatus`. */
 export interface RecorderDiagnostics {
   format: string;
@@ -154,12 +154,12 @@ export type FolderTarget =
 
 /** One line of the log file, as the viewer renders it. */
 export interface LogLine {
-  /** Monotonic index within the returned window — a stable React key. */
+  /** Monotonic index within the returned window: a stable React key. */
   seq: number;
   /** Timestamp as written, or empty for a continuation line. */
   timestamp: string;
   /** Lower-case level, or empty when the line carries none (a panic
-   *  backtrace, say — which is exactly what must not be dropped). */
+   *  backtrace, say, which is exactly what must not be dropped). */
   level: string;
   message: string;
 }

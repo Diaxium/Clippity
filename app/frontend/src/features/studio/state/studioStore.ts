@@ -11,7 +11,7 @@
  * So this store *mirrors* the element for rendering (`currentMs`, fed by
  * the player hook) and *requests* changes from it (`seek`, which bumps a
  * nonce the player hook watches). The nonce is what makes a seek to the
- * position you are already at still work — pressing Home twice, or
+ * position you are already at still work: pressing Home twice, or
  * clicking the in-point handle after the playhead drifted onto it, would
  * otherwise be a no-op because the value didn't change.
  */
@@ -39,7 +39,7 @@ import {
  * A change to one annotation.
  *
  * `Partial` distributes over the union, so this is "a partial of exactly
- * one kind" rather than a bag of every kind's fields — which is what
+ * one kind" rather than a bag of every kind's fields, which is what
  * stops a patch setting `radius` on a text callout.
  */
 export type AnnotationPatch = Partial<Annotation>;
@@ -65,7 +65,7 @@ interface StudioStoreState {
   volume: number;
   muted: boolean;
 
-  /** The in/out points. Always a valid range — see `lib/trim`. */
+  /** The in/out points. Always a valid range; see `lib/trim`. */
   range: TrimRange;
   /** Which handle a pointer is currently dragging, if any. Suppresses
    *  playback-driven playhead updates so the picture follows the handle
@@ -75,7 +75,7 @@ interface StudioStoreState {
    * Whether the user is dragging the playhead itself.
    *
    * While they are, the store is the authority on where it is and the
-   * element is *following* — so the element's own reports are stale by
+   * element is *following*, so the element's own reports are stale by
    * definition and must not be written back. See {@link syncPosition}.
    */
   scrubbing: boolean;
@@ -85,7 +85,7 @@ interface StudioStoreState {
   seekMs: number;
   seekNonce: number;
 
-  /** Annotations over the clip, in paint order — later covers earlier. */
+  /** Annotations over the clip, in paint order: later covers earlier. */
   annotations: Annotation[];
   /** The one being edited, if any. Drives both the handles on the
    *  picture and the highlighted bar on the timeline, so the two cannot
@@ -118,7 +118,7 @@ interface StudioStoreState {
   reconcileDuration(durationMs: number): void;
 
   /** Add an annotation of `kind` starting at the playhead, and select
-   *  it — a new annotation the user cannot immediately adjust is a
+   *  it: a new annotation the user cannot immediately adjust is a
    *  shape they have to go and find. */
   addAnnotation(kind: AnnotationKind): void;
   selectAnnotation(id: string | null): void;
@@ -130,7 +130,7 @@ interface StudioStoreState {
   /** Slide a whole range, keeping its length. */
   nudgeAnnotationRange(id: string, deltaMs: number): void;
   removeAnnotation(id: string): void;
-  /** Replace the whole set — for loading a sidecar. */
+  /** Replace the whole set: for loading a sidecar. */
   setAnnotations(annotations: Annotation[]): void;
 }
 
@@ -144,7 +144,7 @@ const EMPTY = {
   scrubbing: false,
   seekMs: 0,
   // Annotations belong to the clip, so opening a different one must not
-  // carry them over — they would be positioned against a picture that
+  // carry them over: they would be positioned against a picture that
   // is no longer there.
   annotations: [] as Annotation[],
   selectedAnnotationId: null,
@@ -163,7 +163,7 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
   open: (id) =>
     set((s) =>
       // Re-opening the clip already shown must not throw away the user's
-      // in/out points — the dashboard re-emits its view request on every
+      // in/out points: the dashboard re-emits its view request on every
       // cross-window jump, including ones that land back here.
       s.id === id && s.status === "ready"
         ? {}
@@ -186,8 +186,8 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
    *
    * **Ignored while the playhead is being dragged**, and that guard is
    * the fix for a real bug rather than a precaution. A drag seeks the
-   * element on every pointer move, but an element seeks *asynchronously*
-   * — its `seeked` and `timeupdate` events arrive after the fact,
+   * element on every pointer move, but an element seeks *asynchronously*:
+   * its `seeked` and `timeupdate` events arrive after the fact,
    * carrying the position it has just finished reaching rather than the
    * one the pointer is at now.
    *
@@ -195,7 +195,7 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
    * playhead jumps backwards. Dragging *towards* zero makes it
    * pathological: every late report is larger than where the pointer has
    * got to, so the playhead is repeatedly yanked forwards and simply
-   * refuses to approach the start — it appears to have a floor a good
+   * refuses to approach the start: it appears to have a floor a good
    * half-second above zero.
    *
    * While the user is dragging, the store is the authority and the
@@ -222,7 +222,7 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
     }),
 
   // Relative moves live here, not at the call sites, and that is not
-  // tidiness — it is the fix for a real bug. A component computes its
+  // tidiness: it is the fix for a real bug. A component computes its
   // handler from the `currentMs` it rendered with, so three rapid clicks
   // in one tick all step from the *same* stale position and advance a
   // single frame between them. Reading the live position inside the
@@ -256,7 +256,7 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
 
   // Dragging the slider is also the mute control: away from zero
   // unmutes, onto zero mutes. Derived from the *clamped* value, not the
-  // raw one — an out-of-range drag has to agree with the volume it
+  // raw one: an out-of-range drag has to agree with the volume it
   // actually produced, or the player goes silent while still showing an
   // unmuted speaker.
   setVolume: (volume) => {
@@ -275,7 +275,7 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
    * Adopt the length the `<video>` element reports.
    *
    * The probe's duration comes from the container header, which is read
-   * before a single frame is decoded — that is the whole reason a
+   * before a single frame is decoded: that is the whole reason a
    * timeline can be drawn instantly. But a header can be wrong about it.
    * The recorder writes *fragmented* MP4 so a crashed session still
    * plays (ADR 0031), and a fragmented container's header is written
@@ -285,8 +285,8 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
    * The symptom is a timeline longer than the clip: the playhead reaches
    * the last real frame and stops, well short of the end of a track that
    * claims more, and every position on that track maps to the wrong
-   * moment. The element is the authority here — it is the thing actually
-   * decoding — so once it knows, this is what it knows.
+   * moment. The element is the authority here, it is the thing actually
+   * decoding, so once it knows, this is what it knows.
    *
    * The in/out points are carried across rather than reset. A range that
    * spanned the whole clip re-expands to the corrected whole; anything
@@ -301,7 +301,7 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
       // settles: `NaN` while metadata is still loading, and `Infinity`
       // for a fragmented stream whose end is not yet known.
       if (!info || !Number.isFinite(durationMs) || durationMs <= 0) return {};
-      // Sub-frame disagreement is expected — the header states whole
+      // Sub-frame disagreement is expected: the header states whole
       // milliseconds and the element works in floating-point seconds.
       if (Math.abs(durationMs - info.durationMs) < 1) return {};
 
@@ -354,7 +354,7 @@ export const useStudioStore = create<StudioStoreState>((set, get) => ({
         annotation.id === id
           ? // The spread of a partial-of-one-kind onto that same kind is
             // sound, but not something TypeScript can follow across the
-            // union — the cast asserts what the patch type already says.
+            // union: the cast asserts what the patch type already says.
             ({ ...annotation, ...patch } as Annotation)
           : annotation
       ),

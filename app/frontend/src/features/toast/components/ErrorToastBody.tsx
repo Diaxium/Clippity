@@ -1,13 +1,13 @@
 import { AlertTriangle } from "lucide-react";
 
 /**
- * Error-variant toast body — surfaces a failure message from the
+ * Error-variant toast body: surfaces a failure message from the
  * capture / overlay pipelines (and, eventually, every other
  * port).
  *
  * Color design: uses the existing `--color-accent` family rather than
  * a dedicated error token. Clippity's accent is already a warm
- * coral that reads as "notable" — adding a separate error token
+ * coral that reads as "notable": adding a separate error token
  * just for one toast variant would be design-system churn. The
  * legacy's rose-100/600 hex literals broke the rebuild's design-
  * token rule.

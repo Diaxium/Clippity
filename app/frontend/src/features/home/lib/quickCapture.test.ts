@@ -46,7 +46,7 @@ describe("QUICK_CAPTURE_ACTIONS", () => {
   });
 
   it("gives every action a distinct combo", () => {
-    // Two launchers sharing a combo would make one of them dead —
+    // Two launchers sharing a combo would make one of them dead:
     // whichever the matcher happened to find first.
     const combos = QUICK_CAPTURE_ACTIONS.filter((a) => a.combo).map(
       (a) => a.combo
@@ -128,7 +128,7 @@ describe("unavailabilityOf", () => {
   });
 
   it("reports an unshipped action as soon, not as not-installed", () => {
-    // The two have different remedies — telling a user to re-run the
+    // The two have different remedies: telling a user to re-run the
     // installer for a port that hasn't landed would be false advice.
     const unshipped = { ...action("gif"), available: false };
     expect(unavailabilityOf(unshipped, caps({ gifRecording: false }))).toBe(

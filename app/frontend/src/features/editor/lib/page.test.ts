@@ -173,7 +173,7 @@ describe("padding round-trips", () => {
     expect(page.type === "frame" && page.clipContent).toBe(true);
   });
 
-  it("leaves the capture untouched — padding is non-destructive", () => {
+  it("leaves the capture untouched: padding is non-destructive", () => {
     const s = scene();
     const next = setPagePadding(s, s.pageId, BOX, 64);
     expect(next.nodes[s.photoId]).toBe(s.nodes[s.photoId]);
@@ -204,7 +204,7 @@ describe("sealing the page (the export-region trap)", () => {
 
   it("padding folds strays in, so the page rect is the export region", () => {
     // Without this, `unionBounds` of the roots reaches past the padded page and
-    // the backdrop — which is the page's *fill* — exports as an unpainted band
+    // the backdrop, which is the page's *fill*, exports as an unpainted band
     // down the overhanging side. Crop hit the same trap (ADR 0019).
     const s = withStray();
     const next = setPagePadding(s, s.pageId, BOX, 48);
@@ -235,7 +235,7 @@ describe("sealing the page (the export-region trap)", () => {
     const s = withStray();
     const next = setPagePadding(s, s.pageId, BOX, 10);
     const page = next.nodes[s.pageId]!;
-    // The page is the backmost root, so its children painted before the stray —
+    // The page is the backmost root, so its children painted before the stray:
     // appending the stray after them reproduces the original sequence.
     expect(page.type === "frame" && page.children).toEqual([
       s.photoId,
@@ -389,7 +389,7 @@ describe("setWindowChrome", () => {
     const page = next.nodes[s.pageId]!;
     expect(page.y).toBe(BOX.y - BAR);
     expect(page.height).toBe(BOX.height + BAR);
-    // Sideways and below, nothing moved — the bar only grows upward.
+    // Sideways and below, nothing moved: the bar only grows upward.
     expect(page.x).toBe(BOX.x);
     expect(page.width).toBe(BOX.width);
   });
@@ -430,7 +430,7 @@ describe("setWindowChrome", () => {
   });
 
   it("seals the page so the export region still matches the canvas", () => {
-    // Inherited from `setPagePadding` — a stray annotation root outside the
+    // Inherited from `setPagePadding`: a stray annotation root outside the
     // grown page would otherwise stretch `unionBounds` past the backdrop
     // (ADR 0019/0020). Chrome reaches the same trap by growing the page.
     const s = scene();
@@ -447,7 +447,7 @@ describe("setWindowChrome", () => {
 
   it("measures against the window, so repeated writes converge", () => {
     // A second write must not stack a second bar's worth of margin on top of
-    // the first — padding is read back from the already-chromed window.
+    // the first: padding is read back from the already-chromed window.
     const s = scene();
     const once = setWindowChrome(s, s.pageId, s.photoId, spec);
     const twice = setWindowChrome(once, s.pageId, s.photoId, spec);
@@ -498,7 +498,7 @@ describe("degenerate documents", () => {
   });
 
   it("finds an image-filled non-image node as the capture", () => {
-    // `findBaseImage` keys on the fill, not the node type — the page model must
+    // `findBaseImage` keys on the fill, not the node type: the page model must
     // agree with the renderers about what the capture is.
     __resetNodeIdForTests();
     const frame = makeFrame(BOX, { name: "Page" });

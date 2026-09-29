@@ -19,7 +19,7 @@ interface ColorPickPointerHandlers {
  * the user can see the pixel they're about to sample; a left click sends
  * the canvas-local physical-pixel coordinate to the backend, which
  * samples the cached snapshot, copies the hex to the clipboard, and
- * surfaces a color toast. No drag, no Capture button — one click is the
+ * surfaces a color toast. No drag, no Capture button: one click is the
  * whole interaction. The backend hides the overlay + restores the
  * previous window, so the frontend just resets local state.
  */

@@ -9,14 +9,14 @@ import type { AuxColor, CaptureMeta } from "../types";
 import { PaletteCopyControl } from "./PaletteCopyControl";
 
 /**
- * The details-pane body for an aux (non-file) entry — a color, a
+ * The details-pane body for an aux (non-file) entry: a color, a
  * palette, or a grabbed / pasted text run.
  *
  * These three kinds are the reason the inspector needs a per-kind body
  * at all. A screenshot's details are *facts about a file* and fit the
  * information table; an aux entry's details **are its content**, and the
  * content is the thing the user came here to take away. So each kind
- * gets the representations it is actually pasted in — a color as hex,
+ * gets the representations it is actually pasted in: a color as hex,
  * `rgb()` and `hsl()`; a palette as its swatches individually and as a
  * whole in six export formats; text as text, in full and scrollable
  * rather than clipped to the four lines a card can show.
@@ -58,8 +58,8 @@ function ColorDetails({ color }: { color: AuxColor }) {
 /**
  * A palette, swatch by swatch and as a whole.
  *
- * The per-swatch rows exist because a palette is rarely used whole — the
- * common act is taking *one* color out of it — and the whole-palette
+ * The per-swatch rows exist because a palette is rarely used whole (the
+ * common act is taking *one* color out of it) and the whole-palette
  * control keeps the six export formats (`PaletteCopyControl`) that the
  * card's action cluster used to carry.
  *
@@ -156,7 +156,7 @@ function TextDetails({ text }: { text: string }) {
   );
 }
 
-/** A labelled value with a copy button — the color notations. */
+/** A labelled value with a copy button: the color notations. */
 function CopyRow({ label, value }: { label: string; value: string }) {
   const { copied, copy } = useCopyFeedback();
   return (

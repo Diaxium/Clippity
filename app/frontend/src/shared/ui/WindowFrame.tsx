@@ -5,7 +5,7 @@ import { cn } from "@shared/lib/cn";
 interface WindowFrameProps {
   /** Inner padding gutter around the content canvas. */
   padding?: "none" | "sm" | "md" | "lg";
-  /** Hides the rounded outer shell — for HUDs that overlay the desktop. */
+  /** Hides the rounded outer shell: for HUDs that overlay the desktop. */
   borderless?: boolean;
   className?: string;
   children: ReactNode;
@@ -29,7 +29,7 @@ const PADDING_CLASS: Record<
  * the translucent area, so this component just supplies the canvas
  * tint + padding and lets DWM own the rounded boundary. Adding a
  * second CSS-rounded shell here would produce a visible "frame inside
- * a frame" — two rounded shapes at slightly different radii with a
+ * a frame": two rounded shapes at slightly different radii with a
  * Mica halo between them.
  *
  * Window dragging is opt-in, not window-wide: the only draggable surface is
@@ -37,7 +37,7 @@ const PADDING_CLASS: Record<
  * and whose buttons opt out with `.no-drag`). This frame is intentionally NOT a
  * drag region, so click-and-drag gestures on content (e.g. the editor canvas)
  * are never stolen as window moves. `borderless` skips the `app-canvas-bg` tint
- * entirely — used by HUDs (countdown, future overlay chrome) that overlay the
+ * entirely: used by HUDs (countdown, future overlay chrome) that overlay the
  * desktop with no shell.
  */
 export function WindowFrame({

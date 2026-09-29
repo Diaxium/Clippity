@@ -1,4 +1,4 @@
-//! Toast domain types — pure, no I/O.
+//! Toast domain types: pure, no I/O.
 //!
 //! The toast surface is a small floating notification window pinned
 //! to a corner of the cursor's monitor. The Step 2 architecture plan
@@ -8,12 +8,12 @@
 //! MVP only routes the `Error` variant through `ToastService::show`.
 //! The other five variants reserve their wire shape so a future port
 //! (Color-Pick, etc.) can flip them armable without reshaping. The
-//! reject happens at the service boundary, not here in the domain —
+//! reject happens at the service boundary, not here in the domain;
 //! domain stays pure.
 
 use serde::{Deserialize, Serialize};
 
-/// Toast payload — discriminated by `kind`. All variants serialize
+/// Toast payload: discriminated by `kind`. All variants serialize
 /// kebab-case (so `kind = "recording"` etc.).
 ///
 /// **MVP**: only `Error` reaches `ToastService::show`. Other variants
@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum ToastPayload {
-    /// MVP — universal failure surface.
+    /// MVP: universal failure surface.
     Error { message: String },
 
     /// Clipboard-mode capture finished. Reserved for the capture port's
@@ -66,14 +66,14 @@ pub enum ToastPayload {
         /// Two flags rather than one `audio: bool`, because the HUD
         /// draws one mixer row per live source and a single boolean
         /// cannot say which. A source that is on but silent still gets a
-        /// row — that is the row that tells the user their microphone is
+        /// row: that is the row that tells the user their microphone is
         /// muted at the OS level.
         microphone: bool,
         system: bool,
     },
 }
 
-/// Which output the running recorder session is producing — the HUD
+/// Which output the running recorder session is producing: the HUD
 /// labels itself with it, since a GIF session's ceilings differ enough
 /// from an MP4's to be worth stating.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
@@ -96,7 +96,7 @@ pub struct PickedColor {
 /// Palette swatch from the Palette-Capture custom mode. `proportion` is
 /// the swatch's share of the sampled region (0.0–1.0, dominant first),
 /// mirrored from `library::AuxColor` so the toast can size swatches and
-/// label their percentages. `Eq` is not derived — `proportion` is `f64`.
+/// label their percentages. `Eq` is not derived: `proportion` is `f64`.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PaletteSwatch {
@@ -193,7 +193,7 @@ pub enum ToastCorner {
     TopLeft,
 }
 
-/// Default toast settings — hardcoded for MVP. Swap to a
+/// Default toast settings: hardcoded for MVP. Swap to a
 /// settings-accessor injection when settings port #6 lands. Values
 /// mirror the legacy `FALLBACK_DURATIONS` exactly so the toast feels
 /// familiar.
@@ -253,7 +253,7 @@ pub fn clamp_size(width: f64, height: f64) -> (f64, f64) {
     (w, h)
 }
 
-/// Sanity bounds inherited from legacy — see `ToastWindow.tsx`
+/// Sanity bounds inherited from legacy; see `ToastWindow.tsx`
 /// constants. Frontend clamps too; backend enforces against bad IPC.
 pub const MIN_WIDTH: f64 = 280.0;
 pub const MAX_WIDTH: f64 = 720.0;
@@ -366,7 +366,7 @@ mod tests {
     #[test]
     fn bottom_anchor_grows_upward_keeping_bottom_edge_pinned() {
         // The recording HUD grows when it gains its live preview. Anchored
-        // to a bottom corner it must grow *upward* — the bottom edge stays
+        // to a bottom corner it must grow *upward*: the bottom edge stays
         // one gap above the work-area bottom (never sliding under the
         // taskbar), which only holds when the anchor is fed the real new
         // height. Regression guard for the toast resize race.
@@ -385,7 +385,7 @@ mod tests {
         );
         assert!(
             y_tall < y_short,
-            "the taller toast's top is higher — it grew upward"
+            "the taller toast's top is higher: it grew upward"
         );
     }
 

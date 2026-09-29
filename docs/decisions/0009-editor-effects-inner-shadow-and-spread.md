@@ -1,8 +1,8 @@
-# 0009 — Editor effects: inner shadow + spread
+# 0009: Editor effects: inner shadow + spread
 
 - **Status:** Accepted (implemented, PR-Pb.1)
 - **Date:** 2026-06-04 · *reconstructed 2026-06-09 from program memory*
-- **Area:** `app/frontend/src/features/editor` — both renderers
+- **Area:** `app/frontend/src/features/editor`, both renderers
 
 ## Context
 
@@ -15,7 +15,7 @@ actually rendered. `inner-shadow` and `spread` were dead data:
 - Canvas2D export (`lib/render.ts`) found only `drop-shadow`.
 
 Exposing them in the properties panel (PR-Pb's effect-type picker) without
-rendering them would ship dead controls — and worse, controls that silently
+rendering them would ship dead controls, and worse, controls that silently
 disagree between the live canvas and the exported PNG. The editor's standing
 invariant is that **every visual feature renders identically in both renderers**.
 
@@ -24,7 +24,7 @@ invariant is that **every visual feature renders identically in both renderers**
 Implement inner-shadow and drop-shadow spread in **both** renderers.
 
 **Inner shadow**
-- SVG (`EffectsDefs`): an inner-shadow filter recipe — `feFlood` the shadow
+- SVG (`EffectsDefs`): an inner-shadow filter recipe, `feFlood` the shadow
   colour, `feComposite operator="out"` against the source alpha to get the
   inverse silhouette, offset + `feGaussianBlur`, composite back over the shape.
 - Canvas2D (`drawInnerShadow` in `render.ts`): clip to the shape, paint the
@@ -42,14 +42,14 @@ shadow / Layer blur; the spread field ("S") shows on **drop-shadow rows only**.
 
 ## Consequences
 
-- The effect-type picker is now fully backed — no dead controls.
+- The effect-type picker is now fully backed: no dead controls.
 - Deliberately **not** done (to avoid dead controls / silent mismatch):
-  - **Inner-shadow spread** — a correct Canvas2D version needs morphological
+  - **Inner-shadow spread**: a correct Canvas2D version needs morphological
     *erosion*, which the 2D API lacks; a scale-based fake renders an opaque band,
     not a shadow. The spread field is therefore hidden for inner shadows.
-  - **Stacked multiple shadows** — still find-first per type.
+  - **Stacked multiple shadows**: still find-first per type.
   - **Shadows on text / line** nodes.
-  - **Path-node shadows in the Canvas2D export** — SVG shadows path nodes,
+  - **Path-node shadows in the Canvas2D export**: SVG shadows path nodes,
     `render.ts` does not (pre-existing gap, recorded not fixed).
 - Non-zero spread is visually consistent but **not pixel-identical** for
   polygon/star between SVG (`feMorphology`) and Canvas2D (geometric inflate).
@@ -59,5 +59,5 @@ shadow / Layer blur; the spread field ("S") shows on **drop-shadow rows only**.
 
 ## Alternatives considered
 
-- **Single-renderer (live only)** — rejected; the export must match.
-- **Fake inner-shadow spread via scaling** — rejected; opaque band, not a shadow.
+- **Single-renderer (live only)**: rejected; the export must match.
+- **Fake inner-shadow spread via scaling**: rejected; opaque band, not a shadow.

@@ -1,7 +1,7 @@
 //! The one-session-two-outputs fork.
 //!
 //! A [`RecordingSink`] is "somewhere frames go". The session loop knows
-//! nothing about H.264 or LZW — it grabs a rectangle on a cadence,
+//! nothing about H.264 or LZW: it grabs a rectangle on a cadence,
 //! stamps a timestamp on it, and hands it here. That is what lets a
 //! single capture path serve both the Record and GIF entry points
 //! instead of duplicating the pacing, pause clock, and audio mixing per
@@ -28,7 +28,7 @@ use super::{gif_sink, mp4_sink};
 /// **A view rather than an `RgbaImage`,** which is what this used to be,
 /// for one reason: an `RgbaImage` can only hold one channel order, so
 /// every frame off a Win32 surface had to be swapped into it before the
-/// sink would take it. That swap is a whole pass over the frame — at
+/// sink would take it. That swap is a whole pass over the frame: at
 /// 5120x1440, 28 MiB read and 28 MiB written for a rearrangement the
 /// encoder's own colour conversion would have done for free, since it
 /// reads red and blue through indices either way.
@@ -36,7 +36,7 @@ use super::{gif_sink, mp4_sink};
 /// So the order travels with the pixels and the sink decides what to do
 /// about it. MP4 does nothing (it passes the order through to the NV12
 /// conversion). GIF, whose quantizer is built on `image`'s RGBA types,
-/// materialises — and pays for a swap only at GIF's already much
+/// materialises, and pays for a swap only at GIF's already much
 /// smaller frame size.
 #[derive(Clone, Copy)]
 pub struct SinkFrame<'a> {
@@ -51,7 +51,7 @@ pub struct SinkFrame<'a> {
 }
 
 impl<'a> SinkFrame<'a> {
-    /// A frame the caller already holds as an `RgbaImage` — Studio's
+    /// A frame the caller already holds as an `RgbaImage`: Studio's
     /// trim, whose frames come from a decoder and have annotations
     /// composited onto them.
     pub fn rgba(image: &'a RgbaImage) -> Self {
@@ -80,7 +80,7 @@ impl<'a> SinkFrame<'a> {
 
     /// Materialise as an `RgbaImage`, swapping channels if needed.
     ///
-    /// **The copy is the point of avoiding this** — only call it from a
+    /// **The copy is the point of avoiding this**: only call it from a
     /// path that genuinely needs `image`'s types. Alpha is forced opaque
     /// on the way: a Desktop Duplication surface's alpha byte is
     /// whatever the compositor last left there, and a GIF that honoured
@@ -150,7 +150,7 @@ pub trait RecordingSink: Send {
     /// Bytes committed so far, for the HUD's size readout.
     fn bytes_written(&self) -> u64;
 
-    /// Flush and close. Consumes the sink — the file's trailer has to
+    /// Flush and close. Consumes the sink: the file's trailer has to
     /// be written before the caller renames it.
     fn finish(self: Box<Self>) -> AppResult<()>;
 }
@@ -162,12 +162,12 @@ pub trait RecordingSink: Send {
 /// any more. Studio's trim decodes an existing clip and feeds these same
 /// encoders, and it has no region, no window id and no capture toggles
 /// to offer. Narrowing the sinks to what they actually read is what lets
-/// one encoder path serve both — and is why trim-to-GIF required no new
+/// one encoder path serve both, and is why trim-to-GIF required no new
 /// encoder at all.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SinkConfig {
     /// Size of the frames [`RecordingSink::write_frame`] will receive.
-    /// **Not** the output size — a sink applies its own format's rules
+    /// **Not** the output size: a sink applies its own format's rules
     /// (GIF scales down internally; see `gif_sink`) and the user's
     /// resolution cap on top. Ask [`Self::output_size`] for what will be
     /// in the file.
@@ -181,16 +181,16 @@ pub struct SinkConfig {
     ///
     /// Carried as the *request* rather than as a resolved size because
     /// resolving it needs the format, and the format is what picks the
-    /// sink — so a sink that resolves its own is the one place where
+    /// sink, so a sink that resolves its own is the one place where
     /// both are known.
     pub max_height: u32,
-    /// H.264 encoder settings. Read only by `mp4_sink` — GIF has no
+    /// H.264 encoder settings. Read only by `mp4_sink`: GIF has no
     /// bitrate, no keyframes and no rate control, so it ignores this
     /// rather than being handed a narrower config type it would be the
     /// only user of.
     pub encoding: recorder::RecorderEncoding,
     /// Whether to declare an audio stream. A file with no audio must
-    /// have **no** stream rather than a silent one — a zero-sample track
+    /// have **no** stream rather than a silent one: a zero-sample track
     /// makes some players report the file as broken.
     pub with_audio: bool,
 }

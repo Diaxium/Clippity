@@ -17,7 +17,7 @@ import { TrayPresets } from "./TrayPresets";
  * The backend (`services/tray_service.rs`) positions + shows the window
  * on a tray left-click and emits `clippity://tray/opened`. `useTrayPanel`
  * owns dismissal, the quick capture options, and the action handlers;
- * `useRecentCaptures` owns the recents strip. No `WindowFrame` wrapper —
+ * `useRecentCaptures` owns the recents strip. No `WindowFrame` wrapper:
  * the panel isn't draggable and supplies its own canvas tint + padding.
  */
 export function TrayPanel() {

@@ -147,7 +147,7 @@ describe("windowAtPoint", () => {
 
   it("returns the topmost (first) window when rects overlap", () => {
     // The list is front-to-back Z-order, so the first containing rect
-    // is the topmost — exactly what a click should grab.
+    // is the topmost: exactly what a click should grab.
     const top = win(1, 0, 0, 100, 100);
     const bottom = win(2, 0, 0, 200, 200);
     expect(windowAtPoint([top, bottom], { x: 20, y: 20 }, 1)).toBe(top);
@@ -193,7 +193,7 @@ describe("objectIndexAtPoint", () => {
   });
 
   it("returns the SMALLEST containing box when detections nest", () => {
-    // A small icon inside a large toolbar — the user should be able to
+    // A small icon inside a large toolbar: the user should be able to
     // grab the icon, so the smaller box wins regardless of list order.
     const toolbar = obj(0, 0, 400, 80);
     const icon = obj(20, 20, 40, 40);

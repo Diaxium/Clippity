@@ -12,7 +12,7 @@ use installer_domain::wizard::ProductInfo;
 use installer_infra::paths::InstallerPaths;
 
 /// The uninstall key's subpath under the chosen root hive. The product
-/// name is the subkey — stable, and distinct from an MSI ProductCode GUID
+/// name is the subkey: stable, and distinct from an MSI ProductCode GUID
 /// so the two never collide.
 pub const UNINSTALL_SUBKEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Clippity";
 
@@ -32,7 +32,7 @@ pub struct UninstallEntry {
     pub display_name: String,
     pub display_version: String,
     pub publisher: String,
-    /// `"path,index"` — the installed exe, so Settings shows our icon.
+    /// `"path,index"`: the installed exe, so Settings shows our icon.
     pub display_icon: String,
     pub install_location: String,
     /// `YYYYMMDD`, the format Windows Installer uses for `InstallDate`.
@@ -53,7 +53,7 @@ impl UninstallEntry {
     /// Build the entry from the resolved product + install paths.
     ///
     /// `maintenance_exe` is the absolute path of the wizard copy placed in
-    /// the maintenance directory — the binary Windows runs for
+    /// the maintenance directory: the binary Windows runs for
     /// Uninstall/Modify. It must exist before the entry is written, or the
     /// buttons in Settings would fail.
     pub fn build(

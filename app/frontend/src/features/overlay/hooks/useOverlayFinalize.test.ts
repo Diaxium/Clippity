@@ -168,7 +168,7 @@ describe("useOverlayFinalize", () => {
     st.addPenAnchor({ p: { x: 8, y: 8 }, hIn: null, hOut: null });
 
     const { result: hook } = renderHook(() => useOverlayFinalize());
-    // Still "dragging" — closePen hasn't run.
+    // Still "dragging": closePen hasn't run.
     expect(hook.current.ready).toBe(false);
   });
 
@@ -325,7 +325,7 @@ describe("useOverlayFinalize", () => {
     await act(async () => {
       hook.current.finalize();
     });
-    // clipboard defaults off too — both flags pass through verbatim.
+    // clipboard defaults off too: both flags pass through verbatim.
     expect(startScrollCaptureMock).toHaveBeenCalledWith(
       { x: 10, y: 12, width: 60, height: 40 },
       "down",
@@ -352,7 +352,7 @@ describe("useOverlayFinalize", () => {
     const req = startRecordingMock.mock.calls[0]?.[0];
     expect(req.target).toBe("region");
     expect(req.region).toEqual({ x: 10, y: 12, width: 60, height: 40 });
-    // Nothing was captured — a still-capture path must not fire.
+    // Nothing was captured: a still-capture path must not fire.
     expect(finishRegionCaptureMock).not.toHaveBeenCalled();
   });
 

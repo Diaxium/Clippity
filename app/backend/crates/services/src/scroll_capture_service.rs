@@ -8,7 +8,7 @@
 //! are stitched into one tall PNG and saved like any region capture.
 //!
 //! Recording ends one of two ways: the HUD's Stop & Stitch / Discard
-//! buttons, or the worker detecting the scroll direction reversed — it
+//! buttons, or the worker detecting the scroll direction reversed: it
 //! emits `recording/auto-stop`, which the HUD turns into a commit (ADR
 //! 0008 follow-up #4). The reversing frame itself is discarded.
 //!
@@ -52,22 +52,22 @@ const PREVIEW_MAX_EDGE: u32 = 320;
 // The wheel step is NOT a fixed notch count: it's calibrated to the
 // selected region's height (see `domain::scroll::calibrated_wheel_delta`).
 // A fixed step that exceeds a short region's height makes consecutive
-// frames non-overlapping, which `detect_offset` can't align — the stitch
+// frames non-overlapping, which `detect_offset` can't align: the stitch
 // then collapses into an overlapping jumble (the single-`Box-row`
 // failure). The worker starts at the responsive floor, measures the
 // surface's pixels-per-wheel-unit from each step's detected offset, and
 // re-sizes the step to advance ~`AUTO_STEP_ADVANCE_FRACTION` of the region.
 
-/// Pause after a scroll step before capturing — lets the target finish
+/// Pause after a scroll step before capturing: lets the target finish
 /// its (often animated/smooth) scroll so the frame isn't mid-motion.
 const AUTO_SETTLE_MS: u64 = 260;
 /// Consecutive no-change steps that mean the content can't scroll any
-/// further — i.e. we've reached the end and should commit. Requiring a
+/// further, i.e. we've reached the end and should commit. Requiring a
 /// few in a row rides out a single slow-to-render frame.
 const AUTO_END_STAGNANT: u32 = 3;
 /// Consecutive low-confidence steps (the step outran the region even after
 /// halving toward the floor) that mean we can't keep this selection's
-/// frames overlapping — commit what we have rather than loop or emit a
+/// frames overlapping: commit what we have rather than loop or emit a
 /// collapsed stitch. Only reachable for a region too short for even the
 /// floor step to overlap.
 const AUTO_MAX_LOST: u32 = 4;
@@ -75,7 +75,7 @@ const AUTO_MAX_LOST: u32 = 4;
 /// can't grow the stitch without bound. Higher than the legacy 120 since
 /// a short region now takes smaller (more numerous) steps per page.
 const AUTO_MAX_FRAMES: u32 = 300;
-/// Hard step cap (scroll attempts) regardless of frames appended — a
+/// Hard step cap (scroll attempts) regardless of frames appended: a
 /// backstop for the case where capture keeps failing (no frame appended,
 /// so `AUTO_MAX_FRAMES` never trips) so the worker can't loop forever.
 const AUTO_MAX_STEPS: u32 = 600;
@@ -102,7 +102,7 @@ struct ScrollSession {
     data: Mutex<SessionData>,
     stop: AtomicBool,
     region: Region,
-    /// Scroll direction (Down/Up/Left/Right) — sets the stitch axis for
+    /// Scroll direction (Down/Up/Left/Right): sets the stitch axis for
     /// both models, and which way the auto-scroll worker drives the wheel.
     direction: ScrollDirection,
     /// Panoramic mode: the worker drives the scroll itself (auto-scroll)
@@ -112,7 +112,7 @@ struct ScrollSession {
     clipboard: bool,
     preview: bool,
     /// Cursor position (virtual-screen px) captured at start, restored
-    /// on stop — the auto-scroll worker moves the cursor to drive the
+    /// on stop: the auto-scroll worker moves the cursor to drive the
     /// wheel, so we put it back where the user left it. `None` for the
     /// manual model (it never touches the cursor).
     restore_cursor: Option<(i32, i32)>,
@@ -122,7 +122,7 @@ struct ScrollSession {
     source_title: Option<String>,
     /// Display the recorded region sits on, resolved once at `start`.
     /// A stitch is many frames over many seconds, so there is no single
-    /// instant to resolve it at later — and the region never moves during
+    /// instant to resolve it at later, and the region never moves during
     /// a recording, so the answer can't drift. `None` when display
     /// enumeration failed.
     source_monitor: Option<String>,
@@ -248,13 +248,13 @@ impl ScrollCaptureService {
         recording.session.stop.store(true, Ordering::Relaxed);
         let _ = recording.worker.join();
 
-        // Auto-scroll moved the cursor to drive the wheel — put it back
+        // Auto-scroll moved the cursor to drive the wheel: put it back
         // where the user left it (after the worker has fully stopped).
         if let Some((x, y)) = recording.session.restore_cursor {
             restore_cursor_pos(x, y);
         }
 
-        // The capture is done — bring Clippity's window back.
+        // The capture is done: bring Clippity's window back.
         window_service::restore_window(app, "capture");
 
         if discard {
@@ -330,7 +330,7 @@ fn capture_region(region: Region) -> AppResult<RgbaImage> {
 
 /// Worker loop: capture → dedup → detect offset → append (with cumulative
 /// offset) → emit tick + throttled preview. Stops when the stop flag is
-/// set (HUD buttons) or a detected direction reversal auto-commits — see
+/// set (HUD buttons) or a detected direction reversal auto-commits; see
 /// [`scroll::track_direction`].
 fn run_worker(app: AppHandle, session: Arc<ScrollSession>) {
     #[cfg(target_os = "windows")]
@@ -365,7 +365,7 @@ fn run_worker(app: AppHandle, session: Arc<ScrollSession>) {
 
         let frame = match capture_region(session.region) {
             Ok(f) => f,
-            Err(_) => continue, // transient grab failure — try next tick
+            Err(_) => continue, // transient grab failure; try next tick
         };
         if scroll::frame_difference(&last, &frame) < scroll::FRAME_DEDUP_THRESHOLD {
             continue; // no meaningful scroll since the last kept frame
@@ -374,7 +374,7 @@ fn run_worker(app: AppHandle, session: Arc<ScrollSession>) {
         let (dx, dy) = scroll::detect_offset(&last, &frame, axis);
 
         // Auto-stop when the user scrolls back the way they came (ADR
-        // 0008 follow-up #4). The reversing frame is *not* appended — we
+        // 0008 follow-up #4). The reversing frame is *not* appended: we
         // commit what preceded it. The HUD hears this and runs the same
         // commit path as the Stop & Stitch button.
         let (new_locked, reversed) = scroll::track_direction(
@@ -430,7 +430,7 @@ fn run_worker(app: AppHandle, session: Arc<ScrollSession>) {
 /// Panoramic worker: drives the scroll itself instead of following the
 /// user. Each step parks the cursor over the region and sends a wheel
 /// scroll, waits for the surface to settle, captures, and appends the
-/// new frame. Ends — committing what it has — when the view stops
+/// new frame. Ends, committing what it has, when the view stops
 /// changing for [`AUTO_END_STAGNANT`] steps (reached the bottom) or the
 /// [`AUTO_MAX_FRAMES`] safety cap trips, both via the same
 /// `recording/auto-stop` path the HUD already commits on. Also stops
@@ -451,7 +451,7 @@ fn run_auto_worker(app: AppHandle, session: Arc<ScrollSession>) {
     let (anchor_x, anchor_y) = scroll::region_scroll_anchor(&session.region, origin);
     let axis = session.direction.axis();
     let horizontal = session.direction.is_horizontal();
-    // The region's extent along the scroll axis — the budget each step's
+    // The region's extent along the scroll axis: the budget each step's
     // advance must stay under to keep consecutive frames overlapping.
     let region_extent = match axis {
         ScrollAxis::Vertical => session.region.height,
@@ -503,13 +503,13 @@ fn run_auto_worker(app: AppHandle, session: Arc<ScrollSession>) {
 
         let frame = match capture_region(session.region) {
             Ok(f) => f,
-            Err(_) => continue, // transient grab failure — try next step
+            Err(_) => continue, // transient grab failure; try next step
         };
 
         // No meaningful change after a scroll = nothing left to scroll.
         // A few in a row confirms the end (rides out one slow frame). At the
         // floor step a real scroll always clears the dedup threshold, so
-        // stagnation means the surface can't advance — not a too-small step.
+        // stagnation means the surface can't advance, not a too-small step.
         if scroll::frame_difference(&last, &frame) < scroll::FRAME_DEDUP_THRESHOLD {
             stagnant += 1;
             if stagnant >= AUTO_END_STAGNANT {
@@ -544,7 +544,7 @@ fn run_auto_worker(app: AppHandle, session: Arc<ScrollSession>) {
         stagnant = 0;
 
         // Calibrate pixels-per-wheel-unit from the measured advance, then
-        // re-size the step toward the overlap target — growing at most 2×
+        // re-size the step toward the overlap target, growing at most 2×
         // per step so a calibration jump can't itself overshoot.
         let advance = match axis {
             ScrollAxis::Vertical => dy.unsigned_abs(),

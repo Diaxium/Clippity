@@ -37,7 +37,7 @@ describe("rulerTicks", () => {
 
   it("keeps roughly the target spacing across wildly different lengths", () => {
     // A five-second clip and a two-hour one should both get a readable
-    // handful of labels — not two on one and four hundred on the other.
+    // handful of labels, not two on one and four hundred on the other.
     for (const duration of [5_000, 60_000, 600_000, 7_200_000]) {
       const count = rulerTicks(duration).length;
       expect(count).toBeGreaterThanOrEqual(2);

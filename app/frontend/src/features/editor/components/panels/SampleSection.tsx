@@ -13,7 +13,7 @@ const SUB = FIELD_LABEL;
  * Annotate-mode panel; in Design mode the same sample surfaces as an Effects row
  * (see ADR 0015).
  *
- * Multi-select (P3) adjusts every sample of the **same mode** at once — the
+ * Multi-select (P3) adjusts every sample of the **same mode** at once: the
  * common "I blurred four things, now soften them all" edit. Modes are grouped
  * because the amount means a different quantity in each (px radius vs cell size
  * vs zoom factor), so a shared field across modes would be meaningless; the

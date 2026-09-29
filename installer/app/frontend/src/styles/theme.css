@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ *
- * Clippity Design System — tokens
+ * Clippity Design System: tokens
  * Source of truth: docs/UI_DOCUMENTATION.md
  *
  * Every visual surface in the app is expected to resolve through these
@@ -16,7 +16,7 @@
   --color-lavender: #e8d9f2;
   --color-gold: #d4c5b0;
 
-  /* Brand accent — primary coral (active state / accents).
+  /* Brand accent: primary coral (active state / accents).
      Hover/soft/ring/tile-warm derive from the base via color-mix so the
      entire accent family follows a user-chosen --color-accent override. */
   --color-accent: #ff6e4a;
@@ -28,11 +28,11 @@
      accent is user-customizable: `Providers.tsx` recomputes this from
      the chosen accent's luminance so light accents (Lavender / Gold /
      Teal / Mint, or any light custom hex) get a dark ink instead of
-     unreadable white. Mode-invariant — the accent is the same hex in
+     unreadable white. Mode-invariant: the accent is the same hex in
      both themes, so its ink is too. */
   --color-accent-ink: #ffffff;
 
-  /* Deep slate — the former primary-action color. Primary buttons (the
+  /* Deep slate: the former primary-action color. Primary buttons (the
      tray Capture tile, `Button` primary, preset Run) now use the accent
      per appearance preference, so these are unused by default and
      tree-shaken out of the build. Kept here to make reverting a one-liner
@@ -40,7 +40,7 @@
   --color-slate-deep: #163847;
   --color-slate-deep-2: #112b36;
 
-  /* Success — mint. Was the toggle "on" fill; toggles now use the accent
+  /* Success: mint. Was the toggle "on" fill; toggles now use the accent
      (appearance preference), so this is currently unused. Kept for a
      future success state + easy revert. */
   --color-success: #24d1b5;
@@ -49,14 +49,14 @@
   /* Soft icon-tile tints. Both warm and cool now derive from the user's
      accent: the "cool" teal counterpart was folded into the accent so the
      two-tone tile grid reads as one consistent accent hue (appearance
-     preference). Cool is kept as its own token — aliased to warm — so the
+     preference). Cool is kept as its own token, aliased to warm, so the
      `tint="cool"` mode tags don't all need editing and the split can be
      reinstated later by giving cool its own value again. */
   --color-tile-warm: color-mix(in srgb, var(--color-accent) 8%, white);
   --color-tile-warm-ink: var(--color-accent);
   --color-tile-cool: var(--color-tile-warm);
   --color-tile-cool-ink: var(--color-tile-warm-ink);
-  /* Extended dashboard tile tints — violet + gold round out the warm
+  /* Extended dashboard tile tints: violet + gold round out the warm
      (accent) and cool (teal) pair so the home view's icon tiles read as
      a small, on-brand multi-hue set. Mode-aware overrides live below. */
   --color-tile-violet: #ece4fb;
@@ -64,30 +64,30 @@
   --color-tile-gold: #f1e9d8;
   --color-tile-gold-ink: #9b7b34;
 
-  /* Backgrounds — warm, bright, airy (low gray) */
+  /* Backgrounds: warm, bright, airy (low gray) */
   --color-bg: #fcfcfb;
   --color-bg-beige: #faf7f2;
   --color-bg-gray: #f7f8f9;
   --color-surface: #ffffff;
   --color-surface-2: #fbfbfa;
 
-  /* Window-shell tokens — the chrome of each Tauri window. */
+  /* Window-shell tokens: the chrome of each Tauri window. */
   --color-canvas: #fdfdfc;
   --color-canvas-inset: #f6f6f4;
   --color-sidebar: #fbfbfa;
 
-  /* Hairlines / dividers — gentle, never heavy */
+  /* Hairlines / dividers: gentle, never heavy */
   --hairline: rgba(17, 24, 39, 0.05);
   --hairline-strong: rgba(17, 24, 39, 0.08);
 
-  /* Overlays — replace ad-hoc bg-black/[0.0x] usages with these so
+  /* Overlays: replace ad-hoc bg-black/[0.0x] usages with these so
      they auto-flip in dark mode. */
   --color-overlay-1: rgba(17, 24, 39, 0.04);
   --color-overlay-2: rgba(17, 24, 39, 0.06);
   --color-overlay-3: rgba(17, 24, 39, 0.1);
   --color-overlay-4: rgba(17, 24, 39, 0.18);
 
-  /* Text — softer hierarchy, less aggressive contrast */
+  /* Text: softer hierarchy, less aggressive contrast */
   --color-ink: #2a3340;
   --color-slate: #8893a3;
   --color-hint: #aab2bf;
@@ -100,7 +100,7 @@
   --radius-xl: 20px;
   --radius-2xl: 24px;
 
-  /* Soft, gentle elevation — depth without dark contrast */
+  /* Soft, gentle elevation: depth without dark contrast */
   --shadow-subtle: 0 1px 2px rgba(17, 24, 39, 0.04);
   --shadow-medium: 0 4px 14px rgba(17, 24, 39, 0.05);
   --shadow-elevated: 0 10px 30px rgba(17, 24, 39, 0.06);
@@ -128,7 +128,7 @@
   --glow-coral: 0 0 8px color-mix(in srgb, var(--color-accent) 40%, transparent);
   --inset-hl: inset 0 1px 2px rgba(255, 255, 255, 0.3);
 
-  /* Neomorphic top-bar chrome — a softly extruded bar that lifts above
+  /* Neomorphic top-bar chrome: a softly extruded bar that lifts above
      the sidebar. A top inner highlight + a downward drop shadow read as
      a raised surface; the surface→canvas gradient deepens the extrusion.
      The bg references mode-aware tokens so it resolves in dark too; only
@@ -148,7 +148,7 @@
      so dragging the slider gradually reveals the desktop behind. */
   --window-opacity: 1;
 
-  /* Glass surfaces — translucent panels stacked over the desktop. */
+  /* Glass surfaces: translucent panels stacked over the desktop. */
   --glass-1: rgba(248, 249, 250, 0.85);
   --glass-2: rgba(248, 249, 250, 0.8);
   --glass-3: rgba(255, 255, 255, 0.6);
@@ -158,12 +158,12 @@
      (countdown, toast, overlay banners). */
   --float-bg: rgba(253, 253, 252, 0.96);
 
-  /* Countdown HUD progress line — a two-hue accent sweep (the accent
+  /* Countdown HUD progress line: a two-hue accent sweep (the accent
      itself → an accent/purple blend) so it reads as a soft neon line
      for any user accent: a blue accent yields blue→purple, a warm
      coral accent yields orange→pink. High-contrast + forced-colors
      collapse it to a solid fill (see the override block below). The
-     glow is deliberately faint — a soft edge, not a gaming RGB strip. */
+     glow is deliberately faint: a soft edge, not a gaming RGB strip. */
   --countdown-gradient: linear-gradient(
     90deg,
     var(--color-accent) 0%,
@@ -181,12 +181,12 @@
 }
 
 /* ------------------------------------------------------------------ *
- * Dark mode — token overrides only. No selectors should hardcode
+ * Dark mode: token overrides only. No selectors should hardcode
  * colors outside this block (use a token or add one here).
  * ------------------------------------------------------------------ */
 [data-theme="dark"] {
-  /* Tile tints — accent-tinted instead of pastel pale. Warm + cool both
-     follow the user's accent now (cool mirrors warm — see the light
+  /* Tile tints: accent-tinted instead of pastel pale. Warm + cool both
+     follow the user's accent now (cool mirrors warm; see the light
      block); only the dark warm strength differs. */
   --color-tile-warm: color-mix(in srgb, var(--color-accent) 16%, transparent);
   --color-tile-warm-ink: color-mix(in srgb, var(--color-accent) 80%, white);
@@ -198,10 +198,10 @@
   --color-tile-gold: color-mix(in srgb, #d4c5b0 20%, transparent);
   --color-tile-gold-ink: #e2cfa6;
 
-  /* Accent soft fill — needs more presence on a dark surface. */
+  /* Accent soft fill: needs more presence on a dark surface. */
   --color-accent-soft: color-mix(in srgb, var(--color-accent) 14%, transparent);
 
-  /* Backgrounds — warm dark, just a hair off pure neutral. */
+  /* Backgrounds: warm dark, just a hair off pure neutral. */
   --color-bg: #15161a;
   --color-bg-beige: #1a1a1d;
   --color-bg-gray: #15171a;
@@ -214,29 +214,29 @@
   --color-canvas-inset: #131418;
   --color-sidebar: #1c1d21;
 
-  /* Hairlines — white-with-alpha instead of black-with-alpha. */
+  /* Hairlines: white-with-alpha instead of black-with-alpha. */
   --hairline: rgba(255, 255, 255, 0.06);
   --hairline-strong: rgba(255, 255, 255, 0.1);
 
-  /* Overlays — same idea, flipped so hover/press chips stay subtle. */
+  /* Overlays: same idea, flipped so hover/press chips stay subtle. */
   --color-overlay-1: rgba(255, 255, 255, 0.05);
   --color-overlay-2: rgba(255, 255, 255, 0.08);
   --color-overlay-3: rgba(255, 255, 255, 0.12);
   --color-overlay-4: rgba(255, 255, 255, 0.18);
 
-  /* Text — calmer contrast against the dark canvas. */
+  /* Text: calmer contrast against the dark canvas. */
   --color-ink: #e6e8ed;
   --color-slate: #9ca5b4;
   --color-hint: #6b7281;
 
-  /* Shadows — much darker so they actually register. */
+  /* Shadows: much darker so they actually register. */
   --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-medium: 0 4px 14px rgba(0, 0, 0, 0.38);
   --shadow-elevated: 0 10px 30px rgba(0, 0, 0, 0.48);
   --shadow-deep: 0 18px 44px rgba(0, 0, 0, 0.55);
   --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.62);
 
-  /* Glass surfaces — dark translucent panels. */
+  /* Glass surfaces: dark translucent panels. */
   --glass-1: rgba(26, 27, 31, 0.82);
   --glass-2: rgba(26, 27, 31, 0.74);
   --glass-3: rgba(36, 38, 42, 0.55);
@@ -247,7 +247,7 @@
   --glow-focus: 0 0 10px rgba(168, 213, 216, 0.35);
   --inset-hl: inset 0 1px 2px rgba(255, 255, 255, 0.08);
 
-  /* Neomorphic top-bar chrome (dark) — deeper drop, faint highlight.
+  /* Neomorphic top-bar chrome (dark): deeper drop, faint highlight.
      `--titlebar-neo-bg` is inherited from :root (mode-aware tokens). */
   --titlebar-neo-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 -1px 0 var(--hairline),
@@ -328,7 +328,7 @@ body {
   overflow: hidden;
 }
 
-/* Countdown progress line — drop the gradient for a solid fill when
+/* Countdown progress line: drop the gradient for a solid fill when
    the user prefers higher contrast or the OS forces colors. Spec:
    "High Contrast Mode → replace gradient with solid white / solid
    accent color." */
@@ -354,7 +354,7 @@ body {
   }
 }
 
-/* User-forced reduce motion — same effect as the media query but
+/* User-forced reduce motion: same effect as the media query but
    triggered by the appearance setting regardless of OS preference. */
 [data-motion="reduced"] *,
 [data-motion="reduced"] *::before,
@@ -363,11 +363,11 @@ body {
   transition-duration: 0.01ms !important;
 }
 
-/* Idle window — pause looping animations. `data-idle` is set on <html> by
+/* Idle window: pause looping animations. `data-idle` is set on <html> by
    `useWindowActivity` whenever this window is unfocused, minimized, or
    hidden in the tray. Every window is kept alive for the whole session
    (never destroyed), so without this an off-screen window's infinite
-   keyframe animations would keep the compositor — and the GPU — ticking
+   keyframe animations would keep the compositor, and the GPU, ticking
    for nothing. Targets only the looping animations (the breathing capture
    ring, the overlay crosshair pulse, the Tailwind `animate-*` spinners);
    one-shot entrance animations finish in well under a second and aren't an
@@ -413,7 +413,7 @@ body {
  * Surface component utilities (glassmorphic / neumorphic layers)
  * ------------------------------------------------------------------ */
 @layer components {
-  /* Glass surface levels — UI_DOCUMENTATION "Glassmorphic Surfaces" */
+  /* Glass surface levels: UI_DOCUMENTATION "Glassmorphic Surfaces" */
   .glass-1 {
     background: var(--glass-1);
     backdrop-filter: blur(30px);
@@ -438,7 +438,7 @@ body {
     border: 1px solid var(--hairline-strong);
   }
 
-  /* Elevated container — main app shells */
+  /* Elevated container: main app shells */
   .surface-elevated {
     background: var(--glass-1);
     backdrop-filter: blur(30px);
@@ -448,7 +448,7 @@ body {
     box-shadow: var(--shadow-elevated);
   }
 
-  /* Surface card — generic content card */
+  /* Surface card: generic content card */
   .surface-card {
     background: var(--glass-3);
     backdrop-filter: blur(20px);
@@ -458,7 +458,7 @@ body {
     box-shadow: var(--shadow-medium);
   }
 
-  /* Inset neumorphic panel — sidebars */
+  /* Inset neumorphic panel: sidebars */
   .surface-inset {
     background: var(--glass-4);
     backdrop-filter: blur(20px);
@@ -487,7 +487,7 @@ body {
     );
   }
 
-  /* Sidebar — same shell, a hair off so it reads as one surface. */
+  /* Sidebar: same shell, a hair off so it reads as one surface. */
   .sidebar-grad {
     background: color-mix(
       in srgb,
@@ -496,7 +496,7 @@ body {
     );
   }
 
-  /* Recessed content canvas — the inset area the chrome wraps around. */
+  /* Recessed content canvas: the inset area the chrome wraps around. */
   .content-canvas {
     background: color-mix(
       in srgb,
@@ -505,7 +505,7 @@ body {
     );
   }
 
-  /* Neomorphic top bar — a softly extruded chrome strip that lifts
+  /* Neomorphic top bar: a softly extruded chrome strip that lifts
      above the sidebar. Consumes the mode-aware --titlebar-neo-* tokens
      (defined in :root / [data-theme="dark"]): the gradient deepens the
      extrusion and the token's downward drop shadow casts over the
@@ -611,7 +611,7 @@ body {
 }
 
 /* ------------------------------------------------------------------ *
- * Overlay (screenshot capture) — motion tokens + animation primitives.
+ * Overlay (screenshot capture): motion tokens + animation primitives.
  * Scoped under `.clippity-overlay-root` so the rules only apply inside
  * the overlay window and don't leak into other windows.
  * ------------------------------------------------------------------ */
@@ -624,7 +624,7 @@ body {
   --ovl-slow: 260ms;
 }
 
-/* Selection border — soft snap pulse on alignment / edge snap. */
+/* Selection border: soft snap pulse on alignment / edge snap. */
 @keyframes ovl-border-snap-pulse {
   0% {
     box-shadow:
@@ -696,7 +696,7 @@ body {
     0 4px 14px rgba(0, 0, 0, 0.34);
 }
 
-/* Magnifier — soft transitions on size + position. */
+/* Magnifier: soft transitions on size + position. */
 .ovl-magnifier {
   transition:
     transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -706,7 +706,7 @@ body {
   will-change: transform, opacity;
 }
 
-/* Crosshair snap pulse — fires when the cursor aligns to an edge. */
+/* Crosshair snap pulse: fires when the cursor aligns to an edge. */
 @keyframes ovl-crosshair-snap {
   0% {
     transform: scale(1);
@@ -725,14 +725,14 @@ body {
   animation: ovl-crosshair-snap 280ms cubic-bezier(0.32, 0.72, 0.2, 1.12);
 }
 
-/* Outside-region dim/blur — subtle so the user can read context. */
+/* Outside-region dim/blur: subtle so the user can read context. */
 .ovl-dim-outside {
   backdrop-filter: blur(1.5px) saturate(0.72) brightness(0.78);
   -webkit-backdrop-filter: blur(1.5px) saturate(0.72) brightness(0.78);
   transition: backdrop-filter 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Accessibility modes — opt-in via data attributes on the overlay root. */
+/* Accessibility modes: opt-in via data attributes on the overlay root. */
 .clippity-overlay-root[data-motion="reduced"] *,
 .clippity-overlay-root[data-motion="reduced"] *::before,
 .clippity-overlay-root[data-motion="reduced"] *::after {
@@ -757,7 +757,7 @@ body {
  *
  * Backgrounds, text, hairlines, and scrollbars are mapped onto the app's
  * theme tokens so the editor matches the rest of the app and follows
- * light/dark — the canvas reuses the recessed content tint, panels reuse
+ * light/dark: the canvas reuses the recessed content tint, panels reuse
  * the raised surface tint. The editor's accent (selected tool, primary
  * buttons, selection box, alignment guides, transform-handle stroke,
  * text caret) follows the user's chosen accent via the app's
@@ -781,7 +781,7 @@ body {
   --ed-text: var(--color-ink);
   --ed-text-dim: var(--color-slate);
   --ed-text-faint: var(--color-hint);
-  /* Accent family — follows the user's chosen accent (set per-window on
+  /* Accent family: follows the user's chosen accent (set per-window on
      <html> by Providers.tsx). Falls back to the @theme coral default
      before settings hydrate. */
   --ed-accent: var(--color-accent);
@@ -801,7 +801,7 @@ body {
   --ed-input-bg-hover: var(--color-overlay-2);
   /* Inspector property cards. Each section is its own raised slab sitting on
      the panel with a gap between it and its neighbours, rather than a row in a
-     hairline-divided list — so the card tint has to read against `--ed-panel`
+     hairline-divided list, so the card tint has to read against `--ed-panel`
      without a border doing the work. */
   --ed-card: var(--color-overlay-1);
   --ed-card-hairline: var(--hairline);
@@ -829,7 +829,7 @@ body {
 /* Inspector sliders (opacity …). Deliberately *not* `.clippity-slider`: that
    one is the settings panel's accent-thumbed control, and inside the editor an
    accent thumb would read as a selection marker. Neutral ink thumb, thinner
-   rail — the value, not the control, is what should catch the eye here. */
+   rail: the value, not the control, is what should catch the eye here. */
 .clippity-editor .ed-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -891,7 +891,7 @@ body {
 }
 
 /* Alignment guides + the selected-object lift share the accent family and the
-   app shadow tokens — no new palette. The lift is a cheap box-shadow (not a
+   app shadow tokens: no new palette. The lift is a cheap box-shadow (not a
    blur), so it's fine under flat-effects. */
 .clippity-editor .ed-selection-lift {
   box-shadow: var(--shadow-medium);

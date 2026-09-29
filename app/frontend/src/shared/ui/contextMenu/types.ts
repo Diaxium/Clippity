@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-/** Icon shape every entry accepts — matches `lucide-react`'s props. */
+/** Icon shape every entry accepts: matches `lucide-react`'s props. */
 export type ContextMenuIcon = ComponentType<{
   size?: number;
   strokeWidth?: number;
@@ -10,14 +10,14 @@ export interface ContextMenuAction {
   /** Stable key. Also what the tests and keyboard nav address entries by. */
   id: string;
   label: string;
-  /** Right-aligned hint, e.g. `"Ctrl C"`. Purely cosmetic — the binding
+  /** Right-aligned hint, e.g. `"Ctrl C"`. Purely cosmetic: the binding
    *  itself lives with the feature's keymap. */
   shortcut?: string;
   icon?: ContextMenuIcon;
   /** Destructive tint (delete / purge). */
   danger?: boolean;
   /** Rendered greyed and inert. Kept in the list rather than filtered out
-   *  so the menu's shape stays stable — a person learns where "Paste" sits
+   *  so the menu's shape stays stable: a person learns where "Paste" sits
    *  and it shouldn't move when the clipboard happens to be empty. */
   disabled?: boolean;
   onSelect: () => void;
@@ -31,7 +31,7 @@ export type ContextMenuEntry = "divider" | ContextMenuAction;
  *
  * Clicking a menu item moves focus off the field and collapses its
  * selection, so the clipboard commands can't run against "whatever is
- * focused now" — they restore this snapshot first. See `restoreField`.
+ * focused now": they restore this snapshot first. See `restoreField`.
  */
 export interface ContextMenuField {
   el: HTMLInputElement | HTMLTextAreaElement;

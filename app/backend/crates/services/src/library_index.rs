@@ -1,17 +1,17 @@
-//! The library **index** — a SQLite cache over the filesystem, never a
+//! The library **index**: a SQLite cache over the filesystem, never a
 //! second source of truth.
 //!
 //! The library's data lives on disk: a capture *is* its file, and its
 //! description is the `.meta` sidecar beside it (ADR 0026). That model
-//! is worth keeping — it survives a reinstall, a sync client, a manual
-//! copy — but it costs one `open` + `read` + JSON parse per capture on
+//! is worth keeping (it survives a reinstall, a sync client, a manual
+//! copy) but it costs one `open` + `read` + JSON parse per capture on
 //! every listing, and it can only answer questions by re-reading
 //! everything. This module is the cache that fixes both without moving
 //! the data.
 //!
 //! **The contract that makes it safe:** the index is only ever read
 //! *after* being reconciled against the filesystem, and reconciliation
-//! is driven by a [`Stamp`] — the capture file's mtime and size plus its
+//! is driven by a [`Stamp`]: the capture file's mtime and size plus its
 //! sidecar's mtime. A row whose stamp still matches disk is served from
 //! SQLite; a row whose stamp moved is rebuilt from disk; a row whose
 //! file is gone is deleted. So the index cannot serve an answer the
@@ -28,8 +28,8 @@
 //! will only be shown with.** Every provenance field is a real column
 //! (they are all filter facets in Library P3), grabbed text is a real
 //! column (it is the full-text target), the favorite flag is a real
-//! column (a one-click filter), and the colour/palette swatches —
-//! display payloads no query will ever key on — ride in one JSON column
+//! column (a one-click filter), and the colour/palette swatches
+//! (display payloads no query will ever key on) ride in one JSON column
 //! rather than widening the schema with shapes nothing filters.
 //!
 //! Tags sit between the two: they *are* a filter facet, but a row has
@@ -37,7 +37,7 @@
 //! and a join. One JSON column plus an in-memory predicate is what the
 //! library needs today; the join is what Library P3 can grow into when a
 //! tag filter has to be a `WHERE` clause rather than a `.filter()`. The
-//! column is the same either way — see ADR 0029.
+//! column is the same either way; see ADR 0029.
 //!
 //! Failure is never fatal. Every method returns `AppResult`, and the
 //! caller's answer to an error is to fall back to scanning, which is
@@ -62,7 +62,7 @@ const SCHEMA_VERSION: i64 = 3;
 
 /// The columns a [`CaptureMeta`] is read back from, in the order
 /// [`read_row`] indexes them. Shared by every SELECT so the projection
-/// and the mapper can't drift. `search_blob` is deliberately absent — it
+/// and the mapper can't drift. `search_blob` is deliberately absent: it
 /// is a query-only column, never read into a row.
 const ROW_COLUMNS: &str = "id, title, kind, created_at_ms, size_bytes, trashed,
      source_app, source_window, mode, width, height,
@@ -71,7 +71,7 @@ const ROW_COLUMNS: &str = "id, title, kind, created_at_ms, size_bytes, trashed,
 /// File name of the index database under the app data directory.
 pub const DB_FILE_NAME: &str = "library.db";
 
-/// What a row was built from — the disk state that, unchanged, means
+/// What a row was built from: the disk state that, unchanged, means
 /// the cached row is still true.
 ///
 /// The sidecar mtimes are in here alongside the capture's own because
@@ -87,10 +87,10 @@ pub struct Stamp {
     /// Capture file's size in bytes.
     pub size_bytes: i64,
     /// `.meta` sidecar's modified time, epoch ms. `0` when there is
-    /// none — which is a stable answer, not a missing one.
+    /// none, which is a stable answer, not a missing one.
     pub meta_ms: i64,
     /// `.labels` sidecar's modified time, epoch ms. `0` when there is
-    /// none — and un-labelling a capture *deletes* that sidecar rather
+    /// none, and un-labelling a capture *deletes* that sidecar rather
     /// than emptying it (`sidecar::write_labels`), so a capture that was
     /// tagged and untagged stamps identically to one never tagged.
     pub labels_ms: i64,
@@ -127,12 +127,12 @@ pub enum QuerySort {
 /// materializes one page has no other rows to split.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum TrashFilter {
-    /// Live captures only — the library view.
+    /// Live captures only: the library view.
     #[default]
     Exclude,
-    /// Both halves — the superset `library_list` returns.
+    /// Both halves: the superset `library_list` returns.
     Include,
-    /// Soft-deleted captures only — the trash view.
+    /// Soft-deleted captures only: the trash view.
     Only,
 }
 
@@ -147,7 +147,7 @@ impl TrashFilter {
 /// A pushed-down library query: the filters, search and sort the grid
 /// applies over the whole listing, expressed so only the visible page is
 /// materialized. Every field defaults, so `LibraryQuery::default()` is
-/// "the first page of everything, newest first" — the listing's default.
+/// "the first page of everything, newest first": the listing's default.
 #[derive(Clone, Debug, Default)]
 pub struct LibraryQuery {
     /// Which half of the library to read. Default: live only.
@@ -169,7 +169,7 @@ pub struct LibraryQuery {
 }
 
 /// One page of a [`LibraryQuery`], plus the total rows the filters match
-/// before `limit`/`offset` — a virtualized grid sizes its scrollbar from
+/// before `limit`/`offset`: a virtualized grid sizes its scrollbar from
 /// `total` while only ever holding `items`.
 pub struct QueryPage {
     pub items: Vec<CaptureMeta>,
@@ -183,7 +183,7 @@ pub struct QueryPage {
 /// counts back six calendar days from local midnight, which only the
 /// frontend knows (the backend has no timezone and no idea when the
 /// user's day starts). Passing the boundary in keeps one definition of
-/// each window — the frontend's `matchesSmart` — instead of a second one
+/// each window, the frontend's `matchesSmart`, instead of a second one
 /// here that could drift from it.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct FacetsQuery {
@@ -197,7 +197,7 @@ pub struct FacetsQuery {
 
 /// One tag and how many live captures carry it.
 pub struct TagCount {
-    /// Display spelling — the library preserves what the user typed while
+    /// Display spelling: the library preserves what the user typed while
     /// treating `Bug` and `bug` as one tag, so a tag with mixed spellings
     /// is counted once and shown under its lowest-sorting form.
     pub tag: String,
@@ -217,7 +217,7 @@ pub struct SmartCounts {
 /// the **whole** library rather than the page a grid is holding.
 ///
 /// This exists because the rail and the grid ask different questions. The
-/// grid asks "what is in this scope, in this order, on this page" — which
+/// grid asks "what is in this scope, in this order, on this page", which
 /// [`LibraryQuery`] answers by materializing only that page. The rail asks
 /// "how big is every scope", which no page can answer: it is an aggregate
 /// over all rows, and deriving it in the client is exactly the full-listing
@@ -231,12 +231,12 @@ pub struct SmartCounts {
 /// somewhere emptier than its label promised.
 #[derive(Default)]
 pub struct LibraryFacets {
-    /// Live captures — the rail's "All media".
+    /// Live captures: the rail's "All media".
     pub total: u64,
     /// Live captures per kind. Absent = none, which the caller reads as 0.
     pub kinds: HashMap<CaptureKind, u64>,
     pub favorites: u64,
-    /// Soft-deleted captures — the only count over the trashed half.
+    /// Soft-deleted captures: the only count over the trashed half.
     pub trashed: u64,
     /// The vocabulary the library grew, ordered by tag.
     pub tags: Vec<TagCount>,
@@ -249,7 +249,7 @@ impl LibraryQuery {
     /// failed mid-flight, the degraded path must still return the page the
     /// SQL path would. Kept beside the SQL, with a parity test pinning the
     /// two together, so a change to one that forgets the other is caught.
-    /// `rows` is the (unpaginated) candidate set — the scan's whole
+    /// `rows` is the (unpaginated) candidate set: the scan's whole
     /// listing, which must include trashed rows whenever
     /// [`TrashFilter::needs_trash`].
     pub fn apply_in_memory(&self, rows: Vec<CaptureMeta>) -> QueryPage {
@@ -330,7 +330,7 @@ impl LibraryQuery {
 
 impl FacetsQuery {
     /// The in-memory twin of [`LibraryIndex::facets`], for the scan
-    /// fallback — same contract as [`LibraryQuery::apply_in_memory`], and
+    /// fallback; same contract as [`LibraryQuery::apply_in_memory`], and
     /// pinned to the SQL by a parity test. `rows` is the whole listing
     /// *including* trashed rows, since the trash count is taken over the
     /// half every other count excludes.
@@ -338,7 +338,7 @@ impl FacetsQuery {
         let mut facets = LibraryFacets::default();
         // Display spelling per lowercased tag, alongside the count, so a
         // tag written `Bug` once and `bug` twice counts three and shows
-        // under one spelling — the same folding `hasTag` filters by.
+        // under one spelling: the same folding `hasTag` filters by.
         let mut tags: HashMap<String, (String, u64)> = HashMap::new();
 
         for m in rows {
@@ -405,7 +405,7 @@ impl LibraryIndex {
     /// Open (creating if needed) the index at `path`.
     ///
     /// A database that cannot be brought to the current schema is
-    /// deleted and recreated once — a corrupt cache is a cache to throw
+    /// deleted and recreated once: a corrupt cache is a cache to throw
     /// away, not an error to propagate. Only a second failure surfaces,
     /// and the library's answer to that is to scan.
     pub fn open(path: &Path) -> AppResult<Self> {
@@ -489,7 +489,7 @@ impl LibraryIndex {
         Ok(out)
     }
 
-    /// Insert or replace `rows`, in one transaction — a reconcile is
+    /// Insert or replace `rows`, in one transaction: a reconcile is
     /// all-or-nothing, so an interrupted one leaves the previous
     /// (still-valid, still-stamped) rows in place rather than a mix.
     pub fn put(&self, rows: &[(CaptureMeta, Stamp)]) -> AppResult<()> {
@@ -545,7 +545,7 @@ impl LibraryIndex {
         tx.commit().map_err(sql_err("commit put"))
     }
 
-    /// Drop the named rows — the reconcile's answer to files that are
+    /// Drop the named rows: the reconcile's answer to files that are
     /// no longer on disk.
     pub fn remove(&self, ids: &[String]) -> AppResult<()> {
         if ids.is_empty() {
@@ -564,7 +564,7 @@ impl LibraryIndex {
         tx.commit().map_err(sql_err("commit remove"))
     }
 
-    /// Every row, newest first — the library listing.
+    /// Every row, newest first: the library listing.
     ///
     /// The tiebreak on `id` is deliberate: a directory scan's order is
     /// whatever the filesystem hands back, so two captures sharing a
@@ -591,7 +591,7 @@ impl LibraryIndex {
     }
 
     /// Fetch one page of the listing with the grid's filters, search and
-    /// sort pushed into SQL — so a 50k-row library materializes only the
+    /// sort pushed into SQL, so a 50k-row library materializes only the
     /// rows a page shows, not all of them (performance roadmap P5). The
     /// returned [`QueryPage::total`] is the count the same filters match
     /// before `limit`/`offset`, which is what a virtualized grid needs to
@@ -662,7 +662,7 @@ impl LibraryIndex {
             QuerySort::Name => "title COLLATE NOCASE ASC, created_at_ms DESC, id ASC",
             QuerySort::Largest => "size_bytes DESC, created_at_ms DESC, id ASC",
         };
-        // limit/offset are `u32`, so inlining them can't inject — and it
+        // limit/offset are `u32`, so inlining them can't inject, and it
         // keeps the positional args aligned with the count query above.
         let limit_sql = match q.limit {
             Some(n) => format!("LIMIT {n} OFFSET {}", q.offset),
@@ -792,7 +792,7 @@ impl LibraryIndex {
         })
     }
 
-    /// Empty the index. The next reconcile refills it from disk — this
+    /// Empty the index. The next reconcile refills it from disk: this
     /// is what "rebuildable at any time" costs.
     pub fn clear(&self) -> AppResult<()> {
         let conn = self.conn()?;
@@ -802,7 +802,7 @@ impl LibraryIndex {
     }
 
     /// How many rows are cached. Diagnostics and the reindex command's
-    /// return value — the listing never asks, because it reconciles
+    /// return value: the listing never asks, because it reconciles
     /// first. Deliberately not `len`: this is a count of what a cache
     /// happens to hold, not the size of a collection you can iterate.
     pub fn row_count(&self) -> AppResult<u64> {
@@ -904,7 +904,7 @@ fn read_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CaptureMeta> {
     })
 }
 
-/// The kind's column spelling *is* its wire spelling — taken through
+/// The kind's column spelling *is* its wire spelling: taken through
 /// serde rather than a second lookup table, so the two cannot drift.
 fn kind_to_text(kind: CaptureKind) -> String {
     serde_json::to_value(kind)
@@ -915,13 +915,13 @@ fn kind_to_text(kind: CaptureKind) -> String {
 
 /// Inverse of [`kind_to_text`]. An unreadable kind falls back to
 /// `Image`, matching `library::kind_of`'s treatment of an unknown
-/// extension — a row that lists as the wrong icon beats a row that
+/// extension: a row that lists as the wrong icon beats a row that
 /// doesn't list.
 fn kind_from_text(text: &str) -> CaptureKind {
     serde_json::from_value(serde_json::Value::String(text.to_owned())).unwrap_or(CaptureKind::Image)
 }
 
-/// Tags as a JSON array, or `NULL` for none — so an untagged row costs
+/// Tags as a JSON array, or `NULL` for none, so an untagged row costs
 /// a null rather than the two bytes of `[]` on every capture in the
 /// library.
 fn tags_to_json(tags: &[String]) -> Option<String> {
@@ -931,7 +931,7 @@ fn tags_to_json(tags: &[String]) -> Option<String> {
     serde_json::to_string(tags).ok()
 }
 
-/// The lowercased, newline-joined haystack a text search runs against —
+/// The lowercased, newline-joined haystack a text search runs against:
 /// the same fields the frontend `matchesSearch` scans (title, provenance,
 /// grabbed text, tags and every swatch hex), precomputed once at write
 /// time so a search is one indexed column scan instead of re-deriving the
@@ -1172,7 +1172,7 @@ mod tests {
         assert_eq!(r.kind, CaptureKind::Color);
         assert_eq!(r.color, Some(color.clone()));
         assert_eq!(r.palette, Some(vec![color]));
-        // Text is a column, not part of the JSON blob — Library P3
+        // Text is a column, not part of the JSON blob: Library P3
         // searches it.
         assert_eq!(r.text.as_deref(), Some("hello world"));
     }
@@ -1274,7 +1274,7 @@ mod tests {
             .map(|r| r.id)
             .collect();
         assert_eq!(ids, ["/caps/B.png"]);
-        // Removing something absent is not an error — the reconcile
+        // Removing something absent is not an error: the reconcile
         // computes its delete list from a snapshot that may have moved.
         index.remove(&["/caps/Nope.png".to_string()]).unwrap();
     }
@@ -1677,7 +1677,7 @@ mod tests {
     }
 
     /// Four live rows + one trashed, with mixed kinds, stars and tag
-    /// spellings — the shapes the rail has to fold.
+    /// spellings: the shapes the rail has to fold.
     fn seed_facets(index: &LibraryIndex) {
         let rows = vec![
             (

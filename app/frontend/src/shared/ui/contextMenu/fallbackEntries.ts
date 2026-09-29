@@ -18,7 +18,7 @@ import type { ContextMenuEntry, ContextMenuField } from "./types";
  * Two cases are worth answering and the rest deliberately are not:
  *
  *  - **A text field.** Cut / Copy / Paste / Select all. Every settings
- *    input, the library search box, the editor's numeric fields — these
+ *    input, the library search box, the editor's numeric fields: these
  *    are the places where losing the native menu would actually be felt,
  *    and no feature is going to hand-wire clipboard commands onto each
  *    one.
@@ -27,7 +27,7 @@ import type { ContextMenuEntry, ContextMenuField } from "./types";
  *
  * Everything else gets *no* menu. Right-clicking dead chrome and being
  * offered a list of commands that have nothing to do with what is under
- * the cursor is worse than nothing — surfaces with real actions register
+ * the cursor is worse than nothing: surfaces with real actions register
  * them through `useContextMenu`. The native menu is already suppressed
  * by then, so "no menu" here means nothing happens, not a WebView2 popup.
  */

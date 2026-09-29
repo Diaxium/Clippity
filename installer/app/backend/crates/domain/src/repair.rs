@@ -1,4 +1,4 @@
-//! Repair assessment — the pure rules that decide what a repair must
+//! Repair assessment: the pure rules that decide what a repair must
 //! restore, given the installation manifest and what was found on disk.
 //!
 //! Repair's contract is narrow and safety-critical: it restores
@@ -37,7 +37,7 @@ pub struct FileProbe {
 
 /// Classify a single file from its manifest record and a live probe.
 ///
-/// A **mutable** file — one the app rewrites at runtime — is always
+/// A **mutable** file, one the app rewrites at runtime, is always
 /// reported `Ok`: repair must not fight the application over its own data,
 /// and such a file's contents legitimately diverge from install time. Only
 /// immutable, installer-owned files are candidates for restore.
@@ -86,7 +86,7 @@ impl RepairAssessment {
         !self.issues.is_empty() || !self.missing_shortcuts.is_empty() || self.registry_missing
     }
 
-    /// Files that are missing (as opposed to corrupt) — the ones a restore
+    /// Files that are missing (as opposed to corrupt): the ones a restore
     /// re-creates from scratch.
     pub fn missing_files(&self) -> impl Iterator<Item = &FileIssue> {
         self.issues
@@ -94,7 +94,7 @@ impl RepairAssessment {
             .filter(|i| i.health == FileHealth::Missing)
     }
 
-    /// Whether the core application executable itself is broken — the one
+    /// Whether the core application executable itself is broken: the one
     /// case a repair can always fix from the embedded payload.
     pub fn core_is_broken(&self) -> bool {
         self.issues.iter().any(|i| i.component == "core")

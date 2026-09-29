@@ -2,19 +2,19 @@
 //!
 //! # Why not the ordinary path
 //!
-//! `xcap` — every other capture in the app — asks the compositor for an
+//! `xcap` (every other capture in the app) asks the compositor for an
 //! 8-bit BGRA buffer. On an SDR display that is exactly right. On an HDR
 //! display the desktop is composed in scRGB (linear, unbounded, `1.0` =
 //! 80 nits), and the conversion down to 8 bits happens somewhere we
 //! don't control, with no reference to what the display calls white.
 //! The result is the washed-out screenshot every HDR user recognises.
 //! This module takes the float frame instead and does the conversion
-//! itself — see `domain::hdr` for that half.
+//! itself; see `domain::hdr` for that half.
 //!
 //! # Why Desktop Duplication rather than Windows.Graphics.Capture
 //!
 //! WGC is the newer API and the one `xcap` uses, but its frame pool is
-//! built around a *stream* — a D3D device, a pooled surface set, an
+//! built around a *stream*: a D3D device, a pooled surface set, an
 //! event loop, and WinRT interop to turn an `HMONITOR` into a
 //! `GraphicsCaptureItem`. Desktop Duplication takes a list of acceptable
 //! formats directly (`DuplicateOutput1`), which is precisely the knob
@@ -29,7 +29,7 @@
 //! # This path requires a DPI-aware process
 //!
 //! `DuplicateOutput1` refuses with `DXGI_ERROR_UNSUPPORTED` when the
-//! calling process is not DPI aware — undocumented, and independent of
+//! calling process is not DPI aware: undocumented, and independent of
 //! the format list, the display's colour space and the adapter. The
 //! shipped app is fine: tao calls `SetProcessDpiAwarenessContext` with
 //! `PER_MONITOR_AWARE_V2` when it builds the event loop, long before
@@ -37,7 +37,7 @@
 //!
 //! It is worth stating because of how the failure presents. The refusal
 //! is indistinguishable from "this display is not in HDR mode", so a
-//! host process that is not DPI aware does not get an error — it gets a
+//! host process that is not DPI aware does not get an error: it gets a
 //! silent, permanent fallback to the 8-bit path. A bare `cargo test`
 //! binary is exactly such a host, which is why the live tests here set
 //! the awareness themselves rather than inheriting it.
@@ -48,9 +48,9 @@
 //! float duplication is unavailable. An explicit Preserve HDR request
 //! must instead surface the failure: silently substituting an SDR file
 //! would violate the requested output contract. Duplication can be
-//! refused for reasons outside the app — another process already holds
+//! refused for reasons outside the app (another process already holds
 //! the output, a full-screen exclusive game owns the swap chain, or the
-//! session is remote — so callers choose the appropriate policy.
+//! session is remote) so callers choose the appropriate policy.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -84,7 +84,7 @@ const ACQUIRE_TIMEOUT_MS: u32 = 250;
 /// and it answers immediately with a metadata-only frame whenever
 /// nothing has been presented yet, which carries no desktop image at
 /// all (see [`acquire_frame`]). Neither consumes the budget the way a
-/// real failure would — the metadata-only case returns instantly — so a
+/// real failure would, the metadata-only case returns instantly, so a
 /// handful of attempts covers the gap between "nothing is moving" and
 /// "this output is genuinely not going to produce anything".
 const ACQUIRE_ATTEMPTS: usize = 6;
@@ -96,7 +96,7 @@ pub struct HdrGrab {
     pub width: u32,
     pub height: u32,
     /// What the display calls SDR white. Carried alongside the pixels
-    /// because the two are only meaningful together — the same buffer
+    /// because the two are only meaningful together: the same buffer
     /// tone-maps to a different image at a different white level.
     pub sdr_white_nits: f32,
 }
@@ -112,7 +112,7 @@ impl HdrGrab {
 ///
 /// Backs the `capture.hdr` developer feature flag. Turning it off makes
 /// [`rgba_monitor_at`] report "not applicable", which routes every
-/// capture down the ordinary 8-bit grab — the exact comparison a user
+/// capture down the ordinary 8-bit grab: the exact comparison a user
 /// needs when a shot off an HDR display looks wrong and the question is
 /// whether the tone map is why.
 ///
@@ -134,7 +134,7 @@ pub fn enabled() -> bool {
 
 /// Capture `hmonitor` in scRGB, or explain why not.
 ///
-/// Returns `Ok(None)` — not an error — when the monitor simply is not
+/// Returns `Ok(None)`, not an error, when the monitor simply is not
 /// in HDR mode. That is the overwhelmingly common case and the caller's
 /// correct response is to use the ordinary path, which this states
 /// rather than dressing up as a failure.
@@ -153,8 +153,8 @@ pub fn capture_if_hdr(hmonitor: HMONITOR) -> Result<Option<HdrGrab>, String> {
 /// only one: it takes a screen coordinate rather than an `HMONITOR` so
 /// the services crate never has to name a Win32 type, and it returns
 /// `None` for every "not applicable" and every failure alike. Callers
-/// have exactly one branch to write — `None` means "grab it the way you
-/// always did" — which is what keeps the HDR path from becoming a
+/// have exactly one branch to write (`None` means "grab it the way you
+/// always did") which is what keeps the HDR path from becoming a
 /// second capture pipeline that can fail on its own.
 ///
 /// Failures are logged here rather than returned, because no caller can
@@ -203,7 +203,7 @@ fn monitor_at(x: i32, y: i32) -> Option<HMONITOR> {
     use windows::Win32::Graphics::Gdi::{MonitorFromPoint, MONITOR_DEFAULTTONULL};
 
     // SAFETY: a by-value POINT and a documented flag. `DEFAULTTONULL`
-    // rather than `DEFAULTTONEAREST` on purpose — a point that is on no
+    // rather than `DEFAULTTONEAREST` on purpose: a point that is on no
     // monitor means the caller's geometry is stale, and capturing the
     // *nearest* display would silently produce the wrong screen.
     let hmon = unsafe { MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONULL) };
@@ -214,7 +214,7 @@ fn monitor_at(x: i32, y: i32) -> Option<HMONITOR> {
 ///
 /// Split from [`capture_if_hdr`] so the live test can exercise the
 /// duplication path on an SDR display, where the frame comes back with
-/// everything sitting at or below `1.0` — still a valid scRGB buffer,
+/// everything sitting at or below `1.0`: still a valid scRGB buffer,
 /// just an uninteresting one.
 pub fn capture_scrgb(hmonitor: HMONITOR, sdr_white_nits: f32) -> Result<HdrGrab, String> {
     // SAFETY: a linear D3D11 + DXGI sequence. Every interface is
@@ -234,7 +234,7 @@ pub fn capture_scrgb(hmonitor: HMONITOR, sdr_white_nits: f32) -> Result<HdrGrab,
 
         let texture = acquire_frame(&duplication)?;
         let result = read_back(&device, &context, &texture, sdr_white_nits);
-        // Released whichever way the read went — holding a frame blocks
+        // Released whichever way the read went: holding a frame blocks
         // every later duplication on this output, including ours.
         let _ = duplication.ReleaseFrame();
         result
@@ -285,7 +285,7 @@ unsafe fn create_device(
 ) -> Result<(ID3D11Device, ID3D11DeviceContext), String> {
     let mut device: Option<ID3D11Device> = None;
     let mut context: Option<ID3D11DeviceContext> = None;
-    // `UNKNOWN` driver type is required — and not optional — when an
+    // `UNKNOWN` driver type is required, and not optional, when an
     // adapter is supplied: passing HARDWARE with an explicit adapter is
     // an invalid-argument error rather than a preference.
     unsafe {
@@ -315,8 +315,8 @@ unsafe fn create_device(
 ///
 /// A brand-new duplication answers its first `AcquireNextFrame`
 /// immediately and successfully, with `AccumulatedFrames` and
-/// `LastPresentTime` both zero. That frame is *metadata only* — pointer
-/// position and shape — laid over a desktop surface nothing has been
+/// `LastPresentTime` both zero. That frame is *metadata only*, pointer
+/// position and shape, laid over a desktop surface nothing has been
 /// composed into yet, which on a fresh allocation is zero-filled. Taking
 /// it produces a completely black capture, and one that fails silently:
 /// the format is right, the dimensions are right, every error path stays
@@ -351,7 +351,7 @@ unsafe fn acquire_frame(duplication: &IDXGIOutputDuplication) -> Result<ID3D11Te
                     .map_err(|e| format!("frame was not a 2D texture: {e}"));
             }
             Err(e) if e.code() == DXGI_ERROR_WAIT_TIMEOUT => {
-                // A static desktop, not a fault. Ask again — and do not
+                // A static desktop, not a fault. Ask again, and do not
                 // release, because a timeout means nothing was acquired.
                 last_err = "the desktop produced no new frame".into();
             }
@@ -387,7 +387,7 @@ unsafe fn read_back(
     }
 
     // A staging copy is the only way the CPU may read a duplicated
-    // frame — the source texture lives in GPU memory with no CPU access.
+    // frame: the source texture lives in GPU memory with no CPU access.
     let staging_desc = D3D11_TEXTURE2D_DESC {
         Usage: D3D11_USAGE_STAGING,
         BindFlags: 0,
@@ -434,8 +434,8 @@ unsafe fn widen(mapped: &D3D11_MAPPED_SUBRESOURCE, width: u32, height: u32) -> O
     }
     let mut out = Vec::with_capacity((width as usize) * (height as usize) * 4);
     for row in 0..height as usize {
-        // SAFETY: the surface is mapped, and the offset stays inside it
-        // — `RowPitch` is the driver's own stride and the loop stops at
+        // SAFETY: the surface is mapped, and the offset stays inside it:
+        // `RowPitch` is the driver's own stride and the loop stops at
         // the declared height.
         let start = unsafe { (mapped.pData as *const u8).add(row * mapped.RowPitch as usize) };
         let row_slice = unsafe { std::slice::from_raw_parts(start, row_bytes) };
@@ -452,7 +452,7 @@ unsafe fn widen(mapped: &D3D11_MAPPED_SUBRESOURCE, width: u32, height: u32) -> O
 /// is the only thing this app needs from any half-float library, and
 /// having it here means the subnormal and infinity cases are covered by
 /// tests in the same file as the code that depends on them. Subnormals
-/// matter — near-black HDR pixels land there, and flushing them to zero
+/// matter: near-black HDR pixels land there, and flushing them to zero
 /// crushes shadow detail into a flat black.
 pub fn f16_to_f32(bits: u16) -> f32 {
     let sign = (bits & 0x8000) as u32;
@@ -496,15 +496,15 @@ mod tests {
     /// Serialises the live tests that duplicate an output.
     ///
     /// Desktop Duplication permits one duplication per output per
-    /// process, so two of these running concurrently — which is the
-    /// default, `cargo test` being threaded — make each other fail with
+    /// process, so two of these running concurrently (which is the
+    /// default, `cargo test` being threaded) make each other fail with
     /// `E_INVALIDARG`. That matters more than an ordinary flake: these
     /// tests treat a refusal as "not this code's fault" and return
     /// early, so the collision does not show up as a failure. It shows
     /// up as a test that passes without asserting anything.
     static DUPLICATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-    /// Take the duplication lock, ignoring poisoning — a panic in
+    /// Take the duplication lock, ignoring poisoning: a panic in
     /// another live test says nothing about whether this one can run.
     fn one_duplication_at_a_time() -> std::sync::MutexGuard<'static, ()> {
         DUPLICATION.lock().unwrap_or_else(|e| e.into_inner())
@@ -517,7 +517,7 @@ mod tests {
     /// `cargo test` binary is DPI-unaware. tao makes the real app
     /// per-monitor-v2 aware before any capture runs (see the module
     /// docs), so a live test that skips this is exercising a
-    /// configuration the app is never in — every float grab refuses,
+    /// configuration the app is never in: every float grab refuses,
     /// the refusal looks exactly like "this display is not HDR", and
     /// the whole path silently reports itself as covered.
     fn match_app_dpi_awareness() {
@@ -526,14 +526,14 @@ mod tests {
             fn SetProcessDpiAwarenessContext(value: isize) -> i32;
         }
         /// `DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2`, which is what
-        /// tao sets. Idempotent, and failing is harmless — a later
+        /// tao sets. Idempotent, and failing is harmless: a later
         /// call in the same process just returns false.
         const PER_MONITOR_AWARE_V2: isize = -4;
         // SAFETY: a documented user32 call taking a constant.
         unsafe { SetProcessDpiAwarenessContext(PER_MONITOR_AWARE_V2) };
     }
 
-    /// Encode an `f32` as binary16, for round-trip tests. Test-only —
+    /// Encode an `f32` as binary16, for round-trip tests. Test-only:
     /// the capture path only ever decodes.
     fn f32_to_f16(value: f32) -> u16 {
         let bits = value.to_bits();
@@ -632,8 +632,8 @@ mod tests {
     /// in HDR mode, the entry point declines and the ordinary capture
     /// path runs untouched.
     ///
-    /// This is the regression that would matter most — quietly routing
-    /// every SDR screenshot through a second pipeline — and it is worth
+    /// This is the regression that would matter most (quietly routing
+    /// every SDR screenshot through a second pipeline) and it is worth
     /// asserting against real hardware rather than reasoning about.
     /// Skips itself with a note if the machine *is* in HDR mode, where
     /// the opposite answer is the correct one.
@@ -646,7 +646,7 @@ mod tests {
         // SAFETY: DEFAULTTOPRIMARY always resolves to a monitor.
         let hmon = unsafe { MonitorFromPoint(POINT { x: 0, y: 0 }, MONITOR_DEFAULTTOPRIMARY) };
         if hdr_display::describe(hmon).hdr_active {
-            println!("primary display is in HDR mode — nothing to assert here");
+            println!("primary display is in HDR mode; nothing to assert here");
             return;
         }
         assert!(
@@ -659,7 +659,7 @@ mod tests {
     ///
     /// Separate from the grab test below because it can pass on an SDR
     /// machine, where `DuplicateOutput1` legitimately refuses a
-    /// float-only format list — which would otherwise leave the whole
+    /// float-only format list, which would otherwise leave the whole
     /// discovery path untested on any developer machine that isn't in
     /// HDR mode. What it covers is the "wrong adapter" family of bugs:
     /// on a laptop with switchable graphics the first adapter is
@@ -714,8 +714,8 @@ mod tests {
     /// first `AcquireNextFrame` immediately and successfully with
     /// `LastPresentTime == 0`, over a surface nothing has been composed
     /// into. Taking that frame yields a fully black capture through a
-    /// path where every error check passes — right format, right
-    /// dimensions, no error returned — so nothing but the pixels can
+    /// path where every error check passes (right format, right
+    /// dimensions, no error returned) so nothing but the pixels can
     /// catch it. Those metadata-only frames keep arriving throughout
     /// the stream, so this is not a first-capture-only problem.
     ///
@@ -738,8 +738,8 @@ mod tests {
         let grab = match capture_scrgb(hmon, info.sdr_white_nits) {
             Ok(grab) => grab,
             Err(e) => {
-                // Refusable for reasons that are not this code's fault
-                // — see the module docs.
+                // Refusable for reasons that are not this code's fault;
+                // see the module docs.
                 println!("duplication unavailable in this session: {e}");
                 return;
             }
@@ -751,7 +751,7 @@ mod tests {
         );
         assert!(
             peak > 0.0,
-            "every pixel came back zero — the grab took a metadata-only \
+            "every pixel came back zero: the grab took a metadata-only \
              frame instead of waiting for one carrying a desktop image"
         );
     }
@@ -761,7 +761,7 @@ mod tests {
     /// `#[ignore]`d: needs a desktop session, and Desktop Duplication is
     /// legitimately refusable (another capture tool holding the output,
     /// a full-screen exclusive game, a remote session). It asserts the
-    /// frame's *shape* rather than its contents — what it is really
+    /// frame's *shape* rather than its contents: what it is really
     /// proving is that the format request was honoured, which is the
     /// part that silently degrades.
     #[test]
@@ -798,7 +798,7 @@ mod tests {
                 );
             }
             Err(e) => {
-                // Not a failure of this code — see the module docs on
+                // Not a failure of this code; see the module docs on
                 // why duplication is refusable.
                 println!("duplication unavailable in this session: {e}");
             }

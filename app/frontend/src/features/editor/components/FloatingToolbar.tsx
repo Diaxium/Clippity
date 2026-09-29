@@ -44,13 +44,13 @@ interface FloatingToolbarProps {
 /**
  * Contextual action bar that floats above the selected object: Annotate, Blur,
  * Copy, Export, and an overflow menu (duplicate / replace image / z-order /
- * delete). Every action maps to a real store/export capability — no stubs. The
+ * delete). Every action maps to a real store/export capability: no stubs. The
  * bar flips below the object when there's no room above and clamps into the
  * canvas, so it never escapes the viewport. Floating-surface tokens only.
  *
  * Each action is an icon **over its word**, not an icon with a hover tooltip.
  * This bar appears under the cursor on every selection, so its actions are read
- * far more often than any of them is clicked — a tooltip made the common case
+ * far more often than any of them is clicked: a tooltip made the common case
  * (deciding whether this bar has what you want) cost a hover per button.
  */
 export function FloatingToolbar({

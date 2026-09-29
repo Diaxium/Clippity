@@ -2,7 +2,7 @@
 //! roadmap P2).
 //!
 //! Everything here is **synthetic and deterministic**. Benchmarks must
-//! never read a real capture, a real window title or any user data — the
+//! never read a real capture, a real window title or any user data: the
 //! roadmap's own constraint is "collect timings and sizes only". A fixed
 //! seed also makes runs comparable: the same corpus is regenerated
 //! byte-for-byte on every machine, so a percentile shift is a code change,
@@ -16,7 +16,7 @@ use clippity_domain::library::{CaptureKind, CaptureMeta};
 use clippity_services::library_index::Stamp;
 use image::{Rgba, RgbaImage};
 
-/// A xorshift64\* step. Small, allocation-free and fully deterministic —
+/// A xorshift64\* step. Small, allocation-free and fully deterministic:
 /// we only need spread, not cryptographic quality.
 #[inline]
 fn next_u64(state: &mut u64) -> u64 {

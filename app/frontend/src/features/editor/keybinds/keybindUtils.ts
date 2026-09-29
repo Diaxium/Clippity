@@ -1,7 +1,7 @@
 /**
  * Pure helpers for the keybind system: platform detection, typing-surface
  * detection, event/combo → canonical signature, platform-aware display
- * formatting, and conflict detection. No React, no store — every export is a
+ * formatting, and conflict detection. No React, no store: every export is a
  * deterministic function the registry, hook, and tests share.
  *
  * Matching is layout-stable: main keys are derived from `KeyboardEvent.code`
@@ -12,7 +12,7 @@
 
 import type { EditorKeybind, KeybindContext } from "./keybindTypes";
 
-/** True on macOS — flips `Mod` display to ⌘ and Alt to ⌥. */
+/** True on macOS: flips `Mod` display to ⌘ and Alt to ⌥. */
 export const IS_MAC =
   typeof navigator !== "undefined" &&
   /mac|iphone|ipad|ipod/i.test(
@@ -158,7 +158,7 @@ export function parseCombo(combo: string): KeySig {
   return { mod, shift, alt, key };
 }
 
-/** Stable string key for a signature — the index/lookup primitive. */
+/** Stable string key for a signature: the index/lookup primitive. */
 export function sigKey(s: KeySig): string {
   return `${s.mod ? "m" : ""}${s.shift ? "s" : ""}${s.alt ? "a" : ""}:${s.key}`;
 }
@@ -171,7 +171,7 @@ export function eventSigKey(e: KeyboardEvent): string {
   return sigKey(sigFromEvent(e));
 }
 
-/** Lone-modifier tokens (from `KeyboardEvent.key`) — never a bindable main
+/** Lone-modifier tokens (from `KeyboardEvent.key`): never a bindable main
  *  key on their own. */
 const MODIFIER_TOKENS = new Set([
   "control",
@@ -186,7 +186,7 @@ const MODIFIER_TOKENS = new Set([
 ]);
 
 /**
- * Author-combo string captured from a live keyboard event — the primitive
+ * Author-combo string captured from a live keyboard event: the primitive
  * the Shortcuts settings recorder builds a new binding from. Returns null
  * while only modifiers are held (nothing to bind yet). Uses the same
  * layout-stable token space as {@link parseCombo}, so the result round-trips
@@ -241,7 +241,7 @@ export interface KeybindConflict {
 /**
  * Find duplicate bindings: two non-hidden keybinds in the *same* context that
  * resolve to the same signature (a true ambiguity). Different contexts may share
- * a key on purpose — dispatch layers them by priority — so those aren't flagged.
+ * a key on purpose, dispatch layers them by priority, so those aren't flagged.
  */
 export function findKeybindConflicts(
   keybinds: readonly EditorKeybind[]

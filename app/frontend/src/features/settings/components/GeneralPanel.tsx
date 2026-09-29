@@ -14,7 +14,7 @@ interface GeneralPanelProps {
   onChange(next: GeneralSettings): void;
 }
 
-const FALLBACK_HINT = "Default — <app data>/captures";
+const FALLBACK_HINT = "Default: <app data>/captures";
 
 export function GeneralPanel({ value, onChange }: GeneralPanelProps) {
   const capabilities = useCapabilities();
@@ -29,7 +29,7 @@ export function GeneralPanel({ value, onChange }: GeneralPanelProps) {
       if (typeof picked === "string")
         onChange({ ...value, capturesDir: picked });
     } catch {
-      // Dialog cancelled or plugin unavailable — no-op.
+      // Dialog cancelled or plugin unavailable: no-op.
     }
   };
 
@@ -110,7 +110,7 @@ export function GeneralPanel({ value, onChange }: GeneralPanelProps) {
         />
         <Row
           label="Help improve Clippity"
-          description="Carried over from your installer choice. Clippity sends nothing today — this records your answer for if and when it can."
+          description="Carried over from your installer choice. Clippity sends nothing today; this records your answer for if and when it can."
           control={
             <ToggleSwitch
               checked={value.helpImprove}

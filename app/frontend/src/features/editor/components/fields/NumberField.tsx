@@ -25,7 +25,7 @@ interface NumberFieldProps {
   /**
    * The selection disagrees on this value (Workstream P3). The field reads
    * empty with a "Mixed" placeholder instead of claiming the primary's number,
-   * but stays fully live: typing, nudging or scrubbing commits a real value —
+   * but stays fully live: typing, nudging or scrubbing commits a real value,
    * which is exactly the unify-the-selection gesture Figma's mixed fields make.
    * `value` still carries the primary's number so a scrub has a starting point.
    */
@@ -62,7 +62,7 @@ interface DragState {
 /**
  * Compact numeric chip. The *whole* field is drag-scrubbable: a horizontal drag
  * past a small threshold scrubs the value (Shift = ×10, Alt = ×0.1), so
- * suffix-only fields like Opacity scrub exactly like X/Y/radius — not just the
+ * suffix-only fields like Opacity scrub exactly like X/Y/radius, not just the
  * ones that happen to carry a label or icon. A plain click still focuses for
  * typing; commit on Enter/blur evaluates simple arithmetic ("100/2"), and ↑/↓
  * nudge by `step` (Shift ×10, Alt ×0.1). A draft string is held while focused so

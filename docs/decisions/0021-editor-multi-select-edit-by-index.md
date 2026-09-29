@@ -1,4 +1,4 @@
-# 0021 — Multi-select edits list rows by index, and reads through three primitives
+# 0021: Multi-select edits list rows by index, and reads through three primitives
 
 - **Status:** Accepted (implemented)
 - **Date:** 2026-07-20
@@ -9,7 +9,7 @@
 
 ## Context
 
-Until now the inspector rendered the **primary** selection — `sel[0]` — and
+Until now the inspector rendered the **primary** selection, `sel[0]`, and
 disabled its numeric fields whenever more than one node was selected. Selecting
 three arrows and thickening them was three separate edits and three undo steps.
 This was the largest remaining workflow papercut in an annotation tool, where
@@ -19,7 +19,7 @@ The store's batch layer already existed and was **entirely uncalled**:
 `updateNodes`, `updateEach`, `placeNodes`, and the plural
 `updateFills`/`updateStrokes`/`updateEffects` (plus `colorEditor.peers`) had been
 built in an earlier session with zero callers. So this decision is not about
-*whether* to batch — the write side was settled — but about the two questions the
+*whether* to batch, the write side was settled, but about the two questions the
 panels could not avoid answering: **what a list row means across a selection**,
 and **what a field shows when the selection disagrees**.
 
@@ -31,8 +31,8 @@ The fill / stroke / effect sections lay out the **primary's** rows. Editing row
 *i* writes to entry *i* of every selected node that has one; a node with a
 shorter list is **skipped**, not extended.
 
-The alternative — replace-all, where editing any row overwrites the whole paint
-list on every selected node — was rejected because it destroys per-node paint
+The alternative (replace-all, where editing any row overwrites the whole paint
+list on every selected node) was rejected because it destroys per-node paint
 stacks on *every* edit. Nudging one shape's stroke width would silently flatten
 another shape's two-stroke outline into one. For a design tool that is bad; for
 an annotation tool, where a two-stroke halo is a common highlight treatment, it
@@ -43,13 +43,13 @@ pairs the store's plural actions take, and `sharedEntry` reads across them.
 
 ### 2. Three read primitives, chosen by what the property *means*
 
-- **`shared`** — every node carries it (opacity, rotation, W/H). Disagreement is
+- **`shared`**: every node carries it (opacity, rotation, W/H). Disagreement is
   a real disagreement.
-- **`sharedWhere`** — only some nodes carry it. Non-carriers **sit out** rather
+- **`sharedWhere`**: only some nodes carry it. Non-carriers **sit out** rather
   than counting as a disagreement, which is what lets a text-plus-rectangle
   selection still restyle the text, and three callouts plus a shape still swing
   the three tails.
-- **`triState`** — booleans. A split renders unpressed (and indeterminate for
+- **`triState`**: booleans. A split renders unpressed (and indeterminate for
   checkboxes) so it never claims a state the selection doesn't have.
 
 `shared` returns the primary's value **even when mixed**, because a scrub or
@@ -59,7 +59,7 @@ arrow-nudge on a mixed field has to start somewhere.
 
 `NumberField`/`ColorField` render blank with a `Mixed` placeholder rather than
 the primary's number. They remain fully editable: typing, nudging or scrubbing
-commits a real value to the whole selection — Figma's unify-the-selection
+commits a real value to the whole selection: Figma's unify-the-selection
 gesture. Crucially, the resting draft for a mixed field is `""`, and
 `evalNumberExpression("")` is `null`, so **blurring an untouched mixed field
 cannot silently unify the selection**.
@@ -71,9 +71,9 @@ prepended and selecting it is a no-op; picking any real option unifies.
 
 Two cases cannot be expressed as one patch, and both write through `updateEach`:
 
-- **W/H** — each node keeps *its own* aspect ratio. Two locked shapes at 1.25
+- **W/H**: each node keeps *its own* aspect ratio. Two locked shapes at 1.25
   and 2.0 driven to width 200 must become 200×160 and 200×100, not both 200×160.
-- **Corner radii** — each node keeps its *other* three corners.
+- **Corner radii**: each node keeps its *other* three corners.
 
 `CalloutSection` and `SampleSection` do the same so a tail's angle edit doesn't
 carry the primary's length along with it.
@@ -103,12 +103,12 @@ the wrong rule, and hiding the control is more honest than offering one that
 destroys the sequence.
 
 Similarly out of scope by nature, not oversight: `BackdropSection` is
-document-scoped (ADR 0020), and `ExportSection` exports the page or one node —
+document-scoped (ADR 0020), and `ExportSection` exports the page or one node:
 multi-node export is the separate "per-layer export rows" item in Phase 3.
 
 ## Consequences
 
-- **Neither renderer changed**, and no new node fields were added — this is
+- **Neither renderer changed**, and no new node fields were added: this is
   panel wiring over an existing store API, so two-renderer parity is untouched.
 - **Every batch is one undo step**, inherited from the P1 history transaction
   via the store's plural actions rather than re-implemented per call site.
@@ -128,7 +128,7 @@ multi-node export is the separate "per-layer export rows" item in Phase 3.
 
 ## Alternatives
 
-- **Replace-all for paint lists.** Rejected — see §1. Destroys per-node paint
+- **Replace-all for paint lists.** Rejected; see §1. Destroys per-node paint
   stacks on every edit.
 - **Union of rows instead of the primary's rows.** Rejected: the row count would
   change as the selection changes, rows would have no stable identity to edit
@@ -142,4 +142,4 @@ multi-node export is the separate "per-layer export rows" item in Phase 3.
   `mixed` boolean already existed on both field primitives, and the read is a
   one-line `shared(...)` at each call site. A wrapper would have added an
   indirection without removing one.
-- **Batching step numbers anyway, for consistency.** Rejected — see §7.
+- **Batching step numbers anyway, for consistency.** Rejected; see §7.

@@ -1,5 +1,5 @@
 /**
- * Capture wire-format contracts — mirror Rust `domain::capture`.
+ * Capture wire-format contracts: mirror Rust `domain::capture`.
  */
 
 export type CaptureType = "region" | "window" | "fullscreen" | "custom";
@@ -48,7 +48,7 @@ export interface CaptureRequest {
    *  The one provenance field the backend cannot observe for itself:
    *  presets run through `runPreset`, which dispatches the ordinary
    *  capture commands, so which preset is executing is only knowable
-   *  at dispatch. Stamped there, never stored on the preset — that way
+   *  at dispatch. Stamped there, never stored on the preset: that way
    *  renaming a preset can't leave a stale name behind. */
   preset?: string | null;
 }
@@ -72,11 +72,11 @@ export interface CaptureResult {
 /**
  * Outcome of a Clipboard custom-mode ingest (mirrors Rust
  * `domain::capture::ClipboardIngest`). Discriminated on `kind`:
- * - `image` — the clipboard held a bitmap; it was saved as a capture
+ * - `image`: the clipboard held a bitmap; it was saved as a capture
  *   (the backend already emitted `capture/finished` + `library/updated`
  *   and raised a `clipboard` toast).
- * - `text` — the clipboard held text; persisted as an aux library entry.
- * - `empty` — nothing usable; the caller shows a "copy something first"
+ * - `text`: the clipboard held text; persisted as an aux library entry.
+ * - `empty`: nothing usable; the caller shows a "copy something first"
  *   toast.
  */
 export type ClipboardIngest =

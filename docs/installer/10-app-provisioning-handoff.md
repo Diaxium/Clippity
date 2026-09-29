@@ -1,4 +1,4 @@
-# 10 — Installer → application handoff (`install-config.json`)
+# 10: Installer → application handoff (`install-config.json`)
 
 How the choices a user makes in the wizard reach the running application.
 
@@ -10,9 +10,9 @@ is about making the *application* honest about what the user asked for.
 
 The wizard asks two kinds of question:
 
-- **Options step** — create a desktop shortcut, start at login, enable
+- **Options step**: create a desktop shortcut, start at login, enable
   automatic updates, help improve Clippity, register file associations.
-- **Components step** — capture integration, file associations, startup
+- **Components step**: capture integration, file associations, startup
   helper, GIF encoder, OCR engine, cloud sync.
 
 Only two of those answers used to survive the wizard closing: the desktop
@@ -26,7 +26,7 @@ Everything else evaporated. The consequences were concrete:
 - A user who unchecked **capture integration** still got an OS-global capture
   hotkey registered at startup.
 - **Enable automatic updates** and **Help improve Clippity** were bound to
-  nothing whatsoever — the app had no such settings to bind to.
+  nothing whatsoever: the app had no such settings to bind to.
 - The **Modify** step opened on `InstallOptions::default()`, so pressing
   "Apply changes" silently rewrote the user's original choices with defaults.
 
@@ -54,7 +54,7 @@ A small versioned JSON document, written into the **install directory beside
 ```
 
 Beside the executable, because the app can then find it with nothing but
-`current_exe()` — no registry lookup, no knowledge of the installer's
+`current_exe()`: no registry lookup, no knowledge of the installer's
 maintenance directory, and no dependence on paths that differ between
 per-user and all-users installs.
 
@@ -76,13 +76,13 @@ ledger can change shape without breaking every installed copy of Clippity.
 | --- | --- |
 | Install | Written from the committed manifest; recorded as an owned file (component `config`) in the manifest and in the transaction journal. |
 | Modify | Same code path as install, so it is rewritten from the new selection. |
-| Repair | Regenerated from the manifest whenever it is missing or has drifted. Not hash-verified — it is derived, so it is rewritten rather than compared. |
+| Repair | Regenerated from the manifest whenever it is missing or has drifted. Not hash-verified: it is derived, so it is rewritten rather than compared. |
 | Rollback | Removed with every other recorded action of the failed operation. |
-| Uninstall | Removed as one of the manifest's owned files — no special case. |
+| Uninstall | Removed as one of the manifest's owned files: no special case. |
 
 To make repair and Modify able to reconstruct it, `InstallationManifest`
 gained a `preferences` block (`automaticUpdates`, `helpImprove`,
-`fileAssociations` — the three that leave no other trace on the machine). It is
+`fileAssociations`: the three that leave no other trace on the machine). It is
 additive and `#[serde(default)]`, so no schema bump: a manifest written before
 the field existed reads as the shipped defaults, which is what those installs
 actually chose.
@@ -112,8 +112,8 @@ Refusals return the `not-installed` error code (`AppError::NotInstalled`),
 distinct from `unsupported`: this one is fixable by re-running the installer's
 Modify flow, and the UI says so.
 
-**Preferences are seeds, not policy.** On the *first* launch only — no
-`settings.json` yet — `start_at_login`, `automatic_updates`, and `help_improve`
+**Preferences are seeds, not policy.** On the *first* launch only (no
+`settings.json` yet) `start_at_login`, `automatic_updates`, and `help_improve`
 seed `settings.general`. Afterwards they are ordinary settings the user owns; a
 later launch (or a Repair) never overwrites them. `automaticUpdates` and
 `helpImprove` are persisted **intent only** in this build: there is no updater
@@ -124,7 +124,7 @@ updates or report anything finds a real answer instead of a default it invented.
 ## The absent case is "everything on"
 
 A missing, unreadable, or newer-schema document resolves to
-`Capabilities::unmanaged()` — every feature available, flagged as not coming
+`Capabilities::unmanaged()`: every feature available, flagged as not coming
 from an installer. This is the whole failure model, and it is deliberate:
 
 - A **portable** build has no installer behind it (checked before the disk is
@@ -132,7 +132,7 @@ from an installer. This is the whole failure model, and it is deliberate:
 - A **development run** (`cargo run`, `pnpm tauri:dev`) has none either.
 - A **truncated write** or a disk error must not cost a user their features.
 - A document from a **newer installer** must not have its unreadable fields
-  interpreted as declines — features would vanish after an update.
+  interpreted as declines: features would vanish after an update.
 
 Reading silence as "the user declined everything" breaks all four. Reading it as
 "nothing was declined" only loses the ability to hide features, which is

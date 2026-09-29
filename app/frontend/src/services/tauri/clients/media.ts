@@ -42,7 +42,7 @@ export type {
  * fetchable under. Rejects ids outside the captures directory, and
  * anything that isn't a video.
  *
- * Cheap regardless of the clip's length — the backend reads the
+ * Cheap regardless of the clip's length: the backend reads the
  * container's headers and stops, so a two-hour recording opens as fast
  * as a two-second one.
  */
@@ -54,7 +54,7 @@ export function mediaProbe(id: string): Promise<MediaInfo> {
  * Encode the requested range as a new capture and resolve with what was
  * written.
  *
- * Slow by nature — the backend decodes and re-encodes rather than
+ * Slow by nature: the backend decodes and re-encodes rather than
  * remuxing, so a cut lands on the exact frame the handles showed instead
  * of snapping to the nearest keyframe. Pair with {@link onTrimProgress}.
  *
@@ -70,7 +70,7 @@ export function mediaTrim(request: TrimRequest): Promise<TrimResult> {
  * Stage one rendered annotation overlay and resolve with its path, for
  * naming in a {@link TrimRequest}.
  *
- * Called once per interval between annotation boundaries — never per
+ * Called once per interval between annotation boundaries, never per
  * frame. Staged as a file rather than sent inline with the trim for the
  * same reason the clip itself is never sent over IPC: a payload is
  * serialised whole, and a handful of full-resolution bitmaps is
@@ -116,7 +116,7 @@ const MEDIA_SCHEME = "clippity-media";
  * A token plus a URL rather than the media itself, and for a stronger
  * reason than the snapshot scheme's: a recording is not merely large,
  * it is *seeked*. A `<video>` element asks for the byte ranges around
- * the playhead and asks for different ones when the user scrubs — so
+ * the playhead and asks for different ones when the user scrubs, so
  * the bytes cannot travel through the IPC bridge at all, no matter how
  * patient we are about the size. The backend answers ranged requests
  * with `206 Partial Content`; see `media_scheme.rs`.

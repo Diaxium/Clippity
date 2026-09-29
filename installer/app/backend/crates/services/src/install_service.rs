@@ -1,10 +1,10 @@
-//! Fresh-install and modify orchestration — a real transaction.
+//! Fresh-install and modify orchestration: a real transaction.
 //!
 //! An install moves through the journal lifecycle
 //! (`Validate → Apply → Commit → Cleanup`), recording each mutating action
 //! with the inverse that undoes it. If any step fails, the recorded actions
-//! are rolled back — the half-written install dir, the maintenance copy, the
-//! shortcuts, the registry entries, and the manifest are all reversed — so a
+//! are rolled back (the half-written install dir, the maintenance copy, the
+//! shortcuts, the registry entries, and the manifest are all reversed) so a
 //! failed install leaves the machine as it found it rather than a partial,
 //! unusable state. Only after the manifest is committed and verified does
 //! the operation report success.
@@ -33,7 +33,7 @@ use crate::{
     clock, detect, journal_store, pace, provisioning_store, rollback, state_store, ProgressSink,
 };
 
-/// The wizard copy placed in the maintenance directory — the binary
+/// The wizard copy placed in the maintenance directory: the binary
 /// Windows runs for Uninstall / Modify / Repair. It embeds the payload, so
 /// it can also repair or reinstall without the original Setup.exe.
 pub const MAINTENANCE_EXE: &str = "clippity-maintenance.exe";
@@ -55,7 +55,7 @@ fn operation_of(kind: ProgressKind) -> OperationType {
 /// write) are delegated to [`Payload`], `installer-platform`, and
 /// [`state_store`], and each is recorded in an [`OperationJournal`] so a
 /// failure can be reversed. `kind` distinguishes a fresh install from a
-/// modify so the UI labels — and the journal — match.
+/// modify so the UI labels, and the journal, match.
 pub fn run(
     kind: ProgressKind,
     plan: &InstallPlan,
@@ -128,7 +128,7 @@ pub fn run(
     let outcome = (|journal: &mut OperationJournal| -> InstallerResult<()> {
         for step in 0..total {
             match tasks[step].id.as_str() {
-                // The payload ships inside this executable — nothing to
+                // The payload ships inside this executable: nothing to
                 // fetch. The row stays because the same checklist drives the
                 // download-based update flow.
                 "download" => pace(),
@@ -206,7 +206,7 @@ pub fn run(
         Err(e) => {
             // Reverse everything applied so a failed install leaves no
             // partial state, then record the failure.
-            tracing::error!(error = %e, "install failed — rolling back");
+            tracing::error!(error = %e, "install failed; rolling back");
             journal.fail(e.to_string(), &clock.iso);
             let _ = journal_store::write(&maintenance_dir, &journal);
             let _ = rollback::roll_back(&maintenance_dir, &mut journal);
@@ -248,7 +248,7 @@ fn record_dir(
 
 /// Apply every Windows integration the plan implies, recording each action
 /// in the journal, then commit the installation manifest that records
-/// exactly what was done — so a later uninstall reverses these actions and
+/// exactly what was done, so a later uninstall reverses these actions and
 /// nothing else.
 #[allow(clippy::too_many_arguments)]
 fn apply_integrations(
@@ -298,7 +298,7 @@ fn apply_integrations(
     let _ = journal_store::write(maintenance_dir, journal);
     let maintenance_exe_str = maintenance_exe.to_string_lossy().to_string();
 
-    // 2. Shortcuts — recorded by exact path for a precise uninstall/rollback.
+    // 2. Shortcuts: recorded by exact path for a precise uninstall/rollback.
     if let Some(previous) = previous {
         for shortcut in &previous.shortcuts {
             let _ = windows_ops::remove_shortcut_path(Path::new(&shortcut.path));
@@ -378,7 +378,7 @@ fn apply_integrations(
     );
     let _ = journal_store::write(maintenance_dir, journal);
 
-    // 5. The authoritative manifest — writing it is the commit boundary.
+    // 5. The authoritative manifest: writing it is the commit boundary.
     let mut registry_entries = vec![RegistryRecord {
         hive,
         subkey: UNINSTALL_SUBKEY.to_string(),
@@ -440,7 +440,7 @@ fn apply_integrations(
 
     // 6. The application's copy of these choices, written beside the exe so
     //    the app itself can honor them (see `domain::provisioning`). Written
-    //    from the manifest — not from `plan` — so install, modify and repair
+    //    from the manifest, not from `plan`, so install, modify and repair
     //    all produce the same document, and recorded as an owned file so
     //    rollback and uninstall remove it with everything else.
     //
@@ -459,7 +459,7 @@ fn apply_integrations(
                 path: path_str,
                 // No hash: every install / modify / repair regenerates the
                 // document, so repair restores it by rewriting rather than by
-                // comparing bytes. Immutable all the same — the *app* never
+                // comparing bytes. Immutable all the same: the *app* never
                 // writes it, which is why a repair may.
                 sha256: None,
                 bytes: 0,
@@ -469,7 +469,7 @@ fn apply_integrations(
         }
         Err(e) => tracing::warn!(
             error = %e,
-            "could not write the application configuration — Clippity will \
+            "could not write the application configuration; Clippity will \
              start with every feature enabled"
         ),
     }
@@ -595,7 +595,7 @@ fn restore_previous(
 }
 
 /// Copy the running installer to `dest` (the maintenance/uninstaller
-/// location). A no-op when we are already running from `dest` — which is
+/// location). A no-op when we are already running from `dest`, which is
 /// the case when the maintenance exe itself drives a repair/modify.
 enum SelfCopy {
     Unchanged,

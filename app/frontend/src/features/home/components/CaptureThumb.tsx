@@ -3,9 +3,9 @@
  *
  * Reuses the library feature's cached, lazy `useThumbnail` loader (one
  * shared module-level LRU across the whole app, so a thumbnail decoded
- * for the library grid is free here). When the decode returns nothing —
- * a browser preview with no backend, or a video/gif the backend won't
- * decode to a still — it renders a tinted tile with the kind's icon
+ * for the library grid is free here). When the decode returns nothing
+ * (a browser preview with no backend, or a video/gif the backend won't
+ * decode to a still) it renders a tinted tile with the kind's icon
  * instead of a broken image.
  */
 

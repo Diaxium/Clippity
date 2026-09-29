@@ -1,6 +1,6 @@
 # Project structure
 
-Clippity is a single **root-level workspace** — one pnpm workspace and one
+Clippity is a single **root-level workspace**: one pnpm workspace and one
 Cargo workspace, both driven from the repository root (see
 [ADR 0030](../decisions/0030-root-workspace-restructure.md)).
 
@@ -13,7 +13,7 @@ Clippity/
 │   ├── frontend/             # pkg: clippity-frontend  (React 19 + Vite 8 + Tailwind v4)
 │   ├── shared/               # pkg: @clippity/shared   (IPC wire contracts, type-only)
 │   └── backend/              # Cargo workspace
-│       ├── Cargo.toml        # [workspace] — shared deps + release profile
+│       ├── Cargo.toml        # [workspace]: shared deps + release profile
 │       ├── Cargo.lock
 │       ├── benches-budgets.json  # warn/fail bands for `pnpm bench:check`
 │       ├── crates/
@@ -34,13 +34,13 @@ Clippity/
 
 | Package | Path | Role |
 | --- | --- | --- |
-| `clippity-frontend` | `app/frontend` | The React app — every Tauri window's UI. |
+| `clippity-frontend` | `app/frontend` | The React app: every Tauri window's UI. |
 | `@clippity/shared` | `app/shared` | Framework-agnostic IPC **contracts** (types only), consumed by the frontend via `workspace:*`. |
 | `clippity-tauri` | `app/backend/src-tauri` | Thin wrapper that owns the Tauri CLI + `tauri.conf.json`. |
 
 Only these three are root-workspace packages; they are listed in
 [`pnpm-workspace.yaml`](../../pnpm-workspace.yaml). The installer under
-`installer/` is a separate pnpm workspace with its own lockfile — see
+`installer/` is a separate pnpm workspace with its own lockfile; see
 [installer/README.md](../../installer/README.md).
 
 ## Rust crates
@@ -50,7 +50,7 @@ crates listed beside it:
 
 | Crate | Depends on (internal) |
 | --- | --- |
-| `clippity-infra` | — |
+| `clippity-infra` | - |
 | `clippity-domain` | infra |
 | `clippity-platform` | domain, infra |
 | `clippity-vision` | domain, infra |
@@ -60,7 +60,7 @@ crates listed beside it:
 
 - **infra** depends on nothing internal (it may use `tauri` for the error
   type + path resolver + the outbound event channel).
-- **domain** is pure — `serde` + `image` math only; no Tauri, no I/O.
+- **domain** is pure: `serde` + `image` math only; no Tauri, no I/O.
 - **platform** holds OS-specific code (`windows` crate, `cfg`-gated).
 - **vision** isolates the heavy ONNX toolchain (`ort`, `ndarray`) so it
   compiles in parallel and caches independently. Nothing below the app crate

@@ -171,7 +171,7 @@ export function EditorCanvas() {
   const showGrid = useEditorStore((s) => s.showGrid);
   const showRulers = useEditorStore((s) => s.showRulers);
   const gradientEditFillId = useEditorStore((s) => s.gradientEditFillId);
-  // Temporary pan while Space is held — driven by the central keybind system
+  // Temporary pan while Space is held: driven by the central keybind system
   // (useEditorKeybinds), read here so the pointer + cursor logic can grab-pan
   // without disturbing the active tool.
   const tempPan = useEditorStore((s) => s.tempPan);
@@ -330,7 +330,7 @@ export function EditorCanvas() {
       const target = e.target as Element;
 
       // Crop is modal: while a session is open the canvas only edits the crop
-      // window — never picks, marquees or draws. A press on a handle resizes;
+      // window; never picks, marquees or draws. A press on a handle resizes;
       // a press inside the window slides it; anything else is ignored.
       if (store.cropSession) {
         const cropHandle = target.getAttribute(
@@ -560,7 +560,7 @@ export function EditorCanvas() {
             } else {
               store.pushHistory();
             }
-            // Re-read after the (possible) duplicate — the clones are now the
+            // Re-read after the (possible) duplicate: the clones are now the
             // selection, so start bounds + snap lines must reflect them.
             const live = useEditorStore.getState();
             const sel = live.selectedIds
@@ -665,7 +665,7 @@ export function EditorCanvas() {
         case "resize": {
           const node = store.nodes[g.id];
           let pointer = scene;
-          // Snap the dragged handle to peers (axis-aligned nodes only — snapping
+          // Snap the dragged handle to peers (axis-aligned nodes only; snapping
           // a rotated frame's pointer would fight the rotation).
           if (
             node &&
@@ -902,7 +902,7 @@ export function EditorCanvas() {
         finishPen(false);
         return;
       }
-      // Crop owns the canvas while it's open — don't re-select underneath it.
+      // Crop owns the canvas while it's open: don't re-select underneath it.
       if (store.cropSession) return;
       const scene = screenToScene(e.clientX, e.clientY);
       const hit = pickNode(
@@ -926,7 +926,7 @@ export function EditorCanvas() {
       // what tells the window-level fallback (`useNativeContextMenu`) the
       // click found an owner, so the shared menu doesn't open on top of
       // the editor's. Suppressing the WebView2 menu is already handled
-      // globally in the capture phase — the `preventDefault` above only
+      // globally in the capture phase: the `preventDefault` above only
       // matters for the crop-session early return below.
       e.stopPropagation();
       const store = useEditorStore.getState();
@@ -1089,8 +1089,8 @@ export function EditorCanvas() {
         />
       )}
 
-      {/* Bottom rail: the zoom cluster centres under the canvas — it belongs to
-          the view, not to either side of it — and the hint stacks above rather
+      {/* Bottom rail: the zoom cluster centres under the canvas (it belongs to
+          the view, not to either side of it) and the hint stacks above rather
           than beside it, so neither has to yield space as the canvas narrows. */}
       <div className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex flex-col items-center gap-2">
         <CanvasHintBar />
@@ -1118,7 +1118,7 @@ interface TextEditorProps {
   viewport: Viewport;
 }
 
-/** Inline editor for a text node — an absolutely-positioned textarea matching
+/** Inline editor for a text node: an absolutely-positioned textarea matching
  *  the node's screen rect + typography. Commits on blur/Escape. */
 function TextEditor({ nodeId, nodes, viewport }: TextEditorProps) {
   const node = nodes[nodeId];

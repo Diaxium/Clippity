@@ -3,13 +3,13 @@
  * otherwise repeat.
  *
  * These are one line of IPC each, but every one of them is fired from a
- * card, a row, the tag editor *and* the selection bar — four places that
+ * card, a row, the tag editor *and* the selection bar: four places that
  * would each need the same try/catch and the same toast. Wrapping them
  * once keeps a failed write from being swallowed silently.
  *
  * Nothing here holds state: the backend emits `library/updated` when an
  * edit lands, and `useLibraryList` re-fetches on it. A caller does not
- * need the return value, but gets it — the number of entries actually
+ * need the return value, but gets it: the number of entries actually
  * changed, which is `0` when the edit asked for what was already true.
  */
 
@@ -33,7 +33,7 @@ async function guarded(
   }
 }
 
-/** Star or unstar every id — one capture or a whole selection. */
+/** Star or unstar every id: one capture or a whole selection. */
 export function setFavorite(ids: string[], favorite: boolean): Promise<number> {
   return guarded(
     () => librarySetFavorite(ids, favorite),

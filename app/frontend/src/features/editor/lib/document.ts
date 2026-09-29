@@ -1,8 +1,8 @@
 /**
  * Editable-document (de)serialization. The on-disk format is a small JSON
  * envelope around the scene graph, written to a sidecar beside the capture
- * (`editorSaveScene`) and read back on open. The scene is self-contained —
- * image fills embed their base64 data URI — so a saved project survives even
+ * (`editorSaveScene`) and read back on open. The scene is self-contained
+ * (image fills embed their base64 data URI) so a saved project survives even
  * if the source capture is later moved.
  *
  * Versioned so the format can evolve; `parseDocument` rejects anything it
@@ -22,7 +22,7 @@ export interface EditorDocument {
   nodes: Record<string, SceneNode>;
 }
 
-/** Fields of the store the document needs — kept structural so tests and the
+/** Fields of the store the document needs: kept structural so tests and the
  *  save hook can pass a plain object or the live store snapshot. */
 export interface DocumentSource {
   docName: string;

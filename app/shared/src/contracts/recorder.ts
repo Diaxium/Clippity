@@ -1,5 +1,5 @@
 /**
- * Screen-recording wire-format contracts — mirror Rust
+ * Screen-recording wire-format contracts: mirror Rust
  * `domain::recorder`.
  *
  * Distinct from `scroll.ts` on purpose: that module's "recording" is
@@ -14,14 +14,14 @@ import type { Source } from "./composition";
 export type RecorderTarget = "region" | "window" | "fullscreen";
 
 /**
- * Output format, chosen before the session starts — the only fork in
+ * Output format, chosen before the session starts: the only fork in
  * the pipeline. One capture session feeds one of two encoders.
  */
 export type RecorderFormat = "mp4" | "gif";
 
 /**
  * Which audio inputs to mix in. Both can be on at once (narrating over
- * system sound), and each degrades independently — a denied microphone
+ * system sound), and each degrades independently: a denied microphone
  * must not cost the user their system audio. A `null` device id follows
  * the OS default. Ignored entirely for `gif`, which has no audio track.
  */
@@ -30,7 +30,7 @@ export interface AudioSelection {
   system: boolean;
   microphoneDevice?: string | null;
   systemDevice?: string | null;
-  /** Level each input is mixed at, as a percentage of unity — 100 is
+  /** Level each input is mixed at, as a percentage of unity: 100 is
    *  unchanged, 0 is silence, 200 is the ceiling. Percentages rather
    *  than a multiplier because that is the unit the slider shows and it
    *  round-trips through JSON exactly. Omitted = 100. */
@@ -57,7 +57,7 @@ export interface RecorderLevels {
 }
 
 /**
- * Recording toggles. Not `CaptureToggles` — `enhance` is meaningless for
+ * Recording toggles. Not `CaptureToggles`: `enhance` is meaningless for
  * a frame stream, `clicks` has no still equivalent, and `clipboard`
  * means something different here (see below). `clicks` implies `cursor`
  * (the backend turns it on rather than rejecting the pair).
@@ -65,18 +65,18 @@ export interface RecorderLevels {
 export interface RecorderToggles {
   cursor: boolean;
   clicks: boolean;
-  /** Open the finished recording in the library inspector — the
+  /** Open the finished recording in the library inspector: the
    *  recorder's counterpart to "Preview in Editor". */
   preview: boolean;
   /** Put the finished clip on the clipboard as a file reference
-   *  (`CF_HDROP`), not as bytes — which is what makes it viable for a
+   *  (`CF_HDROP`), not as bytes, which is what makes it viable for a
    *  video, and what makes it paste as an attachment. The clipboard
    *  names a path, so moving the clip before pasting breaks it. */
   clipboard: boolean;
 }
 
 /**
- * How generously the H.264 encoder is budgeted — a multiplier on the
+ * How generously the H.264 encoder is budgeted: a multiplier on the
  * bits-per-pixel-per-frame target the backend derives from the frame
  * size and rate.
  *
@@ -110,7 +110,7 @@ export interface RecorderEncoding {
   bitrateBps?: number | null;
   /** Seconds between keyframes (1–10, default 2). A decoder can only
    *  start at a keyframe, so this is the granularity Studio's scrubber
-   *  can seek to — not a cosmetic setting. */
+   *  can seek to, not a cosmetic setting. */
   keyframeSeconds?: number;
   rateControl?: RateControl;
   /** Prefer the GPU's encoder. On by default; software encode cannot
@@ -141,7 +141,7 @@ export interface RecorderRequest {
   audio?: AudioSelection;
   /** H.264 encoder settings. Ignored for `gif`. */
   encoding?: RecorderEncoding;
-  /** Things composited over the captured frame — a webcam, a logo
+  /** Things composited over the captured frame: a webcam, a logo
    *  (ADR 0033). Order is meaningful: later sources draw over earlier
    *  ones. Applies to both formats. */
   sources?: Source[];
@@ -157,7 +157,7 @@ export interface RecorderRequest {
 export type RecorderState = "idle" | "recording" | "paused";
 
 /**
- * Live session status — carried on `recorder/tick` and returned by the
+ * Live session status: carried on `recorder/tick` and returned by the
  * start/pause/resume commands so the HUD can render before the first
  * tick lands.
  *
@@ -169,7 +169,7 @@ export interface RecorderStatus {
   state: RecorderState;
   elapsedMs: number;
   frames: number;
-  /** Frames the encoder couldn't keep up with. Shown, not just logged —
+  /** Frames the encoder couldn't keep up with. Shown, not just logged:
    *  a climbing count is what tells a user to lower the frame rate. */
   dropped: number;
   /** Bytes on disk so far. Always 0 for GIF, which has nothing on disk
@@ -188,7 +188,7 @@ export interface RecorderResult {
   path: string;
   durationMs: number;
   frames: number;
-  /** Whether an audio track was actually written — not merely requested.
+  /** Whether an audio track was actually written, not merely requested.
    *  A denied microphone lands here as `false` so the toast can say so
    *  instead of the user finding the silence on playback. */
   hasAudio: boolean;

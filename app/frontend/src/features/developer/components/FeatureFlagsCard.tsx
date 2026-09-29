@@ -1,11 +1,11 @@
 /**
- * Feature flags — the switches this build exposes, and the user's
+ * Feature flags: the switches this build exposes, and the user's
  * overrides for them.
  *
  * The table is short on purpose. A flag with no consumer is a lie the
  * settings page tells on the app's behalf, so the registry
  * (`shared/lib/featureFlags`) only lists switches something actually
- * reads — today, two capture paths that each already have a tested
+ * reads: today, two capture paths that each already have a tested
  * fallback, which is what makes turning them off safe rather than
  * merely possible.
  */

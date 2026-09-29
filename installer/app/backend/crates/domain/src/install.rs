@@ -51,7 +51,7 @@ impl Default for InstallOptions {
 /// `start_at_login` from its own manifest field (uninstall needs it to
 /// remove the `Run` value), and `destination`/`scope` from the recorded
 /// directories. The preferences below still need an authoritative value for
-/// later maintenance and application provisioning — see [`crate::provisioning`].
+/// later maintenance and application provisioning; see [`crate::provisioning`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstallPreferences {
@@ -62,7 +62,7 @@ pub struct InstallPreferences {
 
 impl Default for InstallPreferences {
     fn default() -> Self {
-        // Mirrors `InstallOptions::default` — an older manifest that
+        // Mirrors `InstallOptions::default`: an older manifest that
         // predates this record reads as "the shipped defaults", which is
         // what those installs actually chose.
         Self {
@@ -166,7 +166,7 @@ pub fn needs_elevation(options: &InstallOptions) -> bool {
     path_requires_elevation(&options.destination)
 }
 
-/// Whether writing to — or *removing from* — `path` requires administrator
+/// Whether writing to, or *removing from*, `path` requires administrator
 /// rights because it sits under a protected system root.
 ///
 /// The install path uses this to decide whether to relaunch elevated before
@@ -261,7 +261,7 @@ mod tests {
 
     #[test]
     fn sibling_sharing_a_prefix_is_not_protected() {
-        // "C:\Program Files Custom" is an ordinary writable folder — a
+        // "C:\Program Files Custom" is an ordinary writable folder: a
         // naive starts_with would wrongly demand elevation for it.
         assert!(!needs_elevation(&user_install(
             r"C:\Program Files Custom\Clippity"

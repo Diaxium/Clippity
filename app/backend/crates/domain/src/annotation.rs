@@ -1,4 +1,4 @@
-//! Studio annotations — the half of the model that has to exist twice.
+//! Studio annotations: the half of the model that has to exist twice.
 //!
 //! An annotation is a shape, a rectangle and a time range: it is drawn
 //! over the picture while the playhead is inside its range, and burned
@@ -9,7 +9,7 @@
 //!
 //! The editor established a property worth keeping: `flattenScene` is
 //! the *same* code that draws the preview, so a callout on screen and a
-//! callout in the exported PNG cannot disagree — there is only one
+//! callout in the exported PNG cannot disagree: there is only one
 //! renderer to be wrong. Studio keeps that by rendering its boxes,
 //! spotlights, arrows and text on a canvas in the webview, once per
 //! interval between annotation boundaries, and handing the results down
@@ -22,7 +22,7 @@
 //! A blur or a pixelation is not something painted on top. It is a
 //! transform of the pixels *underneath*, so it cannot be pre-rendered
 //! into an overlay by a webview that does not have the decoded frame.
-//! These cross as parameters and are implemented twice — once here for
+//! These cross as parameters and are implemented twice: once here for
 //! the export, once in TypeScript for the preview.
 //!
 //! That makes them the only place in the feature where the two halves
@@ -71,7 +71,7 @@ pub const MIN_PIXELATE_BLOCK: u32 = 3;
 /// A rectangle in fractions of the frame, `0.0..=1.0`.
 ///
 /// Normalised rather than in pixels so an annotation survives being
-/// applied to a different size of the same picture — the preview draws
+/// applied to a different size of the same picture: the preview draws
 /// at whatever the stage is showing, the export at the source's native
 /// resolution, and a trim to GIF at a third size again. Storing pixels
 /// would tie a saved sidecar to the display it was authored on.
@@ -87,7 +87,7 @@ pub struct NormRect {
 impl NormRect {
     /// Resolve against a frame size, clamped to its bounds.
     ///
-    /// Returns `None` for a rectangle that lands on no pixels at all —
+    /// Returns `None` for a rectangle that lands on no pixels at all:
     /// zero-sized, entirely off-frame, or built from non-finite numbers.
     /// Callers treat that as "nothing to do", which is why it is an
     /// `Option` rather than an error: a degenerate rectangle is a
@@ -151,7 +151,7 @@ pub enum RedactionMode {
 
 /// A pixel-transforming annotation, resolved for the export path.
 ///
-/// Solid-fill redaction is deliberately *not* here — a filled rectangle
+/// Solid-fill redaction is deliberately *not* here: a filled rectangle
 /// is drawn, so it travels as an overlay with everything else that is
 /// drawn. Only the two transforms that need the frame's own pixels
 /// appear in this enum, which is what keeps the burn-in's second
@@ -177,8 +177,8 @@ impl Redaction {
 
 /// One pre-rendered overlay bitmap and the span of the clip it covers.
 ///
-/// Produced by the webview — one per interval between annotation
-/// boundaries, not one per frame — and staged to a file rather than
+/// Produced by the webview (one per interval between annotation
+/// boundaries, not one per frame) and staged to a file rather than
 /// carried inline, so a multi-megabyte payload never crosses IPC in a
 /// single serialize.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -201,8 +201,8 @@ impl OverlayRef {
 ///
 /// Intervals are built by the webview and do not overlap, so the first
 /// match is the only match. Linear rather than a binary search on
-/// purpose: the list holds one entry per annotation boundary — single
-/// digits in practice — and a scan of that is faster than the branch
+/// purpose: the list holds one entry per annotation boundary, single
+/// digits in practice, and a scan of that is faster than the branch
 /// misses of a search, besides being obviously correct.
 pub fn overlay_at(overlays: &[OverlayRef], ms: u64) -> Option<&OverlayRef> {
     overlays.iter().find(|o| o.covers(ms))
@@ -211,7 +211,7 @@ pub fn overlay_at(overlays: &[OverlayRef], ms: u64) -> Option<&OverlayRef> {
 /// Apply every redaction covering `ms` to `frame`, in order.
 ///
 /// Order matters only where two overlap, and then the later one wins on
-/// the shared pixels — the same last-writer rule the drawn annotations
+/// the shared pixels: the same last-writer rule the drawn annotations
 /// get for free by being composited in order.
 pub fn apply_redactions(frame: &mut RgbaImage, redactions: &[Redaction], ms: u64) {
     let (w, h) = frame.dimensions();
@@ -231,7 +231,7 @@ pub fn apply_redactions(frame: &mut RgbaImage, redactions: &[Redaction], ms: u64
 /// This is the whole of the burn-in for everything Studio *draws*. The
 /// webview rendered those annotations to a transparent PNG with the same
 /// canvas code that drew them on screen, so there is nothing left to
-/// interpret here — no shapes, no fonts, no colours, just a blend.
+/// interpret here: no shapes, no fonts, no colours, just a blend.
 ///
 /// The overlay carries **straight** (non-premultiplied) alpha, which is
 /// what `canvas.toDataURL` produces. Treating it as premultiplied
@@ -241,7 +241,7 @@ pub fn apply_redactions(frame: &mut RgbaImage, redactions: &[Redaction], ms: u64
 /// The frame's own alpha is left at whatever it was: a decoded video
 /// frame is opaque, and the output has nowhere to put transparency
 /// anyway. Sizes that disagree are composited over the overlapping
-/// region rather than refused — see the caller, which logs it.
+/// region rather than refused; see the caller, which logs it.
 pub fn composite_over(frame: &mut RgbaImage, overlay: &RgbaImage) {
     let (fw, fh) = frame.dimensions();
     let (ow, oh) = overlay.dimensions();
@@ -279,8 +279,8 @@ fn blend(src: u32, alpha: u32, dst: u32, inverse: u32) -> u8 {
 /// Stated as its own function because it is the single arithmetic
 /// decision the TypeScript mirror has to match. `(sum + n/2) / n` in
 /// integers rounds `.5` away from zero for the non-negative values a
-/// colour channel holds; anything else — truncation, or a float divide
-/// then a cast — lands a channel one value off on roughly half the
+/// colour channel holds; anything else (truncation, or a float divide
+/// then a cast) lands a channel one value off on roughly half the
 /// blocks in an image, which a fixture comparison catches and a human
 /// never would.
 fn round_div(sum: u32, n: u32) -> u8 {
@@ -294,7 +294,7 @@ fn round_div(sum: u32, n: u32) -> u8 {
 /// fill the block with it.
 ///
 /// Anchored at the rect rather than at the frame's origin so a redaction
-/// looks the same wherever it is dragged to — a grid tied to the frame
+/// looks the same wherever it is dragged to: a grid tied to the frame
 /// would make the block pattern shift under a rectangle being moved,
 /// which reads as the redaction flickering.
 ///
@@ -347,7 +347,7 @@ pub fn pixelate(frame: &mut RgbaImage, rect: PixelRect, block: u32) {
 ///
 /// Sampling clamps to the rect's edges, so the blur never reads a pixel
 /// outside the rectangle the user drew. That matters for more than
-/// tidiness — a blur that pulled in surrounding pixels would leak a
+/// tidiness: a blur that pulled in surrounding pixels would leak a
 /// blurred trace of the redacted content into the border, and pull the
 /// unredacted surroundings into the redaction.
 pub fn box_blur(frame: &mut RgbaImage, rect: PixelRect, radius: u32) {
@@ -373,7 +373,7 @@ enum Axis {
 /// One separable box-average pass over a tightly packed RGB buffer.
 fn box_pass(src: &[u8], w: usize, h: usize, radius: usize, axis: Axis) -> Vec<u8> {
     let mut out = vec![0u8; w * h * 3];
-    // The window is symmetric, so it spans 2r+1 samples — and never
+    // The window is symmetric, so it spans 2r+1 samples, and never
     // zero, which is what makes the mean below safe to take.
     let window = (radius * 2 + 1) as u32;
     let span = if axis == Axis::Horizontal { w } else { h };
@@ -592,7 +592,7 @@ mod tests {
 
     #[test]
     fn a_block_size_too_small_to_redact_is_raised_to_the_floor() {
-        // Block 1 is the identity — a redaction that redacts nothing.
+        // Block 1 is the identity: a redaction that redacts nothing.
         let mut img = frame(3, 3, [0, 0, 0, 255]);
         img.put_pixel(0, 0, Rgba([255, 255, 255, 255]));
         pixelate(
@@ -798,7 +798,7 @@ mod tests {
     // ---------- the cross-language fixture ----------
     //
     // These two filters are the only code in the annotation feature that
-    // exists twice — once here for the export, once in TypeScript for
+    // exists twice: once here for the export, once in TypeScript for
     // the preview (`studio/lib/redact.ts`). Everything else is drawn by
     // one canvas renderer and cannot disagree with itself.
     //
@@ -810,7 +810,7 @@ mod tests {
     //     cargo test -p clippity-domain regenerate_the_shared -- --ignored
     //
     // and expect `redact.test.ts` to fail until the preview is changed
-    // to match — that failure is the mechanism working, not a problem.
+    // to match: that failure is the mechanism working, not a problem.
 
     /// Where both languages look for the fixture.
     fn fixture_path() -> std::path::PathBuf {
@@ -823,7 +823,7 @@ mod tests {
     /// the blur has something to spread.
     fn fixture_input(w: u32, h: u32) -> RgbaImage {
         let mut img = RgbaImage::new(w, h);
-        // A tiny LCG — reproducible, and its constants do not matter
+        // A tiny LCG: reproducible, and its constants do not matter
         // because the bytes it produces are checked into the fixture.
         let mut seed: u32 = 0x1234_5678;
         for y in 0..h {
@@ -977,7 +977,7 @@ mod tests {
         // did. Either way the two no longer agree, which is exactly the
         // thing no amount of reading the code reliably catches.
         let text = std::fs::read_to_string(fixture_path()).expect(
-            "the shared redaction fixture is missing — regenerate it with \
+            "the shared redaction fixture is missing; regenerate it with \
              `cargo test -p clippity-domain regenerate_the_shared -- --ignored`",
         );
         let fixture: serde_json::Value = serde_json::from_str(&text).expect("fixture parses");
@@ -1013,7 +1013,7 @@ mod tests {
         // Pins the shape the TypeScript contract mirrors. The mode is an
         // internally-tagged enum flattened into the struct, which is
         // easy to change by accident and impossible to notice from this
-        // side — the symptom is a redaction that silently stops
+        // side: the symptom is a redaction that silently stops
         // deserializing and so stops being applied.
         let json = serde_json::to_value(Redaction {
             // Binary fractions, so widening f32 to JSON's f64 is exact

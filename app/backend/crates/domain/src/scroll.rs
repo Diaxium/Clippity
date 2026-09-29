@@ -1,22 +1,22 @@
-//! Scroll-stitch algorithms — pure, no I/O.
+//! Scroll-stitch algorithms: pure, no I/O.
 //!
 //! Reconstructs a region taller (or wider, for panoramic) than the
 //! screen from a stream of overlapping frames the user produced by
 //! scrolling. Three pieces (ported from the legacy `capture.rs`):
 //!
-//! - [`frame_difference`] — cheap strided SSD; the recording worker's
+//! - [`frame_difference`]: cheap strided SSD; the recording worker's
 //!   gate to drop near-duplicate frames (scroll paused / cursor jitter).
-//! - [`detect_offset`] — how far the content translated between two
+//! - [`detect_offset`]: how far the content translated between two
 //!   consecutive frames, via a mean-SSD grid search on downscaled
 //!   thumbnails.
-//! - [`stitch`] — composite frames onto one auto-sized canvas at their
+//! - [`stitch`]: composite frames onto one auto-sized canvas at their
 //!   pre-computed **cumulative** offsets (the service accumulates them
-//!   incrementally, so this stays a pure placement function — ADR 0008).
+//!   incrementally, so this stays a pure placement function; ADR 0008).
 
 use image::RgbaImage;
 use serde::{Deserialize, Serialize};
 
-/// Coarse-thumbnail resolution along the **scroll axis** — kept high so
+/// Coarse-thumbnail resolution along the **scroll axis**: kept high so
 /// the offset search has detail to lock onto. Crucially this is applied
 /// to the scroll axis *specifically* (a non-uniform resize), so a custom
 /// selection that's wide-but-short (or tall-but-narrow) doesn't get its
@@ -26,13 +26,13 @@ use serde::{Deserialize, Serialize};
 pub const COARSE_SCROLL_RES: u32 = 200;
 
 /// Coarse-thumbnail resolution along the **cross axis** (perpendicular to
-/// the scroll). Lower than the scroll axis — the cross axis only needs
+/// the scroll). Lower than the scroll axis: the cross axis only needs
 /// enough texture to make the SSD match meaningful, not to resolve the
 /// offset.
 pub const COARSE_CROSS_RES: u32 = 120;
 
 /// Mean-SSD below this means two consecutive frames are visually
-/// identical (the user hasn't scrolled) — the worker skips the frame so
+/// identical (the user hasn't scrolled): the worker skips the frame so
 /// pauses don't bloat the stitch input.
 pub const FRAME_DEDUP_THRESHOLD: f64 = 80.0;
 
@@ -51,7 +51,7 @@ const REFINE_MARGIN: i32 = 3;
 const REFINE_MAX_RADIUS: i32 = 24;
 
 /// A candidate offset must keep at least this fraction of the frame
-/// overlapping to be scored — rejects the tiny-overlap shifts whose
+/// overlapping to be scored: rejects the tiny-overlap shifts whose
 /// near-empty SSD can spuriously beat the true alignment.
 const MIN_OVERLAP_FRACTION: f64 = 0.12;
 
@@ -60,7 +60,7 @@ const MIN_OVERLAP_FRACTION: f64 = 0.12;
 // The panoramic worker must never advance the content by more than a
 // fraction of the capture region per step, or consecutive frames stop
 // overlapping and `detect_offset` can't align them (the stitch collapses
-// into an overlapping jumble — the single-`Box-row` failure). The wheel's
+// into an overlapping jumble: the single-`Box-row` failure). The wheel's
 // pixels-per-unit varies wildly by app/DPI/OS scroll settings, so the
 // worker *calibrates* the step from the measured advance rather than using
 // a fixed notch count.
@@ -84,7 +84,7 @@ pub const AUTO_WHEEL_DELTA_MAX: i32 = 240;
 /// uncorrelated content (NCC ≈ 0) there.
 pub const OFFSET_CONFIDENCE_NCC: f64 = 0.5;
 
-/// Overlap floor for the confidence NCC — higher than the detector's
+/// Overlap floor for the confidence NCC: higher than the detector's
 /// `MIN_OVERLAP_FRACTION` so a tiny, noisy edge overlap can't yield a
 /// spuriously high correlation. Below this, the match is treated as not
 /// confident (too little shared content to trust).
@@ -117,7 +117,7 @@ fn ssd_overlap(prev: &RgbaImage, next: &RgbaImage, dx: i32, dy: i32, stride: i32
     if px_end <= px_start || py_end <= py_start {
         return None;
     }
-    // Reject candidates with too little overlap — their SSD is computed
+    // Reject candidates with too little overlap: their SSD is computed
     // over so few pixels it can spuriously win.
     let overlap = (px_end - px_start) as i64 * (py_end - py_start) as i64;
     if (overlap as f64) < MIN_OVERLAP_FRACTION * (w as i64 * h as i64) as f64 {
@@ -148,7 +148,7 @@ fn ssd_overlap(prev: &RgbaImage, next: &RgbaImage, dx: i32, dy: i32, stride: i32
 /// (R+G+B) intensity when `next` is shifted by `(dx, dy)` relative to
 /// `prev`, sampling every `stride` px. Returns `None` when the overlap is
 /// below [`CONF_MIN_OVERLAP_FRACTION`] (too little to trust) or the
-/// intensity is flat (zero variance — undefined correlation). +1 =
+/// intensity is flat (zero variance, undefined correlation). +1 =
 /// identical content, ~0 = uncorrelated. Used only by the confidence
 /// check; alignment itself stays SSD-based.
 fn ncc_overlap(prev: &RgbaImage, next: &RgbaImage, dx: i32, dy: i32, stride: i32) -> Option<f64> {
@@ -224,7 +224,7 @@ fn axis_downscale(img: &RgbaImage, axis: ScrollAxis) -> (RgbaImage, f64) {
 }
 
 /// Coarse search along the scroll `axis` only (the cross axis is pinned
-/// to 0 — a single-direction scroll doesn't drift sideways). Returns the
+/// to 0: a single-direction scroll doesn't drift sideways). Returns the
 /// best offset in *thumbnail* pixels. Biased to allow a positive sweep
 /// up to ¾ of the axis (content moves opposite the scroll).
 fn coarse_search_axis(p_small: &RgbaImage, n_small: &RgbaImage, axis: ScrollAxis) -> i32 {
@@ -250,7 +250,7 @@ fn coarse_search_axis(p_small: &RgbaImage, n_small: &RgbaImage, axis: ScrollAxis
 
 /// Full-resolution refinement along `axis`: local search `±radius` around
 /// the coarse estimate, scored on the original frames (strided). Corrects
-/// the downscale quantization so the returned offset is pixel-accurate —
+/// the downscale quantization so the returned offset is pixel-accurate:
 /// the difference between an invisible seam and a ghosted/duplicated one
 /// in the stitch.
 fn refine_search_axis(
@@ -308,7 +308,7 @@ fn detect_offset_inner(prev: &RgbaImage, next: &RgbaImage, axis: ScrollAxis) -> 
 }
 
 /// Like [`detect_offset`], but also reports whether the match is
-/// **confident** — i.e. the two frames genuinely share overlapping
+/// **confident**, i.e. the two frames genuinely share overlapping
 /// content. Confidence is the **normalized cross-correlation** of the
 /// overlap at the detected offset: a real scroll aligns identical content
 /// (NCC ≈ 1), whereas a step that *outran the region* (the content jumped
@@ -319,7 +319,7 @@ fn detect_offset_inner(prev: &RgbaImage, next: &RgbaImage, axis: ScrollAxis) -> 
 /// no-shift baseline.
 ///
 /// The panoramic worker uses this to tell "the surface scrolled, here's
-/// how far" from "my wheel step was too big for this short selection" —
+/// how far" from "my wheel step was too big for this short selection":
 /// the latter is the cue to shrink the step and retry rather than commit a
 /// mis-aligned frame that would collapse the stitch.
 pub fn detect_offset_confident(
@@ -341,7 +341,7 @@ pub fn detect_offset_confident(
 pub const DIRECTION_MIN_FRACTION: f64 = 0.06;
 
 /// Absolute floor (full-res px) for the deliberate-step threshold, so a
-/// short region still needs a real move — not detector quantization — to
+/// short region still needs a real move, not detector quantization, to
 /// lock or reverse direction.
 pub const DIRECTION_MIN_PX: i32 = 12;
 
@@ -366,7 +366,7 @@ impl ScrollAxis {
     }
 }
 
-/// User-chosen scroll direction for a Scrolling / Panoramic capture —
+/// User-chosen scroll direction for a Scrolling / Panoramic capture:
 /// the wire enum behind the "auto-scroll direction" capture option.
 /// `Down` (read a long page top-to-bottom) is the default.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -411,7 +411,7 @@ impl ScrollDirection {
 }
 
 /// A locked scroll direction: an axis plus the sign content translates
-/// along it. `positive` means content moved down / right — i.e. the user
+/// along it. `positive` means content moved down / right, i.e. the user
 /// scrolled down / panned right.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct ScrollDir {
@@ -430,7 +430,7 @@ fn deliberate_delta(frame_w: u32, frame_h: u32, axis: ScrollAxis) -> i32 {
 }
 
 /// Fold one detected step `(dx, dy)` into the locked scroll direction and
-/// report whether it **reverses** that direction — the cue that the user
+/// report whether it **reverses** that direction: the cue that the user
 /// scrolled back the way they came, i.e. the capture is complete.
 ///
 /// - Before a direction is locked, the first deliberate step locks it
@@ -461,7 +461,7 @@ pub fn track_direction(
         ScrollAxis::Vertical => dy,
     };
     if mag.abs() < deliberate_delta(frame_w, frame_h, axis) {
-        return (locked, false); // noise — neither lock nor reverse
+        return (locked, false); // noise: neither lock nor reverse
     }
     let positive = mag > 0;
     match locked {
@@ -502,7 +502,7 @@ pub fn frame_difference(a: &RgbaImage, b: &RgbaImage) -> f64 {
 /// Screen-space point to aim the auto-scroll wheel at, for a canvas-local
 /// `region` whose canvas `(0, 0)` sits at virtual-screen `origin`
 /// `(min_x, min_y)`. Returns the region's centre in virtual-screen
-/// coordinates — where the panoramic worker parks the cursor before
+/// coordinates: where the panoramic worker parks the cursor before
 /// sending wheel input so the scroll lands on the captured content.
 /// Pure; the I/O (SetCursorPos / SendInput) lives in `platform`.
 pub fn region_scroll_anchor(region: &crate::overlay::Region, origin: (i32, i32)) -> (i32, i32) {
@@ -591,7 +591,7 @@ mod tests {
     }
 
     /// Every row a unique (r, g) so the full-res SSD has one sharp
-    /// minimum at the true shift — lets us assert *exact* alignment.
+    /// minimum at the true shift: lets us assert *exact* alignment.
     fn unique_rows(w: u32, h: u32, row0: i32) -> RgbaImage {
         RgbaImage::from_fn(w, h, |_x, y| {
             let v = (y as i32 + row0).max(0) as u32;
@@ -604,7 +604,7 @@ mod tests {
         // 480 px wide forces a ~3× downscale for the coarse pass, whose
         // estimate snaps to multiples of 3 px. A 17 px shift (not a
         // multiple of 3) is only recoverable if the full-res refine pass
-        // runs — the old single-stage detector would have returned 15 or
+        // runs: the old single-stage detector would have returned 15 or
         // 18, visibly seaming the stitch.
         let prev = unique_rows(480, 240, 0);
         let next = unique_rows(480, 240, 17);
@@ -635,7 +635,7 @@ mod tests {
         assert_eq!(detect_offset(&prev, &next, ScrollAxis::Vertical), (0, 14));
     }
 
-    /// Each column a unique (r, g) — the horizontal analogue of
+    /// Each column a unique (r, g): the horizontal analogue of
     /// `unique_rows`, for asserting exact horizontal offsets.
     fn unique_cols(w: u32, h: u32, col0: i32) -> RgbaImage {
         RgbaImage::from_fn(w, h, |x, _y| {
@@ -655,7 +655,7 @@ mod tests {
 
     /// Each row a fully-avalanched pseudo-random colour keyed on `y + row0`
     /// (a splitmix32-style mix), so non-adjacent rows are genuinely
-    /// uncorrelated — the regime real screenshots live in. Unlike a plain
+    /// uncorrelated: the regime real screenshots live in. Unlike a plain
     /// multiplicative hash, `mix(y + c)` shares no additive structure with
     /// `mix(y)`, so a non-overlapping shift correlates near 0 (what the
     /// confidence NCC keys on); only the true shift correlates near 1.
@@ -695,7 +695,7 @@ mod tests {
         // 300px of scroll on a 130px region: the content jumped clear past
         // the window, so the frames share NO rows. The true shift is far
         // outside the search range, nothing in range beats no-shift, and
-        // the match must read as NOT confident — the single-`Box-row`
+        // the match must read as NOT confident: the single-`Box-row`
         // failure's root signal.
         let prev = noise_rows(80, 130, 0);
         let next = noise_rows(80, 130, 300);
@@ -891,7 +891,7 @@ mod tests {
     #[test]
     fn track_direction_non_panoramic_ignores_horizontal_component() {
         // detect_offset pins dx=0 when not panoramic; even a huge dx must
-        // not lock a horizontal direction — judge on dy alone.
+        // not lock a horizontal direction; judge on dy alone.
         let (locked, _) = track_direction(None, 999, 5, 100, 200, false);
         assert_eq!(
             locked, None,
@@ -917,7 +917,7 @@ mod tests {
 
     #[test]
     fn track_direction_panoramic_cross_axis_is_not_a_reversal() {
-        // Locked horizontal; a vertical move is a different axis — not a
+        // Locked horizontal; a vertical move is a different axis, not a
         // reversal (only opposite-on-same-axis stops).
         let right = Some(ScrollDir {
             axis: ScrollAxis::Horizontal,

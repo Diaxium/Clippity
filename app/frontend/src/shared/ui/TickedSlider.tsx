@@ -9,7 +9,7 @@ interface TickedSliderProps {
   min: number;
   max: number;
   step: number;
-  /** Commit handler — called once when the drag/keyboard interaction
+  /** Commit handler: called once when the drag/keyboard interaction
    *  settles, NOT on every intermediate value. See the lag note below. */
   onChange: (next: number) => void;
   /** Optional live draft handler. Use for cheap visual previews while
@@ -28,7 +28,7 @@ interface TickedSliderProps {
   disabled?: boolean;
 }
 
-/** Thumb diameter — mirrors `.clippity-slider::-webkit-slider-thumb` in
+/** Thumb diameter: mirrors `.clippity-slider::-webkit-slider-thumb` in
  *  theme.css. The thumb centre is inset half this from each rail edge,
  *  so the fill + ticks use the same inset to stay aligned. */
 const THUMB_PX = 16;
@@ -43,7 +43,7 @@ const THUMB_PX = 16;
  * fired dozens of those per second, so the thumb stuttered against the
  * disk + round-trip. Here the thumb is driven by **local state** for
  * instant motion, and `onChange` (the persist) fires only once the
- * interaction settles — on pointer-up, key-up, or blur. An external
+ * interaction settles: on pointer-up, key-up, or blur. An external
  * value change (e.g. a settings/changed broadcast) is adopted only when
  * no drag is in progress, so a round-trip can't yank the thumb mid-drag.
  */
@@ -64,7 +64,7 @@ export function TickedSlider({
   const latest = useRef(value);
   const dragging = useRef(false);
 
-  // Adopt external changes only when idle — never mid-drag.
+  // Adopt external changes only when idle: never mid-drag.
   useEffect(() => {
     if (dragging.current) return;
     latest.current = value;
@@ -109,9 +109,9 @@ export function TickedSlider({
             width: `calc(${THUMB_PX / 2}px + ${pct} / 100 * (100% - ${THUMB_PX}px))`,
           }}
         />
-        {/* Interval ticks — short rules bracketing the rail. */}
+        {/* Interval ticks: short rules bracketing the rail. */}
         <TrackTicks at={ticks} insetPx={THUMB_PX / 2} heightPct={58} />
-        {/* The actual control — transparent rail (drawn above), accent
+        {/* The actual control: transparent rail (drawn above), accent
             thumb (via .clippity-slider). Sits on top to take all input. */}
         <input
           type="range"

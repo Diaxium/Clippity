@@ -6,7 +6,7 @@ import { useWindowActivity } from "./useWindowActivity";
 // The hook reads document.visibilityState; jsdom's is read-only, so we
 // install a configurable getter we can flip per-test. Local literal type
 // (rather than the DOM-global `DocumentVisibilityState`) to satisfy the
-// `no-undef` lint rule — same pattern the sibling hook tests use.
+// `no-undef` lint rule: same pattern the sibling hook tests use.
 let visibility: "visible" | "hidden" = "visible";
 
 beforeEach(() => {
@@ -68,7 +68,7 @@ describe("useWindowActivity", () => {
 
   it("keeps a never-focused but visible window active (toast / countdown)", () => {
     // Window opened in the background and never took focus: it must still
-    // animate while visible, so blur must NOT mark it idle — only hiding
+    // animate while visible, so blur must NOT mark it idle: only hiding
     // it should.
     vi.spyOn(document, "hasFocus").mockReturnValue(false);
     renderHook(() => useWindowActivity());

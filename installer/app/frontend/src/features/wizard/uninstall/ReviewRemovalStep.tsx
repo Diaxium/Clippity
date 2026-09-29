@@ -10,7 +10,7 @@ import * as backend from "@services/installer";
 
 import { StepShell } from "../components/StepShell";
 
-/** Uninstall step 4 — the removed/kept breakdown + the required consent. */
+/** Uninstall step 4: the removed/kept breakdown + the required consent. */
 export function ReviewRemovalStep() {
   const removeIds = useWizardStore((s) => s.removeIds);
   const exportSettings = useWizardStore((s) => s.exportSettings);
@@ -34,7 +34,7 @@ export function ReviewRemovalStep() {
    *
    * A per-user install in a writable folder removes right here. An install
    * under a protected location (or an all-users install) hands the removal
-   * to an elevated copy, which resumes at the Uninstalling step — otherwise
+   * to an elevated copy, which resumes at the Uninstalling step, otherwise
    * the unelevated process reports success while every file survives.
    * Declining the UAC prompt leaves the user on this step, choices intact.
    */

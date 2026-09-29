@@ -16,7 +16,7 @@ interface CaptureActionsProps {
  * The capture entry points, in a single compact row. Fullscreen grabs
  * immediately; Region + Window open the overlay; the Timed delay is a
  * modifier set in `CaptureControls` (it applies to all three). The fourth
- * tile is the primary "Capture" action — it opens the full capture window
+ * tile is the primary "Capture" action: it opens the full capture window
  * (the roomy hub with every option + the custom modes) and so wears the
  * slate primary chip, which is why Fullscreen no longer does.
  */

@@ -1,5 +1,5 @@
 /**
- * "Recent activity" card — a compact log of the newest captures. "View
+ * "Recent activity" card: a compact log of the newest captures. "View
  * all" jumps to the Library.
  */
 

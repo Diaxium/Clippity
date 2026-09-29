@@ -90,7 +90,7 @@ describe("useToastContent", () => {
     expect(hideToastMock).not.toHaveBeenCalled();
 
     // The hide is requested first and the content is still up while the
-    // IPC is in flight — clearing first would blank the window for the
+    // IPC is in flight: clearing first would blank the window for the
     // length of the round-trip, and forever if it never lands.
     act(() => {
       vi.advanceTimersByTime(EXIT_DURATION_MS);
@@ -125,7 +125,7 @@ describe("useToastContent", () => {
   });
 
   it("hides a window left holding no content (the blank-toast repair)", async () => {
-    // Models a `toast/show` whose payload never arrived — the backend
+    // Models a `toast/show` whose payload never arrived: the backend
     // revealed the window, this hook has nothing, and before the
     // reconciler existed nothing could ever hide it again.
     renderHook(() => useToastContent());
@@ -158,7 +158,7 @@ describe("useToastContent", () => {
     expect(hideToastMock).toHaveBeenCalledTimes(1);
 
     // A toast lands and is then cleared by the backend's own hide event
-    // (e.g. `stop_recording`) — the next empty stretch must be able to
+    // (e.g. `stop_recording`): the next empty stretch must be able to
     // ask again rather than staying latched from the first.
     act(() =>
       showHandler!({
@@ -179,7 +179,7 @@ describe("useToastContent", () => {
   it("reports canAnimate=false for a toast that arrives on a hidden page", () => {
     // rAF doesn't run while the page is hidden, so an entry animation
     // would park the card on its opacity-0 keyframe with no frame ever
-    // coming to advance it — a visible window with invisible content.
+    // coming to advance it: a visible window with invisible content.
     const hidden = vi.spyOn(document, "hidden", "get");
     const { result } = renderHook(() => useToastContent());
     expect(result.current.canAnimate).toBe(true);

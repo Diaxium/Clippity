@@ -20,7 +20,7 @@ interface MultiAreaPointerHandlers {
  * stitches every committed area (via `useOverlayFinalize`); Backspace
  * (in `useOverlayKeybinds`) pops the last one.
  *
- * A drag below `MIN_SIZE` is discarded without committing — the
+ * A drag below `MIN_SIZE` is discarded without committing: the
  * already-committed areas survive (Multi-Area readiness keys off the
  * area count, not the phase).
  */
@@ -35,7 +35,7 @@ export function useMultiAreaSelection(): MultiAreaPointerHandlers {
   const onPointerDown = useCallback(
     (e: PointerEventReact) => {
       if (e.button !== 0) return;
-      // Always begin a fresh rect — Multi-Area accumulates areas rather
+      // Always begin a fresh rect: Multi-Area accumulates areas rather
       // than editing one selection.
       startDrag(actionPoint(e));
     },
@@ -60,7 +60,7 @@ export function useMultiAreaSelection(): MultiAreaPointerHandlers {
       if (s.phase !== "dragging" || !s.start || !s.cur) return;
       const r = rectFromPoints(s.start, s.cur);
       if (r.w < MIN_SIZE || r.h < MIN_SIZE) {
-        // Too small to be a real area — drop the in-progress drag but
+        // Too small to be a real area: drop the in-progress drag but
         // keep the committed list intact.
         endDrag(null);
         return;

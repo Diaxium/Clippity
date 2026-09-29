@@ -32,7 +32,7 @@ import { COMPONENTS, DATA_CATEGORIES, PRODUCT } from "@config/catalog";
 import * as backend from "@services/installer";
 import { hasTauri } from "@services/tauri";
 
-/** Ordered step rail per flow — mirrors Rust `wizard::steps_for`. */
+/** Ordered step rail per flow: mirrors Rust `wizard::steps_for`. */
 export const FLOW_STEPS: Record<WizardFlow, StepId[]> = {
   setup: [
     "welcome",
@@ -167,7 +167,7 @@ interface WizardState {
   // ---- operations ----
   /**
    * Run `kind` and advance to `landOn` when it completes. `plan` overrides
-   * the store's own selections — used when resuming an elevated install.
+   * the store's own selections: used when resuming an elevated install.
    */
   startOperation: (
     kind: ProgressKind,
@@ -180,7 +180,7 @@ interface WizardState {
   reset: () => void;
 }
 
-/** Recommended-default component ids — the initial checked set. */
+/** Recommended-default component ids: the initial checked set. */
 const defaultComponentIds = COMPONENTS.filter(
   (c) => c.required || c.recommendedDefault
 ).map((c) => c.id);
@@ -369,7 +369,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       updateScheduled: kind === "update" && whenAppCloses === true,
     });
 
-    // No backend in browser preview — walk the checklist on a timer so
+    // No backend in browser preview: walk the checklist on a timer so
     // every screen stays reachable without the Tauri shell.
     if (!hasTauri()) {
       let completed = 0;
@@ -485,7 +485,7 @@ export function railFor(flow: WizardFlow): RailStep[] {
     uninstalling: "Uninstalling",
   };
   // The uninstall flow reuses the shared hub as its entry step, but a user
-  // who launched straight into removal never saw it — showing it in the rail
+  // who launched straight into removal never saw it: showing it in the rail
   // as an already-completed step is misleading, so drop it from this rail.
   const steps =
     flow === "uninstall"

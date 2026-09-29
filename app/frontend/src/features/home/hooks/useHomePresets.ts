@@ -40,7 +40,7 @@ export function useHomePresets(): HomePresets {
         if (!cancelled) setLoading(false);
       });
 
-    // The backend emits the full list on every change — replace wholesale.
+    // The backend emits the full list on every change: replace wholesale.
     const unsub = onPresetsChanged((list) => setPresets(list ?? []));
     return () => {
       cancelled = true;

@@ -129,7 +129,7 @@ pub fn create_start_menu_shortcut(
     Ok(path)
 }
 
-/// Re-create a `.lnk` at an exact absolute path pointing at `target_exe` —
+/// Re-create a `.lnk` at an exact absolute path pointing at `target_exe`:
 /// the precise inverse of a recorded [`ShortcutRecord`], used by repair to
 /// restore a shortcut the manifest owns without recomputing which folder it
 /// belonged in. `link_name` is the shortcut's description text.

@@ -1,5 +1,5 @@
 /**
- * Settings feature — public surface.
+ * Settings feature: public surface.
  *
  * Only `SettingsLayout` is exported. The dashboard window mounts it
  * via `DashboardLayout`'s `view === "settings"` branch. Anything that

@@ -4,7 +4,7 @@ import type * as ProvisioningClient from "@services/tauri/clients/provisioning";
 
 const getInstallationProfile = vi.fn();
 
-// Only the IPC call is stubbed — `UNMANAGED_PROFILE` has to stay real, since
+// Only the IPC call is stubbed: `UNMANAGED_PROFILE` has to stay real, since
 // it is the optimistic default the store starts from and the assertions below
 // compare against it.
 vi.mock("@services/tauri/clients/provisioning", async () => {
@@ -65,7 +65,7 @@ describe("capabilitiesStore", () => {
 
   it("fetches once however many components ask", async () => {
     // Several gated components mount in the same tick, all before the first
-    // call resolves — the `hydrated` flag alone wouldn't stop them, so this
+    // call resolves: the `hydrated` flag alone wouldn't stop them, so this
     // guards the shared in-flight promise.
     getInstallationProfile.mockResolvedValue(DECLINED);
     await Promise.all([
@@ -84,7 +84,7 @@ describe("capabilitiesStore", () => {
   it("keeps everything available when the backend call fails", async () => {
     // The backend refuses declined features on its own, so guessing
     // optimistically here costs a control that reports "not installed" when
-    // pressed — never a broken app.
+    // pressed, never a broken app.
     getInstallationProfile.mockRejectedValue(new Error("no backend"));
     await hydrateCapabilities();
     const s = useCapabilitiesStore.getState();

@@ -16,7 +16,7 @@ interface StepRailProps {
 /**
  * The left navigation rail. Every step before the active one reads as
  * completed (a check), the active step is accented, and later steps are
- * dimmed — the pattern the design boards use across all three flows.
+ * dimmed: the pattern the design boards use across all three flows.
  */
 export function StepRail({ steps, current, icons }: StepRailProps) {
   const activeIndex = steps.findIndex((s) => s.id === current);

@@ -1,4 +1,4 @@
-//! Win32 monitor introspection — used by the toast positioner.
+//! Win32 monitor introspection: used by the toast positioner.
 //!
 //! `cursor_monitor_work_area()` resolves the cursor's current monitor
 //! and returns its work-area rectangle (taskbar excluded). The toast
@@ -6,7 +6,7 @@
 //! the user is looking at, not the primary monitor.
 //!
 //! Outside Windows, `ToastService` falls back to `primary_monitor()`
-//! via Tauri's cross-platform API — no equivalent lives here.
+//! via Tauri's cross-platform API: no equivalent lives here.
 
 use std::mem::size_of;
 

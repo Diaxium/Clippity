@@ -2,9 +2,9 @@
  * Freeform-gradient raster engine (Workstream G3). Neither SVG nor Canvas2D has
  * a native freeform/diffusion gradient, so we rasterize one: each color point is
  * a source, and every pixel is an inverse-distance-weighted (IDW, power 2) blend
- * of the sources — a smooth, organic multi-point gradient. The bitmap is computed
+ * of the sources: a smooth, organic multi-point gradient. The bitmap is computed
  * at a capped resolution and upscaled (the blend is smooth, so low-res is fine),
- * shown as an `<image>` in the live SVG and redrawn on export — the same
+ * shown as an `<image>` in the live SVG and redrawn on export: the same
  * "compute offscreen → image" pattern as the pixelate tool (A2.1). Pragmatic
  * approximation per the G3 decision; true diffusion is a later refinement.
  */
@@ -29,7 +29,7 @@ export interface Rgba {
   a: number;
 }
 
-/** IDW (power 2) blend of the sources at pixel (x, y). Pure — the core of the
+/** IDW (power 2) blend of the sources at pixel (x, y). Pure: the core of the
  *  engine, and what the tests exercise (the canvas wrapper isn't testable in
  *  jsdom). A tiny epsilon keeps a pixel sitting exactly on a source finite. */
 export function freeformColorAt(
@@ -71,7 +71,7 @@ export function freeformSources(
   return points.map((p) => stopToSource(p, w, h));
 }
 
-/** Spacing (px) between samples along a freeform line — dense enough for a smooth
+/** Spacing (px) between samples along a freeform line: dense enough for a smooth
  *  ridge of color, sparse enough to keep the IDW source count reasonable. */
 const LINE_SAMPLE_PX = 4;
 
@@ -108,7 +108,7 @@ export function lineSources(
         Math.min(64, Math.round(Math.hypot(bx - ax, by - ay) / LINE_SAMPLE_PX))
       );
       for (let s = 0; s < n; s++) {
-        const t = s / n; // [0,1) — the shared endpoint is emitted by the next seg
+        const t = s / n; // [0,1); the shared endpoint is emitted by the next seg
         out.push({
           x: ax + (bx - ax) * t,
           y: ay + (by - ay) * t,
@@ -125,7 +125,7 @@ export function lineSources(
 }
 
 /** The IDW sources for a freeform gradient on a `w`×`h` grid, by sub-mode
- *  (`lines` samples the lines, otherwise the points). Pure — testable. */
+ *  (`lines` samples the lines, otherwise the points). Pure, testable. */
 export function freeformAllSources(
   g: GradientPaint,
   w: number,
@@ -136,7 +136,7 @@ export function freeformAllSources(
     : freeformSources(g.points ?? [], w, h);
 }
 
-/** Longest side (px) of the computed bitmap — small because the blend is smooth
+/** Longest side (px) of the computed bitmap: small because the blend is smooth
  *  and gets upscaled by the renderers. */
 export const FREEFORM_CAP = 128;
 

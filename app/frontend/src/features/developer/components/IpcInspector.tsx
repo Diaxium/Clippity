@@ -1,5 +1,5 @@
 /**
- * Command inspector — what crossed the IPC bridge, how long it took,
+ * Command inspector: what crossed the IPC bridge, how long it took,
  * and how big it was.
  *
  * Reads the rolling window `services/tauri/client` fills at the invoke
@@ -25,7 +25,7 @@ import { formatBytes, formatMs } from "../lib/format";
 import { CopyButton } from "./DevRow";
 
 interface IpcInspectorProps {
-  /** Whether recording is armed — `developer.commandTiming`. */
+  /** Whether recording is armed: `developer.commandTiming`. */
   enabled: boolean;
   /** Calls at or over this many ms are flagged. */
   slowMs: number;
@@ -43,7 +43,7 @@ export function IpcInspector({ enabled, slowMs }: IpcInspectorProps) {
   const copyText = useCallback(
     () =>
       [
-        `IPC — ${summary.total} calls, ${summary.failed} failed, ${summary.slow} over ${slowMs} ms`,
+        `IPC: ${summary.total} calls, ${summary.failed} failed, ${summary.slow} over ${slowMs} ms`,
         `avg ${formatMs(summary.avgMs)} · p95 ${formatMs(summary.p95Ms)}`,
         "",
         ...summary.byCommand.map(
@@ -139,7 +139,7 @@ export function IpcInspector({ enabled, slowMs }: IpcInspectorProps) {
                   colSpan={5}
                   className="px-2.5 py-3 text-[var(--color-hint)]"
                 >
-                  No calls recorded yet — use the app and they will appear here.
+                  No calls recorded yet. Use the app and they will appear here.
                 </td>
               </tr>
             )}

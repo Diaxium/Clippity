@@ -14,12 +14,12 @@ interface SelectProps {
   options: readonly SelectOption[];
   onChange: (value: string) => void;
   ariaLabel: string;
-  /** Class applied to the trigger button — accepts size, padding, fill. */
+  /** Class applied to the trigger button: accepts size, padding, fill. */
   triggerClassName?: string;
   disabled?: boolean;
   /**
-   * Render `placeholder` in the trigger instead of the option matching `value`
-   * — for a multi-selection whose members disagree. The list still opens and
+   * Render `placeholder` in the trigger instead of the option matching `value`:
+   * for a multi-selection whose members disagree. The list still opens and
    * picking an option commits normally, which is how the choice is unified.
    */
   placeholder?: string;
@@ -28,14 +28,14 @@ interface SelectProps {
 /**
  * Minimal custom dropdown. Click trigger → list of options below.
  *
- * Accessibility note: this is a lightweight implementation for MVP —
+ * Accessibility note: this is a lightweight implementation for MVP:
  * keyboard ArrowUp/ArrowDown navigation, Enter to commit, Escape to
  * close, outside-click to close. It does not implement the full
  * WAI-ARIA listbox pattern. When richer keyboard/screen-reader
  * support is needed, swap implementation behind this same prop
  * surface.
  */
-/** Matches the list's `max-h-60` (240px) plus its 4px offset — used to
+/** Matches the list's `max-h-60` (240px) plus its 4px offset: used to
  *  decide whether the menu still fits below the trigger. */
 const MENU_MAX_PX = 244;
 

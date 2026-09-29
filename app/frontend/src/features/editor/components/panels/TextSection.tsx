@@ -44,7 +44,7 @@ const ALIGNS: readonly { value: TextAlign; Icon: LucideIcon; label: string }[] =
 
 /**
  * Text properties: size, weight, line height, letter spacing, alignment, and
- * color (which lives on `node.color`, separate from fills — that's what the
+ * color (which lives on `node.color`, separate from fills; that's what the
  * renderers read).
  *
  * Multi-select (P3) reads through `sharedWhere`, so the section appears whenever

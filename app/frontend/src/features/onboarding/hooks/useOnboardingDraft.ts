@@ -1,20 +1,20 @@
 /**
- * Onboarding controller — owns the wizard's draft state and the
+ * Onboarding controller: owns the wizard's draft state and the
  * finalize/complete handshake.
  *
  * Design notes:
  * - The wizard previews choices LIVE: changing the theme or accent
  *   immediately fires a `useSettingsPatch` (so the dashboard's theme +
- *   accent re-render in real time — the user sees what they're
+ *   accent re-render in real time: the user sees what they're
  *   choosing). The Storage step is held locally until "Get started"
  *   because writing an empty captures-dir each keystroke would spam
  *   `ensure_captures_dir_exists`.
  * - The `onboarded` flip happens ONLY in `complete()`. Until then the
  *   wizard stays mounted; if the user closes the window mid-flow,
- *   their previewed theme/accent persist (matches the legacy behaviour
- *   — accidental theme picks survive a relaunch) and the wizard
+ *   their previewed theme/accent persist (matches the legacy behaviour:
+ *   accidental theme picks survive a relaunch) and the wizard
  *   re-opens on next launch because `onboarded` is still false.
- * - The "Browse…" picker uses `@tauri-apps/plugin-dialog` — already on
+ * - The "Browse…" picker uses `@tauri-apps/plugin-dialog`, already on
  *   the workspace, matches the Settings panel's CapturesDirField path.
  */
 
@@ -32,7 +32,7 @@ import { emitErrorToast } from "@services/tauri/clients/toast";
 import type { StepIndex } from "../types";
 
 interface UseOnboardingDraftArgs {
-  /** Current settings snapshot — provides initial values + lives mirror. */
+  /** Current settings snapshot: provides initial values + lives mirror. */
   settings: Settings;
   /** Called after `complete()` successfully flips `onboarded = true`. */
   onComplete(): void;
@@ -70,8 +70,8 @@ export function useOnboardingDraft({
   const [error, setError] = useState<string | null>(null);
 
   // Resolve the backend fallback once on mount. If the initial fetch
-  // fails we leave the hint blank — the Storage step renders an em-dash
-  // placeholder rather than a misleading "Default — <unknown>".
+  // fails we leave the hint blank: the Storage step renders an ellipsis
+  // placeholder rather than a misleading "Default: <unknown>".
   useEffect(() => {
     let alive = true;
     void getDefaultCapturesDir()
@@ -79,7 +79,7 @@ export function useOnboardingDraft({
         if (alive) setDefaultHint(dir);
       })
       .catch(() => {
-        /* swallow — display falls back to em-dash */
+        /* swallow: display falls back to an ellipsis */
       });
     return () => {
       alive = false;

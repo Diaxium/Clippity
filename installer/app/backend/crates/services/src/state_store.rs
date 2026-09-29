@@ -52,7 +52,7 @@ pub fn write(maintenance_dir: &Path, manifest: &InstallationManifest) -> Install
 }
 
 /// Read the manifest back. `Ok(None)` when the file is absent; `Err` when
-/// it exists but cannot be parsed (a corrupted or incompatible manifest —
+/// it exists but cannot be parsed (a corrupted or incompatible manifest;
 /// the caller routes that to recovery).
 pub fn read(maintenance_dir: &Path) -> InstallerResult<Option<InstallationManifest>> {
     let path = manifest_path(maintenance_dir);

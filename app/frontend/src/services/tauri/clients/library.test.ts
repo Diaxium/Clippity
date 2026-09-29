@@ -189,7 +189,7 @@ describe("label commands", () => {
   });
 
   it("resolves to how many entries actually changed", async () => {
-    // Zero means the edit asked for what was already true — nothing was
+    // Zero means the edit asked for what was already true: nothing was
     // written and no refresh event fired.
     invokeMock.mockResolvedValueOnce(0);
     await expect(libraryAddTags(["/tmp/a.png"], ["bug"])).resolves.toBe(0);

@@ -1,5 +1,5 @@
 /**
- * Timeline arithmetic — milliseconds, frames and the strings a human
+ * Timeline arithmetic: milliseconds, frames and the strings a human
  * reads them as.
  *
  * Milliseconds are the unit everything else in Studio speaks, because
@@ -13,7 +13,7 @@
 /** Milliseconds in one frame at `fps`. */
 export function frameDurationMs(fps: number): number {
   // `fps` arrives from `MediaInfo`, which the backend guarantees is
-  // never zero — but a guard here costs nothing and the alternative is
+  // never zero, but a guard here costs nothing and the alternative is
   // an `Infinity` that propagates silently into every seek.
   return fps > 0 ? 1000 / fps : 1000 / 30;
 }
@@ -34,7 +34,7 @@ export function frameToMs(frame: number, fps: number): number {
  *
  * Snaps to the frame grid before stepping. Without that, stepping
  * forward from an arbitrary scrub position lands mid-frame and the
- * picture doesn't change — the classic "my frame-step button does
+ * picture doesn't change: the classic "my frame-step button does
  * nothing every other press" bug, which is really "the seek landed
  * inside the frame that was already showing".
  */
@@ -59,7 +59,7 @@ export function clampMs(ms: number, durationMs: number): number {
  * only when the clip needs one.
  *
  * Centiseconds rather than frames, because the readout sits beside a
- * scrubber the user drags with a mouse — two decimal places is the
+ * scrubber the user drags with a mouse: two decimal places is the
  * precision that motion actually has. The frame number is available
  * separately, for the places (frame stepping, trim handles) where the
  * grid is what matters.
@@ -85,7 +85,7 @@ export function formatTimecode(ms: number): string {
  *
  * Distinct from {@link formatTimecode} on purpose. A timecode answers
  * "where am I", and its fixed width is the point. A duration answers
- * "how much", where a fixed width is noise — "0:04.50" makes the reader
+ * "how much", where a fixed width is noise: "0:04.50" makes the reader
  * do arithmetic to learn that a trim is four and a half seconds long.
  */
 export function formatDuration(ms: number): string {
@@ -93,7 +93,7 @@ export function formatDuration(ms: number): string {
   if (safe < 1000) return `${Math.round(safe)}ms`;
   const seconds = safe / 1000;
   if (seconds < 60) {
-    // Drop a trailing `.0` — "5s" reads better than "5.0s".
+    // Drop a trailing `.0`: "5s" reads better than "5.0s".
     const rounded = Math.round(seconds * 10) / 10;
     return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}s`;
   }
@@ -117,7 +117,7 @@ export function msToFraction(ms: number, durationMs: number): number {
   return Math.min(Math.max(ms / durationMs, 0), 1);
 }
 
-/** The inverse — a fraction of the track back to a position. */
+/** The inverse: a fraction of the track back to a position. */
 export function fractionToMs(fraction: number, durationMs: number): number {
   if (!Number.isFinite(fraction)) return 0;
   return clampMs(fraction * durationMs, durationMs);

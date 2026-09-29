@@ -1,5 +1,5 @@
 /**
- * Quick-capture dispatch — turns a `QuickCaptureId` into the matching
+ * Quick-capture dispatch: turns a `QuickCaptureId` into the matching
  * backend call. Shared by the Home launcher cards, the header Capture
  * button, and the keyboard shortcuts so all three entry points fire the
  * exact same flow.
@@ -11,7 +11,7 @@
  *
  * Record and GIF start a recording on the monitor under the cursor
  * (ADR 0031) and raise the recorder HUD, which owns stopping it. They
- * are one call apart because format is the only thing that differs — a
+ * are one call apart because format is the only thing that differs: a
  * session is captured once and fed to whichever encoder the format
  * selected.
  */
@@ -30,7 +30,7 @@ import type { QuickCaptureId } from "../lib/quickCapture";
 export function useQuickCapture(): (id: QuickCaptureId) => void {
   const recording = useSettingsStore((s) => s.settings?.recording);
 
-  /** Start a fullscreen recording, surfacing a failure as a toast — the
+  /** Start a fullscreen recording, surfacing a failure as a toast: the
    *  launcher has nowhere else to report one. */
   const record = useCallback(
     (format: RecorderFormat) => {

@@ -14,7 +14,7 @@ export const INITIAL_RENDERED = 120;
 export const RENDER_STEP = 120;
 
 /** Distance ahead of the viewport at which the next batch is mounted.
- *  Roughly two rows of cards — far enough that a normal scroll never
+ *  Roughly two rows of cards: far enough that a normal scroll never
  *  reaches the end of the mounted list, close enough that a flick
  *  doesn't mount the whole library. */
 const PREFETCH_MARGIN = "600px";
@@ -22,7 +22,7 @@ const PREFETCH_MARGIN = "600px";
 export interface UseProgressiveRenderResult {
   /** How many of the `total` captures to render right now. */
   count: number;
-  /** Captures remain beyond `count` — the caller renders the sentinel. */
+  /** Captures remain beyond `count`: the caller renders the sentinel. */
   hasMore: boolean;
   /** Ref for the sentinel element placed after the last rendered
    *  section. A callback ref, so mounting it is what arms the observer. */
@@ -32,8 +32,8 @@ export interface UseProgressiveRenderResult {
 /**
  * Grow the rendered slice of a long list as the user scrolls into it.
  *
- * The library shapes its whole listing up front — filtering, sorting and
- * day-grouping are cheap over an array — but *mounting* it is not: every
+ * The library shapes its whole listing up front (filtering, sorting and
+ * day-grouping are cheap over an array) but *mounting* it is not: every
  * card is a motion component with a thumbnail observer, two store
  * subscriptions and a context menu, so a large library used to pay for
  * tens of thousands of them on first paint whether or not anything was
@@ -41,14 +41,14 @@ export interface UseProgressiveRenderResult {
  * which is what keeps library first paint flat as the library grows
  * (performance roadmap P5).
  *
- * `resetKey` is the identity of the list being shown — change the scope,
+ * `resetKey` is the identity of the list being shown: change the scope,
  * the sort, the search or any filter and the budget starts over at the
  * top, because the user is now looking at a different list and the rows
  * they had scrolled past are not in it.
  *
  * Without `IntersectionObserver` (jsdom, and any environment that can't
  * report visibility) the whole list renders. Degrading to "mount
- * everything" keeps the grid correct — never silently truncated — and
+ * everything" keeps the grid correct, never silently truncated, and
  * leaves the pre-P5 behaviour exactly as it was.
  */
 export function useProgressiveRender(
@@ -59,7 +59,7 @@ export function useProgressiveRender(
   const [budget, setBudget] = useState(initial);
 
   // The sentinel is held in state rather than a ref so that mounting it
-  // re-runs the effect below — a plain ref's `.current` assignment
+  // re-runs the effect below: a plain ref's `.current` assignment
   // wouldn't, and the observer would never attach.
   const [sentinel, setSentinel] = useState<HTMLElement | null>(null);
   const sentinelRef = useCallback(
@@ -67,7 +67,7 @@ export function useProgressiveRender(
     []
   );
 
-  // A different list — start again from the top.
+  // A different list: start again from the top.
   useEffect(() => {
     setBudget(initial);
   }, [resetKey, initial]);

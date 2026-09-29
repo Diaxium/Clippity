@@ -1,4 +1,4 @@
-//! Developer + diagnostics domain — the wire shapes Settings →
+//! Developer + diagnostics domain: the wire shapes Settings →
 //! Advanced renders, plus the **redaction rules** an exported bundle is
 //! run through. Pure: no filesystem, no Tauri, no clock.
 //!
@@ -7,7 +7,7 @@
 //! somebody else, so "what counts as identifying" is a rule with edge
 //! cases (a user name that is also a common word, a path already
 //! written with an environment variable, a capture named after the
-//! window it came from) — exactly the kind of thing that should be
+//! window it came from): exactly the kind of thing that should be
 //! unit-tested without touching a disk.
 
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ pub const CAPTURE_PLACEHOLDER: &str = "<capture>";
 ///
 /// Every field defaults to the private answer: a bundle that has not
 /// been configured is the redacted one. The three "include" fields are
-/// deliberately *opt-in* — logs can quote window titles, and captures
+/// deliberately *opt-in*: logs can quote window titles, and captures
 /// are the user's screen.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -43,7 +43,7 @@ pub struct BundleOptions {
     /// which is the most identifying string the app produces.
     #[serde(default = "yes")]
     pub redact_capture_names: bool,
-    /// Copy the retained log files into the bundle. Ships on — without
+    /// Copy the retained log files into the bundle. Ships on: without
     /// them a bundle is a settings dump.
     #[serde(default = "yes")]
     pub include_logs: bool,
@@ -80,7 +80,7 @@ pub struct BundleResult {
     pub redacted: bool,
 }
 
-/// One monitor as the capture pipeline sees it — the numbers that
+/// One monitor as the capture pipeline sees it: the numbers that
 /// explain a mis-cropped multi-monitor or mixed-DPI capture.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -100,7 +100,7 @@ pub struct MonitorDiagnostics {
     pub primary: bool,
     /// Whether Windows reports this output presenting in HDR.
     pub hdr: bool,
-    /// SDR white level in nits when known — what the HDR tone-map is
+    /// SDR white level in nits when known: what the HDR tone-map is
     /// anchored to.
     pub sdr_white_nits: Option<f32>,
 }
@@ -124,7 +124,7 @@ pub struct DiagnosticPaths {
 #[serde(rename_all = "camelCase")]
 pub struct SystemInfo {
     pub app_version: String,
-    /// `debug` or `release` — which half of the code base is running.
+    /// `debug` or `release`, which half of the code base is running.
     pub build_profile: String,
     /// True when this process was started by "Restart in safe mode".
     pub safe_mode: bool,
@@ -174,14 +174,14 @@ pub struct WindowDiagnostics {
     pub height: u32,
 }
 
-/// Live runtime state — the answer to "why is nothing happening?".
+/// Live runtime state: the answer to "why is nothing happening?".
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeStatus {
     pub windows: Vec<WindowDiagnostics>,
     pub capture_shielded: bool,
     pub global_capture: ShortcutDiagnostics,
-    /// Whether the installer's capture integration is present — the
+    /// Whether the installer's capture integration is present: the
     /// thing that decides whether a global hotkey is registered at all.
     pub global_hotkeys_installed: bool,
     /// Library index database, and how big it is.
@@ -192,7 +192,7 @@ pub struct RuntimeStatus {
     pub monitors: Vec<MonitorDiagnostics>,
 }
 
-/// What the last recording session actually did — the counterpart to
+/// What the last recording session actually did: the counterpart to
 /// the live `RecorderStatus`, kept after the session ends so a user can
 /// look at why a clip came out wrong.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Default)]
@@ -220,7 +220,7 @@ pub struct RecorderDiagnostics {
 
 impl RecorderDiagnostics {
     /// Dropped frames as a percentage of everything the source
-    /// produced. The number a user actually reads — 3 000 dropped
+    /// produced. The number a user actually reads: 3 000 dropped
     /// frames means nothing without the total.
     pub fn drop_rate_pct(&self) -> f32 {
         let produced = self.frames + self.dropped;
@@ -243,7 +243,7 @@ impl RecorderDiagnostics {
 }
 
 /// A cache a developer may clear. Each maps to exactly one directory or
-/// file set in the service — the enum exists so the command surface
+/// file set in the service: the enum exists so the command surface
 /// can't be handed an arbitrary path to delete.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
@@ -261,7 +261,7 @@ pub enum CacheTarget {
 }
 
 impl CacheTarget {
-    /// Human label — the confirmation dialog says exactly what goes.
+    /// Human label: the confirmation dialog says exactly what goes.
     pub fn label(self) -> &'static str {
         match self {
             CacheTarget::Thumbnails => "thumbnail cache",
@@ -281,15 +281,15 @@ impl CacheTarget {
 /// A folder the developer page can open in the OS file manager.
 ///
 /// An enum, like [`CacheTarget`], so "open a folder" can never become
-/// "open whatever path the webview asked for" — the command surface is
+/// "open whatever path the webview asked for": the command surface is
 /// reachable from any window, and a path parameter would make it a
 /// general-purpose shell-open.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum FolderTarget {
-    /// `<root>/data` — settings, the library index, captures.
+    /// `<root>/data`: settings, the library index, captures.
     Data,
-    /// `<data>/logs` — the rotating log files.
+    /// `<data>/logs`: the rotating log files.
     Logs,
     /// The active captures directory, user override included.
     Captures,
@@ -297,7 +297,7 @@ pub enum FolderTarget {
     Cache,
     /// `<root>/models`.
     Models,
-    /// `<data>/diagnostics` — where exported bundles land.
+    /// `<data>/diagnostics`: where exported bundles land.
     Bundles,
     /// The directory holding the running executable.
     Install,
@@ -328,7 +328,7 @@ pub struct LogLine {
     /// ISO-ish timestamp as written, or empty for a continuation line.
     pub timestamp: String,
     /// Lower-case level (`error`/`warn`/`info`/`debug`/`trace`), or
-    /// empty when the line carries no level — a panic's backtrace, say.
+    /// empty when the line carries no level: a panic's backtrace, say.
     pub level: String,
     pub message: String,
 }
@@ -336,7 +336,7 @@ pub struct LogLine {
 /// Pure: split one formatted log line into its parts.
 ///
 /// The subscriber writes `<rfc3339> <LEVEL> <target>: message…`, where
-/// the level is padded to five columns — so a four-letter level has two
+/// the level is padded to five columns, so a four-letter level has two
 /// spaces before it and `ERROR` has one. Splitting on runs of
 /// whitespace rather than on a fixed separator is what makes both
 /// spellings parse.
@@ -378,7 +378,7 @@ fn split_token(s: &str) -> (&str, &str) {
 }
 
 fn looks_like_timestamp(s: &str) -> bool {
-    // `2026-08-04T12:34:56.789012Z` — cheap shape check, not a parse.
+    // `2026-08-04T12:34:56.789012Z`: cheap shape check, not a parse.
     s.len() >= 20 && s.starts_with(|c: char| c.is_ascii_digit()) && s.contains('T')
 }
 
@@ -399,7 +399,7 @@ fn is_level(s: &str) -> bool {
 pub struct Redaction {
     paths: bool,
     capture_names: bool,
-    /// The account name, lower-cased. Empty disables name matching —
+    /// The account name, lower-cased. Empty disables name matching,
     /// which is the right behaviour for a one- or two-character name,
     /// where substring replacement would corrupt ordinary words.
     user: String,
@@ -430,7 +430,7 @@ impl Redaction {
         }
     }
 
-    /// Rules that change nothing — what an unredacted export uses, so
+    /// Rules that change nothing: what an unredacted export uses, so
     /// the write path has no branch of its own.
     pub fn none() -> Self {
         Self {
@@ -479,7 +479,7 @@ const CAPTURE_EXTENSIONS: [&str; 6] = ["png", "jpg", "jpeg", "webp", "gif", "mp4
 /// Deliberately leaves the extension: "the file that failed was a .mp4"
 /// is diagnosis, while its name almost never is.
 ///
-/// The interesting case is that capture names contain spaces — the
+/// The interesting case is that capture names contain spaces: the
 /// default template is `{label} - {date} {time}`, so a real name reads
 /// `Gmail - Inbox 2026-08-04.png`. Tokenising on whitespace would leave
 /// the window title (the identifying half) behind, so the scan walks
@@ -520,7 +520,7 @@ fn redact_capture_names_in_line(line: &str) -> String {
         let ext_end = ext_start + ext.len();
 
         // Walk back to where the name starts: the nearest hard boundary,
-        // or — when the name isn't inside a path — the last whitespace.
+        // or (when the name isn't inside a path) the last whitespace.
         let mut start = dot;
         let mut whitespace_boundary: Option<usize> = None;
         while start > 0 {
@@ -662,7 +662,7 @@ mod tests {
     fn capture_names_collapse_but_keep_their_extension() {
         // The default name template puts spaces in every capture name,
         // so a whitespace-tokenised redaction would leave the window
-        // title — the identifying half — behind.
+        // title, the identifying half, behind.
         assert_eq!(
             redact_capture_names(r"saved %USERPROFILE%\captures\Gmail - Inbox 2026-08-04.png"),
             r"saved %USERPROFILE%\captures\<capture>.png"

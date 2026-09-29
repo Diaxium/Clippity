@@ -17,7 +17,7 @@ import { FIELD_LABEL, PanelSection } from "./section";
 const SUB = FIELD_LABEL;
 
 /**
- * Window-chrome controls — a macOS or Windows title bar around the capture.
+ * Window-chrome controls: a macOS or Windows title bar around the capture.
  * The last slice of Fork F4; see ADR 0022 and `lib/chrome.ts` for the model.
  *
  * Document-scoped for {@link BackdropSection}'s reasons and sitting directly
@@ -25,7 +25,7 @@ const SUB = FIELD_LABEL;
  * have to stay reachable in Annotation mode where the Layers rail is hidden
  * (Workstream M2), which an empty selection provides.
  *
- * Hidden entirely when the capture can't carry chrome — "the capture" is
+ * Hidden entirely when the capture can't carry chrome: "the capture" is
  * whatever holds the largest image fill, and an ellipse has no title bar in
  * either renderer, so offering the control would promise a drawing that never
  * arrives. The same guard the Corners field uses.

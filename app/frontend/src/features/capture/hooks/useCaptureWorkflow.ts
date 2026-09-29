@@ -27,7 +27,7 @@ interface UseCaptureWorkflow {
    *  `captureType`. Fullscreen → `capture_fullscreen` (returns the
    *  `CaptureResult`). Region + Window → `begin_region_capture` (opens
    *  the overlay in that mode; the result arrives later via
-   *  `capture/finished`). Custom is deferred to a follow-up port — its
+   *  `capture/finished`). Custom is deferred to a follow-up port: its
    *  disabled tile prevents reaching that branch in the UI. */
   trigger: () => Promise<CaptureResult | null>;
 }
@@ -48,10 +48,10 @@ interface UseCaptureWorkflow {
  * (region/window/custom) to the backend, which stamps it onto the
  * `capture/finished` payload; the main window's persistent listener
  * ({@link useOpenEditorOnPreview}) opens the editor when it's set. One
- * decision point, sourced from the toggle the capture actually used —
+ * decision point, sourced from the toggle the capture actually used,
  * so preview works across every mode + entry point (tech-debt row 639).
  *
- * Errors surface as `emitErrorToast` calls — the legacy `setLastError`
+ * Errors surface as `emitErrorToast` calls: the legacy `setLastError`
  * inline-text path was deleted when toast feature #3 landed (the
  * captureStore no longer carries a `lastError` field).
  *
@@ -63,13 +63,13 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
     const state = useCaptureStore.getState();
 
     try {
-      // Clipboard mode is instant and overlay-less — read the system
+      // Clipboard mode is instant and overlay-less: read the system
       // clipboard directly. No toggle-mirror, no delay, no overlay; an
       // empty clipboard surfaces a friendly toast, not an error.
       if (state.captureType === "custom" && state.customMode === "clipboard") {
         const ingest = await ingestClipboard(state.preview);
         if (ingest.kind === "empty") {
-          void emitErrorToast("Clipboard is empty — copy something first.");
+          void emitErrorToast("Clipboard is empty. Copy something first.");
         }
         return null;
       }
@@ -119,7 +119,7 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
           // The overlay opens; the eventual capture arrives via the
           // `clippity://capture/finished` event (subscribed by toast /
           // library / the editor-open listener). The trigger resolves
-          // once the overlay is shown — no immediate CaptureResult.
+          // once the overlay is shown: no immediate CaptureResult.
           await beginRegionCapture("region");
           return null;
         case "window":
@@ -128,7 +128,7 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
           await beginRegionCapture("window");
           return null;
         case "custom": {
-          // Object mode runs on a downloadable on-device model — gate
+          // Object mode runs on a downloadable on-device model: gate
           // the overlay on the backend's readiness verdict. `ready`
           // falls through to the normal dispatch; `downloading` (auto-
           // download just kicked in, or a fetch was already running)
@@ -138,7 +138,7 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
             const readiness = await ensureObjectModel();
             if (readiness.status === "downloading") {
               void emitErrorToast(
-                `Downloading the ${readiness.model.label} model — try Object capture again in a moment.`
+                `Downloading the ${readiness.model.label} model. Try Object capture again in a moment.`
               );
               return null;
             }
@@ -184,7 +184,7 @@ export function useCaptureWorkflow(): UseCaptureWorkflow {
  * Kept module-local rather than hoisted into the IPC client because
  * "wait for one of these two events, then unsubscribe" is a
  * promise-shaped convenience the trigger needs but no other consumer
- * does — putting it in the client would invite copy-paste callers
+ * does: putting it in the client would invite copy-paste callers
  * that forget to unsubscribe.
  */
 function watchCountdownOutcome(): {

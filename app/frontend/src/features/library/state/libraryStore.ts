@@ -4,7 +4,7 @@
  * Feature-local Zustand slice for every view dimension the page has:
  * the mode / kind filter / grid-or-list it started with, plus the
  * catalog-v2 refinements (favorites, a tag, a collection) and the
- * multi-select buffer. The items list + loading flag are NOT here — they
+ * multi-select buffer. The items list + loading flag are NOT here: they
  * live in `useLibraryList`'s local state, since only `LibraryLayout`
  * consumes them and there's no cross-component sharing.
  *
@@ -40,19 +40,19 @@ interface LibraryStoreState {
   collectionId: string | null;
   /** Active smart collection (a rule over the listing), or `null`. */
   smart: SmartId | null;
-  /** Search-box query. Not part of the scope — it narrows whatever
+  /** Search-box query. Not part of the scope: it narrows whatever
    *  destination is open, and survives switching between them. */
   search: string;
   /** Grid ordering. */
   sort: LibrarySort;
-  /** The capture the inspector is showing — the *focus*, which is a
+  /** The capture the inspector is showing, the *focus*, which is a
    *  different thing from the selection: focusing is "let me look at
    *  this one", selecting is "these are the ones I'm about to act on". */
   focusedId: string | null;
-  /** Whether the inspector pane is shown at all (it also needs the room
-   *  — see the layout's container query). */
+  /** Whether the inspector pane is shown at all (it also needs the room;
+   *  see the layout's container query). */
   inspectorOpen: boolean;
-  /** Multi-selected capture ids, **in click order** — "add to
+  /** Multi-selected capture ids, **in click order**: "add to
    *  collection" appends them the way the user picked them, which a Set
    *  could not promise. */
   selected: string[];
@@ -60,14 +60,14 @@ interface LibraryStoreState {
    *  pointed at, by *either* gesture (a plain click that only focused, or
    *  a Ctrl-click that selected). Held separately from `focusedId`
    *  because Ctrl-click deliberately doesn't move the inspector, yet must
-   *  still move the pivot — otherwise the second half of
+   *  still move the pivot, otherwise the second half of
    *  "Ctrl-click one, Shift-click another" ranges from whatever the
    *  inspector happens to be showing. */
   anchorId: string | null;
   /** Every capture currently on screen, in render order, flattened across
    *  day sections. A range select and "select all" are both statements
    *  about *what is on screen*, and the only component that knows that is
-   *  `LibraryLayout` — which mirrors its render order here so a card can
+   *  `LibraryLayout`, which mirrors its render order here so a card can
    *  resolve a range without the order being drilled through
    *  DaySection → Grid → Card. */
   visibleIds: string[];
@@ -115,7 +115,7 @@ export const useLibraryStore = create<LibraryStoreState>((set) => ({
   visibleIds: [],
   ...CLEARED,
 
-  // Mode is a context switch (Library ↔ Trash), not a refinement — a
+  // Mode is a context switch (Library ↔ Trash), not a refinement: a
   // filter left over from the other context silently hides rows
   // ("Trash · 0 captures" while items sit behind a stale Videos tab), so
   // entering a mode clears every refinement. The selection goes with
@@ -136,7 +136,7 @@ export const useLibraryStore = create<LibraryStoreState>((set) => ({
   // would let "Videos" and "Trash" both look active, and the grid would
   // then be showing something neither row promises.
   //
-  // The tag filter goes too — it is a refinement *of a scope*, and a tag
+  // The tag filter goes too: it is a refinement *of a scope*, and a tag
   // that had matches in the collection you just left may have none where
   // you landed, so carrying it over lands the user on an empty grid with
   // no obvious cause. `search` deliberately survives: the box is visibly
@@ -159,7 +159,7 @@ export const useLibraryStore = create<LibraryStoreState>((set) => ({
   // Focusing moves the range pivot: a plain click is the gesture that
   // says "start here", and it would be a strange rule that only a
   // Ctrl-click could set the anchor. Clearing the focus (closing the
-  // inspector) leaves the anchor alone — the selection it belongs to is
+  // inspector) leaves the anchor alone: the selection it belongs to is
   // still on screen.
   setFocused: (focusedId) =>
     set(
@@ -182,7 +182,7 @@ export const useLibraryStore = create<LibraryStoreState>((set) => ({
    *
    * The pivot falls back to `focusedId` when no anchor has been set,
    * which is what makes the gesture work from a cold start: a plain click
-   * only focuses — it deliberately does not select — so without the
+   * only focuses, it deliberately does not select, so without the
    * fallback the very first "click one, Shift-click another" would have
    * nothing to range from and would select a single capture, which is
    * exactly the case the feature exists for.
@@ -190,7 +190,7 @@ export const useLibraryStore = create<LibraryStoreState>((set) => ({
    * The run is stored in **screen order**, not anchor-outward order. The
    * selection list is ordered because "add to collection" appends in it,
    * and a user who Shift-clicked *upward* was pointing at a block, not
-   * asking for it reversed — the block's own order is the grid's.
+   * asking for it reversed: the block's own order is the grid's.
    *
    * The pivot is then pinned as the anchor so successive Shift-clicks
    * re-range from the same place (widening and narrowing the run) instead
@@ -229,7 +229,7 @@ export const useLibraryStore = create<LibraryStoreState>((set) => ({
  * reads rather than as a `LibraryScope` value, because those fields have
  * their own setters (a tag chip on a card, the collection rail) that
  * predate the sidebar. This collapses them back into the one answer the
- * sidebar needs — "which row is lit" — in the order the rows are
+ * sidebar needs, "which row is lit", in the order the rows are
  * offered, so a state that somehow set two of them still resolves to
  * exactly one highlighted row rather than none or both.
  */

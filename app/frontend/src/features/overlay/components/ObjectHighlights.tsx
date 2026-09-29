@@ -16,10 +16,10 @@ const LABEL_CLEARANCE_PX = 32;
  * status pill covers the detecting / no-results / error states. Renders
  * nothing in other modes.
  *
- * `pointer-events: none` — the overlay root owns the hit-testing
+ * `pointer-events: none`: the overlay root owns the hit-testing
  * (`useObjectSelection`); this layer is pure visual feedback. Detection
  * rects are physical px (virtual-desktop origin) while the overlay lays
- * out in logical px, so each side is divided by `devicePixelRatio` —
+ * out in logical px, so each side is divided by `devicePixelRatio`:
  * the same convention as `WindowHighlight`.
  */
 export function ObjectHighlights() {
@@ -35,7 +35,7 @@ export function ObjectHighlights() {
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 z-10">
-      {/* All detections — a quiet outline so targets are discoverable
+      {/* All detections: a quiet outline so targets are discoverable
           without turning the desktop into confetti. */}
       {status === "ready" &&
         objects.map((obj, i) => {
@@ -58,7 +58,7 @@ export function ObjectHighlights() {
           );
         })}
 
-      {/* Hovered detection — the click target. */}
+      {/* Hovered detection: the click target. */}
       {status === "ready" &&
         hoveredIndex !== null &&
         objects[hoveredIndex] &&
@@ -93,7 +93,7 @@ export function ObjectHighlights() {
                   "left 60ms ease-out, top 60ms ease-out, width 60ms ease-out, height 60ms ease-out",
               }}
             >
-              {/* Floating label — outside the box, full text (no clamp /
+              {/* Floating label: outside the box, full text (no clamp /
                   truncation), so the whole "name · confidence" reads. */}
               <span
                 className="absolute whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-medium shadow-[var(--shadow-medium)]"
@@ -112,7 +112,7 @@ export function ObjectHighlights() {
           );
         })()}
 
-      {/* Status pill — detecting / empty / error. */}
+      {/* Status pill: detecting / empty / error. */}
       {status === "detecting" && (
         <StatusPill>
           <Loader2 size={14} strokeWidth={2.2} className="animate-spin" />
@@ -122,7 +122,7 @@ export function ObjectHighlights() {
       {status === "ready" && objects.length === 0 && (
         <StatusPill>
           <ScanEye size={14} strokeWidth={2} />
-          No objects detected — press Esc and try another mode.
+          No objects detected. Press Esc and try another mode.
         </StatusPill>
       )}
       {status === "error" && (

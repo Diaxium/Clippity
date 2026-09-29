@@ -12,7 +12,7 @@ const log = createLogger("overlay");
  *
  * When the overlay opens in `object` mode the backend has already
  * cached the desktop snapshot; this hook fires one `detect_objects`
- * call against it (per session — inference costs ~0.5–2 s, so never
+ * call against it (per session; inference costs ~0.5–2 s, so never
  * per pointer event) and lands the boxes in the store for
  * `useObjectSelection` to hit-test and `ObjectHighlights` to draw.
  *

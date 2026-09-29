@@ -1,5 +1,5 @@
 /**
- * `@clippity/installer-shared` — the single source of truth for the IPC
+ * `@clippity/installer-shared`: the single source of truth for the IPC
  * wire-format contracts exchanged between the React wizard frontend and
  * the Rust/Tauri backend.
  *

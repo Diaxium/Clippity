@@ -2,14 +2,14 @@
  * The library's single window-level key handler.
  *
  * Mounted once by `LibraryLayout`, mirroring how `EditorLayout` mounts
- * `useEditorKeybinds` — one listener that resolves an event to at most
+ * `useEditorKeybinds`: one listener that resolves an event to at most
  * one command, rather than a keydown effect per component. The two views
  * are never mounted at the same time (the dashboard renders one), so
  * their `Mod+A` bindings can't both fire.
  *
  * State is read through `getState()` at event time instead of being
  * subscribed to, so the listener is attached once and never re-bound as
- * the selection changes — a fresh listener on every selection change
+ * the selection changes: a fresh listener on every selection change
  * would be a lot of churn for a value only read when a key is pressed.
  */
 

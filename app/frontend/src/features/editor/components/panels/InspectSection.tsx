@@ -8,7 +8,7 @@ import { paintPreviewCss } from "../../lib/paint";
 import type { SceneNode } from "../../types";
 import { PanelSection } from "./section";
 
-/** Trim a measurement to whole pixels for display — the inspector reports what
+/** Trim a measurement to whole pixels for display: the inspector reports what
  *  the export will contain, and the exporters rasterize on the pixel grid. */
 const px = (n: number): string => `${Math.round(n)}`;
 
@@ -19,7 +19,7 @@ const px = (n: number): string => `${Math.round(n)}`;
  * This is the one place the *rotated* bounding box is reported rather than the
  * unrotated frame the Arrange tab edits. Those disagree for any rotated node,
  * and the difference matters precisely when you're measuring rather than
- * editing — a rotated 200×100 label occupies a wider box on the page, and that
+ * editing: a rotated 200×100 label occupies a wider box on the page, and that
  * box is what an export crop has to clear.
  */
 export function InspectSection() {
@@ -35,7 +35,7 @@ export function InspectSection() {
       <PanelSection id="inspect-geometry" title="Measurements">
         {multi && (
           <p className="mb-2.5 text-[11px] leading-snug text-[var(--ed-text-dim)]">
-            Showing {node.name} — the primary of {sel.length} selected layers.
+            Showing {node.name}, the primary of {sel.length} selected layers.
           </p>
         )}
         <dl className="flex flex-col gap-1.5">
@@ -69,7 +69,7 @@ export function InspectSection() {
 }
 
 /** The node's fills and strokes as swatch + value rows, with the value
- *  copyable — the reason to open this tab is usually to take a hex elsewhere. */
+ *  copyable: the reason to open this tab is usually to take a hex elsewhere. */
 function PaintList({ node }: { node: SceneNode }) {
   const rows: { key: string; swatch: string; label: string; value: string }[] =
     [];

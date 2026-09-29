@@ -20,7 +20,7 @@ interface UseCopyFeedbackResult {
  * follow it.
  *
  * Copying is the whole point of a color, a palette or a grabbed-text
- * entry — those kinds have no editor to open and no file to reveal — so
+ * entry (those kinds have no editor to open and no file to reveal) so
  * it happens in a dozen places across the cards, rows and details pane.
  * It also happens *silently*: the clipboard gives no visible sign it
  * changed, and the app's toast channel only accepts errors in MVP (see
@@ -28,7 +28,7 @@ interface UseCopyFeedbackResult {
  * needing the same flag, the same timeout, and the same cleanup is
  * exactly what a hook is for.
  *
- * The timer is cleared on unmount — a card copied and then scrolled out
+ * The timer is cleared on unmount: a card copied and then scrolled out
  * of the virtualised range would otherwise set state on a dead
  * component.
  */

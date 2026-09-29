@@ -11,7 +11,7 @@ import { StorageStep } from "./StorageStep";
 import { ThemeStep } from "./ThemeStep";
 
 interface OnboardingLayoutProps {
-  /** Hydrated settings snapshot — guaranteed non-null by the caller. */
+  /** Hydrated settings snapshot: guaranteed non-null by the caller. */
   settings: Settings;
   /** Called once `settings.general.onboarded` has been flipped to true. */
   onDone(): void;
@@ -20,7 +20,7 @@ interface OnboardingLayoutProps {
 /**
  * Root of the first-launch wizard. Mounted by `AppShell` when
  * `settings.general.onboarded === false` on the capture / main routes.
- * System routes (overlay / countdown / toast) bypass the gate — those
+ * System routes (overlay / countdown / toast) bypass the gate: those
  * windows are transient utilities triggered AFTER onboarding has run.
  *
  * Layout: chromeless WindowFrame with a single header (Brand + welcome

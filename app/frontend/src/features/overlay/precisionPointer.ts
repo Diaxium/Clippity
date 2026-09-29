@@ -1,5 +1,5 @@
 /**
- * Precision-pointer damping — the "hold Alt to slow the cursor" system.
+ * Precision-pointer damping: the "hold Alt to slow the cursor" system.
  *
  * The overlay draws its own crosshair (`cursor: none` on the root), so the
  * point the user *sees* need not be the point the OS reports. That gap is
@@ -15,7 +15,7 @@
  * Because the OS pointer travels ~1/`PRECISION_FACTOR` times farther
  * than the reticle, precision movement pushes the real cursor toward the
  * screen edges fast. Once it is pinned against one, pushing further that
- * way produces NO pointer events at all — so anything that only corrects
+ * way produces NO pointer events at all, so anything that only corrects
  * the offset *on movement* can never recover. Four things keep that from
  * stranding the reticle:
  *
@@ -25,7 +25,7 @@
  *     reticle back on the real cursor.
  *   - Reel-in: while an interaction IS in flight, a jump would drag the
  *     selection edge with it, so the offset is instead pulled toward
- *     zero proportionally to travel — a fast swipe resolves it, careful
+ *     zero proportionally to travel: a fast swipe resolves it, careful
  *     movement barely touches it, and it never reads as a jump.
  *   - `MAX_OFFSET`: a hard cap on the divergence, so a long
  *     modifier-held drag can't strand the cursor at an edge before
@@ -49,7 +49,7 @@ export const PRECISION_FACTOR = 0.16;
 const REEL_IN_RATE = 0.3;
 
 /** Hard cap (logical px) on how far the reticle may diverge from the OS
- *  pointer. Past this the reticle tracks the hand 1:1 again — a
+ *  pointer. Past this the reticle tracks the hand 1:1 again: a
  *  deliberate behaviour cliff, and the better trade: unbounded
  *  divergence drives the real cursor into a screen edge, where it stops
  *  producing pointer events and the reticle cannot be moved that way at
@@ -64,7 +64,7 @@ function capped(v: number): number {
 
 /** Live divergence between the drawn (virtual) point and the OS pointer. */
 let offset: Pt = { x: 0, y: 0 };
-/** Previous raw pointer position — the base for the per-move delta. */
+/** Previous raw pointer position: the base for the per-move delta. */
 let lastRaw: Pt | null = null;
 /** Modifier state at the previous pointer event, so the true→false edge
  *  can be detected from the pointer stream itself. */
@@ -85,7 +85,7 @@ function reelIn(v: number, pull: number): number {
 }
 
 /**
- * Advance the virtual/raw divergence by one pointer move. Pure — exported
+ * Advance the virtual/raw divergence by one pointer move. Pure: exported
  * for the unit tests; call `precisionPoint` from interaction code.
  *
  * While `precision` is held the virtual point advances by only
@@ -115,7 +115,7 @@ export function advanceOffset(
 /**
  * Map a raw pointer position to the point the overlay should act on.
  *
- * `key` is the native event — pass `e.nativeEvent` so a single physical
+ * `key` is the native event: pass `e.nativeEvent` so a single physical
  * move that reaches two handlers is only integrated once. Every pointer
  * event in a damped mode should go through here (down included), so the
  * delta chain has no gaps.
@@ -125,11 +125,11 @@ export function advanceOffset(
  * activates the system menu and the webview never receives the keyup, so
  * a key-derived flag latches on and the release is never observed. Every
  * pointer event carries the live modifier state, and this function only
- * ever runs on pointer events — reading it here makes the release
+ * ever runs on pointer events: reading it here makes the release
  * impossible to miss.
  *
  * `canResync` is the caller's answer to "is it safe to snap the reticle
- * back onto the cursor right now?" — false while a drag is in flight,
+ * back onto the cursor right now?": false while a drag is in flight,
  * where a jump would take the selection edge with it.
  */
 export function precisionPoint(
@@ -158,7 +158,7 @@ export function precisionPoint(
     y: Math.min(Math.max(raw.y + offset.y, 0), vh),
   };
   // Re-derive from the clamped point so the offset can never bank travel
-  // the viewport already refused — otherwise pushing into an edge under
+  // the viewport already refused, otherwise pushing into an edge under
   // precision would build up a debt the user has to unwind on the way out.
   offset = { x: p.x - raw.x, y: p.y - raw.y };
 
@@ -173,7 +173,7 @@ export function precisionPoint(
  * correction wouldn't be visible until the next pointer move, which
  * reads as a lurch rather than as releasing the key).
  *
- * Safe only when nothing is mid-flight — during a drag this would take
+ * Safe only when nothing is mid-flight: during a drag this would take
  * the selection edge with it. Callers gate on that.
  */
 export function syncPrecisionPointer(): Pt | null {
@@ -183,7 +183,7 @@ export function syncPrecisionPointer(): Pt | null {
 }
 
 /** Drop the accumulated divergence AND the delta chain. Called from the
- *  store's `reset` so a fresh overlay session starts clean — unlike
+ *  store's `reset` so a fresh overlay session starts clean: unlike
  *  `syncPrecisionPointer`, the next move after this seeds a new chain
  *  rather than continuing the old one. */
 export function resetPrecisionPointer(): void {

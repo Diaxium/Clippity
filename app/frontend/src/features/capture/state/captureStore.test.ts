@@ -105,7 +105,7 @@ describe("useCaptureStore", () => {
     expect(useCaptureStore.getState().delaySeconds).toBe(60);
   });
 
-  it("hydrateDefaults is a one-shot — later calls never clobber session edits", () => {
+  it("hydrateDefaults is a one-shot: later calls never clobber session edits", () => {
     useCaptureStore.getState().hydrateDefaults({
       preview: true,
       clipboard: false,

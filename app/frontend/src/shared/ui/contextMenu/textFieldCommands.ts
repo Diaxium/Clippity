@@ -83,7 +83,7 @@ export function cutField(field: ContextMenuField): void {
 export function copyField(field: ContextMenuField): void {
   restore(field);
   if (document.execCommand("copy")) return;
-  // Fallback for engines that refuse the legacy command — the async
+  // Fallback for engines that refuse the legacy command: the async
   // clipboard write doesn't need the field to be focused.
   const text = field.el.value.slice(field.start, field.end);
   if (text) void navigator.clipboard?.writeText(text).catch(() => {});

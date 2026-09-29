@@ -1,7 +1,7 @@
 /**
  * Pure geometry for docking the inspector to a workspace edge.
  *
- * The inspector exists in two forms — a docked rail and a floating panel — and
+ * The inspector exists in two forms (a docked rail and a floating panel) and
  * this module owns the one decision that connects them: given a pointer during
  * a drag, which edge (if any) would receive a drop. Keeping it pure means the
  * snap threshold, the dead zone in the middle, and the tie-breaking are all
@@ -14,7 +14,7 @@
 export type DockSide = "left" | "right";
 
 /**
- * How close to an edge a drag must get before it snaps. Generous on purpose —
+ * How close to an edge a drag must get before it snaps. Generous on purpose:
  * this is a coarse gesture, and an undershoot silently leaves the panel
  * floating, which reads as the drop having failed.
  */
@@ -37,7 +37,7 @@ export function dockTargetAt(
   const width = right - left;
   if (width <= 0) return null;
 
-  // Bands overlap on a narrow container — split at the midpoint instead.
+  // Bands overlap on a narrow container: split at the midpoint instead.
   if (width < threshold * 2) {
     if (x < left || x > right) return null;
     return x - left < right - x ? "left" : "right";

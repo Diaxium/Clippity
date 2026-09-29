@@ -19,7 +19,7 @@ interface ErrorBoundaryState {
 
 /**
  * Catches render-time crashes anywhere in the subtree so a thrown
- * component shows a recoverable panel instead of a blank window — and,
+ * component shows a recoverable panel instead of a blank window, and,
  * critically, leaves a logged breadcrumb (with the component stack) that
  * otherwise would not exist anywhere.
  *
@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<
   }
 
   private readonly handleReload = (): void => {
-    // Reloading re-runs the window from its hash route — the cheapest
+    // Reloading re-runs the window from its hash route: the cheapest
     // full recovery for a desktop webview.
     window.location.reload();
   };

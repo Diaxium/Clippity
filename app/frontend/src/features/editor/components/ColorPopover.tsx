@@ -31,7 +31,7 @@ function canvasCenter(h: number): { left: number; top: number } {
 }
 
 /** Clamp a desired top-left so the `WIDTH`×`h` popover stays fully inside the
- *  viewport (minus `MARGIN`). Idempotent — re-clamping an in-view box is a
+ *  viewport (minus `MARGIN`). Idempotent: re-clamping an in-view box is a
  *  no-op, so it's safe to run repeatedly as the content resizes. */
 function clampToView(
   left: number,
@@ -51,8 +51,8 @@ function clampToView(
  * Mounted once at the layout level so it floats over the canvas. FE1 hosts the
  * Fill editor; stroke / effect / text targets follow in FE3.
  *
- * **Multi-select (P3):** the popover *reads* the primary target — one swatch,
- * one gradient, one set of stops — but *writes* to the primary plus
+ * **Multi-select (P3):** the popover *reads* the primary target (one swatch,
+ * one gradient, one set of stops) but *writes* to the primary plus
  * `colorEditor.peers`, the same-row entries on the rest of the selection
  * (resolved by `lib/multi.entriesAt` at open time). Opening the fill editor with
  * three shapes selected therefore paints all three.
@@ -140,7 +140,7 @@ export function ColorPopover() {
   if (!node) return null;
 
   /**
-   * The primary's entry plus every peer's — what the plural store actions take,
+   * The primary's entry plus every peer's: what the plural store actions take,
    * landing the whole batch as one undo step. Peers always share the primary's
    * `kind` (they come from the same row of the same list), so the entry-id field
    * is read off whichever discriminant this target carries.
@@ -159,7 +159,7 @@ export function ColorPopover() {
               : "",
     })),
   ];
-  /** Every node the edit lands on — for `text`, which has no entry list. */
+  /** Every node the edit lands on: for `text`, which has no entry list. */
   const nodeIds = (): string[] => [
     target.nodeId,
     ...editor.peers.map((p) => p.nodeId),
@@ -289,7 +289,7 @@ export function ColorPopover() {
           type="button"
           aria-label="Close color editor"
           // Swallow the pointerdown so the header's drag handler never captures
-          // it — capture would retarget the click to the header and the button's
+          // it: capture would retarget the click to the header and the button's
           // onClick would never fire (so the X would appear dead).
           onPointerDown={(e) => e.stopPropagation()}
           onClick={close}

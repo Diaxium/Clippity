@@ -7,7 +7,7 @@ import type { Annotation } from "@clippity/shared";
  * jsdom has no canvas rasteriser, so these check the *orchestration*:
  * how many overlays an export produces, at what size, and over which
  * spans. What lands on the pixels is `drawAnnotations`, which is the
- * same function the preview calls — which is the whole point, and is
+ * same function the preview calls, which is the whole point, and is
  * covered by its own tests.
  */
 

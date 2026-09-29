@@ -73,7 +73,7 @@ function makeBody(scrollHeight: number) {
 }
 
 /**
- * Test harness — mounts the hook against an element with a
+ * Test harness: mounts the hook against an element with a
  * controllable `scrollHeight` so we can verify both the initial
  * resize push and the ResizeObserver-driven follow-ups.
  */
@@ -125,7 +125,7 @@ describe("useToastResize", () => {
     const { el } = renderWithScrollHeight(120);
     expect(resizeToastMock).toHaveBeenCalledTimes(1);
 
-    // Trigger the observer with the same height — should NOT call resizeToast again.
+    // Trigger the observer with the same height: should NOT call resizeToast again.
     act(() => {
       observerCallback?.(
         [{ target: el } as unknown as ResizeObserverEntry],
@@ -137,7 +137,7 @@ describe("useToastResize", () => {
 
   it("honors an explicit chrome height of 0 (recording HUD renders bare)", () => {
     renderWithScrollHeight(260, 0);
-    // No outer card padding to add back — the window matches the body.
+    // No outer card padding to add back: the window matches the body.
     expect(resizeToastMock).toHaveBeenCalledWith(TOAST_WIDTH, 260);
   });
 

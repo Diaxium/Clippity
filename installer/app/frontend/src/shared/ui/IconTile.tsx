@@ -20,7 +20,7 @@ interface IconTileProps {
 }
 
 /**
- * A soft rounded tile holding a single icon — the same pattern the app's
+ * A soft rounded tile holding a single icon: the same pattern the app's
  * dashboard uses. Drives the maintenance-hub action cards and the
  * component/data-row leading glyphs.
  */

@@ -1,5 +1,5 @@
 /**
- * Stamps — the bundled icon marks (Fork A-F4). Pure geometry + catalog, no
+ * Stamps: the bundled icon marks (Fork A-F4). Pure geometry + catalog, no
  * React, no store.
  *
  * ### Fork A-F4 resolved: a bundled **vector** set, not emoji glyphs
@@ -12,7 +12,7 @@
  *   second path to the same place would have added a feature nobody gained.
  * - **Emoji glyphs can't hold the two-renderer invariant.** A glyph is rendered
  *   by whichever emoji font the *machine* has, so the same document would export
- *   differently on two machines — and the SVG text layout and Canvas2D
+ *   differently on two machines, and the SVG text layout and Canvas2D
  *   `fillText` don't share metrics even on one. That is the reasoning that made
  *   the Windows caption buttons strokes rather than glyphs (ADR 0022) and that
  *   recommends bundled fonts for Fork F1.
@@ -20,8 +20,8 @@
  * So a stamp is **path data this module owns**: authored on a 24-unit grid (the
  * Lucide grid the toolbar icons already use), mapped into the node's box, and
  * handed to both renderers as **one `d` string to fill and one to stroke**. That
- * is the tightest form of the ADR 0023 contract — sharing the path itself rather
- * than the numbers — so the branches cannot drift, and a stamp exports
+ * is the tightest form of the ADR 0023 contract (sharing the path itself rather
+ * than the numbers) so the branches cannot drift, and a stamp exports
  * byte-identically anywhere.
  *
  * ### The glyph is fit, never stretched
@@ -36,7 +36,7 @@
  *
  * The glyph has two parts: sub-paths meant to be **filled** ({@link
  * StampGeometry.fillD}) and sub-paths meant to be **stroked** at the icon's own
- * line weight ({@link StampGeometry.strokeD}) — a check is a polyline, a star is
+ * line weight ({@link StampGeometry.strokeD}): a check is a polyline, a star is
  * an area, a warning sign is both. Together they are the *ink*, and the node's
  * `fills` paint them.
  *
@@ -61,7 +61,7 @@ import {
 
 const DEG = Math.PI / 180;
 
-/** The authoring grid every icon below is drawn on — Lucide's 24×24, so a
+/** The authoring grid every icon below is drawn on: Lucide's 24×24, so a
  *  stamp and the toolbar icon that offers it share proportions. */
 const STAMP_GRID = 24;
 
@@ -74,7 +74,7 @@ const MIN_STAMP_SIDE = 1;
 // ---------------------------------------------------------------------------
 
 /**
- * One path command on the 24-grid. Deliberately **cubics only** — no elliptical
+ * One path command on the 24-grid. Deliberately **cubics only**, no elliptical
  * arcs. `A` carries large-arc/sweep flags that are ambiguous at exactly 180°,
  * and its radii get silently scaled up when the endpoints don't fit; a cubic has
  * none of that, so the emitted string means one thing in an SVG `d` and in a
@@ -86,7 +86,7 @@ type Cmd =
   | readonly ["C", number, number, number, number, number, number]
   | readonly ["Z"];
 
-/** A point on the circle `(cx,cy,r)` at `deg` — y-down, 0° = +x, so 90° is
+/** A point on the circle `(cx,cy,r)` at `deg`, y-down, 0° = +x, so 90° is
  *  below the center and −90° above it. Callers use it for the `M` that opens an
  *  {@link arc}. */
 function arcPoint(cx: number, cy: number, r: number, deg: number): Vec2 {
@@ -94,7 +94,7 @@ function arcPoint(cx: number, cy: number, r: number, deg: number): Vec2 {
 }
 
 /**
- * Cubic segments approximating the circular arc from `from`° to `to`° — the
+ * Cubic segments approximating the circular arc from `from`° to `to`°: the
  * continuation of a path already sitting at `arcPoint(…, from)`.
  *
  * Split into ≤90° pieces so the standard `k = 4/3·tan(θ/4)` handle length stays
@@ -197,7 +197,7 @@ interface StampDef {
 }
 
 /**
- * The bundled set — twelve marks chosen for what a screenshot actually gets
+ * The bundled set: twelve marks chosen for what a screenshot actually gets
  * annotated with: a verdict (check/cross), a caution (warning/info/question), an
  * emphasis (star/heart/flag/pin), a state (lock), and a gesture (cursor/idea).
  *
@@ -368,7 +368,7 @@ const CATALOG: readonly StampDef[] = [
   },
 ];
 
-/** The catalog in picker order — the panel and the tool both walk this. */
+/** The catalog in picker order: the panel and the tool both walk this. */
 export const STAMPS: readonly { kind: StampKind; label: string }[] =
   CATALOG.map((d) => ({ kind: d.kind, label: d.label }));
 
@@ -381,7 +381,7 @@ function defOf(kind: StampKind): StampDef {
   return BY_KIND.get(kind) ?? CATALOG[0]!;
 }
 
-/** Display name for an icon — the layer name a fresh stamp takes, and the
+/** Display name for an icon: the layer name a fresh stamp takes, and the
  *  picker's tooltip. */
 export function stampLabel(kind: StampKind): string {
   return defOf(kind).label;
@@ -394,7 +394,7 @@ export function stampLabel(kind: StampKind): string {
 /**
  * Whether this node can carry a stamp: a rectangle.
  *
- * A stamp's defining geometry is a box the glyph is fit into — which is what a
+ * A stamp's defining geometry is a box the glyph is fit into, which is what a
  * rectangle models and what the tool draws. Other types return false so a spec
  * stranded on some other shape is inert rather than half-rendered, the guard
  * {@link stampOf} reads (the {@link canCarryMeasure} contract).
@@ -403,7 +403,7 @@ export function canCarryStamp(node: SceneNode): node is RectangleNode {
   return node.type === "rectangle";
 }
 
-/** The node's stamp spec, or null — including for types that can't carry one. */
+/** The node's stamp spec, or null, including for types that can't carry one. */
 export function stampOf(node: SceneNode): StampSpec | null {
   const spec = node.stamp;
   if (!spec || !canCarryStamp(node)) return null;
@@ -415,7 +415,7 @@ export function stampOf(node: SceneNode): StampSpec | null {
  * frame, centered.
  *
  * Fitting rather than stretching is what lets the frame be any proportion
- * without either renderer having to decide what a squashed check looks like —
+ * without either renderer having to decide what a squashed check looks like,
  * and it keeps the scale uniform, so the icon's line weight scales with it
  * instead of turning elliptical.
  */
@@ -444,7 +444,7 @@ export interface StampGeometry {
   strokeD: string;
   /** The icon's own line weight in scene px. */
   weight: number;
-  /** The square the glyph was fit into — the mark's real extent, which sits
+  /** The square the glyph was fit into: the mark's real extent, which sits
    *  inside the node's frame and so never grows the export region. */
   box: Rect;
 }
@@ -500,7 +500,7 @@ export function stampGeometry(node: SceneNode): StampGeometry | null {
 }
 
 /**
- * One icon drawn into a `size`×`size` box at the origin — what the panel's
+ * One icon drawn into a `size`×`size` box at the origin: what the panel's
  * picker renders.
  *
  * Deliberately the *same* emitter the canvas uses rather than a hand-drawn
@@ -531,7 +531,7 @@ export function stampHaloWeight(geo: StampGeometry, width: number): number {
 
 /**
  * The same halo around the filled sub-paths (`fillD`), which have no weight of
- * their own — a centered stroke of twice the halo is half swallowed by the fill
+ * their own: a centered stroke of twice the halo is half swallowed by the fill
  * painted over it, leaving exactly `width` outside.
  */
 export function stampOutlineWeight(width: number): number {

@@ -1,11 +1,11 @@
 /**
- * The floating performance readout — frame rate, frame time, main-
+ * The floating performance readout: frame rate, frame time, main-
  * thread delay, heap, and IPC throughput, in the corner of the window.
  *
  * Mounted from `Providers` (so every chrome window can show it) and
  * rendered only while `developer.performanceOverlay` is on. The sampler
  * it reads from starts on the first subscriber and stops on the last,
- * so a hidden overlay costs nothing — measurement that outlives its
+ * so a hidden overlay costs nothing: measurement that outlives its
  * reader would be a cost the measurement itself is blamed for.
  *
  * Click-through (`pointer-events: none`) except for its own drag-free

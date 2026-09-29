@@ -1,12 +1,12 @@
 /**
- * Minimal structured logger — the single sanctioned console boundary
+ * Minimal structured logger: the single sanctioned console boundary
  * for the frontend.
  *
  * Why this exists: before it, the app logged *nothing*. Caught errors
  * were reduced to a user-facing toast message and the developer-facing
  * detail (error `code`, stack, the failing command) was discarded.
  * Routing every diagnostic through one place lets it be module-tagged,
- * level-filtered, redacted, and — later — forwarded to the backend
+ * level-filtered, redacted, and, later, forwarded to the backend
  * `tracing` log so frontend + backend share one timeline.
  *
  * Levels & gating:
@@ -45,7 +45,7 @@ const isTest = import.meta.env.MODE === "test";
 const isDev = import.meta.env.DEV;
 
 // The build's own floor: production keeps warn/error and drops the
-// verbose levels, dev keeps everything. Fixed at module load — the
+// verbose levels, dev keeps everything. Fixed at module load: the
 // build mode can't change at runtime.
 const buildMinRank = isDev ? LEVEL_RANK.debug : LEVEL_RANK.warn;
 
@@ -79,7 +79,7 @@ export type LogForwarder = (record: {
  * Set the user's severity floor. `null` restores the build default.
  *
  * Takes the persisted `developer.frontendLog` union, which is the
- * backend's `LogLevel` — it has an `off` and a `trace` this logger has
+ * backend's `LogLevel`: it has an `off` and a `trace` this logger has
  * no level for. `off` silences everything; `trace` maps to `debug`,
  * the most verbose thing the console side actually emits, so choosing
  * it shows everything rather than nothing.
@@ -113,7 +113,7 @@ function minRank(): number {
 let enabled = !isTest;
 
 /**
- * Test seam — enable or silence emission. No effect on the dev/prod
+ * Test seam: enable or silence emission. No effect on the dev/prod
  * level threshold; it only gates whether anything is written at all.
  */
 export function setLoggerEnabled(value: boolean): void {
@@ -152,7 +152,7 @@ export function redact(value: unknown, depth = 0): unknown {
   return value;
 }
 
-/** `[clippity:capture]` — the greppable, module-tagged line prefix. */
+/** `[clippity:capture]`: the greppable, module-tagged line prefix. */
 export function formatPrefix(module: string): string {
   return `[clippity:${module}]`;
 }
@@ -171,7 +171,7 @@ function emit(
   } else {
     console[level](prefix, message, safeContext);
   }
-  // Already-redacted context goes to the file — the same value the
+  // Already-redacted context goes to the file: the same value the
   // console got, never the raw one.
   forwarder?.({ level, module, message, context: safeContext });
 }

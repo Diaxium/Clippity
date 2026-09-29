@@ -57,7 +57,7 @@ afterEach(cleanup);
 beforeEach(() => useEditorStore.setState({ sectionsOpen: {} }));
 
 describe("ChromeSection scoping", () => {
-  it("shows on an empty selection — that is how you address the page", () => {
+  it("shows on an empty selection: that is how you address the page", () => {
     seed();
     act(() => state().clearSelection());
     render(<ChromeSection />);
@@ -71,7 +71,7 @@ describe("ChromeSection scoping", () => {
     expect(screen.getByRole("heading", { name: "Window" })).toBeInTheDocument();
   });
 
-  it("hides while a mark is selected — that is not the page", () => {
+  it("hides while a mark is selected: that is not the page", () => {
     const { markId } = seed();
     act(() => state().select([markId]));
     render(<ChromeSection />);
@@ -80,7 +80,7 @@ describe("ChromeSection scoping", () => {
 
   it("hides when the capture can't carry a title bar", () => {
     // An ellipse can hold the largest image fill, but neither renderer draws
-    // chrome on one — so the control must not promise what won't arrive.
+    // chrome on one, so the control must not promise what won't arrive.
     __resetNodeIdForTests();
     const frame = makeFrame(PAGE, { name: "Page" });
     const blob = makeEllipse(PAGE, { name: "Blob" });
@@ -195,7 +195,7 @@ describe("chrome fields", () => {
     fireEvent.click(screen.getByRole("button", { name: "macOS" }));
     act(() => state().setChromeHeight(64));
     expect(node(photoId).chrome?.height).toBe(64);
-    // A taller macOS bar is still macOS — height isn't part of the identity.
+    // A taller macOS bar is still macOS: height isn't part of the identity.
     expect(matchChromePreset(node(photoId).chrome)).toBe("macos");
     expect(screen.getByRole("button", { name: "macOS" })).toHaveAttribute(
       "aria-pressed",
@@ -216,7 +216,7 @@ describe("chrome fields", () => {
 describe("the export region still matches the canvas", () => {
   it("seals a stray annotation root into the grown page", () => {
     // ADR 0019/0020's trap, reached a third way: chrome grows the page, and a
-    // stray root outside it would stretch `unionBounds` past the backdrop —
+    // stray root outside it would stretch `unionBounds` past the backdrop,
     // exporting an unpainted band that is invisible on the live canvas.
     const { pageId } = seed();
     __resetNodeIdForTests();

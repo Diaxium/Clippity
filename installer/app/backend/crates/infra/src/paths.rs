@@ -1,9 +1,9 @@
 //! Resolved filesystem locations the installer reads and writes.
 //!
 //! Kept deliberately small: an installer touches far fewer places than
-//! the app it installs. The paths mirror the app's own convention — all
+//! the app it installs. The paths mirror the app's own convention (all
 //! Clippity data lives under a single `Clippity` folder, not the bundle
-//! identifier — so the uninstaller can find (and optionally remove) it.
+//! identifier) so the uninstaller can find (and optionally remove) it.
 
 use std::path::PathBuf;
 
@@ -24,11 +24,11 @@ pub const MAINTENANCE_DIR_NAME: &str = "maintenance";
 pub struct InstallerPaths {
     /// Program files destination (user-overridable in the Options step).
     pub install_dir: PathBuf,
-    /// Roaming app data (`%APPDATA%\Clippity`) — settings, presets.
+    /// Roaming app data (`%APPDATA%\Clippity`): settings, presets.
     pub app_data: PathBuf,
-    /// Local app data (`%LOCALAPPDATA%\Clippity`) — caches, thumbnails.
+    /// Local app data (`%LOCALAPPDATA%\Clippity`): caches, thumbnails.
     pub local_data: PathBuf,
-    /// Machine-wide data (`%PROGRAMDATA%\Clippity`) — the per-machine
+    /// Machine-wide data (`%PROGRAMDATA%\Clippity`): the per-machine
     /// maintenance root.
     pub program_data: PathBuf,
     /// This run's log file.

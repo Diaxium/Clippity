@@ -72,7 +72,7 @@ describe("ColorPopover", () => {
   });
 
   it("re-clamps back into view when the menu grows past the bottom edge", () => {
-    // Local alias for the DOM-global callback signature — `ResizeObserverCallback`
+    // Local alias for the DOM-global callback signature: `ResizeObserverCallback`
     // isn't a runtime global, so ESLint's `no-undef` rejects it (same pattern as
     // `useToastResize.test.ts`).
     type ROCallback = (
@@ -143,15 +143,15 @@ describe("ColorPopover", () => {
       .openColorEditor({ kind: "stroke", nodeId: r.id, strokeId }, 50, 50);
     render(<ColorPopover />);
     expect(screen.getByText("Stroke")).toBeInTheDocument();
-    // Solid body — no fill-type tabs / blend header.
+    // Solid body: no fill-type tabs / blend header.
     expect(screen.queryByLabelText("Blend mode")).toBeNull();
   });
 
   // Workstream P3: the popover reads the primary target but writes to the
   // primary *plus* the peer rows the section resolved from the rest of the
-  // selection — so a color edit paints everything selected, not just one node.
+  // selection, so a color edit paints everything selected, not just one node.
   describe("multi-select peers", () => {
-    /** The picker's hex field — the only textbox holding a bare 6-digit hex
+    /** The picker's hex field: the only textbox holding a bare 6-digit hex
      *  (opacity and the blend header render numbers). */
     const hexField = (): HTMLElement =>
       screen

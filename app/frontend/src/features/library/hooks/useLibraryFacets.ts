@@ -29,20 +29,20 @@ export interface UseLibraryFacetsResult {
 /**
  * Whole-library counts for the destination rail (performance roadmap P5).
  *
- * The rail asks a question a page cannot answer — "how big is every scope,
- * including the ones you are not showing" — so it has its own aggregate
+ * The rail asks a question a page cannot answer ("how big is every scope,
+ * including the ones you are not showing") so it has its own aggregate
  * call rather than counting the rows the grid happens to hold. That split
  * is the whole point: with it, neither half of the library page needs the
  * full listing in memory.
  *
  * The smart-collection boundaries are computed here, per fetch, from
  * {@link smartThresholds}. "This week" is anchored to local midnight, so
- * the value is only correct for the moment it is read — recomputing it on
+ * the value is only correct for the moment it is read: recomputing it on
  * every refresh (rather than pinning it at mount) means a window left open
  * across midnight re-cuts its buckets on the next capture instead of
  * quietly ageing.
  *
- * Refreshes on `clippity://library/updated`, like `useLibraryList` — a
+ * Refreshes on `clippity://library/updated`, like `useLibraryList`: a
  * capture landing, a star, a tag or a trash op all move these numbers.
  * A failure toasts and leaves the previous counts up: a rail that keeps
  * showing slightly stale numbers is better than one that blanks to zero

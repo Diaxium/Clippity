@@ -37,7 +37,7 @@ export function useDeveloperRuntime(developer: DeveloperSettings | undefined) {
   const flags = developer?.featureFlags;
 
   useEffect(() => {
-    // `undefined` while settings hydrate — leave the build's own floor
+    // `undefined` while settings hydrate: leave the build's own floor
     // in force rather than briefly silencing the boot sequence.
     if (level === undefined) return;
     setLogLevel(level);

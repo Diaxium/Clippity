@@ -44,7 +44,7 @@ function ToggleChip({ icon: Icon, label, active, onClick }: ToggleChipProps) {
 
 /**
  * Quick-capture modifiers beneath the capture tiles: Cursor, Copy, and
- * Timed toggles. All three apply to every quick capture — Cursor + Copy
+ * Timed toggles. All three apply to every quick capture: Cursor + Copy
  * via `emitOverlayToggles` (the Region / Window overlay) and the immediate
  * Fullscreen grab; Timed arms the countdown delay. The seconds selector
  * only appears once Timed is on, so the row stays compact when it isn't.

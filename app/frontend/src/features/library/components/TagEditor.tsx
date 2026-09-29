@@ -14,7 +14,7 @@ const GAP = 6;
 const MARGIN = 8;
 
 /**
- * Tag editor popover — the same control for one capture and for a
+ * Tag editor popover: the same control for one capture and for a
  * selection.
  *
  * With a single capture it shows that capture's tags, each removable,
@@ -26,7 +26,7 @@ const MARGIN = 8;
  *
  * Suggestions are the tags already in use elsewhere in the library,
  * filtered by what has been typed. They exist to stop the vocabulary
- * fragmenting — `bug`, `bugs`, `Bug-report` — which is the failure mode
+ * fragmenting (`bug`, `bugs`, `Bug-report`) which is the failure mode
  * of freeform tags and the reason the backend normalises case.
  *
  * **The panel renders in a portal, positioned against its trigger.**
@@ -48,7 +48,7 @@ export function TagEditor({
   /** The tags of the single capture being edited; empty for a
    *  selection, which has no one tag list. */
   current: string[];
-  /** Every tag in use in the library — the vocabulary to reuse. */
+  /** Every tag in use in the library: the vocabulary to reuse. */
   suggestions: string[];
   /** Icon-only trigger, for the card / row action cluster. */
   compact?: boolean;
@@ -73,7 +73,7 @@ export function TagEditor({
   // Place the panel against the trigger, in viewport coordinates.
   //
   // Re-runs when the content resizes (a suggestion list that grew or
-  // shrank changes whether the panel still fits below) and on scroll —
+  // shrank changes whether the panel still fits below) and on scroll:
   // captured, so an ancestor scrolling the grid moves the panel with its
   // card rather than leaving it stranded mid-air.
   useLayoutEffect(() => {
@@ -108,7 +108,7 @@ export function TagEditor({
     };
   }, [open, matches.length, current.length, single]);
 
-  // Dismiss on Escape or a click elsewhere — a popover that survives
+  // Dismiss on Escape or a click elsewhere: a popover that survives
   // either one strands itself over the grid. The panel is outside the
   // trigger's subtree now, so both have to count as "inside".
   useEffect(() => {
@@ -244,7 +244,7 @@ export function TagEditor({
   );
 }
 
-/** The tags of `meta`, or an empty list — the shape `TagEditor.current`
+/** The tags of `meta`, or an empty list: the shape `TagEditor.current`
  *  wants, without every call site repeating the `?? []`. */
 export function tagsOf(meta: CaptureMeta): string[] {
   return meta.tags ?? [];

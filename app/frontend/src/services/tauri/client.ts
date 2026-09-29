@@ -8,9 +8,9 @@ import {
 import { createLogger } from "@shared/lib/logger";
 
 /** Every IPC call funnels through `invoke`, so this is the one place a
- *  failed command can be observed for free — no caller has to remember
+ *  failed command can be observed for free: no caller has to remember
  *  to log. The same property is what makes it the right place to time
- *  every call for the developer page's command inspector — see
+ *  every call for the developer page's command inspector; see
  *  `recordIpcSample`, which is a no-op until that is armed. */
 const log = createLogger("ipc");
 
@@ -93,7 +93,7 @@ export async function invoke<TResult, TArgs extends InvokeArgs = InvokeArgs>(
       throw new TauriCommandError(raw);
     }
     // Non-wire failure = the bridge itself misbehaved (down, serialization
-    // bug, unexpected throw). That's genuinely unexpected — warn.
+    // bug, unexpected throw). That's genuinely unexpected: warn.
     log.warn(`command "${command}" threw a non-wire error`, raw);
     if (raw instanceof Error) throw raw;
     throw new Error(typeof raw === "string" ? raw : "Unknown Tauri error");

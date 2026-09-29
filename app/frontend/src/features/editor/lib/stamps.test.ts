@@ -36,7 +36,7 @@ function stamp(
  *
  * A conservative superset of the curve's own extent (a cubic never leaves its
  * control hull), which is exactly what the "a stamp never paints outside its
- * frame" assertion below wants — it can only over-report, never miss ink.
+ * frame" assertion below wants: it can only over-report, never miss ink.
  */
 function points(d: string): { x: number; y: number }[] {
   const out: { x: number; y: number }[] = [];
@@ -92,7 +92,7 @@ describe("stamp catalog", () => {
     for (const kind of ALL) {
       expect(stampLabel(kind).length).toBeGreaterThan(0);
       const geo = stampGeometry(stamp(kind))!;
-      // Every icon paints *something* — an area, a line, or both.
+      // Every icon paints *something*: an area, a line, or both.
       expect(geo.fillD.length + geo.strokeD.length).toBeGreaterThan(0);
     }
   });
@@ -104,7 +104,7 @@ describe("stamp catalog", () => {
         if (!d) continue;
         expect(d.startsWith("M")).toBe(true);
         expect(d).not.toMatch(/NaN|Infinity|undefined/);
-        // Cubics only — an `A` carries flags that are ambiguous at exactly
+        // Cubics only: an `A` carries flags that are ambiguous at exactly
         // 180°, which is the whole reason the module has no arc commands.
         expect(d).not.toMatch(/[AaQqSsTtVvHh]/);
         expect(points(d).length).toBeGreaterThan(0);
@@ -174,7 +174,7 @@ describe("stampGeometry", () => {
     // This is why stamps needed no `exportBounds` growth, unlike window chrome
     // (a bar above the node) and a dimension line (caps and label off a
     // zero-height segment): the glyph is fit *into* the frame, so the node's
-    // box already is its extent — including half of the ink's line weight,
+    // box already is its extent, including half of the ink's line weight,
     // which straddles the path.
     for (const kind of ALL) {
       const node = stamp(kind, { x: 100, y: 40, width: 48, height: 48 });
@@ -199,7 +199,7 @@ describe("halo weights", () => {
 
   it("outlines a filled sub-path with twice the halo, half of it swallowed", () => {
     // A centered stroke straddles the edge, and the ink fill is painted over
-    // the inner half — so `width * 2` leaves exactly `width` showing outside.
+    // the inner half, so `width * 2` leaves exactly `width` showing outside.
     expect(stampOutlineWeight(3)).toBe(6);
   });
 });

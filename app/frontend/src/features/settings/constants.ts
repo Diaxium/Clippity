@@ -1,5 +1,5 @@
 /**
- * Settings feature — static tables (categories, presets, duration
+ * Settings feature: static tables (categories, presets, duration
  * rows). Pure data; no React imports so the tables are tree-shake
  * friendly + unit-testable by inspection.
  */
@@ -179,23 +179,23 @@ export const WINDOW_BACKDROP_OPTIONS: readonly WindowBackdropOption[] = [
   {
     value: "clear",
     label: "Clear",
-    hint: "No material — the desktop shows through unblurred",
+    hint: "No material; the desktop shows through unblurred",
   },
 ] as const;
 
-// The per-material tuning tables + helpers live in `lib/backdrop.ts` —
+// The per-material tuning tables + helpers live in `lib/backdrop.ts`:
 // `Providers.tsx` needs them on every window and shouldn't drag this
 // icon-laden module into every bundle to get them.
 
 /** Chrome-opacity slider envelope, in percent. Mirrors the Rust
- *  `domain::settings::{MIN,MAX}_WINDOW_OPACITY_PCT` clamp — keep in
+ *  `domain::settings::{MIN,MAX}_WINDOW_OPACITY_PCT` clamp; keep in
  *  lock-step. */
 export const WINDOW_OPACITY_MIN_PCT = 10;
 export const WINDOW_OPACITY_MAX_PCT = 100;
 export const WINDOW_OPACITY_STEP_PCT = 1;
 
 /** UI-scale slider envelope, in percent. Mirrors the Rust
- *  `domain::settings::{MIN,MAX}_UI_SCALE_PCT` clamp — keep in lock-step. */
+ *  `domain::settings::{MIN,MAX}_UI_SCALE_PCT` clamp; keep in lock-step. */
 export const UI_SCALE_MIN_PCT = 80;
 export const UI_SCALE_MAX_PCT = 120;
 export const UI_SCALE_STEP_PCT = 5;
@@ -281,14 +281,14 @@ export const DURATION_ROWS: readonly DurationRow[] = [
 ] as const;
 
 /** Slider envelope, in ms. `0` is the "Sticky" semantic. Step is
- *  500 ms — matches what's perceivable. */
+ *  500 ms; matches what's perceivable. */
 export const DURATION_MIN_MS = 0;
 export const DURATION_MAX_MS = 15_000;
 export const DURATION_STEP_MS = 500;
 
 /** Capture-delay stepper envelope, in seconds. Mirrors the Rust
  *  `domain::settings::{MIN,MAX}_DELAY_SECONDS` clamp and the capture
- *  store's own `MIN_DELAY`/`MAX_DELAY` — keep the three in lock-step. */
+ *  store's own `MIN_DELAY`/`MAX_DELAY`; keep the three in lock-step. */
 export const CAPTURE_DELAY_MIN_S = 1;
 export const CAPTURE_DELAY_MAX_S = 60;
 
@@ -298,7 +298,7 @@ export const PALETTE_COUNT_MIN = 2;
 export const PALETTE_COUNT_MAX = 16;
 
 /** Recording frame-rate envelopes. Mirrors the Rust
- *  `domain::recorder::{MP4,GIF}_FPS_{MIN,MAX}` clamp — the two ranges
+ *  `domain::recorder::{MP4,GIF}_FPS_{MIN,MAX}` clamp: the two ranges
  *  differ because GIF stores its delay in centiseconds, so a high rate
  *  rounds to a delay viewers substitute their own value for. */
 export const VIDEO_FPS_MIN = 10;
@@ -309,24 +309,24 @@ export const GIF_FPS_MAX = 30;
 /** Audio-gain envelope, as a percentage of unity. Mirrors the Rust
  *  `domain::recorder::{GAIN_PCT_DEFAULT,GAIN_PCT_MAX}` clamp.
  *
- *  The floor is 0 (silence — what mute sends) and the ceiling is +6 dB;
+ *  The floor is 0 (silence, what mute sends) and the ceiling is +6 dB;
  *  past that a bigger number buys distortion rather than volume, because
  *  the mix is clamped to full scale on its way to 16-bit PCM. */
 export const GAIN_MIN_PCT = 0;
 export const GAIN_MAX_PCT = 200;
 export const GAIN_DEFAULT_PCT = 100;
 export const GAIN_STEP_PCT = 5;
-/** Ticks every 50% — unity lands on one, which is what makes "back to
+/** Ticks every 50%: unity lands on one, which is what makes "back to
  *  normal" findable by eye during a drag. */
 export const GAIN_TICK_STEP_PCT = 50;
 
 /** Encoder-quality steps. Mirrors `domain::recorder::RecorderQuality`,
- *  whose bits-per-pixel table is the thing that actually differs —
+ *  whose bits-per-pixel table is the thing that actually differs:
  *  these labels describe the trade in the terms a user makes it in. */
 export const QUALITY_OPTIONS: readonly { value: string; label: string }[] = [
-  { value: "efficient", label: "Efficient — smaller files" },
+  { value: "efficient", label: "Efficient (smaller files)" },
   { value: "balanced", label: "Balanced (recommended)" },
-  { value: "high", label: "High — larger files" },
+  { value: "high", label: "High (larger files)" },
 ];
 
 /** Rate-control modes. Mirrors `domain::recorder::RateControl`. */
@@ -334,8 +334,8 @@ export const RATE_CONTROL_OPTIONS: readonly {
   value: string;
   label: string;
 }[] = [
-  { value: "variable", label: "Variable — smaller files" },
-  { value: "constant", label: "Constant — predictable size" },
+  { value: "variable", label: "Variable (smaller files)" },
+  { value: "constant", label: "Constant (predictable size)" },
 ];
 
 /** Keyframe-interval envelope in seconds. Mirrors
@@ -343,7 +343,7 @@ export const RATE_CONTROL_OPTIONS: readonly {
 export const KEYFRAME_SECONDS_MIN = 1;
 export const KEYFRAME_SECONDS_MAX = 10;
 
-/** Bitrate-override envelope in **megabits** per second — the unit the
+/** Bitrate-override envelope in **megabits** per second: the unit the
  *  field is typed in. Mirrors `domain::recorder::BITRATE_{MIN,MAX}_BPS`
  *  (1.5–60 Mbps); the backend clamps in bits, so the field rounds up to
  *  2 rather than offering a value that would be clamped on arrival. */
@@ -358,7 +358,7 @@ export const MAX_SOURCES = 8;
  *
  *  Corners rather than free positioning: dragging wants a live preview
  *  of the frame, and a recording's frame is whatever the user is about
- *  to point at — which does not exist while this panel is open. A
+ *  to point at, which does not exist while this panel is open. A
  *  quarter-width box in a corner is what people actually do with a
  *  webcam, and because the rect is normalized the same choice lands
  *  correctly on any region or monitor. */
@@ -399,7 +399,7 @@ export const RESOLUTION_SOURCE = 0;
  *  Heights, not `width×height` pairs: a recording's aspect ratio comes
  *  from the region the user picked, and stating a width would either
  *  letterbox an ultrawide clip or promise dimensions no session has.
- *  The cap only ever shrinks — a region shorter than the chosen height
+ *  The cap only ever shrinks: a region shorter than the chosen height
  *  is left alone rather than upscaled. */
 export const RESOLUTION_OPTIONS: readonly { value: number; label: string }[] = [
   { value: RESOLUTION_SOURCE, label: "Same as source" },
@@ -426,8 +426,8 @@ export const LOG_LEVEL_OPTIONS: readonly LogLevelOption[] = [
   { value: "error", label: "Error", hint: "Failures only" },
   { value: "warn", label: "Warning", hint: "Failures + suspicions" },
   { value: "info", label: "Info", hint: "What the app did" },
-  { value: "debug", label: "Debug", hint: "Verbose — for reproducing a bug" },
-  { value: "trace", label: "Trace", hint: "Everything — very noisy" },
+  { value: "debug", label: "Debug", hint: "Verbose, for reproducing a bug" },
+  { value: "trace", label: "Trace", hint: "Everything, very noisy" },
 ] as const;
 
 /** How long an armed developer mode survives. `value` mirrors the
@@ -453,12 +453,12 @@ export const LOG_FILE_MB_MAX = 64;
 export const LOG_FILES_MIN = 1;
 export const LOG_FILES_MAX = 20;
 
-/** Slow-command threshold choices, in ms. 16 ms is one frame at 60 Hz —
+/** Slow-command threshold choices, in ms. 16 ms is one frame at 60 Hz:
  *  the point past which a command can cost a dropped frame. Mirrors the
  *  Rust `{MIN,MAX}_SLOW_COMMAND_MS` envelope. */
 export const SLOW_COMMAND_OPTIONS: readonly { value: number; label: string }[] =
   [
-    { value: 16, label: "16 ms — one frame" },
+    { value: 16, label: "16 ms (one frame)" },
     { value: 50, label: "50 ms" },
     { value: 100, label: "100 ms (default)" },
     { value: 500, label: "500 ms" },
@@ -466,7 +466,7 @@ export const SLOW_COMMAND_OPTIONS: readonly { value: number; label: string }[] =
   ];
 
 /** How many log lines the live viewer holds. Past a couple of thousand
- *  the webview is the bottleneck, not the disk — and the backend caps
+ *  the webview is the bottleneck, not the disk, and the backend caps
  *  the request at the same number. */
 export const LOG_VIEW_LINES = 400;
 
@@ -478,7 +478,7 @@ export const LOG_POLL_MS = 1500;
 export const PERF_SAMPLE_MS = 500;
 
 /** Detection-confidence slider envelope, in percent. Mirrors the Rust
- *  `domain::settings::{MIN,MAX}_CONFIDENCE_PCT` clamp — coordinate in
+ *  `domain::settings::{MIN,MAX}_CONFIDENCE_PCT` clamp; coordinate in
  *  lock-step. */
 export const CONFIDENCE_MIN_PCT = 5;
 export const CONFIDENCE_MAX_PCT = 95;

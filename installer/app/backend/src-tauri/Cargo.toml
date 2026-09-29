@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 authors.workspace = true
-description = "Clippity Setup — the install / modify / update / repair / uninstall wizard shell."
+description = "Clippity Setup: the install / modify / update / repair / uninstall wizard shell."
 
 [lib]
 name = "clippity_installer_lib"

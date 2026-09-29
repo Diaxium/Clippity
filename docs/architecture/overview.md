@@ -29,10 +29,10 @@ app can hide-to-tray without destroying window state.
 
 ## The two halves
 
-- **Frontend** ([architecture/frontend.md](frontend.md)) — React 19,
+- **Frontend** ([architecture/frontend.md](frontend.md)): React 19,
   TypeScript, Vite 8, Tailwind v4, Zustand for state, Motion for animation.
   Feature-organized under `app/frontend/src`.
-- **Backend** ([architecture/backend.md](backend.md)) — a Rust Cargo
+- **Backend** ([architecture/backend.md](backend.md)): a Rust Cargo
   workspace of layered crates (`infra → domain → platform/vision →
   services → src-tauri`).
 
@@ -45,5 +45,5 @@ once in [`@clippity/shared`](../../app/shared) and mirrored by the Rust
 ## Design decisions
 
 Non-obvious choices are recorded as ADRs in
-[decisions/](../decisions/README.md) — e.g. the capture/overlay dispatch
+[decisions/](../decisions/README.md): e.g. the capture/overlay dispatch
 model, provenance sidecars, and the library index as a reconciled cache.

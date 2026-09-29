@@ -1,5 +1,5 @@
 /**
- * Wizard-shell wire-format contracts — mirror Rust `installer_domain::wizard`.
+ * Wizard-shell wire-format contracts: mirror Rust `installer_domain::wizard`.
  *
  * The wizard runs one of three *flows* depending on whether Clippity is
  * already installed and what the user chose from the maintenance hub.

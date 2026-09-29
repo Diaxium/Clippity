@@ -43,7 +43,7 @@ describe("captureActionEntries", () => {
 
   it("sends a recording to Studio instead of the editor", () => {
     // The annotation editor loads a capture as an image, and a video is
-    // not one — so a recording gets the surface that can actually play
+    // not one, so a recording gets the surface that can actually play
     // and trim it, not a disabled entry and not one that always errors.
     const entries = ids(meta({ id: "C:/caps/a.mp4", kind: "video" }));
     expect(entries).toContain("open-studio");
@@ -54,7 +54,7 @@ describe("captureActionEntries", () => {
   });
 
   it("still offers the editor for a GIF, and not Studio", () => {
-    // GIF decodes as an image, so the editor genuinely works on it —
+    // GIF decodes as an image, so the editor genuinely works on it:
     // flattening the animation is a choice the user gets to make. The
     // reverse is not true: Studio's platform decoder will not seek a
     // GIF, so an entry pointing there would open a player that can't

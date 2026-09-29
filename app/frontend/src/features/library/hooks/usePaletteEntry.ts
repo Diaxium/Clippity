@@ -16,7 +16,7 @@ interface UsePaletteEntryResult {
  *
  * Palette entries are aux-catalog rows (no per-entry IPC), so this finds
  * the row in the full `library_list` and re-resolves on
- * `clippity://library/updated` — so the open view reflects a rename /
+ * `clippity://library/updated`, so the open view reflects a rename /
  * delete that happens elsewhere. Includes trashed rows so a palette that
  * gets trashed while open still resolves (the view can show its state).
  * Resolves to `null` when `id` is null or the entry no longer exists.

@@ -210,7 +210,7 @@ describe("paletteCommands (command-palette source)", () => {
 
   it("omits hidden aliases and keyboard-only bindings", () => {
     const listed = ids();
-    // Alias of bring-forward — not a distinct command.
+    // Alias of bring-forward, not a distinct command.
     expect(listed).not.toContain("bring-forward-alt");
     // Arrow-driven: direction lives in the event, so there is nothing to run.
     for (const id of [

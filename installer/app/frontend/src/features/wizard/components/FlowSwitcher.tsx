@@ -9,7 +9,7 @@ import { useWizardStore } from "@state/wizardStore";
  *
  * In a shipping build the entry flow is fixed at launch (fresh download →
  * setup; existing install → maintenance; `/uninstall` flag → uninstall),
- * so this pill would not ship — it exists so every flow is reachable in a
+ * so this pill would not ship: it exists so every flow is reachable in a
  * browser preview without re-launching.
  */
 const ENTRIES: Array<{

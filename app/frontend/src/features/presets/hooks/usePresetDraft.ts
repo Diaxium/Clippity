@@ -8,7 +8,7 @@
  * capture preset share a name, a target and a save directory, and differ
  * in the handful of fields below the `mode` switch. Two drafts would
  * mean two forms and two round-trips for a user toggling between them
- * mid-edit — this way flipping `mode` keeps everything the two have in
+ * mid-edit: this way flipping `mode` keeps everything the two have in
  * common.
  */
 
@@ -115,7 +115,7 @@ export function draftToInput(d: PresetDraft): PresetInput {
         fps: d.fps,
         maxHeight: d.maxHeight,
         audio: {
-          // GIF carries no audio track, so a preset must not claim one —
+          // GIF carries no audio track, so a preset must not claim one:
           // the backend empties it anyway, but a saved preset that says
           // "microphone" and records silence is a lie on disk.
           microphone: d.format === "gif" ? false : d.microphone,
@@ -125,7 +125,7 @@ export function draftToInput(d: PresetDraft): PresetInput {
           cursor: d.cursor,
           clicks: false,
           // The editor cannot open a video, so a recording preset never
-          // hands one to it — see ADR 0031.
+          // hands one to it; see ADR 0031.
           preview: false,
           clipboard: d.clipboard,
         },
@@ -146,7 +146,7 @@ export function draftToInput(d: PresetDraft): PresetInput {
         preview: false,
         clipboard: d.clipboard,
         cursor: d.cursor,
-        // Presets don't expose enhancement yet — it belongs with the
+        // Presets don't expose enhancement yet: it belongs with the
         // per-preset output settings in Presets v2.
         enhance: false,
       },
@@ -170,7 +170,7 @@ export function usePresetDraft(initial?: CapturePreset) {
         const next = { ...d, [key]: value };
         // GIF's frame-rate ceiling is half video's, so carrying a 60
         // across a format flip would save a preset the backend then
-        // silently clamps — the user would see their setting change on
+        // silently clamps: the user would see their setting change on
         // its own the next time they opened it.
         if (key === "format" && value === "gif") next.fps = Math.min(d.fps, 30);
         return next;

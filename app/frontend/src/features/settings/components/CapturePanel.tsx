@@ -17,7 +17,7 @@ interface CapturePanelProps {
 
 /**
  * Settings → Capture. Edits the persisted *defaults* a fresh capture
- * window opens with — the capture window seeds its per-session store
+ * window opens with: the capture window seeds its per-session store
  * from these on launch (see `useCaptureDefaults`), so tweaking a toggle
  * here changes where every new capture session starts, while the
  * capture window's own options panel still lets the user override for
@@ -96,7 +96,7 @@ export function CapturePanel({ value, onChange }: CapturePanelProps) {
       <SectionCard title="Delay">
         <Row
           label="Capture delay"
-          description="Wait a moment before capturing — time to set up the shot."
+          description="Wait a moment before capturing: time to set up the shot."
           control={
             <ToggleSwitch
               checked={value.delay}

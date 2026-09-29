@@ -11,7 +11,7 @@ interface StorageStepProps {
 }
 
 /**
- * Step 1 — choose where captures land. The user either keeps the
+ * Step 1: choose where captures land. The user either keeps the
  * default (`value === ""` → render `defaultHint`) or browses for a
  * custom directory. A "Use default" pill appears when they've picked
  * a custom path so they can revert without retyping.

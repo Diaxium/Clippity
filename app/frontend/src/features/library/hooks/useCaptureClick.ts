@@ -13,13 +13,13 @@
  * | `Shift`-click        | Select the run from the anchor to here      |
  * | `Mod+Shift`-click    | Add that run to what's already selected     |
  * | `Mod`-click          | Toggle this one; it becomes the anchor      |
- * | click                | Focus it (inspector) — **no** selection     |
+ * | click                | Focus it (inspector); **no** selection     |
  *
  * A plain click still refuses to select, which is the load-bearing part
  * of the design: selection is opt-in, so the bulk bar never appears
  * because someone was browsing. Shift-click reaches back to the focused
  * capture for its pivot ({@link useLibraryStore.selectRange}), so the
- * gesture works from a plain click anyway — the user gets the file-manager
+ * gesture works from a plain click anyway: the user gets the file-manager
  * behavior without the library growing a selection they didn't ask for.
  */
 
@@ -54,7 +54,7 @@ export function useCaptureClick(
   // A Shift-click inside a grid is also the browser's "extend the text
   // selection" gesture, which paints a blue smear across every card title
   // between the two. The selection starts on mousedown, so that is where
-  // it has to be refused — by the time the click lands it already exists.
+  // it has to be refused: by the time the click lands it already exists.
   const onMouseDown = useCallback((e: MouseEvent) => {
     if (e.shiftKey) e.preventDefault();
   }, []);

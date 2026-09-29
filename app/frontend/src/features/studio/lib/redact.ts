@@ -2,7 +2,7 @@
  * The preview's half of the two redaction filters.
  *
  * Every other annotation Studio draws exists once, as canvas code shared
- * by the preview and the export — see `drawAnnotations`. These two
+ * by the preview and the export; see `drawAnnotations`. These two
  * cannot be, because a blur or a pixelation transforms the pixels
  * *underneath* rather than painting over them, and the webview has no
  * decoded frame to hand the backend. So the export applies them in Rust
@@ -10,8 +10,8 @@
  * for the only time in the feature the same operation is written twice.
  *
  * Two implementations of the same thing drift. What stops it here is not
- * care, it is `redact.test.ts`: both sides run a checked-in fixture —
- * the same input pixels, the same parameters — and assert the same
+ * care, it is `redact.test.ts`: both sides run a checked-in fixture
+ * (the same input pixels, the same parameters) and assert the same
  * output bytes. If either implementation changes, that test fails on
  * whichever side did not change.
  *
@@ -34,7 +34,7 @@
  * `block` and `radius` are in **source** pixels. The preview runs on a
  * frame scaled to the stage, with the sizes scaled to match, so its
  * blocks do not land on the same grid the export's will. That is a
- * property of showing a scaled picture, not a defect — the preview shows
+ * property of showing a scaled picture, not a defect: the preview shows
  * the operation, and the fixture pins the operation.
  */
 
@@ -59,7 +59,7 @@ export interface PixelRect {
 /**
  * Resolve a normalised rect against a frame size, clamped to it.
  *
- * `null` for a rectangle that covers no pixels — a half-finished drag,
+ * `null` for a rectangle that covers no pixels: a half-finished drag,
  * which callers treat as nothing to do. Mirrors `NormRect::to_pixels`,
  * including the floor/ceil pairing: resolving the edges before clamping
  * is what keeps the on-frame part of a rectangle that hangs off it.
@@ -98,7 +98,7 @@ export function normToPixels(
  * Integer mean, rounding halves up.
  *
  * The single arithmetic decision that has to match Rust's `round_div`.
- * Truncating instead — or dividing as floats and flooring — lands a
+ * Truncating instead, or dividing as floats and flooring, lands a
  * channel one value off on roughly half the blocks of an image, which
  * the fixture catches and an eye never would.
  */
@@ -113,7 +113,7 @@ export function roundDiv(sum: number, n: number): number {
  *
  * Mutates `data` in place. Blocks at the right and bottom edges are
  * clipped by the rect and average over the smaller area, so the whole
- * rectangle is covered — a tail block left unwritten is a stripe of the
+ * rectangle is covered: a tail block left unwritten is a stripe of the
  * redaction still showing. Alpha is untouched: a redaction that changed
  * transparency would be a hole rather than a cover-up.
  */
@@ -164,7 +164,7 @@ export function pixelate(
  * {@link BLUR_PASSES} passes of a separable box average over the rect.
  *
  * Works on a copy of the rect's RGB, because a box average has to read
- * the *input* of its pass — blurring in place feeds each pixel's new
+ * the *input* of its pass: blurring in place feeds each pixel's new
  * value into its neighbour's window and smears the result along the scan
  * direction.
  */
@@ -194,7 +194,7 @@ function boxPass(
   axis: Axis
 ): Uint8Array {
   const out = new Uint8Array(w * h * 3);
-  // Symmetric, so 2r+1 samples — never zero, which is what makes the
+  // Symmetric, so 2r+1 samples: never zero, which is what makes the
   // mean below safe to take.
   const window = radius * 2 + 1;
   const horizontal = axis === "horizontal";
@@ -266,7 +266,7 @@ function writeRgb(
  * Apply every pixel-filter annotation covering `ms` to a frame's pixels.
  *
  * Mirrors `domain::annotation::apply_redactions`, including its order:
- * where two overlap, the later one wins on the shared pixels — the same
+ * where two overlap, the later one wins on the shared pixels: the same
  * last-writer rule the drawn annotations get for free by being
  * composited in order.
  */

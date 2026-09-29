@@ -23,11 +23,11 @@ const PRESETS = [0.5, 1, 2] as const;
  *
  * The percent is free-form (type any value, Enter; clamped to the zoom range)
  * with a caret for quick presets. Grid and snapping are direct toggles rather
- * than menu items — they're flipped mid-gesture often enough that a two-click
+ * than menu items: they're flipped mid-gesture often enough that a two-click
  * popover was the wrong shape for them. Rulers and re-centre stay in the
  * overflow, where a once-a-session control belongs.
  *
- * Floating surface built from app tokens — no new palette.
+ * Floating surface built from app tokens: no new palette.
  */
 export function CanvasZoomControls() {
   const zoom = useEditorStore((s) => s.viewport.zoom);

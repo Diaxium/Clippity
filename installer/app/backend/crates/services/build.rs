@@ -1,7 +1,7 @@
 //! Compiles the staged Clippity application into the installer binary.
 //!
 //! The installer ships as a single `Clippity Setup.exe` with no sibling
-//! files, so the payload cannot be a Tauri bundle resource — it has to be
+//! files, so the payload cannot be a Tauri bundle resource: it has to be
 //! part of the executable itself. This script looks for the staged files
 //! in `installer/payload/` and generates a small module that either
 //! `include_bytes!`-es them or declares them absent.
@@ -43,7 +43,7 @@ fn main() {
         )
     } else {
         println!(
-            "cargo:warning=no Clippity payload staged in {} — \
+            "cargo:warning=no Clippity payload staged in {}; \
              this installer will not be able to install anything \
              (run `pnpm stage:payload`)",
             payload_dir.display()

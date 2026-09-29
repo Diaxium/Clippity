@@ -4,7 +4,7 @@
  * Per [ADR 0001](../../../../docs/decisions/0001-capture-overlay-dispatch.md),
  * typed IPC wrappers live under `services/tauri/clients/` so every consumer
  * (Providers.tsx, features/settings, future onboarding flow) imports from one
- * place — never from `features/settings/`. The wire-format types live in
+ * place, never from `features/settings/`. The wire-format types live in
  * `@clippity/shared` and are re-exported here; the UI-facing name-template
  * constants stay local to the frontend.
  *
@@ -95,7 +95,7 @@ export function updateSettings(patch: SettingsPatch): Promise<Settings> {
 
 /**
  * Return the platform default captures directory (matches the backend
- * `AppPaths.captures` — typically `<app_data>/captures`). Used by the
+ * `AppPaths.captures`; typically `<app_data>/captures`). Used by the
  * onboarding wizard's Storage step so the user sees a real path as the
  * fallback hint instead of the bare word "default".
  *
@@ -108,7 +108,7 @@ export function getDefaultCapturesDir(): Promise<string> {
 
 /**
  * Restart the whole application. Backs the Performance panel's "Restart
- * now" affordance — the GPU-acceleration browser arg is fixed when the
+ * now" affordance: the GPU-acceleration browser arg is fixed when the
  * webview environment is created, so toggling it only takes hold on a
  * fresh process. The process is replaced, so the returned promise never
  * meaningfully resolves; don't chain work after it.
@@ -121,7 +121,7 @@ export function relaunchApp(): Promise<void> {
 
 /**
  * Swap the running process's icons (system tray + per-window taskbar) to
- * the chosen style. Best-effort on the Rust side — a decode/set failure
+ * the chosen style. Best-effort on the Rust side: a decode/set failure
  * is logged and swallowed there, so callers fire-and-forget like
  * `apply_window_theme`. The built executable icon can't change at
  * runtime; this covers every icon the running process owns.
@@ -137,10 +137,10 @@ export function applyAppIcon(style: AppIconStyle): Promise<void> {
 /**
  * Subscribe to `clippity://settings/changed`. Backend emits the full
  * new `Settings` after every successful `settings_update`. Returns a
- * sync unsubscribe — return it directly from a `useEffect`.
+ * sync unsubscribe; return it directly from a `useEffect`.
  *
  * NB: the local window that initiated the update ALSO receives this
- * event (Tauri's emitter is broadcast). That's fine — the store's
+ * event (Tauri's emitter is broadcast). That's fine: the store's
  * `setSettings` is idempotent.
  */
 export function onSettingsChanged(

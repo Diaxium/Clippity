@@ -11,7 +11,7 @@ import {
   usePresetDraft,
 } from "./usePresetDraft";
 
-/** Narrow a built input to the capture shape, failing loudly otherwise —
+/** Narrow a built input to the capture shape, failing loudly otherwise:
  *  the tests below assert on capture-only fields. */
 function asCapture(r: CaptureRequest | RecorderRequest): CaptureRequest {
   if (isRecordingPreset(r)) throw new Error("expected a capture request");

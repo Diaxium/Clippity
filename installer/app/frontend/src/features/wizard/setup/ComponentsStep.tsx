@@ -70,7 +70,7 @@ function ComponentRow({ component }: { component: Component }) {
   );
 }
 
-/** Setup step 3 — choose which features to install. */
+/** Setup step 3: choose which features to install. */
 export function ComponentsStep() {
   const back = useWizardStore((s) => s.back);
   const goToStep = useWizardStore((s) => s.goToStep);

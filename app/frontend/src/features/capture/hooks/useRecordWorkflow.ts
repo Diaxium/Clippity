@@ -25,7 +25,7 @@ interface UseRecordWorkflow {
 }
 
 /**
- * Record-screen workflow dispatch — the counterpart to
+ * Record-screen workflow dispatch: the counterpart to
  * `useCaptureWorkflow`.
  *
  * Much thinner than that hook, and for a structural reason: a recording
@@ -34,7 +34,7 @@ interface UseRecordWorkflow {
  * after that belongs to `RecorderToastBody`. The backend raises that
  * HUD itself, so there is nothing to arm here.
  *
- * Errors surface as toasts, matching the capture workflow — the Record
+ * Errors surface as toasts, matching the capture workflow: the Record
  * screen has no inline error slot, and the window is usually about to
  * lose focus anyway.
  */
@@ -56,8 +56,8 @@ export function useRecordWorkflow(): UseRecordWorkflow {
     try {
       if (overlayMode) {
         // Region / Window need a rectangle first. Mirror the chosen
-        // format across before opening — the overlay is a different
-        // window and cannot see this screen's selection — then hand off:
+        // format across before opening (the overlay is a different
+        // window and cannot see this screen's selection) then hand off:
         // the overlay's own finalize starts the session and raises the
         // HUD, so there is no status to return here.
         await emitOverlayRecordFormat(format);

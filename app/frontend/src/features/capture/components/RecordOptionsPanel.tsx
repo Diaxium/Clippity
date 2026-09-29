@@ -28,14 +28,14 @@ const FPS_RANGE = {
   gif: { min: 5, max: 30, fallback: 15 },
 } as const;
 
-/** Mirrors `domain::recorder::RESOLUTION_SOURCE` — "encode what was
+/** Mirrors `domain::recorder::RESOLUTION_SOURCE`: "encode what was
  *  captured", and the default. Local rather than imported from Settings
  *  for the same reason `FPS_RANGE` is: this feature does not reach into
  *  another's constants. */
 const RESOLUTION_SOURCE = 0;
 
 /** Encoder-quality steps, mirroring `domain::recorder::RecorderQuality`.
- *  Shorter labels than Settings uses — this row sits in a two-column
+ *  Shorter labels than Settings uses: this row sits in a two-column
  *  grid, not a full-width settings list. */
 const QUALITY_OPTIONS = [
   { value: "efficient", label: "Efficient" },
@@ -48,7 +48,7 @@ const GAIN_MAX_PCT = 200;
 const GAIN_DEFAULT_PCT = 100;
 
 /** Corner labels for the sources summary, matching the rects Settings'
- *  `CORNER_PRESETS` writes. Read-only here — the Record screen
+ *  `CORNER_PRESETS` writes. Read-only here: the Record screen
  *  summarises sources, it does not position them. */
 const CORNERS: readonly { x: number; y: number; label: string }[] = [
   { x: 0.03, y: 0.04, label: "top left" },
@@ -58,7 +58,7 @@ const CORNERS: readonly { x: number; y: number; label: string }[] = [
 ];
 
 /** The heights offered on the Record screen, matching Settings →
- *  Recording. Shrinks only — a region shorter than the chosen height is
+ *  Recording. Shrinks only: a region shorter than the chosen height is
  *  left alone rather than upscaled. */
 const RESOLUTION_OPTIONS = [
   { value: String(RESOLUTION_SOURCE), label: "Same as source" },
@@ -158,7 +158,7 @@ interface RecordOptionsPanelProps {
 }
 
 /**
- * The Record screen's options panel — the counterpart to
+ * The Record screen's options panel: the counterpart to
  * `CaptureOptionsPanel`, and deliberately the same shape: icon-tiled
  * rows, per-mode visibility, a Settings shortcut in the header.
  *
@@ -169,8 +169,8 @@ interface RecordOptionsPanelProps {
  * switched on here would silently not apply to those. Same precedent as
  * the palette swatch count in `CaptureOptionsPanel`.
  *
- * Frame rate is one control backed by two stored values — `videoFps`
- * and `gifFps` — because the usable ranges differ enough that carrying
+ * Frame rate is one control backed by two stored values, `videoFps`
+ * and `gifFps`, because the usable ranges differ enough that carrying
  * one number across a format switch would land outside the legal range
  * (the backend clamps, but the user would see their setting change on
  * its own).
@@ -180,8 +180,8 @@ interface RecordOptionsPanelProps {
  * control could not change the file either way.
  *
  * **Audio levels appear under an input once it is on.** The level is a
- * decision you make before pressing Record, not during — the HUD's
- * sliders exist for the during case — and a row that showed a slider for
+ * decision you make before pressing Record, not during (the HUD's
+ * sliders exist for the during case) and a row that showed a slider for
  * a microphone nobody is recording would be noise.
  *
  * **Sources are summarised here, not edited here.** A full editor would
@@ -192,8 +192,8 @@ interface RecordOptionsPanelProps {
  *
  * Not surfaced at all: bitrate override, keyframe interval and the
  * hardware-encoder switch. Those tune a *machine* rather than a
- * recording — you set them once after looking at a bad file, not before
- * each session — so they stay in Settings → Recording.
+ * recording (you set them once after looking at a bad file, not before
+ * each session) so they stay in Settings → Recording.
  */
 export function RecordOptionsPanel({
   startIndex = 3,
@@ -258,7 +258,7 @@ export function RecordOptionsPanel({
           const isQuality = o.key === "quality";
           const isSources = o.key === "sources";
           // Audio rows carry a level slider instead of their
-          // description once the input is on — the level is the thing
+          // description once the input is on: the level is the thing
           // you set before pressing Record, and the description has
           // already done its job by then.
           const isAudio = o.key === "microphone" || o.key === "systemAudio";
@@ -366,7 +366,7 @@ export function RecordOptionsPanel({
               {isSources && (
                 <ToggleSwitch
                   checked={sourcesOn}
-                  // Nothing to switch on when nothing is configured —
+                  // Nothing to switch on when nothing is configured:
                   // the Add shortcut beside it is the way in.
                   disabled={!ready || sources.length === 0}
                   onChange={toggleSources}
@@ -406,7 +406,7 @@ export function RecordOptionsPanel({
  * Names the corner rather than the pixel rect: the rect is normalized
  * and means nothing until a frame exists, whereas "bottom right" is true
  * whatever the user ends up pointing at. A rect that matches no corner
- * preset — a preset from a future build, a hand-edited settings file —
+ * preset (a preset from a future build, a hand-edited settings file)
  * is described without one rather than guessed at.
  */
 export function summariseSources(

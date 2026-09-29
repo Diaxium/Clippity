@@ -1,7 +1,7 @@
 /**
- * Page backdrop model — pure data transforms, no React, no store.
+ * Page backdrop model: pure data transforms, no React, no store.
  *
- * The second half of Fork F4 ("crop + device frames — the *beautiful
+ * The second half of Fork F4 ("crop + device frames: the *beautiful
  * screenshot* treatment"). {@link ./crop.ts} established the model this builds
  * on: **the seeded page frame *is* the page**, and cropping it *outward* past
  * the bitmap already produces padding. This module is what paints into that
@@ -10,20 +10,20 @@
  * Three ideas, all of them existing primitives rather than new ones:
  *
  * 1. **Padding is derived, never stored.** It's the gap between the page
- *    frame's rect and the capture's rect — exactly what an outward crop
+ *    frame's rect and the capture's rect: exactly what an outward crop
  *    creates. Setting it re-derives the page rect from the capture
  *    ({@link paddedPageRect}); reading it measures the gap back
  *    ({@link pagePadding}). No new field means nothing to migrate in saved
  *    sidecars, nothing that can disagree with the rect, and crop and padding
- *    composing for free — they are the same edit.
+ *    composing for free: they are the same edit.
  * 2. **The backdrop is the page frame's own `fills`.** Both renderers already
- *    paint a frame's fills beneath its children, so every fill type — solid,
- *    all four gradients, image — works as a backdrop with **no renderer
+ *    paint a frame's fills beneath its children, so every fill type (solid,
+ *    all four gradients, image) works as a backdrop with **no renderer
  *    change at all**. {@link BACKDROP_PRESETS} is just a menu of stock paints.
  * 3. **The content treatment is the capture node's `cornerRadius` + a
  *    drop-shadow `Effect`.** Also already rendered by both. The page frame
  *    clips its children, so the shadow is visible exactly when there's padding
- *    for it to fall into — which is the correct behaviour, for free.
+ *    for it to fall into, which is the correct behaviour, for free.
  *
  * So the two-renderer parity invariant (the program's load-bearing constraint)
  * holds **by construction**: this module writes only fields both renderers
@@ -49,7 +49,7 @@ import { findBaseImage } from "./sample";
  *  page that the export then tries to rasterize. */
 export const MAX_PAGE_PADDING = 1000;
 
-/** Default padding applied when a backdrop is picked on an unpadded page —
+/** Default padding applied when a backdrop is picked on an unpadded page:
  *  without it the backdrop would be invisible (the capture covers the page
  *  exactly), which reads as "the preset did nothing". */
 export const DEFAULT_PAGE_PADDING = 48;
@@ -59,7 +59,7 @@ export const DEFAULT_PAGE_PADDING = 48;
 export const DEFAULT_CONTENT_RADIUS = 12;
 
 /**
- * The capture node the page pads around — the scene's base image.
+ * The capture node the page pads around: the scene's base image.
  *
  * Deliberately the *same* helper both renderers use to resolve "which node is
  * the capture" for blur/magnifier sampling ({@link findBaseImage}), so the page
@@ -70,7 +70,7 @@ export const DEFAULT_CONTENT_RADIUS = 12;
  * The rect is the capture's **window** rect ({@link chromeWindowRect}), which
  * equals its own rect until window chrome is applied and then grows upward by
  * the title bar. Padding is measured and written against that one rect, so the
- * bar is inside the page rather than clipped by it — and so padding, crop and
+ * bar is inside the page rather than clipped by it, and so padding, crop and
  * chrome compose instead of fighting over the same edge.
  */
 export function pageContent(
@@ -87,7 +87,7 @@ export function pageContent(
  * frame's edges and the capture's, floored at 0.
  *
  * The minimum (rather than, say, the left gap) is what makes this robust after
- * an *asymmetric* edit — a crop that took more off one side leaves four
+ * an *asymmetric* edit: a crop that took more off one side leaves four
  * different gaps, and the smallest is the only one that is padding on every
  * side. Writing through {@link paddedPageRect} then re-normalizes all four to
  * the same value, so read-after-write is exact and the field converges instead
@@ -124,7 +124,7 @@ export function clampPadding(padding: number): number {
 /**
  * A stock backdrop. `build` returns **fresh** paints on every call because
  * paint ids are drawn from the global counter and must stay unique per
- * document — a shared frozen `Paint` would collide the moment two documents
+ * document: a shared frozen `Paint` would collide the moment two documents
  * (or an undo + re-apply) used the same preset.
  */
 export interface BackdropPreset {
@@ -165,7 +165,7 @@ function linear(from: string, to: string, angle = 135): () => Paint[] {
 
 /**
  * The backdrop menu. "None" clears the fills back to a transparent page, which
- * is the state a freshly-opened capture is already in — so the presets are a
+ * is the state a freshly-opened capture is already in, so the presets are a
  * round trip, not a one-way door.
  *
  * The gradients deliberately avoid a mid-stop: two stops render identically in
@@ -224,7 +224,7 @@ export function backdropPreset(id: string): BackdropPreset | null {
 /**
  * Which preset the page currently shows, or null for a custom/edited backdrop.
  *
- * Matched on the painted colors rather than a stored preset id — the user can
+ * Matched on the painted colors rather than a stored preset id: the user can
  * open any backdrop in the color popover and tweak it, and the panel should
  * then honestly show "no preset selected" instead of keeping a stale highlight
  * on whichever one it started from.
@@ -263,7 +263,7 @@ function fillsKey(fills: readonly Paint[]): string {
 // ---------- content treatment ----------
 
 /**
- * The capture's drop shadow — bigger, softer and lower-contrast than the
+ * The capture's drop shadow: bigger, softer and lower-contrast than the
  * generic `makeShadow()` the Effects panel adds. A screenshot floating on a
  * backdrop needs a *lift*, which reads at a much larger blur than the crisp
  * UI-element shadow that default is tuned for.
@@ -309,7 +309,7 @@ function patch(doc: SceneDoc, id: string, p: Partial<SceneNode>): SceneDoc {
  * page (ADR 0019).
  *
  * A stray sitting outside the padded page therefore stretches the export region
- * past the page frame — and since the backdrop is the page frame's *fill*, that
+ * past the page frame, and since the backdrop is the page frame's *fill*, that
  * overhang exports as an **unpainted band** down the side of the image: a
  * gradient backdrop on three sides and raw transparency on the fourth. It is
  * invisible on canvas (the stray renders fine over nothing) and shows up only
@@ -317,7 +317,7 @@ function patch(doc: SceneDoc, id: string, p: Partial<SceneNode>): SceneDoc {
  *
  * Crop hit the identical trap and answers it identically, so both transforms
  * reuse {@link absorbRootsIntoPage} rather than growing a second mechanism.
- * Paint order survives because the page is the backmost root — its children
+ * Paint order survives because the page is the backmost root: its children
  * already painted before every stray, so appending the strays keeps the
  * sequence. Idempotent: once the page is the sole root, later tweaks change
  * nothing structurally.
@@ -326,13 +326,13 @@ function patch(doc: SceneDoc, id: string, p: Partial<SceneNode>): SceneDoc {
 /**
  * Resize the page frame so the capture sits inside `padding` px of margin.
  *
- * This is the same edit crop makes — patching the page frame's rect — so the
+ * This is the same edit crop makes, patching the page frame's rect, so the
  * two share undo behaviour, non-destructiveness, and the guarantee that the
  * export follows.
  *
  * `clipContent` is forced on for the reason `commitCrop` forces it: a
  * non-clipping page would show, on the live canvas, content that the export
- * region trims — the parity invariant again.
+ * region trims: the parity invariant again.
  */
 export function setPagePadding(
   doc: SceneDoc,
@@ -371,7 +371,7 @@ export function setPageBackdrop(
  * The subtlety this exists for: the title bar grows the capture's window rect
  * upward, and the page frame **clips its children**. Writing the spec alone
  * would therefore hide the bar behind the page's own top edge on any document
- * with less padding than the bar is tall — the ADR 0019/0020 export-region trap
+ * with less padding than the bar is tall: the ADR 0019/0020 export-region trap
  * one more time, and again invisible until you look at the saved file.
  *
  * So the margin is measured against the *old* window, the spec is applied, and

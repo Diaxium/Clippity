@@ -5,8 +5,8 @@
  * probes for a `MediaInfo` and streams the clip over the
  * `clippity-media` scheme, neither of which exists in a plain browser.
  * This entry stands a full annotation surface up without either, so the
- * timeline lane, the selection chrome, the inspector and — most usefully
- * — the live blur and pixelate preview can be reviewed and design
+ * timeline lane, the selection chrome, the inspector and, most usefully,
+ * the live blur and pixelate preview can be reviewed and design
  * changes verified via the dev server.
  *
  * The clip is generated here: a canvas animation captured with
@@ -18,7 +18,7 @@
  * **The stage is substituted, the rest is real.** `VideoStage` builds
  * its `src` from a media token, so this supplies its own `<video>` and
  * mounts the genuine `AnnotationLayer` over it. Everything below the
- * picture — `Timeline`, `AnnotationTrack`, `AnnotationInspector` — is
+ * picture (`Timeline`, `AnnotationTrack`, `AnnotationInspector`) is
  * the shipping component reading the shipping store.
  *
  * Referenced by `studio-smoke.html`. Not part of the production bundle.
@@ -104,8 +104,8 @@ async function recordClip(): Promise<string> {
   recorder.start();
   const started = performance.now();
   // A timer rather than `requestAnimationFrame`: rAF does not fire while
-  // the page is not compositing — a hidden tab, or a preview pane that
-  // is not on screen — and the harness would sit on "Recording…"
+  // the page is not compositing (a hidden tab, or a preview pane that
+  // is not on screen) and the harness would sit on "Recording…"
   // forever with nothing to say about why. Timers still run there, just
   // throttled, so the clip comes out choppy instead of never.
   await new Promise<void>((resolve) => {
@@ -134,7 +134,7 @@ function StudioSmoke() {
   }, []);
 
   // Seed once the store is ready to describe a clip, with one of every
-  // kind already placed — the point of the harness is to see them.
+  // kind already placed: the point of the harness is to see them.
   useEffect(() => {
     if (seeded.current) return;
     seeded.current = true;
@@ -167,7 +167,7 @@ function StudioSmoke() {
   }, []);
 
   // The real hook, driving the real element. It owns position mirroring,
-  // seeks, range looping and the duration correction — hand-rolling any
+  // seeks, range looping and the duration correction: hand-rolling any
   // of that here would make the harness agree with itself rather than
   // with the app, and a seek applied by the timeline would be clobbered
   // by a competing clock.

@@ -25,13 +25,13 @@ const WIDTH = 500;
  * These exist because of a bug that made the surface feel broken and was
  * invisible to every test: the selected band carried its own
  * `pointerdown` with a `stopPropagation`, and the band spans the whole
- * track until something has been trimmed — which is how every clip
+ * track until something has been trimmed, which is how every clip
  * opens. So no press ever reached the track's scrub handler. Clicking
  * the timeline did nothing at all, and the only way to place the
  * playhead was to play and pause at exactly the right instant.
  *
  * jsdom computes no layout, so the track's rect is stubbed. That is the
- * whole reason these can run at all — every position here is derived
+ * whole reason these can run at all: every position here is derived
  * from it.
  */
 function renderTimeline() {
@@ -164,7 +164,7 @@ describe("Timeline gestures", () => {
   });
 
   it("slides from the grab bar without a threshold, and without scrubbing", () => {
-    // The bar means one thing, so it acts at once — and grabbing it must
+    // The bar means one thing, so it acts at once, and grabbing it must
     // move the selection, not the playhead.
     const { container, track, rerender } = renderTimeline();
     act(() => {

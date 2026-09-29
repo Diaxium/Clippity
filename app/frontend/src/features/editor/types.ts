@@ -1,5 +1,5 @@
 /**
- * Editor scene model — a Figma-style scene graph. Pure data, no React.
+ * Editor scene model: a Figma-style scene graph. Pure data, no React.
  *
  * Geometry lives in scene space (CSS px at zoom 1). Every node carries an
  * axis-aligned local frame `{ x, y, width, height }` plus a `rotation`
@@ -58,7 +58,7 @@ export type ToolId =
  *  available; it never changes the scene graph. */
 export type EditorMode = "annotate" | "design";
 
-/** The inspector's three families of properties — how the selection looks,
+/** The inspector's three families of properties: how the selection looks,
  *  where it sits, and a read-only readout of both. Orthogonal to
  *  {@link EditorMode}: a mode decides which sections exist, a tab decides which
  *  of them are on screen. */
@@ -104,7 +104,7 @@ export type PaintType = "solid" | "gradient" | "image";
 
 export type GradientKind = "linear" | "radial" | "freeform" | "mesh";
 
-/** Radial profile: box-fit `ellipse` (the default — fills a non-square shape) or
+/** Radial profile: box-fit `ellipse` (the default; fills a non-square shape) or
  *  a true `circle`. The two renderers must agree on this (see Workstream G1). */
 export type GradientShape = "circle" | "ellipse";
 
@@ -137,7 +137,7 @@ export interface GradientStop {
 
 /** A freeform-gradient color point: a localized color source placed at `point`
  *  (normalized 0..1 in the node box) that blends with nearby points. No native
- *  primitive renders this — it's rasterized (IDW blend) by both renderers via
+ *  primitive renders this: it's rasterized (IDW blend) by both renderers via
  *  `lib/freeform.ts`. See Workstream G3. */
 export interface FreeformStop {
   id: string;
@@ -165,13 +165,13 @@ export interface MeshPoint {
   /** 0..1. */
   opacity: number;
   /** Normalized (0..1 in the node box) lattice position. Optional for
-   *  back-compat — absent means this index's slot on the uniform grid. Dragged
+   *  back-compat: absent means this index's slot on the uniform grid. Dragged
    *  on-canvas to warp the mesh (Workstream G4b). */
   point?: Vec2;
 }
 
 /** A mesh gradient: a `rows`×`cols` grid of colored control points, bilinearly
- *  interpolated. No native primitive renders this — it's rasterized like
+ *  interpolated. No native primitive renders this: it's rasterized like
  *  freeform (ADR 0013/0014). Points carry positions (default: a uniform grid)
  *  that can be dragged to warp the gradient; bicubic smoothness is deferred. */
 export interface MeshSpec {
@@ -182,7 +182,7 @@ export interface MeshSpec {
 }
 
 /** Uniform lattice position for grid slot (row `j`, col `i`) of a `rows`×`cols`
- *  mesh — evenly spread across the box, centered when an axis has one line. */
+ *  mesh: evenly spread across the box, centered when an axis has one line. */
 export function meshSlotPoint(
   rows: number,
   cols: number,
@@ -202,7 +202,7 @@ export interface GradientPaint {
   angle: number;
   stops: GradientStop[];
   /** Optional normalized (0..1 in the node box) geometry handles. All optional
-   *  for back-compat — absent fields fall back to `angle` (linear) / centered
+   *  for back-compat: absent fields fall back to `angle` (linear) / centered
    *  ellipse (radial). Resolved by `gradientGeometry`; edited via the on-canvas
    *  handles (Workstream G2). */
   start?: Vec2; // linear gradient start
@@ -230,7 +230,7 @@ export interface Paint {
   opacity: number;
   /** `#rrggbb`. Used by solid paints; a placeholder tint otherwise. */
   color: string;
-  /** Data URI — present on image paints. */
+  /** Data URI: present on image paints. */
   src?: string;
   /** Present on gradient paints. */
   gradient?: GradientPaint;
@@ -262,7 +262,7 @@ export interface Effect {
   visible: boolean;
   /** Shadow color (ignored by `layer-blur`). */
   color: string;
-  /** 0..1 — shadow alpha. */
+  /** 0..1: shadow alpha. */
   opacity: number;
   offsetX: number;
   offsetY: number;
@@ -284,7 +284,7 @@ export type NodeType =
   | "star"
   | "path";
 
-/** A "sample" region re-displays the capture's base image, transformed — backs
+/** A "sample" region re-displays the capture's base image, transformed: backs
  *  the Blur and Magnifier annotation tools. The region is an ordinary box
  *  (rectangle/ellipse); only the renderers special-case `sample`. */
 export type SampleMode = "blur" | "pixelate" | "magnify";
@@ -293,13 +293,13 @@ export interface SampleSpec {
   mode: SampleMode;
   /** blur radius (px) · pixelate cell (px) · magnify zoom (×), by mode. */
   amount: number;
-  /** Whether the sample renders. Absent = visible; `false` hides it — backs the
+  /** Whether the sample renders. Absent = visible; `false` hides it: backs the
    *  per-effect eye toggle that surfaces the sample in Design mode's Effects
    *  panel (see ADR 0015). */
   enabled?: boolean;
 }
 
-/** Default `amount` per sample mode — the seed for a freshly-drawn region and the
+/** Default `amount` per sample mode: the seed for a freshly-drawn region and the
  *  reset value when the mode is switched in the Effects panel. */
 export const SAMPLE_DEFAULT_AMOUNT: Record<SampleMode, number> = {
   blur: 8,
@@ -309,7 +309,7 @@ export const SAMPLE_DEFAULT_AMOUNT: Record<SampleMode, number> = {
 
 /** A numbered step badge (Snagit-style). The badge is an ordinary ellipse; only
  *  the renderers special-case `step` to draw the number centered on it. New
- *  badges auto-increment — `editorStore.addNode` assigns the next value. */
+ *  badges auto-increment: `editorStore.addNode` assigns the next value. */
 export interface StepSpec {
   number: number;
 }
@@ -318,7 +318,7 @@ export interface StepSpec {
  *  splice a pointer **tail** into its outline (one integrated path, so fill and
  *  stroke flow around the tail). The tail aims out from the body center at
  *  `angle` (degrees, 0 = up, clockwise) and its tip extends `length` px past the
- *  body edge — see `calloutOutline`. Both are editable from the panel or by
+ *  body edge; see `calloutOutline`. Both are editable from the panel or by
  *  dragging the tip handle on the canvas (`calloutTailFromLocal`). */
 export interface CalloutSpec {
   angle: number;
@@ -330,25 +330,25 @@ export interface CalloutSpec {
  * draw the eye to it (Snagit's "spotlight & magnify", minus the zoom). The
  * region is an ordinary box shape (rectangle/ellipse); only the renderers
  * special-case `spotlight` to paint a **page-covering scrim with the node's
- * shape punched out** — the one annotation whose effect reaches past its own
+ * shape punched out**: the one annotation whose effect reaches past its own
  * frame, so like window chrome it has no existing primitive and is built from a
  * shared geometry module (`lib/spotlight.ts`) that hands both renderers one
  * even-odd path to fill.
  *
  * The scrim covers the *page frame's* rect, so applying a spotlight seals the
- * page (absorbs stray roots) exactly as crop/backdrop/chrome do — otherwise a
+ * page (absorbs stray roots) exactly as crop/backdrop/chrome do, otherwise a
  * stray outside the page would export as an undimmed band (the ADR 0019/0020
  * export-region trap). See ADR 0023.
  */
 export interface SpotlightSpec {
-  /** Scrim color `#rrggbb` — near-black dims a light capture, near-white a dark
+  /** Scrim color `#rrggbb`: near-black dims a light capture, near-white a dark
    *  one. */
   color: string;
   /** Scrim opacity 0..1: how strongly everything outside the region is dimmed. */
   opacity: number;
 }
 
-/** Scrim seed for a freshly-drawn spotlight — a near-black dim at 60%, which
+/** Scrim seed for a freshly-drawn spotlight: a near-black dim at 60%, which
  *  reads on the light screenshots that make up most captures. `lib/spotlight.ts`
  *  offers a light variant for dark ones. */
 export const DEFAULT_SPOTLIGHT_COLOR = "#0b0e14";
@@ -360,7 +360,7 @@ export type MeasureCap = "tick" | "arrow";
 
 /**
  * A measurement / dimension line (Fork A-F3). The mark is an ordinary **line**
- * node, so its two endpoints — and therefore the measured distance — are the
+ * node, so its two endpoints, and therefore the measured distance, are the
  * line's own endpoints, editable with the endpoint handles, the marquee, and
  * nudge that every line already has. Only the renderers special-case `measure`,
  * replacing the plain shaft with **caps + a length label** computed by the
@@ -383,7 +383,7 @@ export interface MeasureSpec {
   unit: string;
 }
 
-/** Seeds for a freshly-drawn dimension line — capture pixels, 1:1, with the
+/** Seeds for a freshly-drawn dimension line: capture pixels, 1:1, with the
  *  drafting tick caps. Kept beside the tool's stroke seed in `defaultStrokes`. */
 export const DEFAULT_MEASURE_CAPS: MeasureCap = "tick";
 export const DEFAULT_MEASURE_UNIT = "px";
@@ -406,14 +406,14 @@ export type StampKind =
   | "idea";
 
 /**
- * A stamp (Fork A-F4) — one of a bundled set of icon marks. The carrier is an
+ * A stamp (Fork A-F4): one of a bundled set of icon marks. The carrier is an
  * ordinary **rectangle**, whose box the glyph is fit into; only the renderers
  * special-case `stamp`, replacing the box's own shape with the two path strings
  * `lib/stamps.ts` computes (the ADR 0022 pattern, in the ADR 0023 form that
  * shares the *path* rather than the numbers).
  *
  * The spec holds only *which* icon: the color is the node's `fills`, the halo
- * its `strokes`, and the size its frame — all existing controls, so a stamp
+ * its `strokes`, and the size its frame: all existing controls, so a stamp
  * needs no panel beyond the picker.
  */
 export interface StampSpec {
@@ -428,7 +428,7 @@ export const DEFAULT_STAMP_KIND: StampKind = "check";
 export type ChromeStyle = "macos" | "windows";
 
 /**
- * Window chrome drawn around the capture — a macOS or Windows title bar with
+ * Window chrome drawn around the capture: a macOS or Windows title bar with
  * its buttons. The last slice of Fork F4 and the one part of it with **no
  * existing primitive**: both renderers carry a branch for it, the way `step`
  * and `callout` already do.
@@ -448,7 +448,7 @@ export interface ChromeSpec {
   title: string;
 }
 
-/** Separable blend modes — the same string is valid for both CSS
+/** Separable blend modes: the same string is valid for both CSS
  *  `mix-blend-mode` (SVG) and Canvas2D `globalCompositeOperation`. See ADR 0011. */
 export type BlendMode =
   | "normal"
@@ -476,7 +476,7 @@ interface NodeBase {
   height: number;
   /** Degrees, clockwise, about the frame center. Always 0 for line-like nodes. */
   rotation: number;
-  /** 0..1 — multiplies the whole node + its children. */
+  /** 0..1: multiplies the whole node + its children. */
   opacity: number;
   /** When true, resize keeps the node's width:height ratio without holding Shift. */
   lockAspect: boolean;
@@ -486,26 +486,26 @@ interface NodeBase {
   fills: Paint[];
   strokes: Stroke[];
   effects: Effect[];
-  /** Set on Blur/Magnifier regions — see {@link SampleSpec}. */
+  /** Set on Blur/Magnifier regions; see {@link SampleSpec}. */
   sample?: SampleSpec | null;
   /** Compositing blend with the backdrop; absent = normal. Used by Highlighter. */
   blendMode?: BlendMode;
-  /** Set on numbered step badges — see {@link StepSpec}. The renderers draw the
+  /** Set on numbered step badges; see {@link StepSpec}. The renderers draw the
    *  number centered on the node; `addNode` assigns the next sequential value. */
   step?: StepSpec | null;
-  /** Set on speech-bubble callouts — see {@link CalloutSpec}. The renderers
+  /** Set on speech-bubble callouts; see {@link CalloutSpec}. The renderers
    *  replace the box outline with a bubble + pointer tail. */
   callout?: CalloutSpec | null;
-  /** Set on a spotlight region — see {@link SpotlightSpec}. The renderers dim
+  /** Set on a spotlight region; see {@link SpotlightSpec}. The renderers dim
    *  the whole page and punch this node's shape out of the scrim. */
   spotlight?: SpotlightSpec | null;
-  /** Set on a dimension line — see {@link MeasureSpec}. The renderers replace
+  /** Set on a dimension line; see {@link MeasureSpec}. The renderers replace
    *  the plain shaft with end caps and a label reading the line's length. */
   measure?: MeasureSpec | null;
-  /** Set on an icon stamp — see {@link StampSpec}. The renderers replace the
+  /** Set on an icon stamp; see {@link StampSpec}. The renderers replace the
    *  box's own shape with the glyph fit into it. */
   stamp?: StampSpec | null;
-  /** Set on the capture to frame it in a window title bar — see
+  /** Set on the capture to frame it in a window title bar; see
    *  {@link ChromeSpec}. The renderers grow the node's outline upward by the
    *  bar and draw the bar into it. */
   chrome?: ChromeSpec | null;
@@ -673,7 +673,7 @@ export function isBoxLike(
   return !isLineLike(node);
 }
 
-/** Node types whose renderers paint a `sample` (blur/pixelate/magnify) — every
+/** Node types whose renderers paint a `sample` (blur/pixelate/magnify): every
  *  area shape. Frames (containers), text, and line-like nodes have no fillable
  *  area to obscure, so the Effects panel doesn't offer a sample for them. Kept in
  *  sync with the renderers' sample branches (see ADR 0015). */
@@ -743,7 +743,7 @@ export function defaultFills(tool: ToolId): Paint[] {
       // Light bubble body so captions read against it; accent border (below).
       return [makeSolidPaint("#ffffff", 1)];
     case "stamp":
-      // The glyph's ink — a stamp's fills paint the icon, not a box behind it.
+      // The glyph's ink: a stamp's fills paint the icon, not a box behind it.
       return [makeSolidPaint(ACCENT_RED, 1)];
     case "rectangle":
     case "ellipse":
@@ -786,7 +786,7 @@ export function defaultStrokes(tool: ToolId): Stroke[] {
       // Accent border that flows around the body + tail outline.
       return [makeStroke(ACCENT_RED, 2)];
     case "measure":
-      // The dimension's whole appearance — shaft, caps, and the label pill —
+      // The dimension's whole appearance (shaft, caps, and the label pill)
       // is drawn from this one stroke, so recoloring the mark is one control.
       return [makeStroke(ACCENT_RED, 2)];
     case "stamp":
@@ -893,7 +893,7 @@ export function makeGradientPaint(from = "#9747FF", to = "#0D99FF"): Paint {
   };
 }
 
-/** Default color points for a fresh freeform gradient — three sources spread
+/** Default color points for a fresh freeform gradient: three sources spread
  *  across the box so the blend reads immediately. */
 export function makeFreeformPoints(): FreeformStop[] {
   return [
@@ -918,7 +918,7 @@ export function makeFreeformPoints(): FreeformStop[] {
   ];
 }
 
-/** A default mesh gradient — a 2×2 grid of corner colors (a smooth four-corner
+/** A default mesh gradient: a 2×2 grid of corner colors (a smooth four-corner
  *  blend), expandable via {@link resizeMesh}. */
 export function makeMesh(): MeshSpec {
   const colors = ["#9747ff", "#0d99ff", "#ff5c93", "#ffd166"]; // TL, TR, BL, BR
@@ -966,7 +966,7 @@ export function resizeMesh(
   return { rows: r, cols: c, points };
 }
 
-/** A default freeform line — three stops flowing across the box. */
+/** A default freeform line: three stops flowing across the box. */
 export function makeFreeformLine(): FreeformLine {
   return {
     id: nextNodeId("ln"),
@@ -1331,7 +1331,7 @@ export function createNodeForTool(
     }
     case "spotlight": {
       // A rectangular clear region; the renderers dim the rest of the page
-      // around it. Fill-less and stroke-less — the scrim is the whole mark.
+      // around it. Fill-less and stroke-less: the scrim is the whole mark.
       const n = makeRectangle(rect, {
         name: "Spotlight",
         fills: [],
@@ -1344,7 +1344,7 @@ export function createNodeForTool(
       return n;
     }
     case "measure": {
-      // A dimension is a *line* — its endpoints are the two points being
+      // A dimension is a *line*: its endpoints are the two points being
       // measured, so it inherits endpoint handles, 45°-constrained drawing and
       // nudge from the line node rather than re-inventing them.
       const n = makeLine(rect, {

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.3.2",
   "type": "module",
-  "description": "Clippity Setup wizard — install, modify, update, repair, and uninstall UI.",
+  "description": "Clippity Setup wizard: install, modify, update, repair, and uninstall UI.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

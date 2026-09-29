@@ -4,7 +4,7 @@ import { AppWindow, Crop, Maximize, type LucideIcon } from "lucide-react";
  * Display metadata (label + icon) for the capture types a preset can
  * target. Shared by the presets manager (`features/presets`) and the
  * tray's Presets section (`features/tray`) so a preset reads the same in
- * both — `custom` is intentionally absent (not a valid preset target).
+ * both: `custom` is intentionally absent (not a valid preset target).
  */
 export interface CaptureTypeMeta {
   label: string;

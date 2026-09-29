@@ -93,7 +93,7 @@ pub fn resolve_plan(options: InstallOptions, selected: Vec<String>) -> InstallPl
 /// Modify step opens on what is actually installed.
 ///
 /// `None` when nothing is installed (or the manifest is unreadable), which
-/// leaves the wizard on its own defaults — the right answer for a fresh
+/// leaves the wizard on its own defaults: the right answer for a fresh
 /// install, and the only safe one when we cannot read what is there.
 #[tauri::command]
 pub fn get_installed_configuration(state: State<'_, AppState>) -> Option<InstalledConfiguration> {
@@ -106,7 +106,7 @@ pub fn get_installed_configuration(state: State<'_, AppState>) -> Option<Install
     })
 }
 
-/// What an existing installation chose — the Modify step's starting point.
+/// What an existing installation chose: the Modify step's starting point.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstalledConfiguration {
@@ -170,7 +170,7 @@ pub fn plan_requires_elevation(plan: InstallPlan) -> bool {
 /// stays on the Review step so the user can pick another destination.
 #[tauri::command]
 pub fn elevate_and_install(app: AppHandle, plan: InstallPlan) -> InstallerResult<()> {
-    // Refuse if an operation is already running here — relaunching mid
+    // Refuse if an operation is already running here: relaunching mid
     // install would leave two processes writing the same directory.
     {
         let state = app.state::<AppState>();
@@ -210,7 +210,7 @@ pub fn get_launch_route(state: State<'_, AppState>) -> Option<LaunchRoute> {
 /// a protected root such as `C:\Program Files`) that this process lacks.
 ///
 /// The Review-removal step calls this to decide between removing in place
-/// and relaunching elevated via [`elevate_and_uninstall`] — the removal
+/// and relaunching elevated via [`elevate_and_uninstall`]: the removal
 /// analogue of [`plan_requires_elevation`]. Answers `false` when this
 /// process is already elevated, or when there is no manifest to reason
 /// about (the best-effort path removes only user-writable locations).
@@ -248,7 +248,7 @@ pub fn elevate_and_uninstall(app: AppHandle, selection: RemovalSelection) -> Ins
 }
 
 /// The removal selection this process was launched to resume after
-/// elevation, if any. Consumed on first read — the elevated copy skips the
+/// elevation, if any. Consumed on first read: the elevated copy skips the
 /// removal wizard and goes straight to Uninstalling.
 #[tauri::command]
 pub fn take_pending_removal(state: State<'_, AppState>) -> Option<RemovalSelection> {

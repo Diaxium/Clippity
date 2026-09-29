@@ -1,10 +1,10 @@
-# 0018 — Export format is carried by the data URI; the backend is a byte-faithful sink
+# 0018: Export format is carried by the data URI; the backend is a byte-faithful sink
 
 - **Status:** Accepted (implemented)
 - **Date:** 2026-07-20
 - **Area:** `app/backend/src/{domain/editor.rs,services/{capture_io,editor_service}.rs}`,
   `app/frontend/src/features/editor/{lib/render.ts,hooks/useEditorExport.ts,components/panels/ExportSection.tsx}`
-- **Relates to:** [0017 — editable save + grouping](0017-editor-editable-save-and-grouping.md)
+- **Relates to:** [0017: editable save + grouping](0017-editor-editable-save-and-grouping.md)
   (the same `editor_save` / `editor_load` surface), editor roadmap Phase 0,
   [Sharing P0](../roadmaps/sharing-export.md)
 
@@ -12,7 +12,7 @@
 
 The editor could only export PNG. Both the editor roadmap (Phase 0) and the
 sharing roadmap (P0) asked for JPG/WebP with a quality control, and both noted
-it was *the same backend change — build once*.
+it was *the same backend change, build once*.
 
 The frontend already had the encoder: `canvas.toDataURL(mime, quality)` produces
 PNG, JPEG and WebP. The backend did not. `domain::editor::extract_base64_png`
@@ -32,7 +32,7 @@ base64 payload; `ImageFormat::extension()` names the file on disk. There is no
 `format` IPC parameter, because a payload that disagreed with its own declared
 MIME would be unrepresentable-by-construction otherwise.
 
-The accepted set is deliberately narrow — exactly PNG / JPEG / WebP, the three
+The accepted set is deliberately narrow: exactly PNG / JPEG / WebP, the three
 a browser canvas is guaranteed to encode. `image/gif` is *rejected* even though
 the library can hold GIFs, because the editor cannot produce one and writing
 `.gif` over non-GIF bytes would mislabel the file.
@@ -46,7 +46,7 @@ one-line change to `ImageFormat`, not a new Rust encode path.
 channel, so a scene with transparent regions would otherwise come back with
 those regions **black**. `flattenScene` fills the bitmap with `#ffffff` before
 drawing when `formatIsOpaque(format)`. This lives in the frontend because that's
-where the pixels exist — consistent with the program's rule that the backend
+where the pixels exist, consistent with the program's rule that the backend
 sees only baked pixels.
 
 **4. Clipboard copy stays PNG unconditionally.** The async clipboard API only
@@ -64,14 +64,14 @@ only the editor passes a non-PNG extension today.
   `data:image/png;base64,` for *every* capture, so a `.jpg`/`.webp` file in the
   library was announced as PNG. Fixed via `editor::mime_for_path`, which also
   covers GIF/BMP on the read side (a wider set than the write side, on purpose)
-  and falls back to PNG for unknown extensions — matching `library::kind_of`'s
+  and falls back to PNG for unknown extensions, matching `library::kind_of`'s
   existing "unknown means image" precedent.
 - **The library needed no changes.** Its scan lists any file and `kind_of`
   already mapped `jpg`/`jpeg`/`webp` to `CaptureKind::Image`; `thumbnail`
   decodes by extension and re-encodes to PNG regardless of the source format.
 - **This path does not extend to SVG/PDF.** Neither has a `toDataURL` encoder,
   so the still-open vector export (Phase 3) is renderer work and will need its
-  own mechanism — it does not simply add two more `ImageFormat` variants.
+  own mechanism: it does not simply add two more `ImageFormat` variants.
 - **Format/quality are panel-local state**, like `scale` already was. The top
   bar, context menu and `Mod+E` therefore still export PNG. Promoting the
   choice into the scene document is noted as an open question in the roadmap.
@@ -87,12 +87,12 @@ only the editor passes a non-PNG extension today.
 - **Encode in Rust from raw pixels.** Rejected for the editor: the canvas has
   already rasterized the scene, so shipping RGBA to the backend to re-encode
   would double the work and the memory. (This *is* the right answer for capture
-  pipelines, which hold an `RgbaImage` and never touch a canvas — that's why
+  pipelines, which hold an `RgbaImage` and never touch a canvas; that's why
   `save_capture_image` takes an extension rather than a data URI.)
 - **Matte JPEG in the backend.** Rejected: it would force a decode →
   composite → re-encode round trip purely to undo a decision the renderer could
   have made for free, and it would violate decision 2.
-- **A checkerboard or user-chosen matte colour.** Deferred — white is what a
+- **A checkerboard or user-chosen matte colour.** Deferred: white is what a
   document/README/chat background almost always is. Worth revisiting alongside
   the "beautiful screenshot" backdrop work (Fork F4), which introduces a real
   page-background concept the matte should then follow.

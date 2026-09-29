@@ -23,7 +23,7 @@ const MODE_LABEL: Record<RecordingMode, string> = {
  * (frame count + **Stop & Stitch** / **Discard**).
  *
  * The preview sits in a fixed-height box so the window keeps a constant
- * size — the controls bar stays pinned and is never shoved around by the
+ * size: the controls bar stays pinned and is never shoved around by the
  * growing stitch above it. Tick / preview / auto-stop all arrive via
  * `recording/*` events; the backend tears the toast down on stop (so a
  * worker can't be orphaned) and the HUD auto-commits on
@@ -56,7 +56,7 @@ export function RecordingToastBody({
   useEffect(() => {
     const offTick = onRecordingTick((e) => setFrames(e.frames));
     const offPreview = onRecordingPreview((e) => setPreview(e.dataUri));
-    // Reversing scroll direction is the natural "I'm done" signal — the
+    // Reversing scroll direction is the natural "I'm done" signal: the
     // worker emits this and we commit, exactly as Stop & Stitch would.
     const offAutoStop = onRecordingAutoStop(() => stop(false));
     return () => {
@@ -91,7 +91,7 @@ export function RecordingToastBody({
         </div>
       </div>
 
-      {/* Controls bar — a separate floating card below the preview, fixed
+      {/* Controls bar: a separate floating card below the preview, fixed
           in place and unaffected by the live preview above it. */}
       <div className="float-card flex items-center justify-between gap-2 rounded-[12px] border border-[color:var(--hairline)] px-3.5 py-2.5 shadow-[var(--shadow-modal)] backdrop-blur-md">
         <span className="text-[11.5px] text-[var(--color-slate)]">

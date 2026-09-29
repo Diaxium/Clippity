@@ -7,7 +7,7 @@ const listeners: Record<string, (payload: never) => void> = {};
 vi.mock("@services/tauri/clients/overlay", () => ({
   getDesktopSnapshotId: () => getDesktopSnapshotIdMock(),
   // The real one goes through Tauri's `convertFileSrc`; the shape is what
-  // matters here — an id in the path, so each session gets its own URL.
+  // matters here: an id in the path, so each session gets its own URL.
   desktopSnapshotUrl: (id: number) =>
     `http://clippity-snapshot.localhost/${id}`,
   onOverlayOpening: (cb: (p: never) => void) => {
@@ -31,7 +31,7 @@ const fetchMock = vi.fn();
 const createImageBitmapMock = vi.fn();
 
 /**
- * A 2D context stub — the hook only draws into it and hands it on.
+ * A 2D context stub: the hook only draws into it and hands it on.
  *
  * Intercepts `createElement("canvas")` only and delegates every other
  * tag to the real DOM: Testing Library builds its own container through
@@ -86,7 +86,7 @@ describe("useOverlaySnapshot", () => {
         "http://clippity-snapshot.localhost/7"
       )
     );
-    // The command answers with an id — the pixels come over the scheme.
+    // The command answers with an id: the pixels come over the scheme.
     // This is the whole point of the transport: an 8 MiB desktop must
     // never be serialized into a command result.
     expect(fetchMock).toHaveBeenCalledWith(
@@ -116,7 +116,7 @@ describe("useOverlaySnapshot", () => {
     renderHook(() => useOverlaySnapshot());
     await waitFor(() => expect(createImageBitmapMock).toHaveBeenCalledTimes(1));
 
-    // A fresh overlay session — different desktop, different URL, so the
+    // A fresh overlay session: different desktop, different URL, so the
     // webview cache can't serve the previous session's pixels.
     getDesktopSnapshotIdMock.mockResolvedValue(8);
     await act(async () => {

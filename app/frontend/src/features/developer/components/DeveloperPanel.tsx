@@ -12,7 +12,7 @@
  * - **Behind developer mode**: the developer tools, the live
  *   instrumentation, the feature flags, the cache-clearing, and safe
  *   mode. These reveal destructive actions and can record IPC metadata,
- *   so they ship off and — by default — disarm on the next restart.
+ *   so they ship off and, by default, disarm on the next restart.
  */
 
 import { useCallback, useState } from "react";
@@ -100,7 +100,7 @@ export function DeveloperPanel({
       <SectionCard title="Developer mode">
         <Row
           label="Developer mode"
-          description="Reveals the tools, live instrumentation and destructive actions below. Off by default — some of these record command metadata."
+          description="Reveals the tools, live instrumentation and destructive actions below. Off by default, since some of these record command metadata."
           control={
             <ToggleSwitch
               checked={value.enabled}
@@ -203,7 +203,7 @@ export function DeveloperPanel({
           </ActionRow>
           <ActionRow
             label="Restart in safe mode"
-            description="Restarts with hardware acceleration, window effects and the global hotkey off — the state to boot into when one of them is why Clippity misbehaves. Lasts one launch."
+            description="Restarts with hardware acceleration, window effects and the global hotkey off: the state to boot into when one of them is why Clippity misbehaves. Lasts one launch."
           >
             <DangerButton
               label="Restart"
@@ -242,7 +242,7 @@ export function DeveloperPanel({
         />
         <Row
           label="Frontend log level"
-          description="How much the interface records — and mirrors into the same log file, so both halves share one timeline."
+          description="How much the interface records, and mirrors into the same log file, so both halves share one timeline."
           control={
             <Select
               value={value.frontendLog}
@@ -262,7 +262,7 @@ export function DeveloperPanel({
           label="Write logs to disk"
           description={
             info?.logFile
-              ? `Rotating files under the logs folder — currently ${formatBytes(
+              ? `Rotating files under the logs folder, currently ${formatBytes(
                   info.logBytes
                 )}.`
               : "Rotating files under the logs folder. Off means a bug report has no session attached."
@@ -312,7 +312,7 @@ export function DeveloperPanel({
             onConfirm={() => {
               void clearLogs().then(
                 (freed) => {
-                  setNote(`Cleared the logs — freed ${formatBytes(freed)}.`);
+                  setNote(`Cleared the logs and freed ${formatBytes(freed)}.`);
                   refresh();
                 },
                 (err: unknown) =>

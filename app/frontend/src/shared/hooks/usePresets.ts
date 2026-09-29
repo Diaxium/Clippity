@@ -1,9 +1,9 @@
 /**
  * Shared read model for capture presets. Pulls the list once on mount
  * and mirrors `clippity://presets/changed` (the backend emits the full
- * list on every create / update / delete). Two consumers — the dashboard
+ * list on every create / update / delete). Two consumers: the dashboard
  * manager (`features/presets`) and the tray's Presets section
- * (`features/tray`) — so it lives in `shared/` per FEATURE_RULES.
+ * (`features/tray`), so it lives in `shared/` per FEATURE_RULES.
  */
 
 import { useEffect, useState } from "react";
@@ -38,7 +38,7 @@ export function usePresets(): { presets: CapturePreset[]; loading: boolean } {
     };
   }, []);
 
-  // Live updates — the backend emits the full list, so just replace.
+  // Live updates: the backend emits the full list, so just replace.
   useEffect(() => onPresetsChanged((p) => setPresets(p)), []);
 
   return { presets, loading };

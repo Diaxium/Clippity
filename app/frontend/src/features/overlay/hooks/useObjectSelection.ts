@@ -16,12 +16,12 @@ interface ObjectPointerHandlers {
  * element under the cursor (smallest containing box, so nested
  * detections stay reachable); a left click captures it.
  *
- * Mirrors `useWindowSelection`'s shape — the hit-test reads `objects`
+ * Mirrors `useWindowSelection`'s shape: the hit-test reads `objects`
  * via `getState()` so the ~120 Hz pointer-move path doesn't
  * re-subscribe, and only `hoveredObjectIndex` changes flow back out.
  * The detection rect is ALREADY physical px (virtual-desktop origin),
- * so it goes to `finishRegionCapture` with NO devicePixelRatio scaling
- * — a detected object is just a pre-snapped region.
+ * so it goes to `finishRegionCapture` with NO devicePixelRatio scaling:
+ * a detected object is just a pre-snapped region.
  */
 export function useObjectSelection(): ObjectPointerHandlers {
   const setHoveredObject = useOverlayStore((s) => s.setHoveredObject);
@@ -44,7 +44,7 @@ export function useObjectSelection(): ObjectPointerHandlers {
     const s = useOverlayStore.getState();
     const dpr = window.devicePixelRatio || 1;
     // Re-hit-test on the actual down position rather than trusting the
-    // last hover — a click can land a few px off the last move event.
+    // last hover: a click can land a few px off the last move event.
     const hit = objectIndexAtPoint(
       s.objects,
       { x: e.clientX, y: e.clientY },

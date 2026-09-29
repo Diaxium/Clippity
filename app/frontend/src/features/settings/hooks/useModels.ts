@@ -23,7 +23,7 @@ const log = createLogger("settings");
  * (the emit order isn't guaranteed across threads), so the patch also
  * flips the row's phase to `downloading`.
  *
- * `null` until the first fetch resolves — the panel renders a skeleton.
+ * `null` until the first fetch resolves: the panel renders a skeleton.
  */
 export function useModels(): ModelInfo[] | null {
   const [models, setModels] = useState<ModelInfo[] | null>(null);
@@ -74,14 +74,14 @@ export function useModels(): ModelInfo[] | null {
  * page, keyed by model id.
  *
  * Fires the best-effort network check ({@link modelsCheckUpdates}) once on
- * mount — the user asked for this to run automatically when the page opens.
+ * mount: the user asked for this to run automatically when the page opens.
  * A failed or offline check resolves to an empty map, so the page silently
  * falls back to its offline registry status; reachable GitHub-hosted models
  * get a verdict. Re-checks whenever a `models/changed` transition lands
  * (e.g. right after a self-update completes) so the "newer release" badge
  * clears without a manual refresh.
  *
- * `null` until the first check settles — lets the panel distinguish
+ * `null` until the first check settles: lets the panel distinguish
  * "checking…" from "checked, nothing to report".
  */
 export function useReleaseChecks(): Record<string, ReleaseCheck> | null {

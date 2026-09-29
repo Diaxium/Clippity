@@ -24,12 +24,12 @@ afterEach(() => {
   });
 });
 
-describe("ObjectHighlights — hovered label", () => {
+describe("ObjectHighlights: hovered label", () => {
   it("shows the full 'name · confidence' text without truncation", () => {
     showHovered({ x: 40, y: 600, width: 48, height: 48 }); // small box
     render(<ObjectHighlights />);
     const label = screen.getByText("UI element · 95%");
-    // No width clamp / ellipsis — the whole label must read even when the
+    // No width clamp / ellipsis: the whole label must read even when the
     // detected element is tiny. (The bug: max-w-full + truncate.)
     expect(label.className).toContain("whitespace-nowrap");
     expect(label.className).not.toContain("truncate");

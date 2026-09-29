@@ -6,8 +6,8 @@
 //! matching what the screenshot actually contains more closely than raw
 //! rectangle overlap.
 //!
-//! [`dominant_window`] returns the whole winning entry — title *and*
-//! owning app — rather than just the title it originally answered with,
+//! [`dominant_window`] returns the whole winning entry, title *and*
+//! owning app, rather than just the title it originally answered with,
 //! because `domain::metadata` records both and they must describe the
 //! same window. Handing back one struct is what makes picking the title
 //! from one window and the app from another unrepresentable.
@@ -37,7 +37,7 @@ pub struct WindowRect<'a> {
 
 /// A display's bounds in the same coordinate space as the capture
 /// regions it is matched against. `name` is whatever the caller wants
-/// recorded — `domain::metadata::monitor_label` has already formatted it
+/// recorded: `domain::metadata::monitor_label` has already formatted it
 /// by the time it reaches here.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct MonitorRect<'a> {
@@ -85,7 +85,7 @@ impl RectI {
 
 /// The window contributing the most *visible* pixels to the capture,
 /// or `None` when nothing overlaps it. `windows` must be front-to-back
-/// (topmost first) — each entry occludes every entry after it.
+/// (topmost first): each entry occludes every entry after it.
 pub fn dominant_window<'a>(
     windows: &[WindowRect<'a>],
     capture_regions: &[Rect],
@@ -127,7 +127,7 @@ pub fn dominant_window<'a>(
 /// virtual desktop rather than stacking on it, so every pixel of a
 /// monitor rect is its own and simple intersection area is the whole
 /// answer. A selection dragged across the seam between two screens
-/// records the one it mostly sits on — the honest answer for a single
+/// records the one it mostly sits on: the honest answer for a single
 /// field, and the same "largest visible contribution" rule the window
 /// side uses, so the two never disagree about what "dominant" means.
 ///
@@ -311,7 +311,7 @@ mod tests {
     #[test]
     fn dominant_window_carries_the_apps_name_alongside_the_title() {
         // The metadata record names both, and they must describe the
-        // same window — so attribution returns them together.
+        // same window, so attribution returns them together.
         let windows = [
             WindowRect {
                 title: "Inbox",
@@ -402,7 +402,7 @@ mod tests {
 
     #[test]
     fn multi_area_rects_are_summed_across_screens() {
-        // One small rect on Display 1, two larger ones on Display 2 —
+        // One small rect on Display 1, two larger ones on Display 2:
         // the sum decides, not any single rect.
         let capture = [
             Rect {

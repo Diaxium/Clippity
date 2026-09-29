@@ -23,7 +23,7 @@ function bar(startMs: number, endMs: number): Annotation {
  */
 describe("packRows", () => {
   it("keeps non-overlapping annotations on one row", () => {
-    // The common case, and the reason to pack at all — a lane per
+    // The common case, and the reason to pack at all: a lane per
     // annotation would grow the timeline for no benefit.
     expect(
       packRows([bar(0, 1_000), bar(1_000, 2_000), bar(2_000, 3_000)])

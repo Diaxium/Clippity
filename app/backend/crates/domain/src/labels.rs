@@ -1,9 +1,9 @@
-//! Capture **labels** — what the *user* says about a capture, as opposed
+//! Capture **labels**: what the *user* says about a capture, as opposed
 //! to what the machine observed when it took one. Pure: no I/O, no clock.
 //!
 //! `domain::metadata` records provenance: the app, the window, the mode,
 //! the instant. That record is written once, at the save choke point, and
-//! is never edited afterwards — it is a statement about a moment that has
+//! is never edited afterwards: it is a statement about a moment that has
 //! already happened. Labels are the opposite kind of fact: freeform tags
 //! and a favorite flag, authored after the capture exists and rewritten
 //! whenever the user changes their mind. Keeping the two in separate
@@ -12,7 +12,7 @@
 //!
 //! Tags are normalised on the way in ([`normalize_tag`]) and stored
 //! sorted and deduplicated, so two captures the user considers identically
-//! tagged produce byte-identical records — which in turn keeps the
+//! tagged produce byte-identical records, which in turn keeps the
 //! library index's stamp from churning over spelling.
 
 use serde::{Deserialize, Serialize};
@@ -24,7 +24,7 @@ pub const SCHEMA_VERSION: u32 = 1;
 
 /// Longest tag we store. Long enough for "needs-redaction-before-share",
 /// short enough that a chip stays a chip. Over-long input is truncated
-/// rather than rejected — the user gets a tag they can see and edit,
+/// rather than rejected: the user gets a tag they can see and edit,
 /// instead of silence.
 pub const MAX_TAG_LEN: usize = 48;
 
@@ -64,7 +64,7 @@ impl CaptureLabels {
 
     /// Nothing left to say about this capture. The writer deletes the
     /// record rather than leaving an empty one behind, so removing a
-    /// capture's last tag returns it to the pre-labels state exactly —
+    /// capture's last tag returns it to the pre-labels state exactly,
     /// including its stamp, which is what keeps the index from treating
     /// "no labels" and "labels removed" as different rows.
     pub fn is_empty(&self) -> bool {
@@ -81,8 +81,8 @@ fn is_not_favorite(favorite: &bool) -> bool {
 ///
 /// Trims, collapses internal whitespace runs to a single space (so
 /// `"bug  report"` and `"bug report"` are one tag), and truncates to
-/// [`MAX_TAG_LEN`] characters. Case is *preserved* — the user's spelling
-/// is theirs — while [`normalize_tags`] compares case-insensitively, so
+/// [`MAX_TAG_LEN`] characters. Case is *preserved*, the user's spelling
+/// is theirs, while [`normalize_tags`] compares case-insensitively, so
 /// `Bug` and `bug` never coexist.
 pub fn normalize_tag(raw: &str) -> Option<String> {
     let collapsed: String = raw.split_whitespace().collect::<Vec<_>>().join(" ");
@@ -92,7 +92,7 @@ pub fn normalize_tag(raw: &str) -> Option<String> {
     Some(collapsed.chars().take(MAX_TAG_LEN).collect())
 }
 
-/// Pure: normalise a whole list — drop the blanks, drop case-insensitive
+/// Pure: normalise a whole list. Drop the blanks, drop case-insensitive
 /// duplicates (first spelling wins), sort case-insensitively.
 ///
 /// Sorted because a tag set carries no order: leaving insertion order in
@@ -146,7 +146,7 @@ pub fn has_tag(tags: &[String], wanted: &str) -> bool {
 /// The four edits differ only in how they transform a tag list and a
 /// flag, so they are one type rather than four code paths: the service
 /// reads a capture's labels, applies this, and writes back only if
-/// something moved. That is also what makes a bulk edit free — the same
+/// something moved. That is also what makes a bulk edit free: the same
 /// [`LabelEdit`] runs over a list of ids.
 #[derive(Debug, Clone, Copy)]
 pub enum LabelEdit<'a> {
@@ -156,7 +156,7 @@ pub enum LabelEdit<'a> {
     AddTags(&'a [String]),
     /// Drop these tags, ignoring case and ignoring absent ones.
     RemoveTags(&'a [String]),
-    /// Replace the tag list wholesale — the tag editor's "done".
+    /// Replace the tag list wholesale: the tag editor's "done".
     SetTags(&'a [String]),
 }
 

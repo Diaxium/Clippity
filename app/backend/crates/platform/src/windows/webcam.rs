@@ -1,4 +1,4 @@
-//! Video-capture devices — enumeration and frame reads (ADR 0033).
+//! Video-capture devices: enumeration and frame reads (ADR 0033).
 //!
 //! Shaped after [`super::media_reader`], and for the same reason ADR 0031
 //! chose Media Foundation to encode: the platform already ships what this
@@ -100,7 +100,7 @@ fn enumerate_activations(
 /// A camera the user can pick, for the sources UI.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WebcamInfo {
-    /// Symbolic link — the stable id a source pins. Opaque and long;
+    /// Symbolic link: the stable id a source pins. Opaque and long;
     /// never shown.
     pub id: String,
     pub name: String,
@@ -108,8 +108,8 @@ pub struct WebcamInfo {
 
 /// Every video-capture device currently attached.
 ///
-/// An empty list is a valid answer — a machine with no camera is a
-/// configuration, not an error — and is what the sources UI renders as
+/// An empty list is a valid answer (a machine with no camera is a
+/// configuration, not an error) and is what the sources UI renders as
 /// "no cameras found" rather than as a failure.
 pub fn list_devices() -> AppResult<Vec<WebcamInfo>> {
     let attributes = vidcap_attributes()?;
@@ -138,7 +138,7 @@ pub struct Webcam {
     reader: IMFSourceReader,
     width: u32,
     height: u32,
-    /// Negative means the rows arrive bottom-up — the same trap
+    /// Negative means the rows arrive bottom-up: the same trap
     /// `media_reader` documents. Cameras report this more often than
     /// files do, because an RGB32 conversion of a bottom-up native
     /// format inherits the orientation.
@@ -147,7 +147,7 @@ pub struct Webcam {
 
 // The reader is a COM interface, which `windows-rs` leaves `!Send`. The
 // compositor's camera thread creates this, reads it and drops it, and
-// nothing about it crosses a thread boundary — only the decoded frames
+// nothing about it crosses a thread boundary: only the decoded frames
 // do, as plain `Vec<u8>`.
 unsafe impl Send for Webcam {}
 
@@ -158,7 +158,7 @@ impl Webcam {
     /// because Media Foundation has no default-camera concept the way
     /// WASAPI has a default endpoint. A pinned id that no longer
     /// resolves falls back to the first camera with a warning rather
-    /// than failing — the same degradation rule the audio path uses for
+    /// than failing: the same degradation rule the audio path uses for
     /// an unplugged microphone.
     pub fn open(device_id: Option<&str>) -> AppResult<Self> {
         let devices = list_devices()?;
@@ -176,7 +176,7 @@ impl Webcam {
         let source = activate(&chosen.id)?;
         let reader = source_reader(&source)?;
 
-        // Ask for RGB32 and let Media Foundation insert the converter —
+        // Ask for RGB32 and let Media Foundation insert the converter:
         // the same negotiation `media_reader::Decoder::open` does, and
         // the reason a camera's native NV12/MJPG/YUY2 never reaches this
         // module.
@@ -250,7 +250,7 @@ impl Webcam {
             return Ok(None);
         }
         let Some(sample) = sample else {
-            // A format change or a gap notification — no pixels this
+            // A format change or a gap notification: no pixels this
             // time, which is not a failure.
             return Ok(None);
         };
@@ -263,7 +263,7 @@ impl Webcam {
     /// honouring a negative stride.
     ///
     /// Guessing the orientation instead would produce a webcam overlay
-    /// that is silently upside down — valid pixels, wrong picture, and
+    /// that is silently upside down: valid pixels, wrong picture, and
     /// exactly the trap `media_reader` calls out on the decode side.
     fn pack(&self, packed: &[u8], recycle: Option<Vec<u8>>) -> AppResult<Vec<u8>> {
         let width = self.width as usize;
@@ -332,7 +332,7 @@ fn activate(symbolic_link: &str) -> AppResult<IMFMediaSource> {
     // SAFETY: activating a device source returns its IMFMediaSource.
     unsafe { activate.ActivateObject::<IMFMediaSource>() }.map_err(|e| {
         AppError::Recorder(format!(
-            "the camera is unavailable — another app may be using it: {e}"
+            "the camera is unavailable; another app may be using it: {e}"
         ))
     })
 }
@@ -450,14 +450,14 @@ mod tests {
     }
 
     /// Opens the first camera and reads real frames through the real
-    /// converter — the part that compiles perfectly and fails at
+    /// converter: the part that compiles perfectly and fails at
     /// runtime, exactly like media-type negotiation on the encode side.
     #[test]
     #[ignore = "needs a Windows session with a camera attached"]
     fn reads_packed_bgra_frames_from_a_real_camera() {
         let _com = super::super::media_foundation::ComThread::init().expect("COM starts");
         if list_devices().expect("enumeration").is_empty() {
-            println!("no camera attached — nothing to read");
+            println!("no camera attached; nothing to read");
             return;
         }
 

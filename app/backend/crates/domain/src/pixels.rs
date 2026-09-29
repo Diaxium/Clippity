@@ -2,8 +2,8 @@
 //!
 //! A captured frame is four bytes per pixel wherever it came from, but
 //! *which* four differs by source: `xcap` and the video decoder hand back
-//! RGBA, while every raw Win32 surface — a GDI DIB, a Desktop Duplication
-//! read-back — is BGRA. The two are indistinguishable by inspection, so a
+//! RGBA, while every raw Win32 surface (a GDI DIB, a Desktop Duplication
+//! read-back) is BGRA. The two are indistinguishable by inspection, so a
 //! frame that travels without saying which it is arrives somewhere that
 //! guesses, and a wrong guess swaps red with blue in the finished file.
 //!
@@ -20,9 +20,9 @@
 /// differ only by a swap of the outer pair.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PixelOrder {
-    /// Blue, green, red, alpha — Win32's native surface order.
+    /// Blue, green, red, alpha: Win32's native surface order.
     Bgra,
-    /// Red, green, blue, alpha — what `xcap` and the decoder hand back.
+    /// Red, green, blue, alpha: what `xcap` and the decoder hand back.
     Rgba,
 }
 
@@ -38,7 +38,7 @@ impl PixelOrder {
         }
     }
 
-    /// The other order — what reading a frame in this one as the other
+    /// The other order: what reading a frame in this one as the other
     /// would produce.
     pub fn swapped(self) -> Self {
         match self {
@@ -50,7 +50,7 @@ impl PixelOrder {
 
 /// Swap red and blue in place, turning BGRA into RGBA or back.
 ///
-/// For the one consumer that genuinely needs a particular order — the
+/// For the one consumer that genuinely needs a particular order: the
 /// GIF encoder, which quantizes through `image`'s RGBA types. Every
 /// other path carries the order instead, because this is a whole extra
 /// pass over the frame and passes over a frame are what a recording's
@@ -83,7 +83,7 @@ mod tests {
     #[test]
     fn swapping_channels_agrees_with_swapping_the_order() {
         // The same red pixel in each order. Swapping the bytes of one
-        // must produce the other — if it doesn't, a GIF written from a
+        // must produce the other: if it doesn't, a GIF written from a
         // BGRA capture comes out as its own colour negative.
         let mut bgra = [0u8, 0, 255, 255];
         swap_red_blue(&mut bgra);

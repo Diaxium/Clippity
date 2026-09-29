@@ -40,7 +40,7 @@ export function cancelCountdown(): Promise<void> {
  * Hide the strip after a successful tick-to-zero. Same effect on the
  * service as `cancelCountdown`; kept as a distinct command so the
  * caller can express intent ("the timer expired" vs "the user
- * aborted") — used later when capture-delay wiring lands.
+ * aborted"): used later when capture-delay wiring lands.
  */
 export function finishCountdown(): Promise<void> {
   return invoke<void>("finish_countdown");
@@ -51,7 +51,7 @@ export function finishCountdown(): Promise<void> {
 /**
  * Subscribe to `clippity://countdown/start`. Backend emits once per
  * `start_countdown` call after the window is positioned + shown.
- * Returns a sync unsubscribe — return it directly from a `useEffect`.
+ * Returns a sync unsubscribe; return it directly from a `useEffect`.
  */
 export function onCountdownStart(
   handler: (payload: CountdownStartEvent) => void
@@ -62,7 +62,7 @@ export function onCountdownStart(
 /**
  * Subscribe to `clippity://countdown/finished`. Backend emits when
  * `finish_countdown` is called (the strip's tick reached zero).
- * Payload is empty — listeners take this as the cue to proceed with
+ * Payload is empty: listeners take this as the cue to proceed with
  * the deferred capture. Returns a sync unsubscribe.
  */
 export function onCountdownFinished(handler: () => void): () => void {
@@ -72,7 +72,7 @@ export function onCountdownFinished(handler: () => void): () => void {
 /**
  * Subscribe to `clippity://countdown/cancelled`. Backend emits when
  * `cancel_countdown` is called (the user aborted via Esc). Payload is
- * empty — listeners take this as the cue to bail out of the deferred
+ * empty: listeners take this as the cue to bail out of the deferred
  * capture. Returns a sync unsubscribe.
  */
 export function onCountdownCancelled(handler: () => void): () => void {

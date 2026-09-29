@@ -65,7 +65,7 @@ export function relativeLuminance(hex: string): number {
 }
 
 /**
- * Readable ink for a filled background — near-black on light backgrounds,
+ * Readable ink for a filled background: near-black on light backgrounds,
  * near-white on dark ones.
  *
  * Luminance rather than any single channel, so a mid-tone picks the side that
@@ -199,7 +199,7 @@ export interface GradientGeometry {
  * Resolve a gradient's geometry to normalized (0..1 box-space) handles, filling
  * back-compat defaults: linear endpoints from `angle`, radial centered with a
  * box-fit ellipse. The single source both renderers use, so the live SVG and the
- * Canvas2D export agree (fixes the radial circle-vs-ellipse mismatch — see G1).
+ * Canvas2D export agree (fixes the radial circle-vs-ellipse mismatch; see G1).
  */
 export function gradientGeometry(g: GradientPaint): GradientGeometry {
   const line = gradientLine(g.angle);
@@ -219,7 +219,7 @@ export type GradientHandle = "start" | "end" | "center" | "radius" | "focal";
 /**
  * Apply an on-canvas gradient-handle drag (Workstream G2). Given the handle, the
  * gradient being edited, its geometry at the start of the drag, and the pointer
- * in normalized box space, return the patched gradient. Pure — the canvas and
+ * in normalized box space, return the patched gradient. Pure: the canvas and
  * the tests both use it. Dragging the center carries the focal along (keeps its
  * offset); the radius handle uses the local-x distance from the center.
  */
@@ -250,8 +250,8 @@ export function applyGradientHandle(
   }
 }
 
-/** Move a freeform color stop to `p` (normalized box space) — works for a point
- *  or a line stop (ids are unique across the gradient). Pure — the freeform
+/** Move a freeform color stop to `p` (normalized box space): works for a point
+ *  or a line stop (ids are unique across the gradient). Pure: the freeform
  *  on-canvas drag (Workstream G3). */
 export function moveFreeformPoint(
   g: GradientPaint,
@@ -275,7 +275,7 @@ export function moveFreeformPoint(
   };
 }
 
-/** Move a mesh lattice node (by grid index) to `p`, clamped to the box. Pure —
+/** Move a mesh lattice node (by grid index) to `p`, clamped to the box. Pure:
  *  the mesh on-canvas drag (Workstream G4b). */
 export function moveMeshPoint(
   g: GradientPaint,

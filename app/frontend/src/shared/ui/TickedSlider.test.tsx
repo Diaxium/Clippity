@@ -24,7 +24,7 @@ function renderSlider(
   return { onChange, input };
 }
 
-describe("TickedSlider — lag fix (commit on settle, not per input)", () => {
+describe("TickedSlider: lag fix (commit on settle, not per input)", () => {
   it("does NOT commit while dragging, only on pointer-up", () => {
     const { onChange, input } = renderSlider();
 

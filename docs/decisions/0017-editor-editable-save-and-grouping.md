@@ -1,27 +1,27 @@
-# 0017 — Editable scene save (JSON sidecar) + grouping via frames
+# 0017: Editable scene save (JSON sidecar) + grouping via frames
 
 - **Status:** Accepted (implemented)
 - **Date:** 2026-06-14
 - **Area:** `app/frontend/src/features/editor`, `app/backend/src/{domain,services}/editor*`
-- **Relates to:** [0016 — keybind system](0016-editor-keybind-system.md)
+- **Relates to:** [0016: keybind system](0016-editor-keybind-system.md)
   (the `Mod+S` / `Mod+G` bindings these implement were reserved there)
 
 ## Context
 
 The keybind work (ADR 0016) reserved `Mod+S` (Save) and `Mod+G` / `Mod+Shift+G`
 (Group/Ungroup) but left them as honest "Coming soon" no-ops: there was no
-project-save backend (the editor backend was image-only — load a PNG, save a
+project-save backend (the editor backend was image-only: load a PNG, save a
 *flattened* PNG) and no group node type. Both are now implemented.
 
 Two facts made each tractable without a large rewrite:
 
 1. `SceneDoc` (`{ rootIds, nodes }`) is already a clean, JSON-serializable unit,
-   and image fills carry their pixels as embedded data URIs — so a scene is
+   and image fills carry their pixels as embedded data URIs, so a scene is
    **self-contained**.
 2. Editor nodes carry **absolute** scene coordinates and frames are **pure
    logical containers** (they clip + group but apply no transform to children;
    `moveNodes` already carries a container's descendants). So a "group" is just a
-   tree restructure — no geometry recomputation.
+   tree restructure, no geometry recomputation.
 
 ## Decision
 
@@ -29,7 +29,7 @@ Two facts made each tractable without a large rewrite:
 `editor_save_scene(id, scene)` writes the frontend-owned document JSON to
 `<captures>/.scenes/<file>.json`. The `.scenes` dir is dot-prefixed so the
 library scan (which already skips `.`-entries like `.trash`) never lists scene
-files as captures — important because `kind_of` defaults unknown extensions to
+files as captures, important because `kind_of` defaults unknown extensions to
 `Image`. The original capture PNG is **never modified**, so the source pixels
 can't be lost. `editor_load` now returns the sidecar's contents in a new
 `EditorImage.scene` field; the editor restores the editable scene when present
@@ -66,7 +66,7 @@ sets `edited` so the pill reflects unsaved work.
   frontend surface: `editorSaveScene`, `lib/document.ts`, `reseedNodeIds`,
   `sceneFromSaved`, `useEditorSave`, store `markSaved` / `group` / `ungroup` /
   `SceneInit.status`.
-- **Ungroup dissolves any selected frame**, including a user-drawn frame — there
+- **Ungroup dissolves any selected frame**, including a user-drawn frame: there
   is no separate group type to distinguish them.
 - The library preview thumbnail is **not** refreshed on save (the PNG is
   untouched); the scene also duplicates the base image (embedded data URI), so
@@ -78,13 +78,13 @@ sets `edited` so the pill reflects unsaved work.
 ## Alternatives considered
 
 - **Overwrite the capture PNG with the flattened render on save.** Rejected for
-  v1 — destructive (the original screenshot would survive only inside the
+  v1: destructive (the original screenshot would survive only inside the
   sidecar). Export (`Mod+E`) remains the "render to a new file" path.
 - **Store the scene by *reference* to the source path instead of embedding the
-  image.** Rejected — a moved/trashed capture would break the project. Embedding
+  image.** Rejected: a moved/trashed capture would break the project. Embedding
   keeps it portable; size is a documented trade-off.
-- **A separate `group` node type.** Deferred — frames already provide containment
+- **A separate `group` node type.** Deferred: frames already provide containment
   with absolute-coord children, so grouping needed zero new rendering/hit-testing.
   A dedicated type (to diverge group vs frame semantics) can come later.
-- **A bespoke binary document format.** Overkill — JSON is debuggable, diffable,
+- **A bespoke binary document format.** Overkill: JSON is debuggable, diffable,
   and `serde`/`JSON.parse` make it free on both sides.

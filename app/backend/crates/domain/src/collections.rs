@@ -1,16 +1,16 @@
-//! **Collections** — named, manually ordered sets of captures. Pure: no
+//! **Collections**: named, manually ordered sets of captures. Pure: no
 //! I/O, no clock.
 //!
 //! Tags and the favorite flag are *properties of a capture*, so they ride
 //! in a record beside the capture itself (`domain::labels`). A collection
 //! is not a property of anything: it has its own name, its own identity,
-//! and — the part no per-capture record can express — its own **order**.
+//! and (the part no per-capture record can express) its own **order**.
 //! Two captures cannot between them say which of the two comes third in
 //! "Onboarding walkthrough". So a collection is its own document, holding
 //! its members as an ordered list of capture ids. See ADR 0029.
 //!
 //! The cost of that choice is that membership is keyed by an id which,
-//! for a file-backed capture, is its path — and a path changes when the
+//! for a file-backed capture, is its path, and a path changes when the
 //! capture is trashed or restored. [`rekey`] is what the service calls at
 //! those choke points, alongside `sidecar::relocate`, so a curated order
 //! survives a trip through the trash.
@@ -22,8 +22,8 @@
 
 use serde::{Deserialize, Serialize};
 
-/// On-disk schema version for the catalog. Additive changes need no bump
-/// — the same rule the provenance and label records follow.
+/// On-disk schema version for the catalog. Additive changes need no bump:
+/// the same rule the provenance and label records follow.
 pub const SCHEMA_VERSION: u32 = 1;
 
 /// Longest collection name we store. Names are shown whole in the rail,
@@ -33,7 +33,7 @@ pub const MAX_NAME_LEN: usize = 60;
 /// One collection: an identity, a name, and an ordered member list.
 ///
 /// `members` holds capture ids (a file path, or an `aux_…` id) in the
-/// order the user arranged them — *not* newest-first like the library.
+/// order the user arranged them, *not* newest-first like the library.
 /// Curated order is the whole point; a collection that re-sorted itself
 /// by date would be a filter, not a collection.
 ///
@@ -45,7 +45,7 @@ pub const MAX_NAME_LEN: usize = 60;
 #[serde(rename_all = "camelCase")]
 pub struct Collection {
     /// Stable synthetic id, minted once (`col_<ms>_<seq>`) and never
-    /// derived from the name — renaming a collection must not orphan it.
+    /// derived from the name: renaming a collection must not orphan it.
     pub id: String,
     pub name: String,
     pub created_at_ms: u128,
@@ -58,7 +58,7 @@ pub struct Collection {
 }
 
 impl Collection {
-    /// A new, empty collection. `name` is stored as given — callers
+    /// A new, empty collection. `name` is stored as given; callers
     /// normalise with [`normalize_name`] first, which is where a blank
     /// name is rejected.
     pub fn new(id: String, name: String, now_ms: u128) -> Self {
@@ -77,7 +77,7 @@ impl Collection {
     }
 
     /// Append every id not already a member, preserving the given order.
-    /// Returns how many were actually added — zero means the call
+    /// Returns how many were actually added: zero means the call
     /// changed nothing and the caller can skip the write.
     pub fn add_members(&mut self, ids: impl IntoIterator<Item = String>) -> usize {
         let before = self.members.len();
@@ -101,7 +101,7 @@ impl Collection {
     ///
     /// Only current members are honoured, and any member `ordered` fails
     /// to mention keeps its relative place at the end. A drag-and-drop
-    /// reorder races the list it was computed from — a capture added in
+    /// reorder races the list it was computed from: a capture added in
     /// another window between render and drop must not be deleted by an
     /// ordering that predates it.
     pub fn set_order(&mut self, ordered: &[String]) {
@@ -119,7 +119,7 @@ impl Collection {
         self.members = next;
     }
 
-    /// Follow a capture that changed id — a trash move, a restore, a
+    /// Follow a capture that changed id: a trash move, a restore, a
     /// rename. Keeps the member's position. Returns whether anything
     /// changed.
     pub fn rekey(&mut self, from: &str, to: &str) -> bool {
@@ -137,7 +137,7 @@ impl Collection {
 /// The whole catalog, as it sits in `<captures>/collections.json`.
 ///
 /// An object rather than a bare array so a later field (a smart-collection
-/// predicate, Library P4) can join without re-shaping the file — the same
+/// predicate, Library P4) can join without re-shaping the file: the same
 /// reason the aux catalog is one.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "camelCase")]
@@ -159,7 +159,7 @@ impl CollectionCatalog {
 
 /// Pure: the storable form of a collection name, or `None` when there is
 /// no name in it. Trims, collapses internal whitespace, truncates to
-/// [`MAX_NAME_LEN`] — the same treatment `labels::normalize_tag` gives a
+/// [`MAX_NAME_LEN`]: the same treatment `labels::normalize_tag` gives a
 /// tag, for the same reason.
 pub fn normalize_name(raw: &str) -> Option<String> {
     let collapsed = raw.split_whitespace().collect::<Vec<_>>().join(" ");
@@ -180,7 +180,7 @@ pub fn rekey(collections: &mut [Collection], from: &str, to: &str) -> bool {
     changed
 }
 
-/// Pure: drop a capture from every collection — what a purge calls, once
+/// Pure: drop a capture from every collection: what a purge calls, once
 /// the file is gone for good.
 pub fn forget(collections: &mut [Collection], capture_id: &str) -> bool {
     let ids = [capture_id.to_owned()];
@@ -253,7 +253,7 @@ mod tests {
     #[test]
     fn set_order_keeps_members_the_order_forgot() {
         // A reorder computed before another window added a capture must
-        // not delete it — it lands at the end instead.
+        // not delete it: it lands at the end instead.
         let mut c = sample();
         c.set_order(&v(&["/caps/c.png"]));
         assert_eq!(c.members, v(&["/caps/c.png", "/caps/a.png", "/caps/b.png"]));

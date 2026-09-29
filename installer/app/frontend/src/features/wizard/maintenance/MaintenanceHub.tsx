@@ -87,18 +87,18 @@ const ACTIONS: HubAction[] = [
 ];
 
 /**
- * The maintenance hub — the shared entry point for both the maintenance
+ * The maintenance hub: the shared entry point for both the maintenance
  * and uninstall flows. Presents the install status and the four actions
  * that branch into the rest of the wizard.
  */
 export function MaintenanceHub() {
   // Real detection when running under the Tauri shell; the static catalog
   // snapshot in browser preview (where `detectInstallation` resolves
-  // undefined). Never blocks first paint — the fallback renders immediately.
+  // undefined). Never blocks first paint: the fallback renders immediately.
   const [detection, setDetection] = useState<Detection | null>(null);
   const [paths, setPaths] = useState<MaintenancePaths | null>(null);
   const [status, setStatus] = useState<InstallStatus | null>(null);
-  // Repair used to run the moment its card was clicked — with no
+  // Repair used to run the moment its card was clicked, with no
   // confirmation and, worse, under the "modify" progress labels. It now asks
   // first and runs with the correct repair progress.
   const [confirmingRepair, setConfirmingRepair] = useState(false);

@@ -1,12 +1,12 @@
-//! Repair orchestration — restore an installed copy to health without
+//! Repair orchestration: restore an installed copy to health without
 //! upgrading it or touching user data.
 //!
 //! Repair reads the installation manifest, probes every installer-owned
 //! immutable file (existence + SHA-256), and restores what is missing or
 //! corrupt: the core application executable from the embedded payload,
 //! recorded shortcuts that vanished, and the Add/Remove Programs
-//! registration if it was removed. It restores the *installed* version —
-//! never a silent upgrade — and never rewrites files the app owns at
+//! registration if it was removed. It restores the *installed* version,
+//! never a silent upgrade, and never rewrites files the app owns at
 //! runtime, and never removes user content. Every step is recorded in an
 //! [`OperationJournal`] so a crashed repair is detected (and safely
 //! re-runnable) on the next launch.
@@ -52,7 +52,7 @@ fn scan(manifest: &InstallationManifest) -> RepairAssessment {
         let path = Path::new(&record.path);
         let present = path.exists();
         // Only hash an immutable file that both exists and has a recorded
-        // hash — the sole case where a digest tells us anything.
+        // hash: the sole case where a digest tells us anything.
         let actual = if present && !record.mutable && record.sha256.is_some() {
             file_sha256(path).ok()
         } else {
@@ -118,7 +118,7 @@ pub fn run(
     emit(progress::snapshot(ProgressKind::Repair, tasks.clone(), 0));
 
     // Run the repair, capturing any error so the journal records the
-    // failure (repair is restorative — a failed repair is re-run, not
+    // failure (repair is restorative: a failed repair is re-run, not
     // rolled back, so we do not reverse the partial restore).
     let result = (|| -> InstallerResult<()> {
         for step in 0..total {
@@ -135,8 +135,8 @@ pub fn run(
                 "restore" => {
                     journal.advance(Phase::Apply, &clock.iso);
                     restore_files(&manifest, payload, &mut journal, &maintenance_dir, &clock)?;
-                    // Reconciled outside `restore_files` — and so outside its
-                    // "nothing is broken, return early" guard — because this
+                    // Reconciled outside `restore_files` (and so outside its
+                    // "nothing is broken, return early" guard) because this
                     // document is regenerated from the manifest rather than
                     // hash-verified against it. A hand-edited copy that
                     // re-enables a declined feature reads as perfectly
@@ -186,7 +186,7 @@ pub fn run(
         Err(e) => {
             journal.fail(e.to_string(), &clock.iso);
             let _ = journal_store::write(&maintenance_dir, &journal);
-            tracing::error!(error = %e, "repair failed — the journal records it for re-run");
+            tracing::error!(error = %e, "repair failed; the journal records it for re-run");
             Err(e)
         }
     }
@@ -205,7 +205,7 @@ fn restore_files(
 ) -> InstallerResult<()> {
     let assessment = scan(manifest);
     if !assessment.needs_repair() {
-        tracing::info!("repair: nothing to restore — installation is healthy");
+        tracing::info!("repair: nothing to restore; installation is healthy");
         return Ok(());
     }
 
@@ -296,7 +296,7 @@ fn restore_app_configuration(
         }
         Err(e) => tracing::warn!(
             error = %e,
-            "repair: could not restore the application configuration — Clippity \
+            "repair: could not restore the application configuration; Clippity \
              will start with every feature enabled"
         ),
     }

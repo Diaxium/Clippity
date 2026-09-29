@@ -1,7 +1,7 @@
 # Backend
 
 The backend is a **Cargo workspace** at
-[`app/backend`](../../app/backend) — a set of layered crates rather than one
+[`app/backend`](../../app/backend): a set of layered crates rather than one
 crate. The layer boundaries mirror the module structure the app grew up with;
 promoting them to crates gives independent, parallel, separately-cached
 compilation.
@@ -11,10 +11,10 @@ compilation.
 | Crate | Path | Responsibility | Notable deps |
 | --- | --- | --- | --- |
 | `clippity-infra` | `crates/infra` | Errors, logging, app paths, config, the outbound event channel. | tauri, thiserror, tracing |
-| `clippity-domain` | `crates/domain` | Pure types + rules — no I/O, no Tauri. Unit-testable in isolation. | serde, image |
+| `clippity-domain` | `crates/domain` | Pure types + rules: no I/O, no Tauri. Unit-testable in isolation. | serde, image |
 | `clippity-platform` | `crates/platform` | OS-specific code (Win32: DWM chrome, cursor/window enumeration). `cfg`-gated. | windows, window-vibrancy, xcap |
 | `clippity-vision` | `crates/vision` | ONNX object detection + model download/registry. | ort, ndarray, ureq |
-| `clippity-services` | `crates/services` | Everything that touches the outside world — capture, overlay, recorder, library (+ SQLite index), editor, settings, toast, OCR, sharing, scrolling capture. | xcap, image, arboard, rusqlite, base64 |
+| `clippity-services` | `crates/services` | Everything that touches the outside world: capture, overlay, recorder, library (+ SQLite index), editor, settings, toast, OCR, sharing, scrolling capture. | xcap, image, arboard, rusqlite, base64 |
 | `clippity` (`src-tauri`) | `src-tauri` | The Tauri binary + `clippity_lib`: command handlers, `AppState`, window creation, tray composition. | tauri (+ plugins) |
 | `clippity-bench` | `crates/bench` | Dev-only Criterion suite and deterministic synthetic corpora. See [perf/benchmarks.md](../perf/benchmarks.md). | criterion |
 
@@ -27,7 +27,7 @@ sits on `platform`; `platform` and `vision` sit on `domain`; `domain` sits on
 upward edges: the event-name constants and `emit` helper live in
 `clippity-infra::events` (not the app layer) precisely so services can emit
 without depending on the app crate. The one component that legitimately needs
-the whole `AppState` — the system tray — lives in the app crate
+the whole `AppState`, the system tray, lives in the app crate
 (`src-tauri/src/tray_service.rs`), not in `clippity-services`.
 
 ## Why the split pays off

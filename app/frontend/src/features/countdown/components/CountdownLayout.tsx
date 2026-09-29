@@ -7,7 +7,7 @@ import { CountdownProgressBar } from "./CountdownProgressBar";
  * Countdown HUD root. Mounted by `windows/CountdownWindow.tsx`. The
  * Tauri window is `transparent: true` + `decorations: false` so the
  * desktop wallpaper shows through wherever this component doesn't
- * paint pixels — that's why everything is anchored to the strip's
+ * paint pixels: that's why everything is anchored to the strip's
  * bottom edge (the rest stays see-through).
  *
  * Layout, top-to-bottom:
@@ -22,7 +22,7 @@ import { CountdownProgressBar } from "./CountdownProgressBar";
  * last (bottom-left, small + secondary).
  *
  * While the timer is idle the layout renders `null` so the window's
- * webview shows the wallpaper through — no flash of empty strip
+ * webview shows the wallpaper through: no flash of empty strip
  * during the cold-open before `start_countdown` fires.
  */
 export function CountdownLayout() {

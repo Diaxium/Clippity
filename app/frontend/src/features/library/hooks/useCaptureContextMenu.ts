@@ -9,7 +9,7 @@ import {
 import type { CaptureMeta, LibraryMode } from "../types";
 
 interface Options extends CaptureActionHandlers {
-  /** Right-clicking a capture focuses it first — see below. */
+  /** Right-clicking a capture focuses it first; see below. */
   onFocus: (m: CaptureMeta) => void;
 }
 

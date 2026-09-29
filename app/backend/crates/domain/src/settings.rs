@@ -1,9 +1,9 @@
-//! Settings domain — pure types + validation. **No I/O.**
+//! Settings domain: pure types + validation. **No I/O.**
 //!
 //! The persisted shape on disk (and the wire shape across IPC) is
 //! `Settings { general, appearance, notifications }`. Each sub-struct
 //! holds `#[serde(default)]` on every field so an older settings.json
-//! cleanly upgrades — missing fields fall back to defaults rather than
+//! cleanly upgrades: missing fields fall back to defaults rather than
 //! erroring.
 //!
 //! Reserved sub-structs (Capture/Editor/Shortcuts/Vision/Models) are
@@ -32,7 +32,7 @@ pub enum ThemePref {
     System,
 }
 
-/// Default accent — Clippity brand coral. Matches the legacy
+/// Default accent: Clippity brand coral. Matches the legacy
 /// `AppearanceSettings::default_accent` so an unchanged settings.json
 /// renders the same as v0.
 fn default_accent() -> String {
@@ -46,7 +46,7 @@ fn default_accent() -> String {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum RadiusScale {
-    /// Tight corners — near-square, technical feel.
+    /// Tight corners: near-square, technical feel.
     Sharp,
     /// The shipped radius scale.
     #[default]
@@ -63,7 +63,7 @@ pub enum RadiusScale {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum Density {
-    /// The shipped spacing — roomy, breathable.
+    /// The shipped spacing: roomy, breathable.
     #[default]
     Comfortable,
     /// Tighter spacing so more fits on screen (library, settings).
@@ -74,7 +74,7 @@ pub enum Density {
 /// tray icon, the per-window taskbar icons, and the in-app `Brand`
 /// component. The theme (light/dark) still picks the matching asset
 /// within the chosen style. Changing the built *executable* icon isn't
-/// possible at runtime — this covers every icon the running process
+/// possible at runtime: this covers every icon the running process
 /// controls.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -82,7 +82,7 @@ pub enum AppIconStyle {
     /// Full-colour Clippity mark.
     #[default]
     Color,
-    /// Single-hue monochrome glyph — blends into a busy tray / taskbar.
+    /// Single-hue monochrome glyph: blends into a busy tray / taskbar.
     Monochrome,
 }
 
@@ -91,7 +91,7 @@ pub enum AppIconStyle {
 /// used when effects are enabled.
 ///
 /// The materials differ in *what* they show, not just how strongly:
-/// Mica and Tabbed are wallpaper-derived — DWM samples the desktop
+/// Mica and Tabbed are wallpaper-derived; DWM samples the desktop
 /// wallpaper once and blurs it, so nothing behind the window (other
 /// apps, video, a moving window) ever shows through no matter how
 /// transparent the app chrome is made. Acrylic and Blur sample live
@@ -109,7 +109,7 @@ pub enum WindowBackdrop {
     Blur,
     /// Windows 11 tabbed Mica variant.
     Tabbed,
-    /// No native material at all — the transparent window shows the
+    /// No native material at all: the transparent window shows the
     /// desktop / other apps behind it directly, unblurred. The only
     /// mode where lowering chrome opacity reveals *live* content on
     /// every Windows build.
@@ -119,7 +119,7 @@ pub enum WindowBackdrop {
 impl WindowBackdrop {
     /// Whether the material takes a tint colour. Mica / Tabbed are
     /// wallpaper-derived system backdrops that DWM tints itself, and
-    /// `Clear` paints nothing — for those the `tint_strength` knob is a
+    /// `Clear` paints nothing; for those the `tint_strength` knob is a
     /// no-op and the UI hides it.
     pub fn accepts_tint(self) -> bool {
         matches!(self, Self::Acrylic | Self::Blur)
@@ -144,10 +144,10 @@ pub const MAX_BACKDROP_BLUR_PCT: u8 = 200;
 pub const MIN_BACKDROP_SATURATION_PCT: u8 = 50;
 pub const MAX_BACKDROP_SATURATION_PCT: u8 = 200;
 
-/// Neutral value for the three "scale the shipped look" knobs — 100 %
+/// Neutral value for the three "scale the shipped look" knobs: 100 %
 /// reproduces exactly what the app rendered before tuning existed.
 const NEUTRAL_PCT: u8 = 100;
-/// Shipped tint for the two tintable materials — 70 % ≈ the alpha 178
+/// Shipped tint for the two tintable materials: 70 % ≈ the alpha 178
 /// the acrylic tint was hardcoded to before this was user-facing.
 const DEFAULT_TINT_PCT: u8 = 70;
 
@@ -161,25 +161,25 @@ fn default_tint_pct() -> u8 {
 
 /// Fine-tuning for one backdrop material.
 ///
-/// The backdrop picker is coarse — it chooses *which* DWM material to
-/// ask for — and the materials behave differently enough that one set
+/// The backdrop picker is coarse (it chooses *which* DWM material to
+/// ask for) and the materials behave differently enough that one set
 /// of numbers can't flatter all of them. These four knobs are stored
 /// per material so switching between them restores that material's own
 /// tuning rather than dragging one compromise across all of them.
 ///
-/// - `tint_strength` — alpha of the colour blended into the *native*
+/// - `tint_strength`: alpha of the colour blended into the *native*
 ///   material. Only Acrylic and Blur take one (see
 ///   [`WindowBackdrop::accepts_tint`]); on Windows 11 22H2+ acrylic is
 ///   a DWM system backdrop that tints itself, so it lands only on
 ///   Windows 10 / older builds where the legacy composition attribute
 ///   is used.
-/// - `glass_strength` — multiplier on the stacked in-app glass layers.
+/// - `glass_strength`: multiplier on the stacked in-app glass layers.
 ///   This is the knob that decides how much of the native material is
 ///   actually visible through the app's own panels; at 0 the panels
 ///   stop painting entirely.
-/// - `blur_strength` — multiplier on the CSS `backdrop-filter` blur
+/// - `blur_strength`: multiplier on the CSS `backdrop-filter` blur
 ///   radii. Lower = the material reads sharper through the chrome.
-/// - `saturation` — CSS `backdrop-filter: saturate()`. Pushes colour
+/// - `saturation`: CSS `backdrop-filter: saturate()`. Pushes colour
 ///   back into materials (Mica especially) that wash out when the
 ///   chrome above them goes transparent.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
@@ -245,7 +245,7 @@ impl Default for BackdropTuning {
 /// Shipped tuning for every material that doesn't read a tint. Blur's
 /// tint used to be hardcoded to alpha 1 (visually none), `Clear` paints
 /// no material at all, and Mica / Tabbed are DWM system backdrops that
-/// tint themselves — storing 70 for those would look meaningful and
+/// tint themselves: storing 70 for those would look meaningful and
 /// never do anything.
 fn default_untinted_tuning() -> BackdropTuning {
     BackdropTuning::new(0, NEUTRAL_PCT, NEUTRAL_PCT, NEUTRAL_PCT)
@@ -271,7 +271,7 @@ pub struct BackdropTuningSet {
 }
 
 impl BackdropTuningSet {
-    /// The tuning for one material. Total — every variant has an entry.
+    /// The tuning for one material. Total: every variant has an entry.
     pub fn get(&self, backdrop: WindowBackdrop) -> BackdropTuning {
         match backdrop {
             WindowBackdrop::Mica => self.mica,
@@ -367,12 +367,12 @@ pub struct GeneralSettings {
     #[serde(default)]
     pub name_template: String,
     /// Persisted intent. Wiring into `tauri-plugin-autostart` lands
-    /// with production-polish phase — tracked in REBUILD.md tech debt.
+    /// with production-polish phase; tracked in REBUILD.md tech debt.
     ///
     /// Seeded on first launch from the installer's "Start Clippity at
     /// login" answer (`provisioning::ProvisionedPreferences::start_at_login`),
     /// so the box the user ticked in the wizard is the state they find in
-    /// Settings. Editable afterwards like any other setting — the
+    /// Settings. Editable afterwards like any other setting: the
     /// installer's answer is a starting point, not a lock.
     #[serde(default)]
     pub start_on_startup: bool,
@@ -386,7 +386,7 @@ pub struct GeneralSettings {
     /// Whether Clippity may share anonymous usage and diagnostic data.
     ///
     /// Seeded on first launch from the installer's "Help improve Clippity"
-    /// answer. **Persisted intent only in this build** — Clippity sends no
+    /// answer. **Persisted intent only in this build**: Clippity sends no
     /// telemetry, so this gates nothing today. It ships from whatever the
     /// user chose in the wizard rather than from an assumption, which is
     /// the point: the first code that wants to report anything has to find
@@ -480,7 +480,7 @@ pub struct NotificationSettings {
 
 /// PNG encoding effort for the capture-save pipeline. The capture
 /// service maps each variant to a concrete `image`-crate
-/// `CompressionType` + `FilterType` pair — the domain stays I/O-free
+/// `CompressionType` + `FilterType` pair: the domain stays I/O-free
 /// and only names the user-facing intent.
 ///
 /// `Balanced` reproduces the historic default (`DynamicImage::write_to`
@@ -490,12 +490,12 @@ pub struct NotificationSettings {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum CaptureCompression {
-    /// Fastest encode, largest files — least CPU per capture.
+    /// Fastest encode, largest files, least CPU per capture.
     Fast,
     /// The historic default: balanced speed vs size.
     #[default]
     Balanced,
-    /// Smallest files, slowest encode — most CPU per capture.
+    /// Smallest files, slowest encode, most CPU per capture.
     Small,
 }
 
@@ -514,12 +514,12 @@ fn default_true() -> bool {
 ///
 /// - `gpu_acceleration`: drives the WebView2 `--disable-gpu` browser
 ///   arg, read once at process start (`run()` in lib.rs). Changing it
-///   needs an app restart — the arg is fixed when the webview's
+///   needs an app restart: the arg is fixed when the webview's
 ///   environment is created.
 /// - `window_effects`: when false the Win11 Mica backdrop is cleared
-///   and the frontend drops `backdrop-filter` blur — lighter on the DWM
+///   and the frontend drops `backdrop-filter` blur, lighter on the DWM
 ///   compositor + GPU. Applies live.
-/// - `reduced_animations`: the single motion master — the frontend maps
+/// - `reduced_animations`: the single motion master; the frontend maps
 ///   it onto `data-motion` (ORed with the OS `prefers-reduced-motion`).
 /// - `capture_compression`: PNG encode effort for the capture pipeline.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -546,7 +546,7 @@ impl Default for PerformanceSettings {
     }
 }
 
-/// Default palette swatch count — mirrors
+/// Default palette swatch count: mirrors
 /// `domain::palette::DEFAULT_PALETTE_COUNT`. A free function so it can
 /// back both `#[serde(default = …)]` and the `Default` impl.
 fn default_palette_count() -> u8 {
@@ -554,7 +554,7 @@ fn default_palette_count() -> u8 {
 }
 
 /// Capture-delay envelope (seconds). Mirrors the frontend capture
-/// store's `MIN_DELAY`/`MAX_DELAY` — 1 s is the shortest useful wait,
+/// store's `MIN_DELAY`/`MAX_DELAY`: 1 s is the shortest useful wait,
 /// 60 s the longest the stepper exposes.
 pub const DEFAULT_DELAY_SECONDS: u8 = 5;
 pub const MIN_DELAY_SECONDS: u8 = 1;
@@ -564,7 +564,7 @@ fn default_delay_seconds() -> u8 {
     DEFAULT_DELAY_SECONDS
 }
 
-/// The `preview` capture default ships **on** — opening a fresh capture
+/// The `preview` capture default ships **on**: opening a fresh capture
 /// in the editor is the expected baseline. A free function so it backs
 /// both `#[serde(default = …)]` and the `Default` impl.
 fn default_preview() -> bool {
@@ -577,7 +577,7 @@ pub fn clamp_delay_seconds(secs: u8) -> u8 {
     secs.clamp(MIN_DELAY_SECONDS, MAX_DELAY_SECONDS)
 }
 
-/// Capture-behaviour knobs — the defaults a fresh capture window opens
+/// Capture-behaviour knobs: the defaults a fresh capture window opens
 /// with, plus the palette swatch count. This section is the persisted
 /// home for every "capture option" the capture window exposes: the
 /// frontend seeds its per-session capture store from these on launch,
@@ -586,12 +586,12 @@ pub fn clamp_delay_seconds(secs: u8) -> u8 {
 ///
 /// Every field is independently `#[serde(default)]` so an older
 /// settings.json that predates the section (or a build that knew only
-/// `palette_count`) upgrades cleanly — missing fields fall back to the
+/// `palette_count`) upgrades cleanly: missing fields fall back to the
 /// shipped defaults rather than erroring.
 ///
 /// - `preview` / `clipboard` / `cursor` / `enhance`: the four capture
 ///   option toggles. `preview` ships on (open the shot in the editor);
-///   the rest ship off — a screenshot tool's baseline promise is "what
+///   the rest ship off: a screenshot tool's baseline promise is "what
 ///   you saw", so cursor/enhance are opt-in, and clipboard-copy is a
 ///   deliberate choice.
 /// - `delay` / `delay_seconds`: the pre-capture countdown default and
@@ -605,7 +605,7 @@ pub fn clamp_delay_seconds(secs: u8) -> u8 {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct CaptureSettings {
-    /// Default "Preview in Editor" toggle — open the new capture in the
+    /// Default "Preview in Editor" toggle: open the new capture in the
     /// editor after taking it. Ships on.
     #[serde(default = "default_preview")]
     pub preview: bool,
@@ -616,14 +616,14 @@ pub struct CaptureSettings {
     #[serde(default)]
     pub cursor: bool,
     /// Default "Smart Enhance" toggle (auto-levels + light unsharp).
-    /// Ships off — enhancement is a judgement call about the pixels.
+    /// Ships off: enhancement is a judgement call about the pixels.
     #[serde(default)]
     pub enhance: bool,
     /// Save HDR displays as 16-bit BT.2020/PQ PNG instead of the SDR
     /// compatibility export. Off by default for existing workflows.
     #[serde(default)]
     pub hdr: bool,
-    /// Default "Capture Delay" toggle — arm the pre-capture countdown.
+    /// Default "Capture Delay" toggle: arm the pre-capture countdown.
     /// Ships off.
     #[serde(default)]
     pub delay: bool,
@@ -658,7 +658,7 @@ impl Default for CaptureSettings {
     }
 }
 
-/// Default object-detection model id — delegates to the registry so
+/// Default object-detection model id; delegates to the registry so
 /// the two can't drift.
 fn default_object_model() -> String {
     crate::models::DEFAULT_OBJECT_MODEL.to_string()
@@ -669,14 +669,14 @@ fn default_confidence() -> u8 {
     DEFAULT_CONFIDENCE_PCT
 }
 
-/// AI-model preferences — the Models settings page. The model files
+/// AI-model preferences: the Models settings page. The model files
 /// themselves are managed by `services::model_service`; this section
 /// only stores user intent.
 ///
 /// - `auto_download`: when the user arms an AI feature whose model
 ///   isn't installed yet, fetch it automatically instead of bouncing
-///   them to Settings → Models. Ships on — the whole point of managed
-///   models is that they "just work" — and is the user's kill switch
+///   them to Settings → Models. Ships on (the whole point of managed
+///   models is that they "just work") and is the user's kill switch
 ///   for surprise network traffic.
 /// - `object_model`: registry id of the detector backing the Object
 ///   capture mode. Stored loosely; readers fall back to the registry
@@ -726,13 +726,13 @@ fn default_global_capture() -> String {
     "Mod+Shift+2".into()
 }
 
-/// Keyboard-shortcut customization — the long-reserved `shortcuts`
+/// Keyboard-shortcut customization: the long-reserved `shortcuts`
 /// settings section. Two independent concerns:
 ///
 /// - `overrides`: per-binding remaps for the in-app keybind registries
 ///   (editor / library / quick-capture). The key is a fully-qualified
-///   binding id — `"<scope>:<id>"`, e.g. `"editor:select-all"`,
-///   `"library:trash-selection"`, `"quickCapture:screenshot"` — and the
+///   binding id: `"<scope>:<id>"`, e.g. `"editor:select-all"`,
+///   `"library:trash-selection"`, `"quickCapture:screenshot"`, and the
 ///   value is the list of combos that *replace* that binding's registry
 ///   default. A missing id means "use the default"; an explicit empty
 ///   vec means "deliberately unbound". A `BTreeMap` so the persisted
@@ -744,7 +744,7 @@ fn default_global_capture() -> String {
 ///   frontend uses and translated to a plugin `Shortcut` at
 ///   registration time.
 ///
-/// The domain stays I/O-free and only validates shape — the service
+/// The domain stays I/O-free and only validates shape: the service
 /// layer owns registration and the frontend owns applying `overrides`
 /// to its registries.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -783,7 +783,7 @@ pub enum LogLevel {
     Off,
     Error,
     Warn,
-    /// The shipped backend level — enough to explain a session without
+    /// The shipped backend level: enough to explain a session without
     /// narrating every frame.
     #[default]
     Info,
@@ -806,9 +806,9 @@ impl LogLevel {
         }
     }
 
-    /// Parse a wire/filter spelling back into a level. Unknown input —
-    /// a hand-edited settings file, a frontend that sent something odd
-    /// — falls back to `Info` rather than erroring: a log level is never
+    /// Parse a wire/filter spelling back into a level. Unknown input
+    /// (a hand-edited settings file, a frontend that sent something odd)
+    /// falls back to `Info` rather than erroring: a log level is never
     /// worth failing a command over.
     pub fn parse(s: &str) -> Self {
         match s.trim().to_ascii_lowercase().as_str() {
@@ -830,7 +830,7 @@ impl LogLevel {
         self.rank() >= min.rank()
     }
 
-    /// Ordering rank — higher is more severe. Private because the
+    /// Ordering rank: higher is more severe. Private because the
     /// numbers themselves mean nothing outside this comparison.
     fn rank(self) -> u8 {
         match self {
@@ -854,7 +854,7 @@ impl LogLevel {
 pub enum DeveloperExpiry {
     /// Stays on until the user turns it off.
     Never,
-    /// Off again on the next launch — the shipped default.
+    /// Off again on the next launch: the shipped default.
     #[default]
     Restart,
     /// Off again 24 hours after it was armed.
@@ -922,7 +922,7 @@ pub fn clamp_slow_command_ms(ms: u32) -> u32 {
     ms.clamp(MIN_SLOW_COMMAND_MS, MAX_SLOW_COMMAND_MS)
 }
 
-/// Developer + diagnostics preferences — Settings → Advanced.
+/// Developer + diagnostics preferences: Settings → Advanced.
 ///
 /// Two kinds of field live here, and the difference matters:
 ///
@@ -936,7 +936,7 @@ pub fn clamp_slow_command_ms(ms: u32) -> u32 {
 ///   a diagnostics bundle is worth exporting.
 ///
 /// Every field is independently `#[serde(default)]`, so a settings.json
-/// that predates the section — or a build that knew only some of it —
+/// that predates the section (or a build that knew only some of it)
 /// upgrades cleanly.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -958,7 +958,7 @@ pub struct DeveloperSettings {
     /// in ordinary context menus, not just on this page.
     #[serde(default)]
     pub show_actions: bool,
-    /// Ask before a destructive developer action runs. Ships **on** —
+    /// Ask before a destructive developer action runs. Ships **on**:
     /// the actions behind it clear caches and rebuild indexes.
     #[serde(default = "default_true")]
     pub confirm_destructive: bool,
@@ -989,7 +989,7 @@ pub struct DeveloperSettings {
     #[serde(default)]
     pub performance_overlay: bool,
     /// Record the duration, payload size and outcome of every IPC call
-    /// so the command inspector has something to show. Off by default —
+    /// so the command inspector has something to show. Off by default:
     /// it retains a rolling window of command metadata.
     #[serde(default)]
     pub command_timing: bool,
@@ -1004,7 +1004,7 @@ pub struct DeveloperSettings {
     #[serde(default)]
     pub recording_diagnostics: bool,
     /// Strip user names, absolute paths and capture file names from an
-    /// exported diagnostics bundle. Ships **on** — a bundle is made to
+    /// exported diagnostics bundle. Ships **on**: a bundle is made to
     /// be sent to someone else.
     #[serde(default = "default_true")]
     pub redact_diagnostics: bool,
@@ -1060,7 +1060,7 @@ impl DeveloperSettings {
 
 /// Pure: has an armed developer mode outlived its expiry policy?
 ///
-/// Evaluated **once at load**, against a fresh process — which is what
+/// Evaluated **once at load**, against a fresh process, which is what
 /// makes [`DeveloperExpiry::Restart`] mean what it says. `now_ms` is
 /// injected rather than read so the rule is testable without a clock.
 ///
@@ -1082,7 +1082,7 @@ pub fn developer_mode_expired(dev: &DeveloperSettings, now_ms: u64) -> bool {
 
 /// `PartialEq` but not `Eq`, since `RecordingSettings` carries a source
 /// list positioned with `f32` rectangles (ADR 0033). Nothing needs total
-/// equality — the comparisons here are `assert_eq!` and change
+/// equality: the comparisons here are `assert_eq!` and change
 /// detection, both of which are satisfied by partial equality.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
@@ -1107,7 +1107,7 @@ pub struct Settings {
     pub developer: DeveloperSettings,
 }
 
-/// Screen-recording defaults (ADR 0031) — what a fresh session starts
+/// Screen-recording defaults (ADR 0031): what a fresh session starts
 /// with.
 ///
 /// A section of its own rather than fields on [`CaptureSettings`]: a
@@ -1119,7 +1119,7 @@ pub struct Settings {
 /// OS default", which is the setting most users want and the one that
 /// survives plugging in a headset mid-session. A pinned id that no
 /// longer resolves falls back to the default with a warning rather than
-/// failing the recording — see `platform::windows::audio`.
+/// failing the recording; see `platform::windows::audio`.
 /// `PartialEq` but not `Eq`: a source's position is a `NormRect` of
 /// `f32`s, and float equality is partial by definition.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -1131,7 +1131,7 @@ pub struct RecordingSettings {
     #[serde(default)]
     pub microphone: bool,
     /// Mix in what the machine is playing (WASAPI loopback). Also off
-    /// by default — a screen recording that unexpectedly captures the
+    /// by default: a screen recording that unexpectedly captures the
     /// user's music is the other half of the same surprise.
     #[serde(default)]
     pub system_audio: bool,
@@ -1159,7 +1159,7 @@ pub struct RecordingSettings {
     #[serde(default = "default_video_fps")]
     pub video_fps: u32,
     /// Frame rate for GIF recordings. Separate from `video_fps` because
-    /// GIF's usable range is much lower — see `domain::recorder`.
+    /// GIF's usable range is much lower; see `domain::recorder`.
     #[serde(default = "default_gif_fps")]
     pub gif_fps: u32,
     /// Cap on the encoded frame's height. `0` (`recorder::RESOLUTION_SOURCE`)
@@ -1169,7 +1169,7 @@ pub struct RecordingSettings {
     ///
     /// **One value across both formats**, unlike the frame rates. The
     /// rates are split because a number legal for MP4 is illegal for
-    /// GIF; a height cap has no such problem — GIF's own pixel budget is
+    /// GIF; a height cap has no such problem: GIF's own pixel budget is
     /// tighter than any of these and simply wins (see
     /// `recorder::output_size`), so a shared setting cannot produce a
     /// value either format refuses.
@@ -1179,7 +1179,7 @@ pub struct RecordingSettings {
     /// default because it requires a compatible hardware encoder.
     #[serde(default)]
     pub hdr: bool,
-    /// Sources composited over the recording — a webcam, a logo
+    /// Sources composited over the recording: a webcam, a logo
     /// (ADR 0033). The list a session *starts* from; a recording preset
     /// can carry its own instead.
     ///
@@ -1204,7 +1204,7 @@ pub struct RecordingSettings {
     /// session, once the overlay is gone.
     ///
     /// **Ships on.** Between choosing a region and stopping, nothing
-    /// else on screen says what is being recorded — the overlay is
+    /// else on screen says what is being recorded: the overlay is
     /// down by design and the HUD sits in a corner. The outline is
     /// click-through and excluded from capture, so it costs the user
     /// nothing and never lands in the file; the option exists because a
@@ -1215,7 +1215,7 @@ pub struct RecordingSettings {
     /// Put every finished clip on the clipboard as a file reference, so
     /// it can be pasted straight into a chat window.
     ///
-    /// Ships **off**, matching `CaptureSettings::clipboard` — silently
+    /// Ships **off**, matching `CaptureSettings::clipboard`: silently
     /// replacing whatever the user had copied is a surprise whichever
     /// pipeline does it. See `recorder::RecorderToggles::clipboard` for
     /// why this copies a path rather than the file's bytes.
@@ -1269,8 +1269,8 @@ impl RecordingSettings {
     /// Frame rate for `format`, clamped into that format's legal range.
     ///
     /// The clamp lives here rather than at the call site so a settings
-    /// file edited by hand — or written by an older build with a
-    /// different ceiling — can't start a session at a rate the encoder
+    /// file edited by hand (or written by an older build with a
+    /// different ceiling) can't start a session at a rate the encoder
     /// will refuse.
     pub fn fps_for(&self, format: crate::recorder::RecorderFormat) -> u32 {
         let requested = match format {
@@ -1454,7 +1454,7 @@ mod recording_tests {
     const MP4_FPS_DEFAULT_FOR_TEST: u32 = crate::recorder::MP4_FPS_DEFAULT;
 }
 
-/// Patch shape for `settings_update` — each section optional, replaces
+/// Patch shape for `settings_update`: each section optional, replaces
 /// the whole sub-struct when present. Mirrors the legacy ergonomics
 /// (`update({ general })`) on a typed wire.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -1481,13 +1481,13 @@ pub struct SettingsPatch {
 }
 
 /// Hard upper bound for any per-kind toast duration. 60 s is the same
-/// ceiling the legacy slider exposed (15 s) doubled twice — values
+/// ceiling the legacy slider exposed (15 s) doubled twice: values
 /// above this are almost certainly a bug or a typo, and would render
 /// "indefinitely persistent" UX that the user already gets at `0 ms`.
 pub const MAX_TOAST_DURATION_MS: u64 = 60_000;
 
 /// Pure: `^#[0-9a-fA-F]{6}$`. The accent color is injected directly
-/// into a CSS custom property — the service layer rejects anything
+/// into a CSS custom property: the service layer rejects anything
 /// that wouldn't produce a parseable color value.
 pub fn validate_accent_hex(s: &str) -> bool {
     let bytes = s.as_bytes();
@@ -1657,7 +1657,7 @@ mod tests {
         let tuned = BackdropTuning::new(10, 20, 30, 150);
         set.set(WindowBackdrop::Blur, tuned);
         assert_eq!(set.get(WindowBackdrop::Blur), tuned);
-        // Other materials untouched — the point of storing per material.
+        // Other materials untouched: the point of storing per material.
         assert_eq!(set.get(WindowBackdrop::Mica), default_untinted_tuning());
         assert_eq!(set.get(WindowBackdrop::Acrylic), BackdropTuning::default());
     }
@@ -1700,7 +1700,7 @@ mod tests {
         assert_eq!(t.mica.saturation, 140);
         assert_eq!(t.mica.glass_strength, 100);
         // `tintStrength` was absent from the object, so the per-field
-        // serde default fills it — Mica ignores it either way.
+        // serde default fills it: Mica ignores it either way.
         assert_eq!(t.mica.tint_strength, 70);
         assert_eq!(t.clear, default_untinted_tuning());
     }
@@ -1815,7 +1815,7 @@ mod tests {
     #[test]
     fn partial_performance_section_fills_missing_fields_from_default() {
         // A settings.json written by a build that only knew
-        // gpuAcceleration must still parse — the other knobs fall back
+        // gpuAcceleration must still parse: the other knobs fall back
         // to their (on/on/off/balanced) defaults rather than erroring.
         let json = r#"{ "performance": { "gpuAcceleration": false } }"#;
         let parsed: Settings = serde_json::from_str(json).unwrap();
@@ -1996,7 +1996,7 @@ mod tests {
     #[test]
     fn shortcuts_overrides_serialize_in_stable_key_order() {
         // BTreeMap keeps the persisted JSON deterministic regardless of
-        // insertion order — clean diffs, reproducible tests.
+        // insertion order: clean diffs, reproducible tests.
         let mut a = Settings::default();
         a.shortcuts
             .overrides
@@ -2015,7 +2015,7 @@ mod tests {
 
     #[test]
     fn developer_mode_ships_off_behind_a_restart_expiry() {
-        // The switch reveals destructive actions and payload logging —
+        // The switch reveals destructive actions and payload logging:
         // it must not ship armed, and must not stay armed forever by
         // default once a user does arm it.
         let d = DeveloperSettings::default();

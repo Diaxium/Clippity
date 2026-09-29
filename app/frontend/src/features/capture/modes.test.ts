@@ -59,7 +59,7 @@ describe("CUSTOM_MODES_*", () => {
         "scrolling-window",
       ].sort()
     );
-    // Freehand is no longer a Custom tile — it moved under the overlay's
+    // Freehand is no longer a Custom tile: it moved under the overlay's
     // Region selection-method dropdown.
     expect(all.map((m) => m.id)).not.toContain("freehand");
   });
@@ -126,7 +126,7 @@ describe("visibleOptionKeys", () => {
   });
 
   it("drops enhance for the modes that produce no image", () => {
-    // Color/palette/text modes yield swatches or a string — there are no
+    // Color/palette/text modes yield swatches or a string: there are no
     // captured pixels for the enhance pass to run over.
     for (const mode of [
       "color-picker",
@@ -179,7 +179,7 @@ describe("installation gating", () => {
   });
 
   it("leaves the other modes alone when OCR was declined", () => {
-    // Only Grab Text depends on the OCR component — a declined component must
+    // Only Grab Text depends on the OCR component: a declined component must
     // not take unrelated modes down with it.
     const declined = caps({ textRecognition: false });
     for (const def of [...CUSTOM_MODES_STANDARD, ...CUSTOM_MODES_ADVANCED]) {

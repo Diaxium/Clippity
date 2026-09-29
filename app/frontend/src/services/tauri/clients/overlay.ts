@@ -72,7 +72,7 @@ export function beginRegionCapture(
 /** Switch the active selection method on the open overlay session in
  *  place (Rectangle / Freehand / Pen / Magnetic Lasso / Brush share the
  *  same cached snapshot). Updates only the backend session mode so the
- *  saved file's label matches the method drawn — no re-snapshot, no
+ *  saved file's label matches the method drawn: no re-snapshot, no
  *  flicker. No-op when no overlay session is open. */
 export function setOverlayMode(mode: OverlayMode): Promise<void> {
   return invoke<void, { mode: OverlayMode }>("set_overlay_mode", { mode });
@@ -84,7 +84,7 @@ export function cancelRegionCapture(): Promise<void> {
   return invoke<void>("cancel_region_capture");
 }
 
-/** Finalize a Region selection — crop, optional cursor, save, optional
+/** Finalize a Region selection: crop, optional cursor, save, optional
  *  clipboard, emit `clippity://capture/finished`. */
 export function finishRegionCapture(
   request: FinishRegionRequest
@@ -97,8 +97,8 @@ export function finishRegionCapture(
 
 /** Finalize a Fullscreen capture from inside the overlay (`F` / the
  *  Fullscreen tab). The backend crops the monitor the cursor is on out
- *  of the cached snapshot — the same frozen backdrop the overlay is
- *  showing — so this needs no rect from the frontend and never catches
+ *  of the cached snapshot (the same frozen backdrop the overlay is
+ *  showing) so this needs no rect from the frontend and never catches
  *  Clippity's own chrome. Saves, optional clipboard, emits
  *  `clippity://capture/finished`. */
 export function finishFullscreenCapture(
@@ -110,7 +110,7 @@ export function finishFullscreenCapture(
   );
 }
 
-/** Finalize a Freehand selection — mask outside the polygon to
+/** Finalize a Freehand selection: mask outside the polygon to
  *  transparent, crop to the bbox, save, optional clipboard, emit
  *  `clippity://capture/finished`. */
 export function finishFreehandCapture(
@@ -122,7 +122,7 @@ export function finishFreehandCapture(
   );
 }
 
-/** Finalize a Brush selection — composite the snapshot through the
+/** Finalize a Brush selection: composite the snapshot through the
  *  painted alpha mask, crop to the mask's bbox, save, optional clipboard,
  *  emit `clippity://capture/finished`. */
 export function finishBrushCapture(
@@ -134,7 +134,7 @@ export function finishBrushCapture(
   );
 }
 
-/** Finalize a Multi-Area selection — crop every rect, stitch on white,
+/** Finalize a Multi-Area selection: crop every rect, stitch on white,
  *  save, optional clipboard, emit `clippity://capture/finished`. */
 export function finishMultiAreaCapture(
   request: FinishMultiAreaRequest
@@ -160,7 +160,7 @@ export function pickColor(x: number, y: number): Promise<PickedColor> {
  *  physical px), quantize to up to `count` colors, persist a `palette`
  *  library entry + show a palette toast. Returns the persisted entry.
  *  Omit `count` (the usual case) to use the configured
- *  `capture.paletteCount` setting — 6 out of the box; the backend clamps
+ *  `capture.paletteCount` setting: 6 out of the box; the backend clamps
  *  any explicit value to 2–16. */
 export function finishPaletteCapture(
   rect: Region,
@@ -189,7 +189,7 @@ export function finishGrabText(rect: Region): Promise<string> {
  *  it to `last-region.json`).
  *
  *  Divide by `devicePixelRatio` to get the logical-px rect the overlay
- *  draws in — this is the same seam `finishRegionCapture` multiplies at.
+ *  draws in: this is the same seam `finishRegionCapture` multiplies at.
  *
  *  Recorded by every rect-shaped capture (Rectangle / Palette /
  *  Grab-Text). Freehand, Pen, and Brush do not update it: their bounding
@@ -199,12 +199,12 @@ export function lastRegion(): Promise<Region | null> {
   return invoke<Region | null>("last_region");
 }
 
-/** One-shot repeat of the last rectangular selection — no overlay, no
+/** One-shot repeat of the last rectangular selection: no overlay, no
  *  drag. Grabs a fresh screenshot, crops the remembered rect, saves,
  *  and emits `clippity://capture/finished` like any other capture.
  *
  *  Rejects when nothing is remembered, or when the virtual desktop has
- *  changed size since the region was stored — nothing is shown for the
+ *  changed size since the region was stored: nothing is shown for the
  *  user to sanity-check before the shutter fires, so stale coordinates
  *  are an error rather than something to clamp. Use `lastRegion()` +
  *  the overlay restore when the rect should be reviewable first. */
@@ -258,7 +258,7 @@ export function overlayWindows(): Promise<OverlayWindow[]> {
 
 /** Object mode: run the configured on-device detector over the cached
  *  desktop snapshot. Returns canvas-local physical-pixel boxes. Slow
- *  (one ONNX inference per snapshot tile, ~0.5–2 s) — call once per
+ *  (one ONNX inference per snapshot tile, ~0.5–2 s): call once per
  *  overlay session, not per pointer move. Rejects with a `vision`
  *  error when no overlay session is active or the model isn't
  *  installed. */
@@ -282,7 +282,7 @@ export function onOverlayShown(
   return on<OverlayShownPayload>(EVENT_NAMES.overlayShown, handler);
 }
 
-/** Subscribe to `overlay/snapshot-ready` — fires when the backend's
+/** Subscribe to `overlay/snapshot-ready`: fires when the backend's
  *  background loupe encoder finishes producing the cached data URI.
  *  Decoupled from `overlay/shown` so the overlay UI can become
  *  interactive before the (slow) PNG encode completes; the magnifier
@@ -291,7 +291,7 @@ export function onOverlaySnapshotReady(handler: () => void): () => void {
   return on<void>(EVENT_NAMES.overlaySnapshotReady, handler);
 }
 
-/** Subscribe to the `overlay/toggles` mirror — the capture window
+/** Subscribe to the `overlay/toggles` mirror: the capture window
  *  broadcasts its current toggle state so the overlay's bottom bar
  *  reflects what the user pre-set. */
 export function onOverlayToggles(

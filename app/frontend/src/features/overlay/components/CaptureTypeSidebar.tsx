@@ -13,10 +13,10 @@ import { useOverlayStore } from "../state/overlayStore";
  * out of the cached snapshot; Custom renders disabled (its modes are
  * entered from the capture window).
  *
- * Shown only while the overlay is in Region or Window mode — the other
+ * Shown only while the overlay is in Region or Window mode: the other
  * (reserved) overlay modes skip this sidebar entirely.
  *
- * NOTE: not currently mounted by `OverlayLayout` — the in-overlay
+ * NOTE: not currently mounted by `OverlayLayout`; the in-overlay
  * switch ships via the W/R/F keybinds for now. Kept mode-correct so
  * mounting it later is a one-liner.
  */
@@ -37,7 +37,7 @@ export function CaptureTypeSidebar() {
     }
     if (id === "fullscreen") {
       // Captures the monitor under the cursor out of the cached
-      // snapshot — no bounce back to the capture window.
+      // snapshot: no bounce back to the capture window.
       captureFullscreenFromOverlay();
     }
     // C is disabled (deferred port); the click is a visual no-op via

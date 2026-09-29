@@ -21,7 +21,7 @@ import { useStudioStore } from "../state/studioStore";
  * Playback and trim controls.
  *
  * Everything on this bar is also a keyboard binding
- * (`useStudioKeybinds`), and both routes call the same store actions —
+ * (`useStudioKeybinds`), and both routes call the same store actions,
  * so a button and its shortcut cannot drift into doing different
  * things. The shortcut is named in each control's tooltip rather than
  * hidden in a help panel, because this is where someone is standing
@@ -142,7 +142,7 @@ export function TransportBar() {
       </button>
 
       {/* The selection's length, and a way back. Both only once there is
-          something to report — an untrimmed clip's "length" is just the
+          something to report: an untrimmed clip's "length" is just the
           duration already shown in the readout. */}
       {trimmed ? (
         <>

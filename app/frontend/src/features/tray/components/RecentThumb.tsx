@@ -24,8 +24,8 @@ interface RecentThumbProps {
  * click; shows a placeholder glyph until its data URI has decoded.
  *
  * Right-click adds the two destinations the tile can't offer on its own.
- * The panel is a shortcut surface — a tile is 40px square and can carry
- * exactly one gesture — so "reveal in folder" would otherwise mean
+ * The panel is a shortcut surface (a tile is 40px square and can carry
+ * exactly one gesture) so "reveal in folder" would otherwise mean
  * opening the main window to do it.
  */
 export function RecentThumb({ recent, onOpen }: RecentThumbProps) {

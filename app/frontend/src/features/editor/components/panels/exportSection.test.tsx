@@ -16,7 +16,7 @@ function chooseFormat(label: string): void {
   fireEvent.click(screen.getByRole("option", { name: label }));
 }
 
-/** The submit button — named for the document, so it doesn't collide with the
+/** The submit button: named for the document, so it doesn't collide with the
  *  "Export format" / "Export scale" dropdown triggers. */
 const exportButton = (): HTMLElement =>
   screen.getByRole("button", { name: "Export Doc" });

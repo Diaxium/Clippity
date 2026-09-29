@@ -5,23 +5,23 @@
  * the quick capture options (cursor / clipboard toggles + the Timed
  * delay modifier), and the action handlers wired to the panel's buttons.
  * The actions themselves are thin: each reuses an existing IPC client
- * (capture / overlay / countdown / dashboard) — the tray is a launcher,
+ * (capture / overlay / countdown / dashboard): the tray is a launcher,
  * not a second capture pipeline.
  *
  * Capture handlers `await hideTrayPanel()` BEFORE firing so the panel
  * can't appear in the shot (the backend hide settles the compositor
- * before resolving — the panel isn't a primary window, so the capture
+ * before resolving; the panel isn't a primary window, so the capture
  * pipeline won't hide it for us). Region/Window mirror the toggles to the
  * overlay first (`emitOverlayToggles`), exactly like `useCaptureWorkflow`,
  * so the overlay's bottom bar reflects the tray's choices.
  *
- * `preview` is held on (it's a no-op until the editor-preview port lands —
+ * `preview` is held on (it's a no-op until the editor-preview port lands;
  * the capture window renders that toggle disabled for the same reason), so
  * only Cursor + Copy are user-facing.
  *
  * Timed is a modifier, not a mode: when enabled it applies to every quick
  * capture (Fullscreen / Region / Window / Repeat) via `runTimedGate`, which mirrors
- * `useCaptureWorkflow`'s delay branch — show the countdown HUD, then
+ * `useCaptureWorkflow`'s delay branch: show the countdown HUD, then
  * proceed on tick-to-zero or bail on Esc. Sharing that one timing model
  * retires the earlier `timedPendingRef` interim that fired the shot on a
  * persistent `countdown/finished` listener (see
@@ -59,7 +59,7 @@ import {
 
 /** The quick toggles the tray exposes. `cursor` / `clipboard` are
  *  mirrored to the overlay; `timed` arms the countdown delay modifier.
- *  (`preview` is held on — see the module doc.) */
+ *  (`preview` is held on; see the module doc.) */
 export type TrayToggleKey = "cursor" | "clipboard" | "timed";
 
 /** Selectable delays (seconds) for the Timed modifier. First entry is the
@@ -74,7 +74,7 @@ function fullscreenRequest(
   return {
     type: "fullscreen",
     customMode: null,
-    // The tray flyout is a quick-action surface — it exposes only
+    // The tray flyout is a quick-action surface: it exposes only
     // cursor/clipboard/timed, so enhancement stays off here and is
     // chosen per-capture in the capture window or the overlay.
     toggles: { preview: true, clipboard, cursor, enhance: false },
@@ -130,7 +130,7 @@ export function useTrayPanel() {
       await startCountdown(timedSeconds);
     } catch {
       waiter.dispose();
-      return false; // HUD never showed — don't wait on an event that won't fire.
+      return false; // HUD never showed; don't wait on an event that won't fire.
     }
     return (await waiter.outcome) === "finished";
   }, [timedEnabled, timedSeconds]);
@@ -150,7 +150,7 @@ export function useTrayPanel() {
   const region = useCallback(async () => {
     await hideTrayPanel();
     if (!(await runTimedGate())) return;
-    // Mirror toggles so the overlay bottom bar matches, then open it —
+    // Mirror toggles so the overlay bottom bar matches, then open it:
     // same handshake as `useCaptureWorkflow`.
     await emitOverlayToggles({
       preview: true,
@@ -178,7 +178,7 @@ export function useTrayPanel() {
     if (!(await runTimedGate())) return;
     // No overlay: the backend crops the remembered rect straight out of a
     // fresh snapshot. It rejects when nothing is remembered or the
-    // display layout changed since — surface that, since the user
+    // display layout changed since: surface that, since the user
     // clicked expecting a capture and would otherwise see nothing happen.
     await recaptureLastRegion({
       preview: true,
@@ -244,7 +244,7 @@ export function useTrayPanel() {
     dismiss,
   };
 
-  // Esc closes the panel — it's focused, so a window keydown suffices.
+  // Esc closes the panel: it's focused, so a window keydown suffices.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") dismiss();
@@ -280,7 +280,7 @@ export function useTrayPanel() {
  * late event doesn't leak listeners.
  *
  * Mirrors the identical helper in `useCaptureWorkflow`; kept module-local
- * (rather than hoisted into the IPC client) per that module's note — a
+ * (rather than hoisted into the IPC client) per that module's note: a
  * shared "wait then unsubscribe" wrapper invites copy-paste callers that
  * forget to clean up. The tray's delay gate and the capture window now
  * share one timing model.

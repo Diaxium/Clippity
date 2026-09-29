@@ -21,7 +21,7 @@ const FORMAT_OPTIONS = [
   { value: "webp", label: "WebP" },
 ] as const;
 
-/** Formats whose encoder takes a quality factor — PNG is lossless. */
+/** Formats whose encoder takes a quality factor: PNG is lossless. */
 const LOSSY: readonly ExportFormat[] = ["jpeg", "webp"];
 
 /** Percent, matching the browser's 0.92 `toDataURL` default. */

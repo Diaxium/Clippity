@@ -1,5 +1,5 @@
 /**
- * Palette export formatting — pure, framework-free.
+ * Palette export formatting: pure, framework-free.
  *
  * Turns an extracted palette into the text a designer pastes elsewhere:
  * a hex list, `rgb()` / `hsl()` lines, CSS custom properties, a JSON
@@ -13,7 +13,7 @@
  * Unit-tested in `paletteExport.test.ts`.
  */
 
-/** The minimal swatch shape every export needs — satisfied structurally
+/** The minimal swatch shape every export needs: satisfied structurally
  *  by both `AuxColor` (library) and `PaletteSwatch` (toast). */
 export interface SwatchLike {
   hex: string;
@@ -32,7 +32,7 @@ export interface PaletteFormatDef {
   label: string;
 }
 
-/** Selector order — HEX first (the default + the legacy copy behavior). */
+/** Selector order: HEX first (the default + the legacy copy behavior). */
 export const PALETTE_FORMATS: readonly PaletteFormatDef[] = [
   { id: "hex-list", label: "HEX" },
   { id: "rgb", label: "RGB" },
@@ -43,7 +43,7 @@ export const PALETTE_FORMATS: readonly PaletteFormatDef[] = [
 ];
 
 /**
- * Convert 0-255 sRGB to HSL — hue in `[0, 360)`, saturation + lightness
+ * Convert 0-255 sRGB to HSL: hue in `[0, 360)`, saturation + lightness
  * as integer percents. Pure; the standard piecewise hue formula.
  */
 export function rgbToHsl(

@@ -11,7 +11,7 @@ import {
 import type { AuxColor } from "../types";
 
 /**
- * Compact "Copy as <format>" control for a palette library entry — a
+ * Compact "Copy as <format>" control for a palette library entry: a
  * format selector + a copy button that writes the whole palette in the
  * chosen format (HEX / RGB / HSL / CSS vars / JSON / Tailwind). Lives in
  * the card/row action cluster, replacing the single copy icon the other

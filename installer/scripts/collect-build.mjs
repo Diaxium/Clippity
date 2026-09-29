@@ -75,7 +75,7 @@ async function main() {
   const PAYLOAD_FLOOR_BYTES = 30_000_000;
   if (size < PAYLOAD_FLOOR_BYTES) {
     console.warn(
-      `[collect-build] WARNING: ${SHIPPED_NAME} is only ${mb} MB — too small ` +
+      `[collect-build] WARNING: ${SHIPPED_NAME} is only ${mb} MB, too small ` +
         `to contain the application. It was probably built without a staged ` +
         `payload; run \`pnpm dist\` from the app root.`,
     );

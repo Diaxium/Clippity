@@ -8,7 +8,7 @@ import type { CaptureMeta } from "../types";
 /**
  * One-click star toggle for a card or row.
  *
- * Optimistic in appearance only — it fires the IPC and lets the
+ * Optimistic in appearance only: it fires the IPC and lets the
  * backend's `library/updated` bring the new state back, the same loop
  * delete/restore use. A star is cheap to re-render and the round trip is
  * a single sidecar write, so holding local state here would buy a few
@@ -26,7 +26,7 @@ export function FavoriteButton({
   meta: CaptureMeta;
   className?: string;
   /** Keep the outline star showing at rest. For hosts with no hover
-   *  group to reveal it — the inspector shows one capture, so there is
+   *  group to reveal it: the inspector shows one capture, so there is
    *  no field of grey stars to avoid. */
   alwaysVisible?: boolean;
 }) {

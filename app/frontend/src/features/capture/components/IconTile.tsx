@@ -10,7 +10,7 @@ interface IconTileProps {
 /**
  * Small color-coded icon chip used by mode tiles and option rows.
  * Warm tint follows the user's accent (`--color-tile-warm/-ink`),
- * cool tint stays in the brand teal family — both auto-flip for the
+ * cool tint stays in the brand teal family: both auto-flip for the
  * dark theme via theme.css.
  */
 export function IconTile({ icon: Icon, tint }: IconTileProps) {

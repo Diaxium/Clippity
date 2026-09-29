@@ -10,7 +10,7 @@ interface AccentStepProps {
 }
 
 /**
- * Step 3 — accent colour. Re-uses the settings panel's `AccentPicker`
+ * Step 3: accent colour. Re-uses the settings panel's `AccentPicker`
  * (presets + custom hex input). Changes preview live through the
  * settings store, exactly like the theme step.
  */

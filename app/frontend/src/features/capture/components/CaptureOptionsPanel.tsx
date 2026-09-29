@@ -81,7 +81,7 @@ const OPTIONS: readonly OptionDef[] = [
 
 interface CaptureOptionsPanelProps {
   startIndex?: number;
-  /** Settings-button click handler — opens the main hub on /settings. */
+  /** Settings-button click handler: opens the main hub on /settings. */
   onOpenSettings: () => void;
 }
 

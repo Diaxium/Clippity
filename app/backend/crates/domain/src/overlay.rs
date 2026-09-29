@@ -1,6 +1,6 @@
 //! Overlay-feature domain types + pure rules.
 //!
-//! `domain/` has no I/O, no Tauri, no filesystem — these types and
+//! `domain/` has no I/O, no Tauri, no filesystem: these types and
 //! helpers are unit-testable without a desktop session. Everything
 //! that needs to touch the OS lives in `services/overlay_service.rs`.
 //!
@@ -8,7 +8,7 @@
 //! camelCase struct fields (mirrors the capture domain). The
 //! `OverlayMode` enum reserves variants for future ports (Color-Pick,
 //! Object, Freehand, …) so the wire shape doesn't break when those
-//! ports land — but only `Region` is reachable from `validate_mode`
+//! ports land, but only `Region` is reachable from `validate_mode`
 //! today.
 
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ pub struct Region {
 }
 
 /// A capturable top-level window surfaced to the overlay's Window
-/// mode. `rect` is physical-pixel, virtual-desktop-origin — the same
+/// mode. `rect` is physical-pixel, virtual-desktop-origin: the same
 /// coordinate space as [`Region`], so the frontend hands it straight
 /// back to `finish_region_capture` on click (no extra DPR scaling).
 /// `id` is the source HWND's bits, stable for the session; the
@@ -61,21 +61,21 @@ pub enum OverlayMode {
     ColorPick,
     /// Reserved (Freehand-lasso port).
     Freehand,
-    /// Pen / Bézier-path selection — anchor points + curve handles
+    /// Pen / Bézier-path selection: anchor points + curve handles
     /// flattened to a polygon frontend-side, then masked exactly like
     /// Freehand (shares `finish_freehand_capture`).
     Pen,
-    /// Magnetic-lasso selection — an edge-snapped trace flattened to a
+    /// Magnetic-lasso selection: an edge-snapped trace flattened to a
     /// polygon frontend-side, masked exactly like Freehand (shares
     /// `finish_freehand_capture`).
     MagneticLasso,
-    /// Brush selection — a painted raster alpha mask. Unlike the
+    /// Brush selection: a painted raster alpha mask. Unlike the
     /// polygon modes it can't be represented as a path, so it has its
     /// own finalize (`finish_brush_capture`).
     Brush,
     /// Reserved (Multi-Area port).
     MultiArea,
-    /// Reserved (Object-mode port — per-element detection inside a
+    /// Reserved (Object-mode port: per-element detection inside a
     /// window via the UIA tree; builds on Window-mode enumeration).
     Object,
     /// Reserved (Grab-Text / OCR port).
@@ -88,8 +88,8 @@ pub enum OverlayMode {
     Panoramic,
     /// Drag-to-select a rectangle, then **record** it (ADR 0031).
     ///
-    /// Shares the whole Region interaction — the same drag, handles and
-    /// selection UI — and diverges only at finalize, where the rect
+    /// Shares the whole Region interaction (the same drag, handles and
+    /// selection UI) and diverges only at finalize, where the rect
     /// starts a recorder session instead of cropping the snapshot.
     /// A distinct mode rather than a flag on `Region` because the
     /// overlay's banner copy, its finalize branch and its toolbar all
@@ -118,7 +118,7 @@ pub struct OverlayToggles {
     ///
     /// `#[serde(default)]` so a payload from a frontend that predates
     /// this field still deserializes as "off" rather than failing the
-    /// whole capture — the same courtesy `BeginOverlayRequest::output_dir`
+    /// whole capture: the same courtesy `BeginOverlayRequest::output_dir`
     /// gets.
     #[serde(default)]
     pub enhance: bool,
@@ -141,8 +141,8 @@ pub struct BeginOverlayRequest {
     #[serde(default)]
     pub output_dir: Option<String>,
     /// Name of the preset that opened this overlay, for the provenance
-    /// record. Rides the session exactly as `output_dir` does — stashed
-    /// at `show`, consumed at `finalize`, cleared at `cancel` — because
+    /// record. Rides the session exactly as `output_dir` does (stashed
+    /// at `show`, consumed at `finalize`, cleared at `cancel`) because
     /// the capture it describes happens several IPC calls later.
     /// `None` = the user opened the overlay themselves.
     #[serde(default)]
@@ -153,7 +153,7 @@ pub struct BeginOverlayRequest {
 /// coordinates to physical pixels (multiplied by DPR).
 ///
 /// `cursor_pin` is the canvas-local position where the cursor should
-/// be composited if `toggles.cursor` is on — the user's
+/// be composited if `toggles.cursor` is on: the user's
 /// `lastInSelection` so the cursor lands inside the crop instead of
 /// on the floating Capture button.
 #[derive(Deserialize, Clone, Copy, Debug)]
@@ -165,8 +165,8 @@ pub struct FinishRegionRequest {
 }
 
 /// Result of a successful Region capture. Same shape as
-/// `domain::capture::CaptureResult` minus the per-capture-mode fields
-/// — kept separate so the two features can evolve independently.
+/// `domain::capture::CaptureResult` minus the per-capture-mode fields,
+/// kept separate so the two features can evolve independently.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayResult {
@@ -174,7 +174,7 @@ pub struct OverlayResult {
     pub width: u32,
     pub height: u32,
     pub path: String,
-    /// Mirrors `CaptureResult::preview` — whether the user wants this
+    /// Mirrors `CaptureResult::preview`: whether the user wants this
     /// capture opened in the editor. Sourced from the finalize request's
     /// toggles (or the scroll session) so `capture/finished` carries the
     /// intent for the overlay/scroll dispatch paths too.
@@ -183,7 +183,7 @@ pub struct OverlayResult {
 
 /// Sent on `finish_freehand_capture`. `points` are the lasso path in
 /// canvas-local physical pixels (DPR already applied frontend-side),
-/// in draw order. `cursor_pin` mirrors `FinishRegionRequest` — the
+/// in draw order. `cursor_pin` mirrors `FinishRegionRequest`: the
 /// canvas-local pixel the cursor is composited at when `toggles.cursor`
 /// is on (clipped to the path's bounding box).
 #[derive(Deserialize, Clone, Debug)]
@@ -236,7 +236,7 @@ impl BrushMask {
     /// Decode the RLE into a flat row-major `width * height` alpha buffer.
     /// Rejects a mask whose run lengths don't sum to the declared area
     /// (the backend never trusts client-side coords) or whose area is
-    /// zero. Pure — unit-tested below.
+    /// zero. Pure: unit-tested below.
     pub fn decode(&self) -> Result<Vec<u8>, &'static str> {
         let area = (self.width as usize)
             .checked_mul(self.height as usize)
@@ -302,7 +302,7 @@ pub fn validate_region(
 ///
 /// The canvas dimensions it was taken against are stored alongside the
 /// rect. A [`Region`] is only meaningful relative to a particular
-/// virtual-desktop size — plug a monitor in, change a resolution, and
+/// virtual-desktop size: plug a monitor in, change a resolution, and
 /// the same coordinates point somewhere else entirely. Keeping the
 /// dimensions is what lets [`resolve_last_region`] tell "the exact same
 /// pixels" apart from "coordinates that merely still fit".
@@ -321,7 +321,7 @@ pub struct LastRegion {
 ///
 ///   - **Overlay restore** (`strict = false`) puts the rect back on
 ///     screen as an editable selection. The user sees it and confirms,
-///     so a display layout change is survivable — clamp the rect into
+///     so a display layout change is survivable: clamp the rect into
 ///     the new bounds and let them adjust.
 ///   - **One-shot recapture** (`strict = true`) fires immediately with
 ///     nothing to review. If the canvas has changed size, the stored
@@ -340,7 +340,7 @@ pub fn resolve_last_region(
 }
 
 /// Minimum side length (physical pixels) for a usable Region capture.
-/// Matches the frontend `geometry.ts` `MIN_SIZE` constant — coordinate
+/// Matches the frontend `geometry.ts` `MIN_SIZE` constant; coordinate
 /// these in lock-step.
 pub const MIN_REGION_PX: u32 = 8;
 
@@ -357,7 +357,7 @@ pub const MULTI_AREA_GAP_PX: u32 = 12;
 /// integer pixel coordinates; the ray is cast in +x and edge crossings
 /// counted. The `(yi > y) != (yj > y)` guard excludes horizontal edges
 /// and keeps the slope division safe. Returns false for degenerate
-/// (< 3-point) polygons. Pure — ported from the legacy `capture.rs`.
+/// (< 3-point) polygons. Pure, ported from the legacy `capture.rs`.
 pub fn point_in_polygon(x: i32, y: i32, poly: &[(i32, i32)]) -> bool {
     if poly.len() < MIN_FREEHAND_POINTS {
         return false;
@@ -427,7 +427,7 @@ mod last_region_tests {
 
     #[test]
     fn strict_refuses_a_resized_canvas_even_when_the_rect_still_fits() {
-        // The rect fits inside 1920×1080 — but those coordinates now
+        // The rect fits inside 1920×1080, but those coordinates now
         // address different pixels than the user selected, and the
         // one-shot path has no preview to catch that.
         let r = rect(100, 200, 640, 480);
@@ -458,7 +458,7 @@ mod last_region_tests {
 
     #[test]
     fn rejects_a_rect_that_clamps_below_the_minimum() {
-        // Origin sits within 4 px of the right edge — nothing usable is
+        // Origin sits within 4 px of the right edge: nothing usable is
         // left after clamping, so this must not resolve.
         let r = rect(1917, 100, 640, 480);
         assert!(resolve_last_region(last(r, 3840, 1080), 1920, 1080, false).is_err());

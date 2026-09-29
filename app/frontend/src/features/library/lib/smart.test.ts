@@ -75,7 +75,7 @@ describe("smartThresholds", () => {
 
   it("anchors this week to local midnight, not a rolling 168 hours", () => {
     // Two captures the same distance back in hours but either side of a
-    // midnight must not both be "this week" — the window is calendar
+    // midnight must not both be "this week": the window is calendar
     // days, so the boundary is a date, not an elapsed duration.
     const t = smartThresholds(NOON);
     const midnight = new Date(2026, 5, 15).getTime();

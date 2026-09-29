@@ -17,15 +17,15 @@ import { useStudioStore } from "../state/studioStore";
 /**
  * Add an annotation, and adjust the selected one.
  *
- * A single row rather than a side panel. Studio's layout is fixed —
- * picture, timeline, transport, export — and a panel that appeared on
+ * A single row rather than a side panel. Studio's layout is fixed
+ * (picture, timeline, transport, export) and a panel that appeared on
  * selection would resize the picture underneath, moving the very thing
  * the user is pointing at.
  *
  * The controls shown depend on the selected kind, because the fields
  * genuinely differ: a spotlight has no colour and a blur has no text.
  * Only the fields that exist are offered, rather than greying out a
- * fixed set — a disabled control invites a click that will do nothing.
+ * fixed set: a disabled control invites a click that will do nothing.
  */
 
 /** The kinds, in the order they are offered. */
@@ -140,7 +140,7 @@ function SelectedControls({ annotation, onChange }: SelectedControlsProps) {
           />
           <Toggle
             label="Filled"
-            // The redaction that actually redacts — a solid cover has no
+            // The redaction that actually redacts: a solid cover has no
             // recoverable signal under it, unlike a blur.
             title="A filled box is the safest redaction"
             checked={annotation.filled}
@@ -216,7 +216,7 @@ function SelectedControls({ annotation, onChange }: SelectedControlsProps) {
       return (
         <Slider
           label="Strength"
-          // Source pixels — the preview scales it to the stage, so what
+          // Source pixels: the preview scales it to the stage, so what
           // is set here is what the export applies.
           min={2}
           max={40}

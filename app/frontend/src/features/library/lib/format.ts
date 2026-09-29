@@ -37,8 +37,8 @@ export function formatDimensions(width?: number, height?: number): string {
 }
 
 /**
- * The full provenance of a capture as one hover string — window title,
- * source app, capture mode, dimensions, display, preset — skipping
+ * The full provenance of a capture as one hover string (window title,
+ * source app, capture mode, dimensions, display, preset) skipping
  * whatever the backend couldn't resolve.
  *
  * A tooltip rather than a visible line on purpose: a window title is
@@ -46,8 +46,8 @@ export function formatDimensions(width?: number, height?: number): string {
  * to uselessness or wreck the grid. The card shows the short, stable
  * part (the app); this is what you get for asking.
  *
- * Ordered narrowest-to-widest — the window, then what owned it, then how
- * and where it was taken — so the parts a capture is most likely to have
+ * Ordered narrowest-to-widest (the window, then what owned it, then how
+ * and where it was taken) so the parts a capture is most likely to have
  * lead, and the tail simply stops early on a sparse record.
  *
  * Returns `""` when nothing is known, so a caller can pass it straight
@@ -85,7 +85,7 @@ export interface TextStats {
 
 /**
  * Measure a text entry. Words are whitespace-separated runs, so a blank
- * or whitespace-only entry counts zero rather than one — `"".split(/\s+/)`
+ * or whitespace-only entry counts zero rather than one: `"".split(/\s+/)`
  * yields `[""]`, which is the classic off-by-one here.
  */
 export function textStats(text: string): TextStats {
@@ -103,7 +103,7 @@ export function textStats(text: string): TextStats {
  * A screenshot is described by its pixels (`1920×1080`); a palette by
  * how many colors it holds; a text entry by how much text. Falling back
  * to dimensions for all six would leave every aux entry describing
- * itself as `""` — the ones that most need a word of description would
+ * itself as `""`: the ones that most need a word of description would
  * get the least.
  *
  * A color is described by its **RGB**, not its hex, because the backend

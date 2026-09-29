@@ -1,19 +1,19 @@
 # Contributing to Clippity
 
 Thanks for taking the time. Clippity is a Windows-first desktop capture suite
-built on Tauri v2 — a React 19 + TypeScript frontend over a layered Rust
+built on Tauri v2: a React 19 + TypeScript frontend over a layered Rust
 workspace. This document covers how to get set up, what the code expects of you,
 and what CI checks before a merge.
 
 ## Before you start
 
 - **Open an issue first for anything non-trivial.** A bug report or feature
-  request costs you five minutes and can save a rewrite. Small fixes — typos,
-  a broken link, an obvious one-liner — can go straight to a PR.
+  request costs you five minutes and can save a rewrite. Small fixes (typos,
+  a broken link, an obvious one-liner) can go straight to a PR.
 - **Check the roadmaps.** [docs/roadmaps/](docs/roadmaps/README.md) is where
   planned work lives, per area, with priorities. If your idea is already there,
   say so in the issue; if it contradicts a decision, read the relevant
-  [ADR](docs/decisions/README.md) first — the reasoning is usually written down.
+  [ADR](docs/decisions/README.md) first; the reasoning is usually written down.
 
 ## Setup
 
@@ -37,7 +37,7 @@ needs network access and takes a while. Later builds are incremental.
 
 1. **Branch** off `main`.
 2. **Match the code around you.** Naming, comment density, module layout, and
-   error handling are consistent in this codebase on purpose — see
+   error handling are consistent in this codebase on purpose; see
    [docs/development/conventions.md](docs/development/conventions.md).
 3. **Keep the IPC seam typed.** Wire shapes are declared once in
    `app/shared/src/contracts` and mirrored by the Rust `domain` structs. If you
@@ -61,10 +61,10 @@ Run the same checks CI runs:
 pnpm check && pnpm lint && pnpm test
 ```
 
-- `pnpm check` — TypeScript type-check plus `cargo check --workspace`
-- `pnpm lint` — ESLint and clippy
-- `pnpm test` — Vitest (frontend + shared) and `cargo test --workspace`
-- `pnpm format` — Prettier and rustfmt, if the formatter has opinions about
+- `pnpm check`: TypeScript type-check plus `cargo check --workspace`
+- `pnpm lint`: ESLint and clippy
+- `pnpm test`: Vitest (frontend + shared) and `cargo test --workspace`
+- `pnpm format`: Prettier and rustfmt, if the formatter has opinions about
   your diff
 
 Performance-sensitive work should also clear the benchmark budgets:
@@ -92,7 +92,7 @@ Use the bug report template. The details that actually shorten a fix:
 - Windows version and build (`winver`)
 - Whether you built from source or ran a bundle, and which
 - The capture mode, monitor layout, and display scaling involved
-- Logs — Clippity writes through `tracing`; see
+- Logs: Clippity writes through `tracing`; see
   [docs/development/debugging.md](docs/development/debugging.md)
 
 ## Security

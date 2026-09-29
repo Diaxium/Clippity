@@ -4,18 +4,18 @@
 //! "primary" window before taking a screenshot. The capture port
 //! kept these helpers inline (`hide_capture_window_briefly`,
 //! `restore_capture_window`) with a tech-debt entry pointing here
-//! for the overlay's eventual second consumer — this file is that
+//! for the overlay's eventual second consumer: this file is that
 //! promotion.
 //!
 //! Both consumers funnel through `hide_primary_windows(keep_label)`
 //! / `restore_window(label)` and the named compositor-unpaint sleep
-//! in `infra::config`. No service state — pure orchestration.
+//! in `infra::config`. No service state; pure orchestration.
 
 use tauri::{AppHandle, Manager};
 
 use clippity_infra::config;
 
-/// Mutually-exclusive "primary" windows — only one of these is
+/// Mutually-exclusive "primary" windows: only one of these is
 /// allowed to be visible at a time during a capture. Toast (post-
 /// capture notification) and countdown (pre-capture timer) are
 /// intentionally excluded; they coexist with whichever primary
@@ -81,16 +81,16 @@ pub fn focus_primary_window(app: &AppHandle, label: &str) -> bool {
 }
 
 /// Which compositor-unpaint sleep the caller wants. Sleeps run on
-/// the calling thread — these are `std::thread::sleep`, not async,
+/// the calling thread: these are `std::thread::sleep`, not async,
 /// because Tauri commands already run on a blocking executor and
 /// switching to `tokio::time::sleep` here would add an executor
 /// hop without changing behaviour. If profiling shows this hurts
 /// IPC throughput, the right fix is an event-driven "compositor
-/// settled" signal, not a sleep flavour swap — tracked in
+/// settled" signal, not a sleep flavour swap; tracked in
 /// REBUILD.md.
 /// The capture path's fixed unpaint sleep, used by the live-regrab
 /// fallbacks (a cached snapshot missing or failed). The overlay open path
-/// no longer uses a fixed sleep at all — see [`settle_after_hide`], which
+/// no longer uses a fixed sleep at all; see [`settle_after_hide`], which
 /// waits on the actual hide instead of guessing at it.
 #[derive(Clone, Copy, Debug)]
 pub enum CompositorWait {
@@ -107,7 +107,7 @@ pub fn sleep_compositor_unpaint(kind: CompositorWait) {
 
 /// Block until DWM has presented `cycles` composition frames. Pair
 /// with [`sleep_compositor_unpaint`] before a screen capture that
-/// must not include a window we just hid — Tauri's `.hide()` posts a
+/// must not include a window we just hid: Tauri's `.hide()` posts a
 /// message to the window thread, and a time-based sleep alone can't
 /// guarantee DWM has actually swapped out the buffer by the time we
 /// grab it. Two flushes is usually enough; the sleep handles the
@@ -133,19 +133,19 @@ pub fn wait_compositor_compose(cycles: u32) {
 }
 
 /// Wait until windows just hidden by [`hide_primary_windows`] are gone
-/// from the composited desktop — the guard in front of any snapshot that
+/// from the composited desktop: the guard in front of any snapshot that
 /// must not contain our own chrome.
 ///
 /// Two unknowns, addressed in order by two mechanisms:
 ///
 /// 1. **The hide is processed.** `.hide()` runs `ShowWindow(SW_HIDE)`,
 ///    which the window's own thread must service before `WS_VISIBLE`
-///    clears. This is the step that made a fixed sleep fragile — too
+///    clears. This is the step that made a fixed sleep fragile: too
 ///    short and the flush below runs while the window is still up,
 ///    baking it into the shot. So instead of guessing, poll
 ///    `is_visible()` (a plain `IsWindowVisible`, safe from this thread)
 ///    until every primary is down. The poll exits the instant the hide
-///    lands — a frame or two, typically — rather than after a
+///    lands (a frame or two, typically) rather than after a
 ///    worst-case sleep, and is bounded so a wedged pump can't hang the
 ///    capture.
 /// 2. **The recomposition.** Once the window is down, a short floor plus
@@ -154,7 +154,7 @@ pub fn wait_compositor_compose(cycles: u32) {
 ///    contains the window.
 ///
 /// This replaces a flat 260 ms sleep on the overlay path, which had to
-/// assume the worst about (1) — a step (1) can simply observe.
+/// assume the worst about (1), a step (1) can simply observe.
 pub fn settle_after_hide(app: &AppHandle) {
     wait_primaries_hidden(app);
     std::thread::sleep(config::compositor_unpaint_floor());
@@ -169,7 +169,7 @@ pub fn settle_after_hide(app: &AppHandle) {
 /// At the point this runs during an overlay/capture open, every primary
 /// has been hidden and the overlay isn't shown yet, so "no primary
 /// visible" is exactly "our chrome is gone". A timeout hit is logged and
-/// falls through — a slightly-early grab beats a hung capture.
+/// falls through: a slightly-early grab beats a hung capture.
 fn wait_primaries_hidden(app: &AppHandle) {
     if !spin_until(config::compositor_hide_timeout(), || {
         current_visible_primary(app).is_none()
@@ -217,7 +217,7 @@ mod tests {
     #[test]
     fn spin_until_returns_as_soon_as_the_condition_holds() {
         let calls = Cell::new(0);
-        // False, false, then true — exits on the third poll, well under
+        // False, false, then true: exits on the third poll, well under
         // the timeout.
         let ok = spin_until(Duration::from_secs(5), || {
             calls.set(calls.get() + 1);
@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn spin_until_gives_up_at_the_timeout_rather_than_hanging() {
         // A wedged pump: the condition never holds. The capture must not
-        // hang on it — bounded, and it reports the give-up.
+        // hang on it: bounded, and it reports the give-up.
         let start = Instant::now();
         let ok = spin_until(Duration::from_millis(30), || false);
         assert!(!ok);

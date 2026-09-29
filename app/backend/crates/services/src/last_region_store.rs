@@ -1,4 +1,4 @@
-//! Last-region persistence — the "capture that same spot again" memory.
+//! Last-region persistence: the "capture that same spot again" memory.
 //!
 //! Persistence:
 //! - File: `<paths.data>/last-region.json` (a single pretty-printed
@@ -9,7 +9,7 @@
 //!
 //! Deliberately NOT part of `settings.json`. Two reasons: this is app
 //! state rather than user-expressed preference, and `settings_service`
-//! broadcasts `clippity://settings/changed` on every write — routing a
+//! broadcasts `clippity://settings/changed` on every write: routing a
 //! per-capture write through it would fire a settings-changed event at
 //! every window on every capture.
 //!
@@ -47,7 +47,7 @@ impl LastRegionStore {
         }
     }
 
-    /// The remembered region, if any. Raw — callers resolve it against
+    /// The remembered region, if any. Raw: callers resolve it against
     /// the live canvas via `domain::overlay::resolve_last_region`.
     pub fn get(&self) -> Option<LastRegion> {
         self.state.read().ok().and_then(|g| *g)

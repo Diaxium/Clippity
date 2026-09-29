@@ -17,7 +17,7 @@ if (typeof window !== "undefined" && !window.matchMedia) {
 }
 
 // jsdom doesn't implement ResizeObserver. The toast feature's
-// `useToastResize` hook subscribes to one — stub a minimal observer
+// `useToastResize` hook subscribes to one: stub a minimal observer
 // that records the callback so tests can drive it manually.
 if (typeof globalThis.ResizeObserver === "undefined") {
   class StubResizeObserver {
@@ -35,7 +35,7 @@ if (typeof globalThis.ResizeObserver === "undefined") {
 }
 
 // jsdom implements neither half of the pointer-drag surface, and both gaps
-// fail *silently* — a gesture test still renders and still asserts, it just
+// fail *silently*: a gesture test still renders and still asserts, it just
 // never runs the gesture. Both stubs are needed together.
 //
 // (1) No Pointer Capture API. A handler calling `setPointerCapture` throws, so
@@ -57,7 +57,7 @@ if (typeof Element !== "undefined" && !Element.prototype.setPointerCapture) {
 
 // (2) No `PointerEvent`
 // constructor. Testing Library's `fireEvent.pointerDown/Move/Up` therefore
-// falls back to a plain Event and *silently drops* `clientX`/`clientY` — a
+// falls back to a plain Event and *silently drops* `clientX`/`clientY`: a
 // pointer-driven gesture (the inspector's dock/undock, panel resize) then sees
 // `undefined` coordinates, computes NaN, and no-ops. The test still passes its
 // render assertions, so the gesture looks exercised when it never ran.

@@ -1,4 +1,4 @@
-//! Capture domain types — the pure shape of a capture request, its
+//! Capture domain types: the pure shape of a capture request, its
 //! options, and its result. Shared by `services::capture_service` and
 //! the typed IPC surface in `app::commands`.
 //!
@@ -18,7 +18,7 @@ pub enum CaptureKind {
 }
 
 /// The custom sub-modes from the legacy product. Most are not yet
-/// implemented in the rebuild — see [`AppError::Unsupported`] in
+/// implemented in the rebuild; see [`AppError::Unsupported`] in
 /// `capture_service::execute` for the rejection path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -83,8 +83,8 @@ pub struct CaptureRequest {
     /// Which preset ran is the one provenance field the backend cannot
     /// observe: presets are executed by the frontend's `runPreset`
     /// orchestrator, which dispatches through the ordinary capture
-    /// commands. So it travels the same route `output_dir` does — a
-    /// request field the preset runner fills in — rather than being
+    /// commands. So it travels the same route `output_dir` does (a
+    /// request field the preset runner fills in) rather than being
     /// inferred at the save choke point like everything else in
     /// `domain::metadata`. Serde-defaulted, so an older payload (or the
     /// capture window, which never sets it) still parses.
@@ -109,7 +109,7 @@ pub struct CaptureResult {
     /// "Preview in Editor" toggle, mirrored from the capture request).
     /// Carried on `capture/finished` so one persistent listener can
     /// open the editor regardless of which window/mode produced the
-    /// capture — instead of each dispatch path arming its own one-shot.
+    /// capture, instead of each dispatch path arming its own one-shot.
     pub preview: bool,
 }
 
@@ -117,12 +117,12 @@ pub struct CaptureResult {
 /// hold an image, plain text, or nothing, so the mode fans out three
 /// ways (mirrors the legacy `ClipboardIngest`):
 ///
-/// - `Image` — the clipboard held a bitmap; it was saved as a
+/// - `Image`: the clipboard held a bitmap; it was saved as a
 ///   file-backed capture (same pipeline as a screenshot) and the wrapped
 ///   [`CaptureResult`] points at the on-disk PNG.
-/// - `Text` — the clipboard held text; it was persisted as an aux
+/// - `Text`: the clipboard held text; it was persisted as an aux
 ///   library entry (no file), same as Grab-Text.
-/// - `Empty` — nothing usable on the clipboard; the frontend turns this
+/// - `Empty`: nothing usable on the clipboard; the frontend turns this
 ///   into a friendly "copy something first" toast (no error).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
@@ -179,7 +179,7 @@ mod tests {
 
     #[test]
     fn preset_name_rides_the_request_and_defaults_when_absent() {
-        // The capture window sends no `preset` — that payload must still
+        // The capture window sends no `preset`: that payload must still
         // parse, as "no preset ran".
         let interactive: CaptureRequest = serde_json::from_str(
             r#"{"type":"fullscreen","customMode":null,"toggles":{"preview":false,"clipboard":false,"cursor":false},"delay":null,"effect":null,"share":null}"#,

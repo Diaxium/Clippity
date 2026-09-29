@@ -98,12 +98,12 @@ export type GestureKind =
   | "crop";
 
 /** A transient transform readout (live W×H, position, or angle) anchored at a
- *  scene point — shown beside the selection during a drag/resize/rotate. */
+ *  scene point: shown beside the selection during a drag/resize/rotate. */
 export interface TransformHud {
   text: string;
   sx: number;
   sy: number;
-  /** True while a resize is holding the aspect ratio (Shift or lockAspect) — the
+  /** True while a resize is holding the aspect ratio (Shift or lockAspect): the
    *  HUD shows a small "locked" cue. */
   aspectLocked?: boolean;
 }
@@ -150,7 +150,7 @@ export interface ContextMenuState {
   kind: ContextMenuKind;
 }
 
-/** What the floating color editor is editing — a fill, or a solid color on a
+/** What the floating color editor is editing: a fill, or a solid color on a
  *  stroke / effect / text node. Resolved to the live paint by the popover. */
 export type ColorTarget =
   | { kind: "fill"; nodeId: string; fillId: string }
@@ -162,15 +162,15 @@ export interface ColorEditorState {
   target: ColorTarget;
   /**
    * The rest of the selection this edit also applies to (P3 batch apply). The
-   * popover *reads* the primary `target` — one swatch, one gradient, one set of
-   * stops — but *writes* to the primary plus these, so opening the fill editor
+   * popover *reads* the primary `target` (one swatch, one gradient, one set of
+   * stops) but *writes* to the primary plus these, so opening the fill editor
    * with three shapes selected paints all three. Empty for a single selection.
    *
    * Peers always share the primary's `kind`, because they're resolved by
    * `lib/multi.entriesAt` from the same row of the same list.
    */
   peers: readonly ColorTarget[];
-  /** Anchor in screen px (the clicked row) — the popover floats next to it. */
+  /** Anchor in screen px (the clicked row): the popover floats next to it. */
   x: number;
   y: number;
 }
@@ -178,7 +178,7 @@ export interface ColorEditorState {
 /**
  * An open crop session. Crop is **modal**: while a session exists the canvas
  * stops picking/drawing and every pointer gesture edits `rect` instead. Nothing
- * touches the document until `commitCrop` — cancelling (or switching tools)
+ * touches the document until `commitCrop`: cancelling (or switching tools)
  * simply drops the session, which is why the pending rect lives here rather
  * than as a live mutation on the page frame.
  */
@@ -187,7 +187,7 @@ export interface CropSession {
   nodeId: string;
   /** Pending crop window in scene space. */
   rect: Rect;
-  /** The page rect when the session opened — backs Reset and the "Original"
+  /** The page rect when the session opened: backs Reset and the "Original"
    *  aspect chip. */
   original: Rect;
   /** Locked width ÷ height, or null for a freeform drag. */
@@ -232,11 +232,11 @@ export interface EditorState {
   /**
    * The icon a freshly-drawn stamp takes. Session state rather than a document
    * property: it's the picker's current choice, the way a tool group remembers
-   * its last-used sub-tool, and `addNode` stamps it onto the new node — the same
+   * its last-used sub-tool, and `addNode` stamps it onto the new node: the same
    * seam step badges get their number from.
    */
   stampKind: StampKind;
-  /** Annotation (fast markup) vs Design (full editor) — see Workstream M. */
+  /** Annotation (fast markup) vs Design (full editor); see Workstream M. */
   mode: EditorMode;
   viewport: Viewport;
   /**
@@ -245,7 +245,7 @@ export interface EditorState {
    * across a switch slides the document off-centre under the new chrome. On
    * `setMode` the outgoing mode's viewport is stashed here and the incoming
    * mode's is restored; a mode not yet visited inherits the current viewport
-   * rather than snapping. Deliberately *not* `fitView()` on switch — that would
+   * rather than snapping. Deliberately *not* `fitView()` on switch: that would
    * discard a zoom the user chose on purpose.
    */
   viewportByMode: Partial<Record<EditorMode, Viewport>>;
@@ -266,34 +266,34 @@ export interface EditorState {
   // ----- inspector chrome -----
   /**
    * Where the inspector lives, per mode: an edge to dock to, or `null` to
-   * float. Per-mode because the two modes want different defaults — Design is a
-   * rail-shaped workflow, Annotation wants the canvas — but both are now the
+   * float. Per-mode because the two modes want different defaults (Design is a
+   * rail-shaped workflow, Annotation wants the canvas) but both are now the
    * same mechanism, so either can be dragged into either shape.
    */
   inspectorDock: Record<EditorMode, DockSide | null>;
   setInspectorDock(mode: EditorMode, side: DockSide | null): void;
   /** Edge that would receive a drop during a panel drag; drives the drop-zone
-   *  highlight. Transient — never persisted, cleared on pointer-up. */
+   *  highlight. Transient: never persisted, cleared on pointer-up. */
   dockPreview: DockSide | null;
   setDockPreview(side: DockSide | null): void;
 
   /**
    * Right-inspector section collapse, keyed by section id; an id absent here is
    * open. Held in the store rather than each section's local state so a section
-   * unmounting — switching to the Export tab, or selecting a node type that
-   * hides it — doesn't silently reset the user's choice. Session-scoped: not
+   * unmounting (switching to the Export tab, or selecting a node type that
+   * hides it) doesn't silently reset the user's choice. Session-scoped: not
    * written to Settings, so it doesn't survive a restart.
    */
   sectionsOpen: Record<string, boolean>;
   toggleSection(id: string): void;
-  /** Force a section open/closed — used by "add fill/stroke/effect" actions so
+  /** Force a section open/closed: used by "add fill/stroke/effect" actions so
    *  the row you just created isn't created inside a collapsed section. */
   setSectionOpen(id: string, open: boolean): void;
   /**
    * Which family of properties the inspector is showing. The section list grew
    * past the point where one scroll could stay legible, so it is split three
    * ways: `style` (how the selection looks), `arrange` (where it sits), and
-   * `inspect` (a read-only readout of both). Not per-mode — the tab you left
+   * `inspect` (a read-only readout of both). Not per-mode: the tab you left
    * the inspector on is a habit, and Annotate/Design switching shouldn't
    * silently reshuffle it.
    */
@@ -386,7 +386,7 @@ export interface EditorState {
     opts?: MutateOptions
   ): void;
   /**
-   * Patch each id with a patch *derived from that node* — the per-node batch
+   * Patch each id with a patch *derived from that node*: the per-node batch
    * `updateNodes`' single shared patch can't express. Needed wherever a batch
    * edit depends on the node it lands on: W/H under each node's own aspect
    * ratio, per-corner radii built from each node's existing corners. Returning
@@ -399,7 +399,7 @@ export interface EditorState {
   ): void;
   /**
    * Move every id so its bounds sit at `x` / `y` (whichever is supplied),
-   * carrying descendants the way a drag does — nodes hold absolute coords, so
+   * carrying descendants the way a drag does: nodes hold absolute coords, so
    * repositioning a frame has to move its contents too. This is what the
    * inspector's X/Y fields write through; patching `x` directly would slide a
    * frame out from under its children. One undo step.
@@ -458,7 +458,7 @@ export interface EditorState {
     target: ColorTarget,
     x: number,
     y: number,
-    /** Additional targets the same edit applies to (P3) — see `peers`. */
+    /** Additional targets the same edit applies to (P3); see `peers`. */
     peers?: readonly ColorTarget[]
   ): void;
   closeColorEditor(): void;
@@ -524,7 +524,7 @@ export interface EditorState {
   setCropAspect(aspect: number | null): void;
   /** Restore the crop window to the page's rect at session start. */
   resetCrop(): void;
-  /** Apply the pending crop to the page frame — one undo step — and leave the
+  /** Apply the pending crop to the page frame, one undo step, and leave the
    *  session. A crop that doesn't move anything records no history. */
   commitCrop(): void;
 
@@ -535,7 +535,7 @@ export interface EditorState {
   setPagePadding(padding: number): void;
   /** Paint a stock backdrop on the page frame. Applying a non-empty backdrop to
    *  a page with no padding also opens a default margin (and rounds the
-   *  capture's corners) in the **same undo step** — otherwise the backdrop
+   *  capture's corners) in the **same undo step**, otherwise the backdrop
    *  would be entirely hidden behind the capture and read as a no-op. */
   applyBackdrop(presetId: string): void;
   /** Round the capture's corners. */
@@ -546,7 +546,7 @@ export interface EditorState {
   // ----- window chrome (Fork F4, ADR 0022) -----
   /** Frame the capture in a stock title bar (or `"none"` to remove it). The
    *  page grows to make room for the bar in the **same undo step**, and a first
-   *  chrome on a square-cornered capture also rounds it — a window with sharp
+   *  chrome on a square-cornered capture also rounds it: a window with sharp
    *  corners reads as a bug rather than a style. No-op without a page + capture. */
   applyChrome(presetId: string): void;
   /** Set the title-bar text (empty draws no label). */
@@ -675,8 +675,8 @@ function withNode(
 /**
  * Cap on retained undo snapshots. Each entry holds a whole-doc snapshot
  * (`{rootIds, nodes}`); unchanged nodes are shared by reference, but without a
- * bound a long editing session grows `past` — and the superseded node objects
- * it pins — without limit. 100 steps is deep enough for real editing while
+ * bound a long editing session grows `past` (and the superseded node objects
+ * it pins) without limit. 100 steps is deep enough for real editing while
  * keeping memory bounded.
  */
 const HISTORY_LIMIT = 100;
@@ -709,8 +709,8 @@ function nextZoom(current: number, dir: 1 | -1): number {
 export const useEditorStore = create<EditorState>((set, get) => {
   /**
    * Apply a doc transform. Snapshots history unless `transient`. Inside a
-   * `beginHistory`/`endHistory` transaction the snapshot is taken once — on the
-   * first real change — so a whole drag/nudge collapses to a single undo step.
+   * `beginHistory`/`endHistory` transaction the snapshot is taken once, on the
+   * first real change, so a whole drag/nudge collapses to a single undo step.
    */
   const mutate = (
     fn: (doc: SceneDoc) => SceneDoc,
@@ -723,7 +723,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       const base = {
         rootIds: next.rootIds,
         nodes: next.nodes,
-        // Any real change means unsaved work — flip draft *and* saved to edited.
+        // Any real change means unsaved work: flip draft *and* saved to edited.
         docStatus: "edited" as DocStatus,
       };
       if (opts?.transient) return base;
@@ -760,7 +760,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
   };
 
   /**
-   * Translate each id by its own delta, carrying descendants — nodes hold
+   * Translate each id by its own delta, carrying descendants: nodes hold
    * absolute coords, so a container's contents have to travel with it. A locked
    * node sits out along with its whole subtree.
    *
@@ -772,7 +772,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     deltas: ReadonlyMap<string, Vec2>
   ): SceneDoc => {
     const moves = new Map<string, Vec2>();
-    // Descendants first, then the named nodes — so a node that is both selected
+    // Descendants first, then the named nodes, so a node that is both selected
     // and a descendant of another selected node keeps its *own* delta rather
     // than inheriting its ancestor's.
     for (const [id, delta] of deltas) {
@@ -802,7 +802,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
   // ----- fills / strokes / effects, as one implementation -----
   // All three are `{id}`-keyed lists hanging off the node, so add / patch /
   // remove is written once over a `key` and reused nine ways. The batch shape is
-  // the primitive here and the single-node actions delegate into it — that's
+  // the primitive here and the single-node actions delegate into it: that's
   // what makes a multi-select row edit (Fork P-F1) one undo step rather than one
   // per node.
 
@@ -822,7 +822,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
   ): SceneNode => ({ ...node, [key]: list }) as SceneNode;
 
   /**
-   * Rewrite one list on each node named by `refs` — grouped by node first, so a
+   * Rewrite one list on each node named by `refs`: grouped by node first, so a
    * node holding several targeted entries is still rewritten once, and the whole
    * batch lands in a single `mutate` (one undo step).
    */
@@ -868,7 +868,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       list.filter((e) => !targets.has(e.id))
     );
 
-  /** Append a freshly made entry to `key` on every id — one undo step. `make` is
+  /** Append a freshly made entry to `key` on every id: one undo step. `make` is
    *  called per node so each gets its own entry id. */
   const appendEntries = (
     ids: readonly string[],
@@ -890,12 +890,12 @@ export const useEditorStore = create<EditorState>((set, get) => {
     });
 
   /**
-   * The page frame plus the capture it wraps — the two anchors every backdrop
+   * The page frame plus the capture it wraps: the two anchors every backdrop
    * action needs (ADR 0020).
    *
    * Null when the document has no page frame (`lib/crop.pageFrameId`) or no
    * image, which is what keeps the Backdrop panel and its actions inert on a
-   * blank document — the same way crop stays inert. Also null when the capture
+   * blank document: the same way crop stays inert. Also null when the capture
    * *is* the page (a frame carrying the image fill directly): padding would
    * then be measured against the very rect it resizes, so there is no
    * well-defined margin to author.
@@ -1015,14 +1015,14 @@ export const useEditorStore = create<EditorState>((set, get) => {
     // Crop is a modal session rather than a drag tool, so tool switching owns
     // its lifecycle: picking Crop opens the session (and clears the selection,
     // since crop acts on the page, not on nodes), and picking anything else
-    // discards it — `commitCrop` is the only path that writes to the document.
+    // discards it: `commitCrop` is the only path that writes to the document.
     setTool: (tool) =>
       set((s) => {
         if (tool === "crop") {
           if (s.cropSession) return { tool };
           const nodeId = pageFrameId(s.rootIds, s.nodes);
           const node = nodeId ? s.nodes[nodeId] : undefined;
-          // Nothing page-shaped to crop — leave the active tool alone rather
+          // Nothing page-shaped to crop: leave the active tool alone rather
           // than stranding the user in an inert mode.
           if (!nodeId || !node) return {};
           const rect = rectOfNode(node);
@@ -1161,7 +1161,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
           next = { rootIds: [...d.rootIds, node.id], nodes };
         }
         // A spotlight dims the page frame's rect, so that rect must equal the
-        // document extent — otherwise a stray root exports as an undimmed band
+        // document extent, otherwise a stray root exports as an undimmed band
         // (the ADR 0019/0020 export-region trap). Sealing the page is therefore
         // part of adding one, in the same undo step. See lib/spotlight.ts.
         if (placed.spotlight) {
@@ -1728,7 +1728,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       if (!session) return;
       const node = s.nodes[session.nodeId];
       const rect = roundCrop(session.rect);
-      // Resizing the page frame *is* the crop — children keep their absolute
+      // Resizing the page frame *is* the crop: children keep their absolute
       // coords and `clipContent` trims them, so no pixels are discarded and
       // undo restores the full page (see lib/crop.ts). Absorbing the other
       // roots in the same step is what makes the export follow the crop, and
@@ -1751,8 +1751,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
     },
 
     // ----- page backdrop (ADR 0020) -----
-    // Every action here resolves the same two anchors — the page frame and the
-    // capture inside it — and stays inert without both, exactly as crop does
+    // Every action here resolves the same two anchors (the page frame and the
+    // capture inside it) and stays inert without both, exactly as crop does
     // when `pageFrameId` finds no page.
     setPagePadding: (padding) => {
       const t = pageTargets(get());
@@ -1766,8 +1766,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
       if (!preset || !t) return;
       const fills = preset.build();
       const page = get().nodes[t.pageId];
-      // A backdrop on a page with no margin is invisible — the capture covers
-      // the page exactly — so opening a default margin (and rounding the
+      // A backdrop on a page with no margin is invisible, the capture covers
+      // the page exactly, so opening a default margin (and rounding the
       // capture) is part of *this* edit rather than a second thing to discover.
       const needsMargin =
         fills.length > 0 && !!page && pagePadding(page, t.content.rect) === 0;
@@ -1808,10 +1808,10 @@ export const useEditorStore = create<EditorState>((set, get) => {
       if (!preset || !t) return;
       const content = get().nodes[t.content.id];
       if (!content || !canCarryChrome(content)) return;
-      // Carry the typed title across a style switch — it's content, not style.
+      // Carry the typed title across a style switch: it's content, not style.
       const chrome = makeChrome(preset, content.chrome?.title ?? "");
       // A square-cornered window is the one thing that makes chrome look
-      // broken rather than plain, so rounding is part of *this* edit — the
+      // broken rather than plain, so rounding is part of *this* edit: the
       // same reasoning that has `applyBackdrop` open a margin (ADR 0020).
       const needsRadius =
         !!chrome && !content.chrome && content.cornerRadius === 0;
@@ -2181,7 +2181,7 @@ function applyZOrder(
 /**
  * Derived-read API for the store. Components select through these instead of
  * touching the flat node map / page tree directly, so the tree traversal and
- * id→node resolution stay encapsulated. (`canUndo`/`canRedo` are trivial —
+ * id→node resolution stay encapsulated. (`canUndo`/`canRedo` are trivial;
  * read `past.length`/`future.length` inline at the call site.)
  */
 export const editorSelectors = {

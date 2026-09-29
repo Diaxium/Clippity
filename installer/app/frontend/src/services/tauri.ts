@@ -5,7 +5,7 @@
  * `invoke` reaches the Rust commands and window controls work) and in a
  * plain browser preview (where none of that exists). Every helper here
  * detects Tauri once and degrades to a safe no-op / simulation in the
- * browser, so the same components render in both — mirroring the main
+ * browser, so the same components render in both, mirroring the main
  * app's "getSettings returns null in preview" pattern.
  */
 

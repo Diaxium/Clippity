@@ -6,7 +6,7 @@
  * directly) this one has to answer IPC: the items arrive through
  * `library_list`, the thumbnails through `library_thumbnail`. The stub
  * below installs `window.__TAURI_INTERNALS__` *before* the app's module
- * graph loads — `@tauri-apps/api/core` reads it at call time, so a plain
+ * graph loads: `@tauri-apps/api/core` reads it at call time, so a plain
  * dev-server page can drive the real component tree with real data.
  *
  * Referenced by `library-smoke.html`. Not part of the production bundle.
@@ -87,7 +87,7 @@ const THUMBS = new Map(
         return THUMBS.get(args?.id) ?? null;
       case "collections_list":
         return [];
-      // The event plugin's listen/unlisten handshake — resolve so the
+      // The event plugin's listen/unlisten handshake: resolve so the
       // `library/updated` subscription mounts without throwing.
       case "plugin:event|listen":
         return 0;
@@ -120,7 +120,7 @@ document.documentElement.setAttribute("data-effects", "flat");
 
 (window as any).__lib = useLibraryStore;
 
-// Reuse the root across hot updates — this module re-executes on HMR,
+// Reuse the root across hot updates: this module re-executes on HMR,
 // and a second `createRoot` on the same container warns and detaches.
 const container = document.getElementById("root")!;
 const root = ((window as any).__libRoot ??= createRoot(container));

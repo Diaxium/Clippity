@@ -41,7 +41,7 @@ export function useSettingsPatch() {
     (patch: SettingsPatch) => {
       const next = merge(useSettingsStore.getState().settings, patch);
       if (!next) {
-        // Not yet hydrated — nothing to patch against. Drop the call
+        // Not yet hydrated: nothing to patch against. Drop the call
         // silently; the UI is gated on `settings === null` anyway.
         return;
       }

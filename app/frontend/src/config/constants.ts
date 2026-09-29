@@ -1,5 +1,5 @@
 /**
- * Window labels and hash routes — single source of truth shared
+ * Window labels and hash routes: single source of truth shared
  * between `App.tsx`'s router, the Tauri config, and any service that
  * needs to show/focus a window.
  *

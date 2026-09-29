@@ -3,7 +3,7 @@
 //!
 //! The document lives *beside the executable*, not under the app data root:
 //! it describes the installation, so it belongs with the installed files,
-//! and locating it needs nothing but `current_exe()` — no registry lookup,
+//! and locating it needs nothing but `current_exe()`: no registry lookup,
 //! no knowledge of the installer's maintenance directory, no dependency on
 //! paths that differ between per-user and all-users installs.
 //!
@@ -14,7 +14,7 @@
 //! per query would buy nothing and would mean a feature could disappear
 //! mid-session.
 //!
-//! Every failure path resolves to [`Capabilities::unmanaged`] — everything
+//! Every failure path resolves to [`Capabilities::unmanaged`]: everything
 //! available. See `domain::provisioning` for why silence must not read as
 //! "the user declined everything".
 
@@ -22,13 +22,13 @@ use std::path::{Path, PathBuf};
 
 use clippity_domain::provisioning::{Capabilities, InstallProvisioning, PROVISIONING_FILE};
 
-/// Where the document was found — logged at startup and surfaced to the
+/// Where the document was found: logged at startup and surfaced to the
 /// frontend so "unmanaged" can be explained rather than just asserted.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProvisioningSource {
     /// A usable document was read beside the executable.
     Installer,
-    /// Portable mode — there is no installer to have asked anything.
+    /// Portable mode: there is no installer to have asked anything.
     Portable,
     /// No document beside the executable (a development run, or a copy
     /// extracted by hand).
@@ -70,7 +70,7 @@ impl ProvisioningService {
         // document next to it (a leftover from the folder it was copied
         // from, say) has no authority over it.
         if clippity_infra::paths::portable_root().is_some() {
-            tracing::info!("provisioning: portable build — every feature enabled");
+            tracing::info!("provisioning: portable build; every feature enabled");
             return Self::without_document(ProvisioningSource::Portable);
         }
 
@@ -82,7 +82,7 @@ impl ProvisioningService {
         Self::from_path(&path)
     }
 
-    /// Resolve from an explicit document path — the seam the tests drive
+    /// Resolve from an explicit document path: the seam the tests drive
     /// (including `settings_service`'s first-launch seeding tests, which
     /// need a service built around a document they wrote themselves).
     pub(crate) fn from_path(path: &Path) -> Self {
@@ -93,7 +93,7 @@ impl ProvisioningService {
                 // one, so there is nothing to honor.
                 tracing::debug!(
                     path = %path.display(),
-                    "provisioning: no installer configuration — every feature enabled"
+                    "provisioning: no installer configuration; every feature enabled"
                 );
                 return Self::without_document(ProvisioningSource::Absent);
             }
@@ -101,7 +101,7 @@ impl ProvisioningService {
                 tracing::warn!(
                     path = %path.display(),
                     error = %e,
-                    "provisioning: configuration unreadable — every feature enabled"
+                    "provisioning: configuration unreadable; every feature enabled"
                 );
                 return Self::without_document(ProvisioningSource::Unusable);
             }
@@ -113,7 +113,7 @@ impl ProvisioningService {
                 tracing::warn!(
                     path = %path.display(),
                     error = %e,
-                    "provisioning: configuration is malformed — every feature enabled"
+                    "provisioning: configuration is malformed; every feature enabled"
                 );
                 return Self::without_document(ProvisioningSource::Unusable);
             }
@@ -124,8 +124,8 @@ impl ProvisioningService {
                 path = %path.display(),
                 schema = document.schema_version,
                 product = %document.product_id,
-                "provisioning: configuration is not one this build can apply \
-                 — every feature enabled"
+                "provisioning: configuration is not one this build can apply; \
+                 every feature enabled"
             );
             return Self::without_document(ProvisioningSource::Unusable);
         }
@@ -154,7 +154,7 @@ impl ProvisioningService {
         }
     }
 
-    /// What this installation may offer. Cheap — `Capabilities` is `Copy`.
+    /// What this installation may offer. Cheap: `Capabilities` is `Copy`.
     pub fn capabilities(&self) -> Capabilities {
         self.capabilities
     }

@@ -2,7 +2,7 @@
   "name": "clippity",
   "version": "0.3.2",
   "private": true,
-  "description": "Clippity — modern screen capture, recording, annotation, and workflow automation. Root workspace.",
+  "description": "Clippity: modern screen capture, recording, annotation, and workflow automation. Root workspace.",
   "license": "MIT",
   "packageManager": "pnpm@11.17.0",
   "engines": {

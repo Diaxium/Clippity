@@ -1,4 +1,4 @@
-//! Settings orchestration — JSON persistence + in-memory snapshot
+//! Settings orchestration: JSON persistence + in-memory snapshot
 //! behind a `RwLock`. Also publishes two accessor traits
 //! (`CapturesDirSource`, `ToastSettingsSource`) that the other
 //! services depend on instead of `Arc<AppPaths>` / `Arc<ToastDefaults>`,
@@ -9,7 +9,7 @@
 //! - Read at construction (`load`); ignored if absent or malformed.
 //! - Written on every `update` (full-file rewrite, pretty-printed).
 //!
-//! Concurrency: `RwLock<Settings>` — many concurrent
+//! Concurrency: `RwLock<Settings>`, many concurrent
 //! `captures_dir()` / `toast_settings()` reads, infrequent writes
 //! through `update`. The write critical section is small (snapshot,
 //! patch in memory, write file, swap snapshot).
@@ -34,7 +34,7 @@ use clippity_infra::paths::AppPaths;
 use crate::provisioning_service::ProvisioningService;
 
 /// Feature-flag id gating the HDR (scRGB) capture path. Must match the
-/// frontend's flag registry — `shared/lib/featureFlags.ts`.
+/// frontend's flag registry: `shared/lib/featureFlags.ts`.
 pub const FLAG_CAPTURE_HDR: &str = "capture.hdr";
 
 /// Feature-flag id gating the recorder's Desktop Duplication frame
@@ -71,7 +71,7 @@ pub trait CaptureEncodingSource: Send + Sync {
 /// `SettingsService`; the four capture pipelines (`capture`, `overlay`,
 /// `scroll_capture`, `editor`) depend on this trait so a change to
 /// `general.name_template` names the *next* capture without a restart.
-/// Returns the raw stored string — blank means "use the built-in
+/// Returns the raw stored string: blank means "use the built-in
 /// default", a decision `domain::naming::render` owns.
 pub trait NameTemplateSource: Send + Sync {
     fn name_template(&self) -> String;
@@ -79,7 +79,7 @@ pub trait NameTemplateSource: Send + Sync {
 
 /// Live read of the recording preferences. Implemented by
 /// `SettingsService`; `RecorderService` depends on this trait so a
-/// change takes effect on the very next session without a restart —
+/// change takes effect on the very next session without a restart,
 /// and, more importantly, so preferences apply to **every** entry point
 /// (launcher card, Record screen, overlay, a future hotkey or preset)
 /// rather than only the ones that remember to send them over IPC.
@@ -89,13 +89,13 @@ pub trait RecordingSettingsSource: Send + Sync {
 
 pub struct SettingsService {
     file: PathBuf,
-    /// Where the rotating log files live — `<data>/logs`. Held here
+    /// Where the rotating log files live: `<data>/logs`. Held here
     /// because this service is the one that knows when the developer
     /// logging preferences changed.
     log_dir: PathBuf,
     fallback_captures: PathBuf,
     state: RwLock<Settings>,
-    /// True when no `settings.json` existed at load — this process is the
+    /// True when no `settings.json` existed at load: this process is the
     /// app's first launch on this machine, the one moment the installer's
     /// answers may seed anything (see [`SettingsService::seed_from_installer`]).
     first_launch: bool,
@@ -107,22 +107,22 @@ impl SettingsService {
     /// `CapturesDirSource` impl.
     pub fn load(paths: Arc<AppPaths>) -> AppResult<Self> {
         let file = paths.data.join("settings.json");
-        // Asked before the read so a *malformed* file — which also falls
-        // back to defaults — is not mistaken for a first launch. Re-seeding
+        // Asked before the read so a *malformed* file, which also falls
+        // back to defaults, is not mistaken for a first launch. Re-seeding
         // over a file the user has been using is exactly what must not
         // happen; better to leave a corrupt file on defaults than to
         // resurrect install-time answers over it.
         let first_launch = !file.exists();
         let mut state = read_or_log(&file);
-        // Developer mode's expiry is evaluated exactly here — a fresh
-        // process, before any window can read the flag — which is what
+        // Developer mode's expiry is evaluated exactly here (a fresh
+        // process, before any window can read the flag) which is what
         // makes the `restart` policy mean what it says. Not persisted:
         // the next save writes the disarmed value, and until then the
         // file still records the policy the user chose.
         if settings::developer_mode_expired(&state.developer, epoch_ms()) {
             tracing::info!(
                 expiry = ?state.developer.expiry,
-                "developer mode expired — disarming for this session"
+                "developer mode expired; disarming for this session"
             );
             state.developer.enabled = false;
         }
@@ -140,13 +140,13 @@ impl SettingsService {
     ///
     /// Called once at startup and after every settings save, so a
     /// changed level takes effect on the next log line rather than on
-    /// the next launch. Cheap and idempotent — an unchanged
+    /// the next launch. Cheap and idempotent: an unchanged
     /// configuration leaves the open file alone.
     pub fn apply_logging(&self) {
         let dev = self.snapshot().developer;
         if !logging::set_level(dev.backend_log.as_str()) {
             tracing::debug!(
-                "log level is pinned by CLIPPITY_LOG/RUST_LOG — the setting is inert \
+                "log level is pinned by CLIPPITY_LOG/RUST_LOG; the setting is inert \
                  for this process"
             );
         }
@@ -166,7 +166,7 @@ impl SettingsService {
     /// Push the backend-consumed developer feature flags into the
     /// platform paths they gate.
     ///
-    /// Only flags with a real consumer live here — a flag table that
+    /// Only flags with a real consumer live here: a flag table that
     /// lists switches nothing reads is a lie the settings page tells on
     /// the app's behalf. Today that is two capture paths, both of which
     /// already have a tested fallback for "unavailable", which is what
@@ -230,13 +230,13 @@ impl SettingsService {
             ),
             Err(e) => tracing::warn!(
                 error = %e,
-                "could not persist the installer-seeded settings — they apply \
+                "could not persist the installer-seeded settings; they apply \
                  for this session and will be written on the next change"
             ),
         }
     }
 
-    /// Snapshot the current settings. Clones — callers shouldn't hold
+    /// Snapshot the current settings. Clones: callers shouldn't hold
     /// the read guard across awaits.
     pub fn snapshot(&self) -> Settings {
         self.state.read().map(|g| g.clone()).unwrap_or_default()
@@ -250,7 +250,7 @@ impl SettingsService {
         self.fallback_captures.clone()
     }
 
-    /// Live, clamped palette swatch count — the Palette-Capture default.
+    /// Live, clamped palette swatch count: the Palette-Capture default.
     /// `finish_palette_capture` reads this when the IPC call omits an
     /// explicit count, so changing it in settings takes effect on the
     /// next palette capture without a restart. Clamped on read so a
@@ -401,7 +401,7 @@ fn apply_patch(target: &mut Settings, patch: SettingsPatch) {
 }
 
 /// Wall-clock milliseconds since the Unix epoch. Only the developer
-/// section's expiry uses this — everything else in settings is
+/// section's expiry uses this: everything else in settings is
 /// timeless.
 fn epoch_ms() -> u64 {
     std::time::SystemTime::now()
@@ -435,7 +435,7 @@ fn ensure_captures_dir_exists(g: &GeneralSettings, fallback: &Path) -> AppResult
     Ok(())
 }
 
-/// Load settings from disk, falling back to defaults — but **never
+/// Load settings from disk, falling back to defaults, but **never
 /// silently**. A missing file is the expected fresh-install case
 /// (`debug`); a present-but-unreadable or malformed file is a data
 /// problem the user needs to know about (`warn`), because it silently
@@ -449,7 +449,7 @@ fn read_or_log(path: &Path) -> Settings {
                 tracing::warn!(
                     path = %path.display(),
                     error = %e,
-                    "settings file is malformed — using defaults; the file is \
+                    "settings file is malformed: using defaults; the file is \
                      left untouched until the next save so it can be recovered"
                 );
                 Settings::default()
@@ -458,7 +458,7 @@ fn read_or_log(path: &Path) -> Settings {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             tracing::debug!(
                 path = %path.display(),
-                "no settings file — using defaults (fresh install)"
+                "no settings file; using defaults (fresh install)"
             );
             Settings::default()
         }
@@ -466,7 +466,7 @@ fn read_or_log(path: &Path) -> Settings {
             tracing::warn!(
                 path = %path.display(),
                 error = %e,
-                "could not read settings file — using defaults"
+                "could not read settings file; using defaults"
             );
             Settings::default()
         }
@@ -484,7 +484,7 @@ fn write_file(path: &Path, s: &Settings) -> AppResult<()> {
 
 // -------- Test-only static accessor impls --------
 
-/// Static `CapturesDirSource` for test harnesses — returns the same
+/// Static `CapturesDirSource` for test harnesses: returns the same
 /// path on every call. Lives in the production module (behind
 /// `cfg(any(test, feature = "test-support"))`) so consumer crates'
 /// tests can use it without re-declaring the trait.
@@ -511,7 +511,7 @@ impl ToastSettingsSource for StaticToastSettings {
     }
 }
 
-/// Static `NameTemplateSource` for test harnesses — returns the same
+/// Static `NameTemplateSource` for test harnesses: returns the same
 /// template on every call (a blank one selects the built-in default).
 #[cfg(test)]
 #[derive(Clone, Debug)]
@@ -634,7 +634,7 @@ mod tests {
         assert!(s.general.start_on_startup, "the user ticked start-at-login");
         assert!(!s.general.automatic_updates);
         assert!(!s.general.help_improve);
-        // Persisted, not just held in memory — the next launch must agree.
+        // Persisted, not just held in memory: the next launch must agree.
         let text = fs::read_to_string(&h.service.file).unwrap();
         assert!(text.contains("\"automaticUpdates\": false"), "{text}");
     }

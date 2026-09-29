@@ -1,4 +1,4 @@
-//! Uninstall orchestration — manifest-driven and deliberately
+//! Uninstall orchestration: manifest-driven and deliberately
 //! conservative.
 //!
 //! Removal is reversed off the installation manifest: only files, registry
@@ -33,7 +33,7 @@ pub fn summary(selection: &RemovalSelection) -> RemovalSummary {
 /// Remove Clippity, deleting only the data categories the user selected
 /// and only the application resources the manifest records owning.
 ///
-/// Refuses to proceed unless the selection is `acknowledged` — the
+/// Refuses to proceed unless the selection is `acknowledged`: the
 /// Review step's confirmation toggle.
 pub fn run(
     selection: &RemovalSelection,
@@ -122,7 +122,7 @@ pub fn run(
     }
 
     if reboot_required {
-        tracing::warn!("uninstall complete — a reboot is required to finish removing locked files");
+        tracing::warn!("uninstall complete; a reboot is required to finish removing locked files");
     } else {
         tracing::info!("uninstall complete");
     }
@@ -158,7 +158,7 @@ fn remove_owned_files(m: &InstallationManifest) -> InstallerResult<bool> {
                 tracing::warn!(
                     path = %path.display(),
                     error = %e,
-                    "owned file still locked — scheduling deletion at next reboot"
+                    "owned file still locked; scheduling deletion at next reboot"
                 );
                 if windows_ops::schedule_delete_on_reboot(path).is_ok() {
                     reboot_required = true;
@@ -192,7 +192,7 @@ fn remove_dir_if_empty(dir: &Path) {
             }
         }
         Ok(false) => {
-            tracing::info!(dir = %dir.display(), "preserving directory — unknown files remain");
+            tracing::info!(dir = %dir.display(), "preserving directory: unknown files remain");
         }
         Err(e) => tracing::warn!(dir = %dir.display(), error = %e, "could not inspect directory"),
     }
@@ -397,14 +397,14 @@ fn finalize_maintenance_dir(maintenance_dir: &Path) -> InstallerResult<bool> {
     let mut reboot_required = false;
     let exe = maintenance_dir.join(MAINTENANCE_EXE);
     if exe.exists() && fs::remove_file(&exe).is_err() {
-        // Locked (we are probably running from it) — schedule for reboot.
+        // Locked (we are probably running from it): schedule for reboot.
         if windows_ops::schedule_delete_on_reboot(&exe).is_ok() {
             reboot_required = true;
         }
     }
 
     if fs::remove_dir(maintenance_dir).is_err() {
-        // Not empty yet (the exe is pending reboot removal) — schedule the
+        // Not empty yet (the exe is pending reboot removal): schedule the
         // directory too, so it is cleaned once the exe is gone.
         if reboot_required {
             let _ = windows_ops::schedule_delete_on_reboot(maintenance_dir);
@@ -418,7 +418,7 @@ fn finalize_maintenance_dir(maintenance_dir: &Path) -> InstallerResult<bool> {
 /// Best-effort fallback when no manifest is present: remove the install
 /// directory recorded in `paths`. Tolerates an already-absent directory.
 ///
-/// Kept conservative — this path only runs for a pre-manifest (legacy)
+/// Kept conservative: this path only runs for a pre-manifest (legacy)
 /// install with no recorded file list, and even then removes only the
 /// directory the resolved paths point at, never a user-typed data folder.
 fn remove_install_dir(paths: &InstallerPaths) -> InstallerResult<()> {

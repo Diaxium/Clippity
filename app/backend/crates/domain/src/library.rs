@@ -1,10 +1,10 @@
-//! Library domain types — pure, no I/O.
+//! Library domain types: pure, no I/O.
 //!
 //! The library is the user-visible inventory of saved captures. MVP
 //! handles **file-backed kinds only** (`image` / `video` / `gif`);
 //! the three reserved variants (`Color` / `Palette` / `Text`) exist
 //! so a future port can flip them armable without re-shaping the
-//! wire contract — same pattern as `OverlayMode::Region` reserving
+//! wire contract; same pattern as `OverlayMode::Region` reserving
 //! `Window` / `Object` / `Custom`.
 
 use std::path::{Path, PathBuf};
@@ -22,7 +22,7 @@ pub enum CaptureKind {
     Image,
     Video,
     Gif,
-    // Reserved for future ports — the wire shape supports them so a
+    // Reserved for future ports: the wire shape supports them so a
     // library catalog can mix file-backed and aux-only entries
     // later without re-shaping. MVP filesystem scan never produces
     // these.
@@ -37,7 +37,7 @@ pub enum CaptureKind {
 /// the hex). `proportion` is the swatch's share of its palette (0.0–1.0,
 /// dominant first; the proportions across one palette sum to ~1).
 ///
-/// `Eq` is intentionally not derived — `proportion` is an `f64`. The
+/// `Eq` is intentionally not derived: `proportion` is an `f64`. The
 /// catalog only ever compares colors for equality in tests, where
 /// `PartialEq` suffices.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -63,10 +63,10 @@ pub struct AuxColor {
 /// during the scan
 /// (`domain::metadata`). Every field there is optional and stays `None`
 /// for captures saved before sidecars existed, for aux entries, and
-/// whenever the sidecar is missing or unreadable — the row still
+/// whenever the sidecar is missing or unreadable: the row still
 /// renders, just with less to say.
 ///
-/// `tags` / `favorite` are **labels** — what the user says rather than
+/// `tags` / `favorite` are **labels**: what the user says rather than
 /// what was observed (`domain::labels`, ADR 0029). For a file-backed
 /// capture they come from its `.labels` sidecar; for an aux entry, which
 /// has no file to hang a sidecar off, they are stored on this row inside
@@ -78,7 +78,7 @@ pub struct AuxColor {
 pub struct CaptureMeta {
     /// Absolute path of the file. Doubles as the stable id across
     /// IPC calls. Brittleness: when a file moves to/from trash, the
-    /// id changes — callers must re-list (or react to
+    /// id changes: callers must re-list (or react to
     /// `clippity://library/updated`) to discover the new id.
     pub id: String,
     /// File stem (without extension). Used as the human-readable
@@ -90,7 +90,7 @@ pub struct CaptureMeta {
     /// True when the entry is soft-deleted (a file under
     /// `<captures>/.trash/`, or an aux row with `trashed: true`).
     pub trashed: bool,
-    /// Aux-only payload — `None` for file-backed entries. A `color`
+    /// Aux-only payload: `None` for file-backed entries. A `color`
     /// entry carries one swatch; a `palette` entry an ordered list
     /// (most-dominant first); `text` a grabbed string (grab-text port).
     /// `serde(default)` keeps old `history.json` catalogs parseable.
@@ -172,7 +172,7 @@ impl CaptureMeta {
     }
 }
 
-/// Pure: the sidecar file name for a capture — its full file name plus
+/// Pure: the sidecar file name for a capture, its full file name plus
 /// `.json`, so `Shot.png` and `Shot.jpg` never collide the way sharing a
 /// stem would.
 ///
@@ -189,7 +189,7 @@ pub fn sidecar_file_name(capture_path: &str) -> String {
 }
 
 /// Storage usage summary. `total_bytes` is the fixed display cap
-/// (currently 10 GB — cross-platform free-disk-space via Tauri v2's
+/// (currently 10 GB; cross-platform free-disk-space via Tauri v2's
 /// path API is unreliable; surface a generous cap so the UI can
 /// render a progress bar).
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -200,7 +200,7 @@ pub struct StorageInfo {
 }
 
 /// Pure: classify a filename extension into a `CaptureKind`.
-/// Anything not a known video / gif extension defaults to image —
+/// Anything not a known video / gif extension defaults to image, which
 /// matches the legacy precedent (an unknown extension on a file
 /// in the captures dir is most likely a PNG saved by someone's
 /// future custom-mode port).
@@ -213,7 +213,7 @@ pub fn kind_of(extension: Option<&str>) -> CaptureKind {
 }
 
 /// Pure: reject ids that escape the captures dir (or its `.trash`
-/// subdir). Defense against malicious IPC payloads — the frontend
+/// subdir). Defense against malicious IPC payloads: the frontend
 /// could send any string as an id. Returns the canonicalized path
 /// on success.
 ///
@@ -222,7 +222,7 @@ pub fn kind_of(extension: Option<&str>) -> CaptureKind {
 pub fn validate_id(id: &str, captures_root: &Path) -> AppResult<PathBuf> {
     let candidate = PathBuf::from(id);
 
-    // Reject any id containing `..` segments outright — the only
+    // Reject any id containing `..` segments outright: the only
     // legitimate ids are absolute paths produced by our own
     // filesystem scan, which never contain `..`.
     if candidate
@@ -232,7 +232,7 @@ pub fn validate_id(id: &str, captures_root: &Path) -> AppResult<PathBuf> {
         return Err(AppError::Library("invalid id: parent traversal".into()));
     }
 
-    // Compare lexically — `canonicalize` would fail for trash paths
+    // Compare lexically: `canonicalize` would fail for trash paths
     // that have just been renamed away, breaking the
     // delete-then-listen flow. Lexical comparison is sufficient
     // because the frontend only ever sends ids returned by our own
@@ -252,7 +252,7 @@ pub fn validate_id(id: &str, captures_root: &Path) -> AppResult<PathBuf> {
 /// rather than a file? Aux entries use a synthetic `aux_<kind>_<ms>` id
 /// so they live in the library without a real file. File ids are always
 /// absolute paths under the captures root (`validate_id`), which never
-/// start with `aux_` — so the prefix can't collide.
+/// start with `aux_`, so the prefix can't collide.
 pub fn is_aux_id(id: &str) -> bool {
     id.starts_with("aux_")
 }
@@ -339,7 +339,7 @@ mod tests {
             false,
         );
         let s = serde_json::to_string(&original).unwrap();
-        // camelCase rename — created_at_ms → createdAtMs, etc.
+        // camelCase rename: created_at_ms → createdAtMs, etc.
         assert!(s.contains(r#""createdAtMs":1700000000000"#));
         assert!(s.contains(r#""sizeBytes":12345"#));
         assert!(s.contains(r#""kind":"image""#));
@@ -443,7 +443,7 @@ mod tests {
     #[test]
     fn capture_meta_without_labels_omits_those_keys() {
         // An untagged capture must not ship `"tags":[]` + `"favorite":
-        // false` on every row — the wire shape says "nothing to show".
+        // false` on every row: the wire shape says "nothing to show".
         let entry = CaptureMeta::new("/a.png".into(), "a".into(), CaptureKind::Image, 1, 2, false);
         let s = serde_json::to_string(&entry).unwrap();
         assert!(!s.contains("tags"), "got {s}");

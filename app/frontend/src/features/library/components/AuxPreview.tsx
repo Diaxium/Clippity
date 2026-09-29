@@ -1,7 +1,7 @@
 import type { CaptureMeta } from "../types";
 
 /**
- * The visual for an aux (non-file) library entry — rendered in place of
+ * The visual for an aux (non-file) library entry: rendered in place of
  * the file thumbnail. A `color` is a full swatch with its hex; a
  * `palette` is an equal-width swatch strip; a `text` entry (grab-text
  * port) is a clipped preview. Fills its container.
@@ -60,7 +60,7 @@ export function AuxPreview({ meta }: { meta: CaptureMeta }) {
     );
   }
 
-  // Aux entry with a missing payload — defensive fallback.
+  // Aux entry with a missing payload: defensive fallback.
   return <div className="h-full w-full bg-[var(--color-surface-2)]" />;
 }
 

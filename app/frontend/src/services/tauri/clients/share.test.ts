@@ -23,7 +23,7 @@ describe("shareCapture", () => {
   });
 
   it("passes each target through verbatim", async () => {
-    // The wire values are kebab-case to match the Rust enum — a silent
+    // The wire values are kebab-case to match the Rust enum: a silent
     // rename here would deserialize-fail on the backend.
     for (const target of ["reveal", "open", "copy-path"] as const) {
       invokeMock.mockResolvedValueOnce(undefined);
@@ -36,7 +36,7 @@ describe("shareCapture", () => {
   });
 
   it("propagates a backend rejection to the caller", async () => {
-    // A missing file is a real error, not a silent no-op — the action
+    // A missing file is a real error, not a silent no-op: the action
     // bar surfaces it as a toast.
     invokeMock.mockRejectedValueOnce(new Error("not a file"));
     await expect(shareCapture("/tmp/gone.png", "open")).rejects.toThrow(

@@ -1,4 +1,4 @@
-//! `installer-services` — the I/O-performing layer.
+//! `installer-services`: the I/O-performing layer.
 //!
 //! Each service turns a domain plan into real side effects (copying
 //! files, writing registry entries, deleting data) and reports progress

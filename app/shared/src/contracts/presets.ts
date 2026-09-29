@@ -1,5 +1,5 @@
 /**
- * Presets wire-format contracts — mirror Rust `domain::preset`.
+ * Presets wire-format contracts: mirror Rust `domain::preset`.
  *
  * A preset is a saved `CaptureRequest` **or** `RecorderRequest`, plus
  * output steps. Recordings are presets rather than a separate "scenes"
@@ -13,7 +13,7 @@ import type { RecorderRequest } from "./recorder";
 
 export interface PresetOutput {
   /** Open the new capture in the editor once it finishes. Meaningless
-   *  for a recording preset — the editor can't open a video — so the
+   *  for a recording preset, the editor can't open a video, so the
    *  editor hides it there rather than offering a promise nothing
    *  keeps. */
   openEditor: boolean;
@@ -26,8 +26,8 @@ export interface PresetOutput {
  *
  * Untagged on the wire, because presets already on disk are bare
  * `CaptureRequest` objects with no discriminant. Safe because the two
- * shapes are disjoint by *required* field — a capture must carry `type`
- * and `toggles`, a recording must carry `target` and `format` — which is
+ * shapes are disjoint by *required* field (a capture must carry `type`
+ * and `toggles`, a recording must carry `target` and `format`) which is
  * exactly what {@link isRecordingPreset} tests.
  */
 export type PresetRequest = CaptureRequest | RecorderRequest;
@@ -47,7 +47,7 @@ export function isRecordingPreset(
 }
 
 /**
- * The surface a preset acts on — `fullscreen` / `region` / `window` for
+ * The surface a preset acts on: `fullscreen` / `region` / `window` for
  * either kind, since a recording's `target` and a capture's `type` are
  * the same three answers under different field names.
  *
@@ -67,7 +67,7 @@ export interface CapturePreset {
   output: PresetOutput;
 }
 
-/** Create payload — everything but the id, which the backend mints. */
+/** Create payload: everything but the id, which the backend mints. */
 export interface PresetInput {
   name: string;
   request: PresetRequest;

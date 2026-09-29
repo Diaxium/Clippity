@@ -113,7 +113,7 @@ describe("libraryStore", () => {
 
     it("ranges upward from the anchor, still in screen order", () => {
       // The selection list is ordered because "add to collection"
-      // appends in it — a user who Shift-clicked upward pointed at a
+      // appends in it: a user who Shift-clicked upward pointed at a
       // block, not at a reversed one.
       useLibraryStore.getState().toggleSelected("/d.png");
       useLibraryStore.getState().selectRange("/b.png", false);

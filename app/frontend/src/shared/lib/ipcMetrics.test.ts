@@ -103,7 +103,7 @@ describe("ipcMetrics recording", () => {
     endIpcCall();
     expect(pendingIpcCalls()).toBe(1);
     endIpcCall();
-    endIpcCall(); // one too many — must not go negative
+    endIpcCall(); // one too many; must not go negative
     expect(pendingIpcCalls()).toBe(0);
   });
 });
@@ -165,7 +165,7 @@ describe("summarizeIpc", () => {
   });
 
   it("reports p95 by nearest rank, not by interpolation", () => {
-    // With 20 samples the p95 is the 19th measured value — not a number
+    // With 20 samples the p95 is the 19th measured value, not a number
     // nobody observed.
     const window: IpcSample[] = Array.from({ length: 20 }, (_, i) => ({
       seq: i + 1,

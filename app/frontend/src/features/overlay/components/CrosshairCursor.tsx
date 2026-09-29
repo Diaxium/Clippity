@@ -9,7 +9,7 @@ const GAP = 6; // gap between center and arm start
 const ARM_PRECISION = 28; // arm length when precision mode (Alt) held
 
 /**
- * Precision crosshair — thinner, CAD-style geometry with adaptive
+ * Precision crosshair: thinner, CAD-style geometry with adaptive
  * contrast halo. Replaces the bulky 1px arm + heavy outer ring.
  *
  * Contextual states:
@@ -41,7 +41,7 @@ export function CrosshairCursor() {
   }, [snapPulse]);
 
   // Once a selection is committed the rect is the focal point, so the
-  // crosshair stays hidden *inside* it — the rect's own "move" cursor
+  // crosshair stays hidden *inside* it: the rect's own "move" cursor
   // takes over there. But the overlay root sets `cursor: none`, so
   // outside the rect there would be no cursor at all; show the crosshair
   // there, where a drag starts a fresh selection. Hovering a handle
@@ -106,7 +106,7 @@ export function CrosshairCursor() {
       style={{
         left: pos.x,
         top: pos.y,
-        // Smooth follow for slow movements — disabled during drag to
+        // Smooth follow for slow movements: disabled during drag to
         // keep precision tight (the cursor IS the truth there).
         transition:
           phase === "dragging" || isResizing
@@ -146,7 +146,7 @@ export function CrosshairCursor() {
           />
         </>
       )}
-      {/* Center dot — pulse in idle, snap-pulse on alignment. */}
+      {/* Center dot: pulse in idle, snap-pulse on alignment. */}
       <div
         key={`dot-${pulseKey}`}
         className={`${dotPulse} ${snapAnim}`.trim()}
@@ -162,7 +162,7 @@ export function CrosshairCursor() {
             "0 0 0 1.2px rgba(255,255,255,0.85), 0 0 5px 1.5px color-mix(in srgb, var(--color-accent) 55%, transparent)",
         }}
       />
-      {/* Outer halo ring — adaptive readability layer. Faint enough to
+      {/* Outer halo ring: adaptive readability layer. Faint enough to
           stay invisible on simple backgrounds but lifts the reticle off
           busy content like photos or text. */}
       <div

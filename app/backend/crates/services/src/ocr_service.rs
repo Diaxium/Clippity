@@ -1,4 +1,4 @@
-//! Grab-Text OCR — runs Windows.Media.Ocr against a cropped region and
+//! Grab-Text OCR: runs Windows.Media.Ocr against a cropped region and
 //! returns the recognized plaintext. The engine is resolved from the
 //! user's profile languages so the input language matches what they read
 //! day to day (ADR 0007).
@@ -16,7 +16,7 @@
 
 /// Recognize the text in `image`, returning the engine's concatenated
 /// plaintext (untrimmed). `Err` on an empty image, a missing OCR
-/// language pack, or any WinRT failure — the caller maps it to a
+/// language pack, or any WinRT failure: the caller maps it to a
 /// user-facing error.
 #[cfg(target_os = "windows")]
 pub fn recognize(image: &image::RgbaImage) -> Result<String, String> {
@@ -27,7 +27,7 @@ pub fn recognize(image: &image::RgbaImage) -> Result<String, String> {
     }
 
     // Tauri commands can land on worker threads where COM isn't init'd.
-    // RPC_E_CHANGED_MODE is fine — COM was already initialized under a
+    // RPC_E_CHANGED_MODE is fine: COM was already initialized under a
     // different model, and Media.Ocr works either way.
     unsafe {
         let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
@@ -109,7 +109,7 @@ async fn recognize_async(image: image::RgbaImage) -> Result<String, String> {
     Ok(text.to_string_lossy())
 }
 
-/// Non-Windows stub — Media.Ocr is Windows-only. A macOS Vision / Linux
+/// Non-Windows stub: Media.Ocr is Windows-only. A macOS Vision / Linux
 /// Tesseract backend would replace this (ADR 0007 follow-up).
 #[cfg(not(target_os = "windows"))]
 pub fn recognize(_image: &image::RgbaImage) -> Result<String, String> {

@@ -37,7 +37,7 @@ function KeyChips({ kb }: { kb: EditorKeybind }) {
  * registry (so it never drifts from the actual bindings) and renders it grouped
  * by category with platform-aware labels. Closes on Esc (owned here in a
  * capture listener so it beats the global handler), a backdrop click, or the
- * close button; `?` again toggles it via the central keybind. Lightweight —
+ * close button; `?` again toggles it via the central keybind. Lightweight:
  * plain conditional render, no animation dependency.
  */
 export function KeybindHelpOverlay() {
@@ -50,7 +50,7 @@ export function KeybindHelpOverlay() {
     if (!open) setQuery("");
   }, [open]);
 
-  // Own Esc while open (capture phase) so it closes regardless of focus —
+  // Own Esc while open (capture phase) so it closes regardless of focus,
   // including from inside the search box, where the global Esc is suppressed.
   useEffect(() => {
     if (!open) return;

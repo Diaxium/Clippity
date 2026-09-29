@@ -22,12 +22,12 @@ interface SourcesCardProps {
 }
 
 /**
- * Settings → Recording → Sources (ADR 0033) — the things composited over
+ * Settings → Recording → Sources (ADR 0033): the things composited over
  * a recording.
  *
  * **Position is a corner preset, not a drag surface.** Free positioning
  * wants a live preview of the frame to drag on, and a recording's frame
- * is whatever the user is about to point at — which does not exist yet
+ * is whatever the user is about to point at, which does not exist yet
  * when this panel is open. Corners cover what people actually do with a
  * webcam, and because the rect is normalized the same choice lands
  * correctly on any region or monitor.

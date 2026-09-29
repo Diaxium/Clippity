@@ -1,4 +1,4 @@
-//! Editor domain types — pure, no I/O.
+//! Editor domain types: pure, no I/O.
 //!
 //! The editor opens an existing capture (file-backed), lets the user
 //! draw annotations + crop, and saves a flattened image as a *new*
@@ -8,14 +8,14 @@
 //!
 //! **MVP scope (Tier 2)**: open an image from the captures dir,
 //! return its bytes as a base64 data URI; accept a flattened image
-//! data URI on save and persist it. No per-annotation Rust types —
+//! data URI on save and persist it. No per-annotation Rust types:
 //! those live entirely in the frontend feature folder.
 //!
 //! **Formats.** The frontend's Canvas2D `toDataURL` can encode PNG,
 //! JPEG and WebP, so the save path is format-driven rather than
 //! PNG-only: [`parse_image_data_uri`] reads the declared MIME and the
 //! resulting [`ImageFormat`] picks the on-disk extension. The backend
-//! never transcodes — it persists exactly the bytes the canvas
+//! never transcodes: it persists exactly the bytes the canvas
 //! produced.
 
 use std::path::Path;
@@ -46,7 +46,7 @@ pub struct EditorImage {
 /// Sidecar filename for a capture's editable scene: `<filename>.json`
 /// (e.g. `Shot.png` → `Shot.png.json`). The sidecar lives in the hidden
 /// `.scenes` subdir of the captures directory so it never appears in the
-/// library scan (which skips dot-prefixed entries). Pure — no I/O.
+/// library scan (which skips dot-prefixed entries). Pure: no I/O.
 ///
 /// Delegates to [`library::sidecar_file_name`], which every sidecar
 /// family shares: the `.meta` provenance record must resolve to the
@@ -57,7 +57,7 @@ pub fn scene_file_name(capture_path: &str) -> String {
 }
 
 /// What the frontend sends when it saves an edited capture. The
-/// backend treats the `data_uri` as opaque encoded bytes — frontend has
+/// backend treats the `data_uri` as opaque encoded bytes: frontend has
 /// already flattened annotations + effects via Canvas2D.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -88,7 +88,7 @@ impl ImageFormat {
         }
     }
 
-    /// Canonical MIME type — what a data URI for this format declares.
+    /// Canonical MIME type: what a data URI for this format declares.
     pub fn mime(self) -> &'static str {
         match self {
             ImageFormat::Png => "image/png",
@@ -132,7 +132,7 @@ pub fn parse_image_data_uri(data_uri: &str) -> Option<ImagePayload<'_>> {
 
 /// Pure: the MIME type to declare when handing a capture file back to
 /// the frontend as a data URI. Covers the formats the library can hold,
-/// not just the ones the editor writes — a `.jpg` capture opened in the
+/// not just the ones the editor writes: a `.jpg` capture opened in the
 /// editor must not be announced as PNG, or the webview may refuse to
 /// decode it. Unknown extensions fall back to PNG, matching
 /// `library::kind_of`'s "unknown means image" precedent.
@@ -243,7 +243,7 @@ mod tests {
     fn scene_file_name_appends_json_to_the_basename() {
         assert_eq!(scene_file_name("/tmp/captures/Shot.png"), "Shot.png.json");
         assert_eq!(scene_file_name(r"C:\caps\A B.png"), "A B.png.json");
-        // A path with no file component still yields a usable name —
+        // A path with no file component still yields a usable name:
         // the fallback is `library::sidecar_file_name`'s, shared with
         // the `.meta` record so both families agree.
         assert_eq!(scene_file_name(""), "capture.json");

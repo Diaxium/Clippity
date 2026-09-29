@@ -42,7 +42,7 @@ const INLINE_OPTIONS = [
 
 /**
  * Single-row low-profile layout. Authored to match the legacy compact
- * mode but **unreachable in MVP** — the user has no path to flip the
+ * mode but **unreachable in MVP**: the user has no path to flip the
  * compact bit until the settings port lands.
  */
 export function CompactCaptureRow() {

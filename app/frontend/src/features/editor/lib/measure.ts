@@ -1,14 +1,14 @@
 /**
- * Measurement / dimension lines (Fork A-F3) — pure geometry + formatting, no
+ * Measurement / dimension lines (Fork A-F3): pure geometry + formatting, no
  * React, no store.
  *
  * ### Why this needs its own module
  *
  * A dimension is a line *plus* decorations that live outside the line: serif
  * ticks or arrowheads perpendicular to it, and a rotated label pill sitting in a
- * break in the shaft. Nothing either renderer already reads can express that —
- * it is the same position window chrome (ADR 0022) and the spotlight scrim
- * (ADR 0023) were in — so the answer is the same one those reached: **one
+ * break in the shaft. Nothing either renderer already reads can express that
+ *; it is the same position window chrome (ADR 0022) and the spotlight scrim
+ * (ADR 0023) were in, so the answer is the same one those reached: **one
  * shared module computes every number, and each renderer only decides how to
  * *emit* it** (SVG elements vs Canvas2D calls). {@link measureGeometry} is the
  * whole drawing as data; `SceneNodeView`'s `MeasureMarks` and `render.ts`'s
@@ -19,13 +19,13 @@
  * Scene space is capture px at 1:1 (`sceneFromImage` sizes the page to the
  * bitmap), so the distance between the line's endpoints **is** the measurement.
  * Storing the number alongside would let it drift from the line the moment
- * either endpoint moved — the label reads the geometry every render instead.
+ * either endpoint moved: the label reads the geometry every render instead.
  * {@link MeasureSpec.scale} and `unit` only re-express that one true length.
  *
  * ### Text is measured, not laid out
  *
  * Neither renderer can share the other's text metrics (jsdom has no Canvas2D at
- * all — see the test convention), so the label's pill is sized here from an
+ * all; see the test convention), so the label's pill is sized here from an
  * average advance width and *both* renderers center the text inside that same
  * pill. An estimate that is slightly loose is fine; an estimate that differs
  * between the two renderers would not be. Same reasoning that made the Windows
@@ -45,7 +45,7 @@ import { isLineLike, lineEndpoints } from "../types";
 import { readableInk, topStroke } from "./paint";
 
 /** Below this the line is a dot, and there is no direction to lay a dimension
- *  out along — the mark renders as nothing rather than as NaN. */
+ *  out along: the mark renders as nothing rather than as NaN. */
 const MIN_MEASURE_LENGTH = 0.5;
 
 /** Bounds on {@link MeasureSpec.scale}. A zero or negative factor would report
@@ -62,7 +62,7 @@ export function clampMeasureScale(scale: number): number {
 /**
  * Whether this node can carry a measurement: a line or an arrow.
  *
- * A dimension's defining property is that it has *two endpoints* — which is
+ * A dimension's defining property is that it has *two endpoints*, which is
  * exactly what line-like nodes model (signed width/height encode the a→b
  * vector) and what box nodes do not. Other types return false so a stale spec is
  * inert rather than half-rendered, the guard {@link measureOf} reads.
@@ -71,7 +71,7 @@ export function canCarryMeasure(node: SceneNode): node is LineNode | ArrowNode {
   return isLineLike(node);
 }
 
-/** The node's measure spec, or null — including for types that can't carry one. */
+/** The node's measure spec, or null, including for types that can't carry one. */
 export function measureOf(node: SceneNode): MeasureSpec | null {
   const spec = node.measure;
   if (!spec || !canCarryMeasure(node)) return null;
@@ -80,7 +80,7 @@ export function measureOf(node: SceneNode): MeasureSpec | null {
 
 // ---------- the number ----------
 
-/** The measured distance in scene px — the plain length of the line. */
+/** The measured distance in scene px: the plain length of the line. */
 export function measureLength(node: SceneNode): number {
   const { a, b } = lineEndpoints(node as LineNode);
   return Math.hypot(b.x - a.x, b.y - a.y);
@@ -137,7 +137,7 @@ export type MeasureSegment = readonly [Vec2, Vec2];
  * The length label: a rounded pill with the number centered in it.
  *
  * Both renderers place it by rotating `rotation` degrees about (`cx`,`cy`) and
- * drawing a `width`×`height` pill centered there — an SVG `<g transform=
+ * drawing a `width`×`height` pill centered there: an SVG `<g transform=
  * "rotate(…)">` and a Canvas `translate`+`rotate` are two spellings of that one
  * transform.
  */
@@ -151,13 +151,13 @@ export interface MeasureLabel {
   rotation: number;
   width: number;
   height: number;
-  /** Corner radius — half the height, i.e. a pill. */
+  /** Corner radius: half the height, i.e. a pill. */
   radius: number;
   /** Font size in scene px. */
   size: number;
   /** Text ink, contrast-picked against `plate`. */
   color: string;
-  /** Pill fill — the mark's stroke color, so the label belongs to the line. */
+  /** Pill fill: the mark's stroke color, so the label belongs to the line. */
   plate: string;
 }
 
@@ -169,7 +169,7 @@ export interface MeasureGeometry {
   color: string;
   width: number;
   opacity: number;
-  /** Shaft segments — two, split around the label; fewer when the label eats
+  /** Shaft segments: two, split around the label; fewer when the label eats
    *  the whole span. */
   shaft: readonly MeasureSegment[];
   /** Perpendicular serifs at the endpoints (`caps: "tick"`), else empty. */
@@ -180,7 +180,7 @@ export interface MeasureGeometry {
   label: MeasureLabel;
 }
 
-/** Serif half-length, and the arrowhead's length — both scaled off the stroke
+/** Serif half-length, and the arrowhead's length: both scaled off the stroke
  *  width so a heavier dimension keeps its proportions. */
 const TICK_HALF = (width: number): number => Math.max(4, width * 2.6);
 const HEAD_LEN = (width: number): number => Math.max(8, width * 3.2);
@@ -192,12 +192,12 @@ const LABEL_SIZE = (width: number): number =>
   Math.max(12, Math.min(36, width * 5));
 /** Mean advance width of a digit in Inter at weight 600, as a fraction of the
  *  font size. The pill is sized from this rather than from either renderer's
- *  text metrics — see the module header. */
+ *  text metrics; see the module header. */
 const LABEL_ADVANCE = 0.58;
 /** Clear space between the pill and where the shaft resumes. */
 const LABEL_GAP = 4;
 
-/** Fallback stroke for a dimension whose strokes were all deleted or hidden —
+/** Fallback stroke for a dimension whose strokes were all deleted or hidden:
  *  the mark stays visible and editable instead of vanishing with no way back. */
 const FALLBACK_STROKE = { color: "#f24822", width: 2, opacity: 1 };
 
@@ -255,7 +255,7 @@ export function measureGeometry(node: SceneNode): MeasureGeometry | null {
           : angleDeg,
     width: labelW,
     height: labelH,
-    // Pill, but never a radius wider than the box it rounds — Canvas2D's
+    // Pill, but never a radius wider than the box it rounds: Canvas2D's
     // `arcTo` would draw a distorted corner where SVG's `rx` silently clamps.
     radius: Math.min(labelH, labelW) / 2,
     size,
@@ -263,7 +263,7 @@ export function measureGeometry(node: SceneNode): MeasureGeometry | null {
     plate: color,
   };
 
-  // Arrow caps eat the shaft's ends so the barbs stay sharp — the same inset
+  // Arrow caps eat the shaft's ends so the barbs stay sharp: the same inset
   // `drawLine`/`LineView` already apply to a plain arrow.
   const inset =
     spec.caps === "arrow"
@@ -319,8 +319,8 @@ function arrowHead(tip: Vec2, dx: number, dy: number, width: number): Vec2[] {
  * The scene-space box the dimension actually paints, or null when it paints
  * nothing.
  *
- * A line-like node's own frame is the bare segment — zero-height for a
- * horizontal dimension — while the ticks, arrowheads and label pill all sit
+ * A line-like node's own frame is the bare segment, zero-height for a
+ * horizontal dimension, while the ticks, arrowheads and label pill all sit
  * *outside* it. `exportBounds` unions this in so exporting a dimension on its
  * own doesn't slice its decorations off, the way window chrome needed
  * (ADR 0022). Deliberately not folded into `rotatedAABB`, which also backs

@@ -75,7 +75,7 @@ describe("chromeWindowRect", () => {
 
   it("ignores chrome on a node neither renderer can draw it on", () => {
     // "The capture" is whatever holds the largest image fill, and an ellipse
-    // could qualify — but there is no title-bar code path for one, so a stale
+    // could qualify, but there is no title-bar code path for one, so a stale
     // spec has to be inert rather than half-rendered.
     __resetNodeIdForTests();
     const ellipse = makeEllipse(BOX);
@@ -89,7 +89,7 @@ describe("chromeWindowRect", () => {
 });
 
 describe("chromeWindowRadii", () => {
-  it("puts the capture's corners on the window — top on the bar, bottom on the image", () => {
+  it("puts the capture's corners on the window: top on the bar, bottom on the image", () => {
     const radii = chromeWindowRadii(capture(macos(), 12));
     expect(radii).toEqual({ tl: 12, tr: 12, br: 12, bl: 12 });
   });
@@ -190,7 +190,7 @@ describe("chromeTitle", () => {
     expect(chromeTitle(capture(macos({ title: "   " })))).toBeNull();
   });
 
-  it("centres on macOS and left-aligns on Windows — each desktop's convention", () => {
+  it("centres on macOS and left-aligns on Windows: each desktop's convention", () => {
     const mac = chromeTitle(capture(macos({ title: "Report" })))!;
     expect(mac.align).toBe("center");
     expect(mac.x).toBe(BOX.width / 2);
@@ -252,7 +252,7 @@ describe("presets", () => {
     }
   });
 
-  it("carries the title across a style switch — it's content, not style", () => {
+  it("carries the title across a style switch: it's content, not style", () => {
     const win = makeChrome(chromePreset("windows")!, "Dashboard")!;
     expect(win.style).toBe("windows");
     expect(win.title).toBe("Dashboard");

@@ -1,5 +1,5 @@
 /**
- * Editor wire-format contracts — mirror Rust `domain::editor`.
+ * Editor wire-format contracts: mirror Rust `domain::editor`.
  *
  * Per-annotation types live entirely in `features/editor/` because the
  * backend treats them as opaque pixels baked into the saved PNG.

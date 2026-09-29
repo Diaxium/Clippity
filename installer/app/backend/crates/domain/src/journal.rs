@@ -1,12 +1,12 @@
-//! The operation journal — the transaction record every mutating
+//! The operation journal: the transaction record every mutating
 //! maintenance operation writes as it runs.
 //!
 //! An install / modify / repair / update / reinstall / uninstall is a
 //! transaction: it moves through a fixed lifecycle
 //! (`Detect → Validate → Plan → Stage → Apply → Verify → Commit →
 //! Cleanup`), and each mutating step records an [`Action`] together with
-//! the inverse that undoes it. If the process dies partway — power loss, a
-//! crash, the user killing it — the next launch reads the journal and the
+//! the inverse that undoes it. If the process dies partway (power loss, a
+//! crash, the user killing it) the next launch reads the journal and the
 //! pure [`recover`] rule decides whether to resume forward, roll the
 //! applied actions back, just finish cleanup, or stop for manual recovery.
 //!
@@ -17,9 +17,9 @@
 //! with a half-finished operation" question unit-testable without a
 //! filesystem.
 //!
-//! The shape is deliberately MSI-adjacent — an action with a recorded
+//! The shape is deliberately MSI-adjacent: an action with a recorded
 //! inverse is the same idea as a Windows Installer custom action paired
-//! with its rollback action inside a rollback boundary — so the Option-C
+//! with its rollback action inside a rollback boundary, so the Option-C
 //! target (a WiX-authored MSI driven by this wizard) inherits the concept
 //! rather than replacing it. See `docs/installer/04-lifecycle-and-recovery.md`.
 
@@ -69,7 +69,7 @@ pub enum Phase {
     /// swap). Commit steps must be idempotent so an interrupted commit can
     /// be rolled *forward*.
     Commit,
-    /// Removing staging, backups, and — for uninstall — the operation's own
+    /// Removing staging, backups, and, for uninstall, the operation's own
     /// footprint. Nothing here changes the committed outcome.
     Cleanup,
 }
@@ -153,7 +153,7 @@ pub enum ActionStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Action {
-    /// Monotonic id within this operation, assigned in apply order — the
+    /// Monotonic id within this operation, assigned in apply order: the
     /// order rollback reverses.
     pub id: u32,
     pub kind: ActionKind,
@@ -258,7 +258,7 @@ impl OperationJournal {
     }
 
     /// Record an action as `Applied`, assigning it the next id, and return
-    /// that id. The caller performs the side effect first, then records —
+    /// that id. The caller performs the side effect first, then records,
     /// so a crash between the two loses at most a not-yet-recorded action,
     /// never claims one that did not happen.
     pub fn record_applied(&mut self, mut action: Action, now: impl Into<String>) -> u32 {
@@ -270,7 +270,7 @@ impl OperationJournal {
         id
     }
 
-    /// The applied actions still needing reversal, newest-first — the order
+    /// The applied actions still needing reversal, newest-first: the order
     /// a rollback must undo them (a file replaced last is restored first).
     pub fn pending_reversals(&self) -> Vec<&Action> {
         self.actions
@@ -312,12 +312,12 @@ impl OperationJournal {
     }
 }
 
-/// What the next launch should do about a journal it found — the pure
+/// What the next launch should do about a journal it found: the pure
 /// recovery decision, testable without touching disk.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Recovery {
-    /// Nothing to do — the operation committed and cleaned up.
+    /// Nothing to do: the operation committed and cleaned up.
     None,
     /// Re-run the operation from the start; no live mutations had happened
     /// yet, so a clean restart is safe.
@@ -336,7 +336,7 @@ pub enum Recovery {
 /// The rule encodes the transaction's safety boundary: nothing is
 /// authoritative until [`Phase::Commit`], so an interruption *before*
 /// commit rolls back (or, if nothing was applied, simply restarts), while
-/// an interruption *at or after* commit rolls forward — reversing a nearly
+/// an interruption *at or after* commit rolls forward: reversing a nearly
 /// complete, half-authoritative operation is riskier than finishing it,
 /// and every commit/cleanup step is defined idempotent for exactly this
 /// reason.
@@ -359,13 +359,13 @@ pub fn recover(journal: &OperationJournal) -> Recovery {
         Outcome::RolledBack => Recovery::Cleanup,
         // Errored mid-flight and recorded it: reverse what was applied.
         Outcome::Failed => Recovery::RollBack,
-        // Died before writing any terminal outcome — classify by how far it
+        // Died before writing any terminal outcome: classify by how far it
         // had got.
         Outcome::Pending => match journal.phase {
             // Pre-mutation phases: nothing live changed, safe to restart.
             Phase::Detect | Phase::Validate | Phase::Plan => Recovery::Resume,
             // Staging / applying / verifying: partial, uncommitted mutations
-            // exist — reverse them.
+            // exist; reverse them.
             Phase::Stage | Phase::Apply | Phase::Verify => Recovery::RollBack,
             // Crossed the commit boundary: roll forward to finish.
             Phase::Commit => Recovery::Resume,

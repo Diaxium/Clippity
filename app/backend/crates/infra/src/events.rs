@@ -1,4 +1,4 @@
-//! Outbound event channel — wraps `tauri::AppHandle::emit` so the rest
+//! Outbound event channel: wraps `tauri::AppHandle::emit` so the rest
 //! of the backend doesn't import Tauri types directly.
 //!
 //! Event names mirror the frontend's `services/tauri/events.ts` and
@@ -29,15 +29,15 @@ pub mod names {
     /// Emitted by capture / overlay / library services after any
     /// filesystem change in the captures directory. Listeners
     /// (LibraryLayout in the capture window) refresh on receipt.
-    /// Empty payload — this is a "go refetch" notification.
+    /// Empty payload: this is a "go refetch" notification.
     pub const LIBRARY_UPDATED: &str = "clippity://library/updated";
-    /// Emitted after any change to the collections document — create,
+    /// Emitted after any change to the collections document: create,
     /// rename, delete, membership, reorder. Separate from
     /// `LIBRARY_UPDATED` because the two answer different questions: the
     /// rows a listing returns are unchanged when a capture joins a
     /// collection, so a shared event would make every library view
     /// re-fetch its whole list over an arrangement it doesn't show.
-    /// Empty payload — the handler re-fetches.
+    /// Empty payload: the handler re-fetches.
     pub const COLLECTIONS_UPDATED: &str = "clippity://collections/updated";
     /// Emitted by `request_dashboard_view` so the dashboard switches
     /// views in-flight. The cold-show case still uses the
@@ -59,7 +59,7 @@ pub mod names {
     /// Empty payload.
     pub const COUNTDOWN_CANCELLED: &str = "clippity://countdown/cancelled";
     /// Emitted by `tray_service` once the flyout panel has been
-    /// positioned + shown. Empty payload — the panel's `useTrayPanel`
+    /// positioned + shown. Empty payload: the panel's `useTrayPanel`
     /// listener refreshes its recent captures and resets focus to the
     /// first action on receipt (the window persists hidden between
     /// opens, so "on mount" alone wouldn't re-run).
@@ -76,7 +76,7 @@ pub mod names {
     /// Payload: `{ dataUri: String }` (base64 PNG). The HUD shows it.
     pub const RECORDING_PREVIEW: &str = "clippity://recording/preview";
     /// Emitted once by the worker when it detects the user reversed scroll
-    /// direction (scrolled back the way they came) — the cue that the
+    /// direction (scrolled back the way they came): the cue that the
     /// capture is complete. The recording HUD responds by committing, the
     /// same path as the Stop & Stitch button. Empty payload.
     pub const RECORDING_AUTO_STOP: &str = "clippity://recording/auto-stop";
@@ -89,7 +89,7 @@ pub mod names {
     /// producing a still image. See `domain::recorder`.
     pub const RECORDER_TICK: &str = "clippity://recorder/tick";
     /// Emitted ten times a second while a session has audio, carrying
-    /// `RecorderLevels` — the peak of each input since the last one.
+    /// `RecorderLevels`: the peak of each input since the last one.
     /// Drives the HUD's meters.
     ///
     /// Its own event rather than fields on [`RECORDER_TICK`]: a meter
@@ -99,7 +99,7 @@ pub mod names {
     /// session with no audio emits this not at all.
     pub const RECORDER_LEVELS: &str = "clippity://recorder/levels";
     /// Emitted once when a recording session ends, whatever the reason.
-    /// Payload: `{ reason, result }` — `result` is null for a discard
+    /// Payload: `{ reason, result }`; `result` is null for a discard
     /// or a session that produced nothing. The main window's persistent
     /// listener opens the result when `result.preview` is set, mirroring
     /// how `capture/finished` is handled.
@@ -110,8 +110,8 @@ pub mod names {
     /// reason `RECORDER_TICK` is scoped to the toast: it fires many
     /// times over one export and exactly one surface renders it. The
     /// *result* travels back as the command's return value, not as an
-    /// event, because unlike a recording — which can end with nobody
-    /// having called anything — an export always has a caller waiting.
+    /// event, because unlike a recording (which can end with nobody
+    /// having called anything) an export always has a caller waiting.
     pub const MEDIA_TRIM_PROGRESS: &str = "clippity://media/trim-progress";
     /// Emitted by `model_service` after any model status transition
     /// (download started / finished / failed / cancelled, model
@@ -128,7 +128,7 @@ pub mod names {
 /// high-frequency recording events.
 pub const TOAST_WINDOW: &str = "toast";
 
-/// Label of the dashboard window, which hosts Studio — the sole consumer
+/// Label of the dashboard window, which hosts Studio: the sole consumer
 /// of trim-export progress. Must match `WINDOW_LABELS.main` in the
 /// frontend's constants.
 pub const MAIN_WINDOW: &str = "main";
@@ -146,11 +146,11 @@ pub enum EventTarget {
 ///
 /// Most events broadcast: any window might be listening, and they fire
 /// at human speed (a setting changed, a capture finished). The recording
-/// HUD's tick/preview/auto-stop are the exception — they fire several
+/// HUD's tick/preview/auto-stop are the exception: they fire several
 /// times a second for the whole duration of a scroll capture, and only
 /// the toast window ever listens (see `RecordingToastBody`). Broadcasting
 /// them wakes the other five always-alive WebViews on every frame to
-/// deserialize a payload they immediately discard — including a
+/// deserialize a payload they immediately discard, including a
 /// base64-encoded PNG for each preview tick. Scoping them to the toast
 /// window (P1 in the performance roadmap) removes that per-frame wake-up.
 ///
@@ -184,8 +184,8 @@ pub fn emit<P: Serialize + Clone>(app: &AppHandle, event: &str, payload: P) -> A
     };
     result.map_err(|e| {
         // Most call sites emit best-effort (`let _ = emit(...)`), so
-        // without this a failed emit — a window that never gets its
-        // update — would leave no trace at all. Logged here once,
+        // without this a failed emit (a window that never gets its
+        // update) would leave no trace at all. Logged here once,
         // centrally, rather than at every (mostly silent) call site.
         tracing::warn!(event, error = %e, "event emit failed");
         AppError::from(e)
@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn trim_progress_reaches_only_the_window_that_renders_it() {
-        // Many emits over one export, one surface reading them — the
+        // Many emits over one export, one surface reading them: the
         // same argument that scopes the recorder's tick to the HUD.
         assert_eq!(
             target_for(names::MEDIA_TRIM_PROGRESS),

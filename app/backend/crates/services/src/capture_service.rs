@@ -4,7 +4,7 @@
 //! the result, optionally push to the clipboard, restore the window, and
 //! emit `clippity://capture/finished`.
 //!
-//! Non-fullscreen `CaptureKind` variants reject with `Unsupported` —
+//! Non-fullscreen `CaptureKind` variants reject with `Unsupported`:
 //! they unblock as the overlay (port #2) and custom-mode ports land.
 
 use std::sync::{Arc, Mutex};
@@ -25,7 +25,7 @@ use clippity_domain::window_attribution::{self, Rect as AttributionRect, WindowR
 use clippity_infra::error::{AppError, AppResult};
 use clippity_infra::events;
 
-/// Per-process capture state — currently just the most recent result
+/// Per-process capture state: currently just the most recent result
 /// so a later port (library / toast) can read it through an inspector
 /// command without re-capturing.
 #[derive(Default)]
@@ -61,7 +61,7 @@ impl CaptureService {
         self.execute_fullscreen(app, &request)
     }
 
-    /// Inspector — last successful capture, if any. Unused in the
+    /// Inspector: last successful capture, if any. Unused in the
     /// MVP capture port; reserved for library / toast / editor.
     #[allow(dead_code)]
     pub fn last(&self) -> Option<CaptureResult> {
@@ -98,7 +98,7 @@ impl CaptureService {
                 .unwrap_or(fallback_source);
 
         // xcap's Windows.Graphics.Capture path explicitly excludes the
-        // cursor — composite it on top when the user asked for it. The
+        // cursor; composite it on top when the user asked for it. The
         // None / None args use the system cursor's live position
         // (correct for fullscreen captures, where the entire monitor
         // is in-frame).
@@ -114,7 +114,7 @@ impl CaptureService {
         }
 
         // Smart enhance, when asked for, runs before the encode so the
-        // file and the clipboard copy below are the same pixels — the
+        // file and the clipboard copy below are the same pixels: the
         // overlay pipeline sequences it the same way.
         if request.toggles.enhance {
             enhance::smart_enhance(&mut image);
@@ -148,7 +148,7 @@ impl CaptureService {
         // use the live captures dir from settings.
         let dir = resolve_save_dir(request.output_dir.as_deref(), self.captures.captures_dir());
         // This pipeline grabs one whole monitor, so there is nothing to
-        // attribute — the display it captured *is* the display it came
+        // attribute: the display it captured *is* the display it came
         // from.
         let source = CaptureSource::from_mode("Fullscreen")
             .with_window(source_window.as_deref(), source_app.as_deref())
@@ -177,10 +177,10 @@ impl CaptureService {
         );
 
         if request.toggles.clipboard {
-            // Push the RGBA we already have — no PNG re-decode. (The png
+            // Push the RGBA we already have: no PNG re-decode. (The png
             // bytes are still what we persisted above.)
             if let Err(e) = copy_rgba_to_clipboard(&image) {
-                // Clipboard failure shouldn't fail the capture itself —
+                // Clipboard failure shouldn't fail the capture itself:
                 // the file is on disk; surface to logs and continue.
                 tracing::warn!("clipboard copy failed: {e}");
             }
@@ -198,7 +198,7 @@ impl CaptureService {
         // painted capture window (avoids a brief blank frame on focus).
         window_service::restore_window(app, "capture");
 
-        // Tell the library to refresh — best-effort, the capture
+        // Tell the library to refresh. Best-effort, the capture
         // succeeded regardless of whether the event fires.
         let _ = events::emit(app, events::names::LIBRARY_UPDATED, ());
         events::emit(app, events::names::CAPTURE_FINISHED, result.clone())?;
@@ -209,7 +209,7 @@ impl CaptureService {
     /// custom mode, image branch). Reuses `execute_fullscreen`'s encode →
     /// save → cache → emit tail, minus the screenshot grab, the
     /// window-hide dance, and the clipboard copy-back (the image is
-    /// already on the clipboard — that's where it came from). Emits
+    /// already on the clipboard: that's where it came from). Emits
     /// `library/updated` + `capture/finished` so the library refreshes and
     /// the preview-in-editor listener can open the editor on the new PNG.
     pub fn save_clipboard_image(
@@ -220,7 +220,7 @@ impl CaptureService {
     ) -> AppResult<CaptureResult> {
         let png = encode_png(image, self.encoding.capture_compression())?;
         let dir = resolve_save_dir(None, self.captures.captures_dir());
-        // No source window, and no screen of origin either — the image
+        // No source window, and no screen of origin either: the image
         // came from the clipboard, not off a display. The name falls back
         // to the "Clipboard" type label and the metadata record carries
         // the mode + dimensions only.
@@ -266,7 +266,7 @@ impl CaptureService {
 /// another.
 type AttributedSource = (Option<String>, Option<String>);
 
-/// The focused window for fallback file naming — `(None, None)` when it
+/// The focused window for fallback file naming: `(None, None)` when it
 /// can't be resolved (no foreground window, blank title, or it's our
 /// own window). Windows-only; other targets always get the empty pair.
 fn foreground_window_source() -> AttributedSource {
@@ -344,7 +344,7 @@ struct EncodedPng {
 
 /// The system cursor's position in screen coordinates, or `None` where
 /// there is no way to ask. Mirrors the recorder's helper of the same
-/// name — both resolve "which screen does Fullscreen mean?" and must
+/// name: both resolve "which screen does Fullscreen mean?" and must
 /// answer it identically.
 #[cfg(target_os = "windows")]
 fn cursor_position() -> Option<(i32, i32)> {
@@ -357,7 +357,7 @@ fn cursor_position() -> Option<(i32, i32)> {
 }
 
 /// Tone-mapped RGBA for the monitor at a screen point, when that
-/// monitor is running in HDR. `None` means "use the ordinary grab" —
+/// monitor is running in HDR. `None` means "use the ordinary grab";
 /// see `platform::windows::hdr_capture`.
 ///
 /// The point is nudged one pixel inside the monitor's origin: the
@@ -379,20 +379,20 @@ struct MonitorGrab {
     x: i32,
     y: i32,
     /// Display label for the provenance record, or `None` when the
-    /// device name couldn't be read — a missing label costs a metadata
+    /// device name couldn't be read: a missing label costs a metadata
     /// field, never the capture.
     monitor: Option<String>,
 }
 
-/// Grab the monitor the user is currently looking at — the one under
-/// the cursor — falling back to the primary when there is no cursor to
+/// Grab the monitor the user is currently looking at, the one under
+/// the cursor, falling back to the primary when there is no cursor to
 /// read or no monitor under it.
 ///
 /// The cursor, not the primary, because Fullscreen means "this screen"
 /// and on a multi-monitor desk the screen the user means is the one
 /// they are pointing at. Shooting the primary instead is invisible on a
 /// single display and wrong on every other setup; it is also what
-/// `RecorderService::start` already assumed the still path did — its
+/// `RecorderService::start` already assumed the still path did: its
 /// comment says fullscreen recording resolves to the cursor's monitor
 /// "matching where the still Fullscreen mode shoots", which was true of
 /// the intent and not of the code. Now both modes frame the same
@@ -417,7 +417,7 @@ fn grab_active_monitor_image() -> AppResult<MonitorGrab> {
         .and_then(|name| metadata::monitor_label(&name));
     // An HDR display's desktop is composed in scRGB, and asking xcap
     // for 8-bit pixels gets it flattened by a conversion that never
-    // saw the display's white level — the washed-out HDR screenshot.
+    // saw the display's white level: the washed-out HDR screenshot.
     // `None` covers both "this display is SDR" and "the float path
     // wasn't available", and both mean the same thing here.
     #[cfg(target_os = "windows")]
@@ -450,11 +450,11 @@ fn encode_png(image: &RgbaImage, compression: CaptureCompression) -> AppResult<E
 
     let (width, height) = (image.width(), image.height());
     let (compression_type, filter) = match compression {
-        // Fastest deflate, no per-row filtering — least CPU, biggest file.
+        // Fastest deflate, no per-row filtering, least CPU, biggest file.
         CaptureCompression::Fast => (CompressionType::Fast, FilterType::NoFilter),
         // The historic default.
         CaptureCompression::Balanced => (CompressionType::Default, FilterType::Adaptive),
-        // Maximum deflate effort + adaptive filtering — smallest file.
+        // Maximum deflate effort + adaptive filtering, smallest file.
         CaptureCompression::Small => (CompressionType::Best, FilterType::Adaptive),
     };
 
@@ -471,11 +471,11 @@ fn encode_png(image: &RgbaImage, compression: CaptureCompression) -> AppResult<E
 }
 
 // Post-capture PNG / clipboard / id helpers live in
-// `services::capture_io` — promoted there once the overlay port made
+// `services::capture_io`: promoted there once the overlay port made
 // them dual-consumer.
 //
 // Window-lifecycle primitives (hide / restore / sleep) live in
-// `services::window_service` — promoted on the same trigger during the
+// `services::window_service`: promoted on the same trigger during the
 // overlay port.
 
 #[cfg(test)]

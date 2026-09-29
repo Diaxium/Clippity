@@ -13,22 +13,22 @@ live in `app/backend/crates/bench`:
 | Criterion id | Covers |
 | --- | --- |
 | `scroll_stitch/stitch_24x1280x400` | Stitching a full scroll capture (24 overlapping 1280×400 frames). |
-| `still_encode/png_encode_4k` | PNG-encoding a 4K RGBA still — the dominant CPU cost of selection-to-saved. |
+| `still_encode/png_encode_4k` | PNG-encoding a 4K RGBA still: the dominant CPU cost of selection-to-saved. |
 | `thumbnail/thumb_4k_to_320` | Downscale + encode of a 4K still to a 320px card thumbnail. |
 | `library_put/put_50k` | Inserting 50k rows into a fresh index (cold catalog rebuild). |
-| `library_rows/rows_50k` | Listing **all** 50k rows — the pre-P5 full-list load the client filtered over. |
+| `library_rows/rows_50k` | Listing **all** 50k rows: the pre-P5 full-list load the client filtered over. |
 | `library_stamps/stamps_50k` | The staleness stamp map every library open builds over 50k rows. |
 | `library_query/page_50` | **P5**: fetch one filtered/sorted page (50 of 50k) with the query pushed into SQL. |
 | `library_query/search_50k` | **P5**: substring search over 50k rows returning a page. |
 | `library_facets/facets_50k` | **P5**: the rail's whole-library counts (kinds, favorites, trash, smart sets, tag vocabulary). |
-| `recorder_frame/readback_{1080p,4k,ultrawide}` | Copying one frame out of a mapped staging surface at a driver-realistic row pitch — what a held Desktop Duplication costs per frame. |
+| `recorder_frame/readback_{1080p,4k,ultrawide}` | Copying one frame out of a mapped staging surface at a driver-realistic row pitch: what a held Desktop Duplication costs per frame. |
 | `recorder_frame/nv12_{1080p,4k,ultrawide}` | BGRA→NV12 colour conversion into what the H.264 encoder takes. |
 
 ### Why the recorder rows are different
 
 Every other budget here is a comfort threshold: a slower PNG encode is a
 slower save. The recorder's two are a **deadline**. A capture loop that
-overruns its frame interval does not fail or report an error — it silently
+overruns its frame interval does not fail or report an error: it silently
 produces fewer frames, and the user gets a recording that stutters. So the
 bands are set from the interval rather than from headroom over the current
 number: 33.3 ms at 30 fps, 16.7 ms at 60, shared between the read-back, the
@@ -40,13 +40,13 @@ size at which this pipeline first failed to keep up. Read-back and
 conversion together are ~3.3 ms there, a fifth of a 60 fps frame.
 
 Both stages are measured apart on purpose. A recording that misses its rate
-gives no clue which half is over budget, and the two scale differently — the
+gives no clue which half is over budget, and the two scale differently: the
 read-back is pure memory bandwidth, the conversion scales with cores.
 
 Corpora are **synthetic and deterministic** (`crates/bench/src/lib.rs`): a
 fixed seed regenerates the same frames and rows byte-for-byte on every
 machine, and no real capture content, window title or user data ever enters
-a benchmark — the roadmap constraint is *timings and sizes only*.
+a benchmark: the roadmap constraint is *timings and sizes only*.
 
 ## App-lifecycle metrics (tracked, not yet automated)
 
@@ -64,7 +64,7 @@ follow-on work under P2.
 pnpm bench
 ```
 
-That runs the Criterion suite (optimized `bench` profile — the first run
+That runs the Criterion suite (optimized `bench` profile; the first run
 recompiles the dependency tree, later runs are fast) and writes results to
 `app/backend/target/criterion/**/new/estimates.json`.
 
@@ -99,7 +99,7 @@ your own runner before reading a breach as a regression.
 | `library_facets/facets_50k` | 46.4 ms | 65 / 110 |
 
 `library_rows` (loading the whole listing) sits right at the roadmap's 150 ms
-search budget at 50k rows — the concrete evidence that drove **P5**. The
+search budget at 50k rows: the concrete evidence that drove **P5**. The
 `library_query/*` rows are P5's answer: `LibraryIndex::query` pushes the
 grid's filters, search, sort and pagination into SQL, so a page costs
 **2.1 ms** and a search **7.1 ms** instead of materializing all 50k rows.
@@ -108,20 +108,20 @@ That's the number a virtualized grid pays per page.
 **P5 is now wired end to end.** The library page makes three bounded reads
 where it used to make one unbounded one:
 
-- the grid pages through `library_query` (`useLibraryQuery`) — **2.1 ms**;
-- the rail reads `library_facets` (`useLibraryFacets`) — **46.4 ms**;
+- the grid pages through `library_query` (`useLibraryQuery`): **2.1 ms**;
+- the rail reads `library_facets` (`useLibraryFacets`): **46.4 ms**;
 - the DOM is bounded on top of that (`useProgressiveRender` +
   `takeSections`): 120 cards mounted, growing by 120 as an
   `IntersectionObserver` sentinel is reached, which is also what pulls the
   next page.
 
 Read the facets number honestly: **opening a 50k library costs ~48 ms of
-native work rather than 126 ms** — a little under 3x, not the ~60x the page
+native work rather than 126 ms**: a little under 3x, not the ~60x the page
 figure alone suggests. The aggregate is inherently a full-table pass
 (conditional sums, plus a `GROUP BY` over `json_each` for the tag
 vocabulary), and it is the dominant remaining cost. What makes it
 acceptable is *when* it runs: once per open and per `library/updated`,
-never per keystroke, off the grid's critical path — the rail renders zeros
+never per keystroke, off the grid's critical path: the rail renders zeros
 until it lands, so nothing blocks or reflows. If it needs to come down, the
 tag `GROUP BY` is the piece to attack (a tags side-table instead of
 `json_each`).
@@ -138,7 +138,7 @@ fetched.
 
 `app/backend/benches-budgets.json` holds warn/fail bands per automated
 metric and targets for the manual ones. **Bands are seeded from the first
-baseline on reference hardware and must be re-tuned per runner** — a machine
+baseline on reference hardware and must be re-tuned per runner**: a machine
 slower or faster than the reference will shift every median, so treat a band
 breach as a code regression only after confirming the baseline on that
 runner. Criterion also keeps its own previous run as a `base/` comparison,

@@ -2,7 +2,7 @@
 //!
 //! Mirrors the **countdown** pattern (see `countdown_service.rs`): the
 //! backend owns a pre-declared, transparent, always-on-top utility
-//! window (`tray`, route `index.html#/tray`) — it sizes, positions,
+//! window (`tray`, route `index.html#/tray`); it sizes, positions,
 //! shows, and hides the window and emits an event; the React side
 //! (`features/tray`) owns everything the user sees and does inside it.
 //!
@@ -18,7 +18,7 @@
 //! exclusion. It dismisses on focus loss (`on_panel_blur`) and on Esc
 //! (frontend → `hide_tray_panel`). Because it isn't a primary window,
 //! the capture pipeline won't hide it for us, so `hide_panel` runs a
-//! compositor settle when it actually took the panel off-screen — a
+//! compositor settle when it actually took the panel off-screen: a
 //! tray-initiated capture must not include the panel itself.
 
 use std::sync::Mutex;
@@ -34,7 +34,7 @@ use clippity_infra::error::{AppError, AppResult};
 use clippity_infra::events;
 use clippity_services::window_service;
 
-/// Flyout size in logical pixels. Fixed — the React layout fits within
+/// Flyout size in logical pixels. Fixed: the React layout fits within
 /// it (and scrolls if the recents row ever overflows), so there's no
 /// resize-on-show dance. Tauri converts to physical px at the DPI seam.
 const PANEL_W_LOGICAL: f64 = 340.0;
@@ -123,7 +123,7 @@ impl TrayService {
     /// the window ops are safe to call inline.
     pub fn toggle_panel(&self, app: &AppHandle) {
         // Blur-then-click guard (see `REOPEN_GUARD`): if an auto-hide
-        // just fired, this click is the gesture that caused it — consume
+        // just fired, this click is the gesture that caused it; consume
         // the marker and stay hidden instead of re-opening.
         if let Ok(mut slot) = self.last_auto_hide.lock() {
             if let Some(hidden_at) = slot.take() {
@@ -163,7 +163,7 @@ impl TrayService {
     /// Hide the panel. Called explicitly by the frontend after an action
     /// (or Esc) via `hide_tray_panel`. If the panel was actually on
     /// screen, settle the compositor so a capture started immediately
-    /// after can't catch the panel mid-fade — it isn't a PRIMARY_WINDOW,
+    /// after can't catch the panel mid-fade: it isn't a PRIMARY_WINDOW,
     /// so the capture pipeline won't hide/settle it for us.
     pub fn hide_panel(&self, app: &AppHandle) -> AppResult<()> {
         if let Some(panel) = app.get_webview_window(PANEL_LABEL) {
@@ -179,7 +179,7 @@ impl TrayService {
     /// Auto-dismiss on focus loss. Records the instant (so `toggle_panel`
     /// can suppress the immediate re-open) and hides. Wired from
     /// `lib.rs`'s `on_window_event` for `WindowEvent::Focused(false)` on
-    /// the `tray` window. No compositor settle here — a blur dismiss
+    /// the `tray` window. No compositor settle here: a blur dismiss
     /// never precedes a capture.
     pub fn on_panel_blur(&self, app: &AppHandle) {
         if let Ok(mut slot) = self.last_auto_hide.lock() {
@@ -267,7 +267,7 @@ mod tests {
     }
 
     // The Tauri-touching paths (build / show / hide / blur + geometry)
-    // are covered by the manual gate — there's no portable way to spin
+    // are covered by the manual gate: there's no portable way to spin
     // up a real tray icon or `WebviewWindow` inside a unit test, matching
     // the note in `countdown_service`.
 }

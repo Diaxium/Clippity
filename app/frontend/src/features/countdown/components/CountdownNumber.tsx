@@ -5,9 +5,9 @@ interface CountdownNumberProps {
 }
 
 /**
- * Right-aligned countdown numeral — the #1 element in the spec's
+ * Right-aligned countdown numeral, the #1 element in the spec's
  * visual hierarchy: large (spec: 48–72 px), bold, and unadorned. No
- * ring / badge / dot / container — "the number alone is enough." Each
+ * ring / badge / dot / container: "the number alone is enough." Each
  * whole-second change swaps the numeral with a subtle scale + fade so
  * the tick reads as a soft beat, never a bounce or spin. `MotionConfig`
  * (set in AppShell) drops the transition under reduced-motion

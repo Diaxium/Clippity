@@ -5,7 +5,7 @@ import { createLogger } from "@shared/lib/logger";
 const log = createLogger("events");
 
 /**
- * Canonical event names — must stay in lock-step with
+ * Canonical event names: must stay in lock-step with
  * `backend/src/app/events.rs::names`. Centralizing them prevents the
  * "string typo in two places" failure mode.
  */
@@ -30,15 +30,15 @@ export const EVENT_NAMES = {
   recordingTick: "clippity://recording/tick",
   recordingPreview: "clippity://recording/preview",
   recordingAutoStop: "clippity://recording/auto-stop",
-  /** Video/GIF recorder (ADR 0031). Note `recorder/`, not `recording/`
-   *  — those belong to the scroll stitcher, which produces a still. */
+  /** Video/GIF recorder (ADR 0031). Note `recorder/`, not `recording/`:
+   *  those belong to the scroll stitcher, which produces a still. */
   recorderTick: "clippity://recorder/tick",
   /** Audio peak levels, ~10×/s while a session has audio, for the HUD's
    *  meters. Its own event rather than fields on the tick: a meter needs
    *  an order of magnitude more updates than a clock. */
   recorderLevels: "clippity://recorder/levels",
   recorderFinished: "clippity://recorder/finished",
-  /** Studio's trim export. Scoped to the main window by the backend —
+  /** Studio's trim export. Scoped to the main window by the backend:
    *  many emits over one export, one surface reading them. The *result*
    *  is the command's return value, not an event. */
   mediaTrimProgress: "clippity://media/trim-progress",
@@ -83,8 +83,8 @@ export function on<TPayload>(
       }
     })
     .catch((err) => {
-      // A rejected `listen` means this subscription silently never fires
-      // — the handler would just appear dead. Surface it.
+      // A rejected `listen` means this subscription silently never fires:
+      // the handler would just appear dead. Surface it.
       log.warn(`failed to subscribe to "${event}"`, err);
     });
 

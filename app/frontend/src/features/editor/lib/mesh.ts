@@ -2,10 +2,10 @@
  * Mesh-gradient raster engine (Workstream G4). A mesh is a `rows`×`cols` grid of
  * colored control points; every pixel is the **bilinear** interpolation of the
  * four surrounding cells. When points sit on the uniform grid this is a plain
- * grid blend; dragging a point warps its cells (G4b) — each pixel finds the cell
+ * grid blend; dragging a point warps its cells (G4b): each pixel finds the cell
  * quad it lands in via inverse bilinear and interpolates that cell's corners.
  * Rasterized at a capped resolution and shown as an `<image>` (live) / redrawn
- * (export) — the same offscreen→image pattern as freeform (ADR 0013).
+ * (export): the same offscreen→image pattern as freeform (ADR 0013).
  */
 
 import { meshSlotPoint, type GradientPaint, type MeshSpec } from "../types";
@@ -62,7 +62,7 @@ export interface MeshNode {
   a: number;
 }
 
-/** Resolve a mesh to positioned nodes — each point's stored position, or its
+/** Resolve a mesh to positioned nodes: each point's stored position, or its
  *  uniform-grid slot when absent (back-compat / freshly-resized). */
 export function meshNodes(mesh: MeshSpec): MeshNode[] {
   const { rows, cols } = mesh;
@@ -82,7 +82,7 @@ const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 /**
  * Inverse bilinear: the parameters (u along the P00→P10 edge, v along P00→P01)
  * whose unit-square maps to box point (qx, qy) on the quad P00 P10 P01 P11.
- * Returns each real candidate (0, 1, or 2) — solved as a quadratic in v.
+ * Returns each real candidate (0, 1, or 2): solved as a quadratic in v.
  */
 function invBilinear(
   qx: number,
@@ -147,7 +147,7 @@ function bilerpColor(
 /**
  * Color of a warped mesh at box point (qx, qy) ∈ [0,1]². Finds the cell quad
  * that contains the point (inverse bilinear) and interpolates its four corners.
- * Points outside every cell — possible once nodes are dragged inward — clamp to
+ * Points outside every cell, possible once nodes are dragged inward, clamp to
  * the nearest cell edge, so the fill never shows holes.
  */
 export function meshColorAtWarped(
@@ -187,7 +187,7 @@ export function meshColorAtWarped(
     }
   }
   if (bestColor) return bestColor;
-  // No cell yielded a solution (a point fully outside a concave quad) — clamp to
+  // No cell yielded a solution (a point fully outside a concave quad): clamp to
   // the nearest node so the fill still has no holes.
   let nodeDist = Infinity;
   let nodeColor: Rgba = { r: 0, g: 0, b: 0, a: 0 };
@@ -203,8 +203,8 @@ export function meshColorAtWarped(
 
 /** Rasterize a mesh gradient to a capped-resolution canvas, or null when a 2D
  *  context is unavailable (e.g. jsdom) or there's no mesh. A ≥2×2 grid uses the
- *  warped sampler (honors dragged positions); degenerate 1×N grids — which have
- *  no quad cells — fall back to the uniform bilinear blend. */
+ *  warped sampler (honors dragged positions); degenerate 1×N grids, which have
+ *  no quad cells, fall back to the uniform bilinear blend. */
 export function renderMesh(
   gradient: GradientPaint,
   width: number,

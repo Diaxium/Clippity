@@ -1,8 +1,8 @@
 /**
  * Flatten a scene (or a single node subtree) to an image data URI via
- * Canvas2D — PNG, JPEG or WebP. Used by Save (whole page) and the Export
+ * Canvas2D: PNG, JPEG or WebP. Used by Save (whole page) and the Export
  * panel (one node). The SVG canvas is the interactive renderer; this is the
- * pixel-accurate export path, so the two must stay visually consistent —
+ * pixel-accurate export path, so the two must stay visually consistent;
  * keep shape/stroke/text logic in sync.
  */
 
@@ -64,7 +64,7 @@ export function formatMime(format: ExportFormat): string {
 }
 
 /** Does this format drop the alpha channel? JPEG has none, so a scene
- *  with transparent areas has to be matted onto a background first —
+ *  with transparent areas has to be matted onto a background first,
  *  otherwise the encoder fills them with black. */
 export function formatIsOpaque(format: ExportFormat): boolean {
   return format === "jpeg";
@@ -83,7 +83,7 @@ export interface FlattenOptions {
   nodeId?: string | null;
   /** Encoding for the returned data URI. Defaults to `"png"`. */
   format?: ExportFormat;
-  /** Lossy-encoder quality, 0–1. Ignored for PNG. Defaults to 0.92 —
+  /** Lossy-encoder quality, 0–1. Ignored for PNG. Defaults to 0.92:
    *  the browser's own `toDataURL` default. */
   quality?: number;
 }
@@ -122,7 +122,7 @@ export async function flattenScene(
   for (const node of targets) drawNode(ctx, nodes, node, images, 1);
 
   // A browser that can't encode the requested format silently returns
-  // PNG. That's a fine degradation — the data URI still declares what it
+  // PNG. That's a fine degradation: the data URI still declares what it
   // actually is, and the backend derives the extension from that.
   return canvas.toDataURL(
     formatMime(format),
@@ -177,7 +177,7 @@ export function exportBounds(node: SceneNode): Rect {
   };
 }
 
-/** Union of {@link exportBounds} over the export's targets — the whole-page
+/** Union of {@link exportBounds} over the export's targets: the whole-page
  *  path's `unionBounds`, corrected the same way. Null when there is nothing to
  *  draw. */
 function unionExportBounds(nodes: readonly SceneNode[]): Rect | null {
@@ -214,7 +214,7 @@ function collectSources(
   };
   ids.forEach(visit);
   // Sample regions (blur/magnifier) draw the base image, which may not appear
-  // in the exported subtree — make sure it's loaded.
+  // in the exported subtree; make sure it's loaded.
   if (hasSample) {
     const base = findBaseImage(nodes);
     if (base) srcs.add(base.src);
@@ -312,7 +312,7 @@ function drawNode(
  * Paint a gradient fill, kept in lock-step with `SceneNodeView`'s `GradientFill`
  * (see G1). Linear is a plain endpoint gradient. Radial clips to the shape, then
  * stretches a unit-circle gradient to `rx`×`ry` (box-fit ellipse by default, an
- * equal-radius circle when `shape === "circle"`) — the transform is what makes
+ * equal-radius circle when `shape === "circle"`): the transform is what makes
  * the export match the live SVG's objectBoundingBox radial.
  */
 function paintGradientFill(
@@ -325,7 +325,7 @@ function paintGradientFill(
   if (!g) return;
 
   if (g.kind === "freeform" || g.kind === "mesh") {
-    // Raster gradients (no native primitive) — render to a canvas and blit it.
+    // Raster gradients (no native primitive): render to a canvas and blit it.
     const canvas =
       g.kind === "mesh"
         ? renderMesh(g, node.width, node.height)
@@ -395,7 +395,7 @@ function paintGradientFill(
 }
 
 /**
- * Paint a stamp — the bundled glyph fit into the node's box. Draws nothing when
+ * Paint a stamp: the bundled glyph fit into the node's box. Draws nothing when
  * the box is too small to carry one, which is also what `StampMark` does; the
  * decision of *whether* a node is a stamp at all is `stampOf`'s, taken by both
  * renderers before they get here so they can't answer it differently.
@@ -458,7 +458,7 @@ function drawShape(
   alpha: number
 ): void {
   // A stamp replaces the box's own shape entirely (see `drawStamp`), before any
-  // effect is considered — a shadow cast by the invisible rectangle behind the
+  // effect is considered: a shadow cast by the invisible rectangle behind the
   // glyph is not what either renderer should draw, and `SceneNodeView` skips its
   // filter wrapper for the same reason.
   if (stampOf(node)) {
@@ -476,13 +476,13 @@ function drawShape(
 
   // Blur/Magnifier regions re-sample the base image behind the fills, so a
   // translucent fill tints the sampled region (skipped when the sample's effect
-  // is toggled off — see ADR 0015).
+  // is toggled off; see ADR 0015).
   if (node.sample && node.sample.enabled !== false) {
     drawSample(ctx, nodes, node, images, alpha);
   }
 
   // Spotlight: dim the whole page, punching this node's shape out of the scrim.
-  // Painted here — over everything drawn earlier in z-order, before the fills —
+  // Painted here (over everything drawn earlier in z-order, before the fills)
   // so the hole reveals the content beneath. One even-odd `Path2D` from the
   // shared module, filled the same way SceneNodeView's `<path>` is (ADR 0023).
   const spot = spotlightScrim(node, nodes);
@@ -531,8 +531,8 @@ function drawShape(
     if (blend) ctx.restore();
   }
 
-  // Window chrome paints after the fills — the bar sits outside the node's box,
-  // directly above it — and before the strokes, which outline the whole window
+  // Window chrome paints after the fills (the bar sits outside the node's box,
+  // directly above it) and before the strokes, which outline the whole window
   // and so must stay on top of the bar. Same order as `SceneNodeView`'s
   // `RectView`/`FrameView`.
   if (node.chrome) drawChrome(ctx, node, alpha);
@@ -579,7 +579,7 @@ function drawShape(
 const SHADOW_K = 100000;
 
 /** A copy of `node` with its box grown by `spread` on every side (corner radii
- *  bumped to stay concentric). Drives drop-shadow spread on the export path —
+ *  bumped to stay concentric). Drives drop-shadow spread on the export path:
  *  exact for box/ellipse, proportional for polygon/star (see ADR 0009). */
 function spreadInflate(node: SceneNode, spread: number): SceneNode {
   if (spread === 0) return node;
@@ -687,7 +687,7 @@ function shapePath(
     node.type === "rectangle" ||
     node.type === "image"
   ) {
-    // With window chrome the outline is the whole window — bar + capture — so
+    // With window chrome the outline is the whole window, bar + capture, so
     // the clip, strokes and the lift shadow treat the framed screenshot as one
     // object. Mirrors `SceneNodeView`'s `cornerPath`.
     roundedRectSubpath(ctx, chromeWindowRect(node), chromeWindowRadii(node));
@@ -731,7 +731,7 @@ function roundedRectSubpath(
 }
 
 /**
- * Paint the window title bar — background, buttons, title, hairline.
+ * Paint the window title bar: background, buttons, title, hairline.
  *
  * Every number comes from `lib/chrome.ts`, so this and `SceneNodeView`'s
  * `ChromeBar` are two spellings of one drawing rather than two implementations
@@ -809,7 +809,7 @@ function drawChrome(
  * Paint a Blur/Magnifier "sample" region: the capture's base image, clipped to
  * the region shape and either blurred or zoomed about the region center. Drawn
  * the same way the normal image fill is (cover), so it aligns with the image
- * beneath. Mirrors `SceneNodeView`'s `SampledImage` — see ADR 0010.
+ * beneath. Mirrors `SceneNodeView`'s `SampledImage`; see ADR 0010.
  */
 function drawSample(
   ctx: CanvasRenderingContext2D,
@@ -848,7 +848,7 @@ function drawSample(
 }
 
 /**
- * Paint a dimension line — shaft (broken around the label), end caps, and the
+ * Paint a dimension line: shaft (broken around the label), end caps, and the
  * length label pill. Returns false when the node carries no measurement, so
  * `drawLine` falls through to the plain shaft.
  *
@@ -979,7 +979,7 @@ function drawPath(
     if (node.closed) ctx.closePath();
   };
   // A sample (blur/pixelate/magnify) paints behind the fills, clipped to the
-  // path outline (implicitly closed) — `drawSample` clips via `shapePath`.
+  // path outline (implicitly closed): `drawSample` clips via `shapePath`.
   if (node.sample && node.sample.enabled !== false) {
     drawSample(ctx, nodes, node, images, alpha);
   }
@@ -1025,7 +1025,7 @@ function drawText(
   });
 }
 
-/** Centered white number for a step badge — kept in sync with `EllipseView`'s
+/** Centered white number for a step badge: kept in sync with `EllipseView`'s
  *  SVG `<text>` (same size factor, weight, and baseline). */
 function drawStepNumber(
   ctx: CanvasRenderingContext2D,

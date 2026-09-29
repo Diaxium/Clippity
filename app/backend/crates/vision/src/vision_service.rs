@@ -1,16 +1,16 @@
-//! Object detection — runs the installed ONNX detector over a desktop
+//! Object detection: runs the installed ONNX detector over a desktop
 //! snapshot and returns canvas-space boxes for the overlay's Object
 //! mode.
 //!
 //! Pipeline per request:
-//!   1. Plan covering tiles over the canvas (`domain::vision::plan_tiles`)
-//!      — a 640-px detector over an unbroken 4K+ virtual desktop would
+//!   1. Plan covering tiles over the canvas (`domain::vision::plan_tiles`):
+//!      a 640-px detector over an unbroken 4K+ virtual desktop would
 //!      miss everything smaller than a window, so inference runs per
 //!      tile and the results are merged with cross-tile NMS.
 //!   2. Per tile: crop → letterbox to the model's square input
 //!      (gray 114 padding, YOLO convention) → CHW f32 → `session.run`.
 //!   3. Decode by output shape (`[1, N, 6]` end-to-end vs `[1, 4+C, A]`
-//!      raw — see `domain::vision`), un-letterbox, offset to canvas
+//!      raw; see `domain::vision`), un-letterbox, offset to canvas
 //!      coords.
 //!   4. `finalize`: merge-NMS, clamp, drop slivers, resolve labels.
 //!
@@ -34,19 +34,19 @@ use clippity_domain::vision::{
 };
 use clippity_infra::error::{AppError, AppResult};
 
-/// Tile overlap as a fraction of the tile edge — a quarter-tile seam,
+/// Tile overlap as a fraction of the tile edge: a quarter-tile seam,
 /// wide enough that an element split by a tile boundary lands fully
 /// inside at least one neighbour.
 const TILE_OVERLAP_DIV: u32 = 4;
 
-/// Hard cap on inferences per request — bounds worst-case latency on
+/// Hard cap on inferences per request: bounds worst-case latency on
 /// large multi-monitor desktops (the planner grows tiles to fit).
 const MAX_TILES: usize = 12;
 
 /// YOLO letterbox padding value (gray 114).
 const PAD_VALUE: f32 = 114.0 / 255.0;
 
-/// Neutral grey the typer pads its square crop canvas with — must match
+/// Neutral grey the typer pads its square crop canvas with: must match
 /// the classifier's training letterbox (RGB 128).
 const TYPER_PAD: u8 = 128;
 
@@ -55,7 +55,7 @@ const TYPER_PAD: u8 = 128;
 const TYPER_MEAN: [f32; 3] = [0.485, 0.456, 0.406];
 const TYPER_STD: [f32; 3] = [0.229, 0.224, 0.225];
 
-/// Crops classified per typer inference — bounds the transient input
+/// Crops classified per typer inference: bounds the transient input
 /// tensor (a full 192-detection desktop would otherwise be one ~115 MB
 /// batch).
 const TYPER_BATCH: usize = 64;
@@ -104,7 +104,7 @@ impl VisionService {
         }
     }
 
-    /// Drop the cached session when it belongs to `id` — called after a
+    /// Drop the cached session when it belongs to `id`: called after a
     /// model file is removed so a stale in-memory session can't outlive
     /// its artifact.
     pub fn invalidate(&self, id: &str) {
@@ -193,7 +193,7 @@ impl VisionService {
         let started = std::time::Instant::now();
         let input = model.input_size;
         // Tile at 1:1 with the model input so a screen pixel maps to a
-        // model pixel — no downscale, so small UI elements (the point of
+        // model pixel: no downscale, so small UI elements (the point of
         // the recommended detector) stay above the model's effective
         // minimum size. The planner grows tiles to honour MAX_TILES on
         // very large desktops (trading some small-element recall for
@@ -238,8 +238,8 @@ impl VisionService {
 
         let mut result = finalize(all, canvas.width(), canvas.height(), spec.labels);
 
-        // Second stage: name each detected box's element type. Best-effort
-        // — a typer failure keeps the detector labels rather than losing
+        // Second stage: name each detected box's element type. Best-effort:
+        // a typer failure keeps the detector labels rather than losing
         // the whole detection.
         let typed = if let Some(typer) = model.typer.as_mut() {
             if result.is_empty() {
@@ -289,7 +289,7 @@ fn build_session(model_path: &Path) -> AppResult<Session> {
 
 /// Build the typer session for a typed model. `Ok(None)` for a
 /// detection-only model, or when the typer artifact is absent (logged,
-/// then detection-only) — `Err` only on a corrupt/unloadable typer.
+/// then detection-only): `Err` only on a corrupt/unloadable typer.
 fn build_typer(spec: &ModelSpec, typer_path: Option<&Path>) -> AppResult<Option<LoadedTyper>> {
     let Some(t) = spec.typer else {
         return Ok(None);
@@ -372,7 +372,7 @@ fn classify_objects(
 }
 
 /// Crop `rect` (padded by `pad`) out of `canvas`, paste it onto a neutral
-/// grey square (preserving aspect — a wide slider vs a square checkbox is
+/// grey square (preserving aspect: a wide slider vs a square checkbox is
 /// informative), resize to `input × input`, and return ImageNet-normalized
 /// CHW f32 data. Mirrors the typer's training transform.
 fn preprocess_crop(canvas: &RgbaImage, rect: Region, pad: f32, input: u32) -> Vec<f32> {
@@ -430,7 +430,7 @@ fn argmax(row: &[f32]) -> usize {
 }
 
 /// Read a detector's declared square input edge from its input
-/// `ValueType` — thin glue over [`square_input_from_dims`].
+/// `ValueType`: thin glue over [`square_input_from_dims`].
 fn declared_input_size(ty: &ValueType) -> Option<u32> {
     match ty {
         ValueType::Tensor { shape, .. } => square_input_from_dims(shape),
@@ -440,7 +440,7 @@ fn declared_input_size(ty: &ValueType) -> Option<u32> {
 
 /// Pure: extract the square input edge from an NCHW shape `[_, _, H, W]`
 /// with `H == W > 0`. Returns `None` for any other rank, a non-square
-/// input, or a dynamic (`-1`) spatial dimension — the caller then falls
+/// input, or a dynamic (`-1`) spatial dimension: the caller then falls
 /// back to the registry's `input_size`.
 fn square_input_from_dims(dims: &[i64]) -> Option<u32> {
     if dims.len() == 4 {
@@ -485,7 +485,7 @@ fn preprocess_tile(canvas: &RgbaImage, tile: Region, input: u32, lb: Letterbox) 
 }
 
 /// Dispatch on output shape: `[1, N, 6]` end-to-end vs `[1, 4+C, A]`
-/// raw (channels < anchors disambiguates — a raw head always has far
+/// raw (channels < anchors disambiguates: a raw head always has far
 /// more anchors than channels).
 fn decode_output(
     dims: &[usize],
@@ -542,7 +542,7 @@ mod tests {
         assert_eq!(dets.len(), 1);
         assert_eq!(dets[0].class_id, 2);
 
-        // raw shape [1, 5, 8] (1 class, 8 anchors) — all below threshold.
+        // raw shape [1, 5, 8] (1 class, 8 anchors), all below threshold.
         let raw = vec![0.0f32; 5 * 8];
         let dets = decode_output(&[1, 5, 8], &raw, lb, 0.5).unwrap();
         assert!(dets.is_empty());
@@ -630,7 +630,7 @@ mod tests {
         let at = |c: usize, x: usize, y: usize| data[c * n + y * input as usize + x];
 
         let grey_r = (TYPER_PAD as f32 / 255.0 - TYPER_MEAN[0]) / TYPER_STD[0];
-        // Top row is grey pad; the centered band is the red content —
+        // Top row is grey pad; the centered band is the red content,
         // distinctly redder than the pad (exact value blurs at the band
         // edge under the resize filter, so assert the relationship).
         assert!(

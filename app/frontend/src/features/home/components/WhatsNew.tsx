@@ -1,5 +1,5 @@
 /**
- * "What's new" card — a small release spotlight. The version is read
+ * "What's new" card: a small release spotlight. The version is read
  * live from the Tauri runtime; the summary is a static tagline (there is
  * no changelog service to pull from yet). "Open settings" points at the
  * place updates and models live.

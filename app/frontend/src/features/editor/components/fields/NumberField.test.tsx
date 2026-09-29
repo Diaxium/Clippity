@@ -59,7 +59,7 @@ describe("NumberField drag-scrub", () => {
     const { container } = render(
       <NumberField value={50} suffix="%" onChange={onChange} />
     );
-    // No label/icon handle — the whole field is the scrub surface.
+    // No label/icon handle: the whole field is the scrub surface.
     expect(container.querySelector("span.cursor-ew-resize")).toBeNull();
     scrub(container.firstChild as HTMLElement, 100, 110); // +10px → +10
     expect(onChange).toHaveBeenLastCalledWith(60);

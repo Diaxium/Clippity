@@ -4,7 +4,7 @@
  * The Home view is the dashboard's landing overview. Its cards are fed
  * from live backend data (library listing, presets, storage, app
  * version) via the hooks in `./hooks`, so the section shapes are the
- * wire types from `@clippity/shared` — these are just the small
+ * wire types from `@clippity/shared`: these are just the small
  * presentational primitives shared across the cards.
  */
 

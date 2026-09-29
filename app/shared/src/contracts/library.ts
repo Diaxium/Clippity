@@ -1,5 +1,5 @@
 /**
- * Library wire-format contracts — mirror Rust `domain::library`
+ * Library wire-format contracts: mirror Rust `domain::library`
  * (+ `domain::metadata` provenance and `domain::labels`).
  *
  * Two families of entry share this shape: **file-backed** captures
@@ -27,20 +27,20 @@ export interface AuxColor {
 export interface CaptureMeta {
   /** File path (file-backed entries) OR a synthetic `aux_<kind>_<ms>`
    *  id (color / palette / text). File ids change when a file moves
-   *  to/from trash — react to `clippity://library/updated` (or re-list)
+   *  to/from trash: react to `clippity://library/updated` (or re-list)
    *  to find the new id; aux ids are stable across delete/restore. */
   id: string;
-  /** Card title — file stem, or the dominant hex for aux entries. */
+  /** Card title: file stem, or the dominant hex for aux entries. */
   title: string;
   kind: CaptureKind;
-  /** When the capture was taken, from its provenance record — falling
+  /** When the capture was taken, from its provenance record, falling
    *  back to the file's mtime for captures saved before records
    *  existed. */
   createdAtMs: number;
   sizeBytes: number;
   /** True when soft-deleted (file under `.trash/`, or aux `trashed`). */
   trashed: boolean;
-  /** Aux payload — present only for the matching `kind` (absent on
+  /** Aux payload: present only for the matching `kind` (absent on
    *  file-backed entries). */
   color?: AuxColor;
   palette?: AuxColor[];
@@ -52,24 +52,24 @@ export interface CaptureMeta {
   // saved before sidecars shipped, and whenever the owning process
   // couldn't be resolved (elevated/protected windows).
 
-  /** Application that owned the captured window — `"Chrome"`, `"Code"`. */
+  /** Application that owned the captured window: `"Chrome"`, `"Code"`. */
   sourceApp?: string;
   /** Title of the captured window. */
   sourceWindow?: string;
-  /** Capture mode that produced it — `"Region"`, `"Fullscreen"`,
+  /** Capture mode that produced it: `"Region"`, `"Fullscreen"`,
    *  `"Scrolling"`, `"Edited"`, … */
   mode?: string;
   /** Pixel dimensions. Absent for editor exports, whose bytes the
    *  backend deliberately never decodes. */
   width?: number;
   height?: number;
-  /** Display the capture came from — `"Display 1"`, `"Display 2"`.
+  /** Display the capture came from: `"Display 1"`, `"Display 2"`.
    *  Attributed by area, so a selection straddling two screens names
    *  the one it mostly sat on. Absent when the capture has no screen of
    *  origin (a clipboard ingest, an editor export). */
   monitor?: string;
   /** Name of the capture preset that produced it. Absent for every
-   *  interactive capture — which is most of them. */
+   *  interactive capture, which is most of them. */
   preset?: string;
 
   // ---------- Labels (Rust `domain::labels`) ----------
@@ -109,7 +109,7 @@ export type LibrarySort = "newest" | "oldest" | "name" | "largest";
 export type TrashFilter = "exclude" | "include" | "only";
 
 export interface LibraryQuery {
-  /** Default `"exclude"` — live captures only. */
+  /** Default `"exclude"`: live captures only. */
   trash?: TrashFilter;
   /** Keep only this kind; omit for every kind. */
   kind?: CaptureKind;
@@ -127,7 +127,7 @@ export interface LibraryQuery {
 }
 
 /** One page of a {@link LibraryQuery}, plus the total rows the filters
- *  match before `limit`/`offset` — a virtualized grid sizes its scrollbar
+ *  match before `limit`/`offset`: a virtualized grid sizes its scrollbar
  *  from `total` while holding only `items`. */
 export interface CapturePage {
   items: CaptureMeta[];
@@ -140,8 +140,8 @@ export interface CapturePage {
  * Sent by the client rather than decided by the backend because they are
  * anchored to the user's clock: "this week" counts back six calendar days
  * from *local* midnight, which the backend has no timezone to compute.
- * Keeping the boundary here means one definition of each window —
- * `matchesSmart` — instead of a second one in SQL that could drift.
+ * Keeping the boundary here means one definition of each window,
+ * `matchesSmart`, instead of a second one in SQL that could drift.
  *
  * Mirrors Rust `commands::LibraryFacetsArgs` → `library_index::FacetsQuery`.
  */
@@ -174,7 +174,7 @@ export interface SmartCounts {
  * This is the other half of a paged library (performance roadmap P5). A
  * page can say what is in one scope; it cannot say how big every *other*
  * scope is, and deriving that in the client means loading the full
- * listing — the exact cost pushing the grid into SQL removes.
+ * listing: the exact cost pushing the grid into SQL removes.
  *
  * Deliberately not narrowed by the active scope or search: the rail is a
  * map of the library, so "Videos 12" means twelve videos exist, not

@@ -13,7 +13,7 @@ import { useRegionSelection } from "./useRegionSelection";
 // `phase !== "dragging"`. Pointer-up events from the BottomToolbar's
 // Capture button and the Selection's resize/move handles bubble past
 // their `stopPropagation` barriers via the React→DOM bridge and reach
-// the canvas-wide handler — so the destructive branch would wipe the
+// the canvas-wide handler, so the destructive branch would wipe the
 // committed rect before `onCapture` could read it, and resize-handle
 // drags would silently destroy the selection.
 //
@@ -23,12 +23,12 @@ import { useRegionSelection } from "./useRegionSelection";
 
 const initialStore = useOverlayStore.getState();
 
-// The hook's `onPointerUp` does not read the event body — the guard
+// The hook's `onPointerUp` does not read the event body: the guard
 // only inspects store phase. Passing an empty stub keeps the test
 // focused on the state-machine behaviour the regression depends on.
 const stubEvent = {} as PointerEventReact;
 
-describe("useRegionSelection — canvas pointer-up phase guard", () => {
+describe("useRegionSelection: canvas pointer-up phase guard", () => {
   beforeEach(() => {
     useOverlayStore.setState(initialStore, true);
   });
@@ -40,7 +40,7 @@ describe("useRegionSelection — canvas pointer-up phase guard", () => {
     useOverlayStore.getState().endDrag(rect);
     expect(useOverlayStore.getState().phase).toBe("selected");
 
-    // Act: stray pointer-up reaches the canvas-wide handler — matches
+    // Act: stray pointer-up reaches the canvas-wide handler, matches
     // the Capture-button / resize-handle bubble path from Step 4.
     const { result } = renderHook(() => useRegionSelection());
     result.current.onPointerUp(stubEvent);
@@ -68,7 +68,7 @@ describe("useRegionSelection — canvas pointer-up phase guard", () => {
   });
 
   it("still finalizes a real drag when phase is 'dragging' (sanity)", () => {
-    // Arrange: live drag — start + cur both set, rect clears MIN_SIZE.
+    // Arrange: live drag, start + cur both set, rect clears MIN_SIZE.
     useOverlayStore.getState().startDrag({ x: 10, y: 20 });
     useOverlayStore.getState().updateDrag({ x: 110, y: 120 });
     expect(useOverlayStore.getState().phase).toBe("dragging");
@@ -93,12 +93,12 @@ describe("useRegionSelection — canvas pointer-up phase guard", () => {
     useOverlayStore.getState().updateDrag({ x: 12, y: 22 });
     expect(useOverlayStore.getState().phase).toBe("dragging");
 
-    // Act: real pointer-up — but the rect is too small to commit.
+    // Act: real pointer-up, but the rect is too small to commit.
     const { result } = renderHook(() => useRegionSelection());
     result.current.onPointerUp(stubEvent);
 
     // Assert: phase falls to idle, no rect. (The guard's destructive
-    // branch is intentional here — this branch only runs when phase
+    // branch is intentional here: this branch only runs when phase
     // IS dragging.)
     expect(useOverlayStore.getState().phase).toBe("idle");
     expect(useOverlayStore.getState().rect).toBeNull();

@@ -27,15 +27,15 @@ import { SAMPLE_CFG, SAMPLE_MODES } from "./sampleConfig";
 import { PanelSection } from "./section";
 
 // Effect types the renderers support (live SVG + Canvas2D export). Inner shadow
-// renders in both; shadow `spread` renders for drop shadows only — see ADR 0009.
+// renders in both; shadow `spread` renders for drop shadows only; see ADR 0009.
 const EFFECT_TYPE_OPTIONS = [
   { value: "drop-shadow", label: "Drop shadow" },
   { value: "inner-shadow", label: "Inner shadow" },
   { value: "layer-blur", label: "Layer blur" },
 ] as const;
 
-// Annotation sample modes, surfaced here as first-class effects in Design mode
-// — applicable to any area shape, not just the annotation tools (ADR 0015).
+// Annotation sample modes, surfaced here as first-class effects in Design mode:
+// applicable to any area shape, not just the annotation tools (ADR 0015).
 const SAMPLE_TYPE_OPTIONS = SAMPLE_MODES.map((m) => ({
   value: m,
   label: SAMPLE_CFG[m].title,
@@ -54,7 +54,7 @@ const isSampleMode = (v: string): v is SampleMode =>
  * Effects of the primary selection. Shadows expose offset + blur + color;
  * layer blur exposes only its radius.
  *
- * Multi-select is **edit-by-index** (Fork P-F1) — see `StrokeSection`. The two
+ * Multi-select is **edit-by-index** (Fork P-F1); see `StrokeSection`. The two
  * sample⇄shadow *conversions* stay single-node: they rewrite `node.sample`,
  * which is a per-node slot rather than a list row, and a batch conversion would
  * silently discard samples on nodes the primary knows nothing about.
@@ -83,7 +83,7 @@ export function EffectsSection() {
     canCarrySample(node) && !sample ? SHADOW_THEN_SAMPLE : EFFECT_TYPE_OPTIONS;
 
   // Converting between a shadow (in `effects[]`) and the single `node.sample`
-  // is one undo step — wrap the remove+set pair in a history transaction.
+  // is one undo step: wrap the remove+set pair in a history transaction.
   const convertEffectToSample = (effectId: string, mode: SampleMode): void => {
     const store = useEditorStore.getState();
     store.beginHistory();

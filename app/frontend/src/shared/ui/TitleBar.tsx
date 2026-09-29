@@ -103,7 +103,7 @@ const WINDOW_ACTION_MOTION = {
  * The whole bar is the drag region; buttons opt out via `.no-drag` so
  * click targets don't trigger window-drag. Window controls call
  * `@tauri-apps/api/window` directly; in browser preview these fail
- * silently (caught by the `void` cast — there's no recovery path
+ * silently (caught by the `void` cast; there's no recovery path
  * worth surfacing).
  *
  * Layout: [Sidebar toggle] [Brand] [optional title] [flex spacer] [Minimize]

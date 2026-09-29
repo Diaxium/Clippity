@@ -1,5 +1,5 @@
 /**
- * Countdown feature — public surface.
+ * Countdown feature: public surface.
  *
  * Only `CountdownLayout` is exported. The countdown window mounts it
  * directly; no dashboard surface owns this view.

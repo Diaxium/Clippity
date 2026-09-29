@@ -3,15 +3,15 @@
 //!
 //! This is the single source of truth the whole maintenance engine reads:
 //! install writes it, detect/modify/repair/uninstall read it. It records
-//! *what Clippity put on this machine* — the files it owns, the registry
-//! values it wrote, the shortcuts it created, the scope it installed under
-//! — so a later operation can reverse exactly those actions and nothing
+//! *what Clippity put on this machine* (the files it owns, the registry
+//! values it wrote, the shortcuts it created, the scope it installed under)
+//! so a later operation can reverse exactly those actions and nothing
 //! else. Everything here is pure data + pure rules; the services layer
 //! performs the I/O that produces and consumes it.
 //!
 //! The shape is deliberately MSI-adjacent (components, files, registry,
 //! shortcuts, a stable installation id) so the documented Option-C target
-//! — a WiX-authored MSI driven by this wizard as a bootstrapper — can
+//! (a WiX-authored MSI driven by this wizard as a bootstrapper) can
 //! adopt or supersede a manifest-recorded install deterministically. See
 //! `docs/installer/03-installation-model.md`.
 
@@ -32,9 +32,9 @@ pub const PRODUCT_ID: &str = "com.clippity.app";
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum RegistryHive {
-    /// `HKEY_CURRENT_USER` — per-user installs.
+    /// `HKEY_CURRENT_USER`: per-user installs.
     CurrentUser,
-    /// `HKEY_LOCAL_MACHINE` — per-machine installs.
+    /// `HKEY_LOCAL_MACHINE`: per-machine installs.
     LocalMachine,
 }
 
@@ -63,7 +63,7 @@ pub struct InstalledFile {
     pub bytes: u64,
     /// Component id that owns this file (`core`, `gif`, …).
     pub component: String,
-    /// True when the app rewrites this file at runtime — excluded from
+    /// True when the app rewrites this file at runtime: excluded from
     /// corruption checks.
     pub mutable: bool,
 }
@@ -122,7 +122,7 @@ pub struct InstallationManifest {
     ///
     /// Additive and `#[serde(default)]`, so a manifest written before this
     /// field existed still reads (as the shipped defaults, which is what
-    /// those installs chose) — no schema bump needed. Recorded because
+    /// those installs chose): no schema bump needed. Recorded because
     /// Modify has to pre-fill them and the application has to honor them;
     /// see [`crate::provisioning`].
     #[serde(default)]
@@ -132,7 +132,7 @@ pub struct InstallationManifest {
 impl InstallationManifest {
     /// The installed application executable's absolute path (the file the
     /// `core` component owns and that shortcuts point at). `None` if no
-    /// core file is recorded — itself a sign of a broken manifest.
+    /// core file is recorded: itself a sign of a broken manifest.
     pub fn primary_exe(&self) -> Option<&str> {
         self.files
             .iter()
@@ -143,7 +143,7 @@ impl InstallationManifest {
     /// Reconstruct the Options-step selections this installation was made
     /// with, so Modify opens showing what is actually installed.
     ///
-    /// Without this the Modify step opens on `InstallOptions::default()` —
+    /// Without this the Modify step opens on `InstallOptions::default()`,
     /// which would silently *change* the user's choices the moment they
     /// pressed "Apply changes", since the modify path rewrites the manifest
     /// and the application's configuration from whatever the wizard holds.
@@ -162,7 +162,7 @@ impl InstallationManifest {
     /// Whether a desktop shortcut is part of this installation.
     ///
     /// Nothing records the Options-step toggle itself, because the `.lnk`
-    /// on the Desktop *is* the record — which is also what lets a repair
+    /// on the Desktop *is* the record, which is also what lets a repair
     /// restore it. Both `FOLDERID_Desktop` and `FOLDERID_PublicDesktop`
     /// resolve to a folder named `Desktop`, while the Start-menu shortcut
     /// every install writes lands under `Programs`, so the parent folder's
@@ -184,7 +184,7 @@ impl InstallationManifest {
     /// needs elevation), and a protected install or maintenance directory
     /// cannot be deleted by a standard user. Without this check an install
     /// into `C:\Program Files` uninstalls "successfully" while silently
-    /// leaving every file behind — even the reboot-scheduled fallback
+    /// leaving every file behind, even the reboot-scheduled fallback
     /// (`MoveFileEx`) is denied there without an elevated token.
     pub fn needs_elevation_to_remove(&self) -> bool {
         matches!(self.scope, InstallScope::AllUsers)
@@ -214,7 +214,7 @@ impl InstallationManifest {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum InstallState {
-    /// No trace of Clippity — offer a fresh install.
+    /// No trace of Clippity: offer a fresh install.
     NotInstalled,
     /// Manifest, registry, and the on-disk exe all agree and match this
     /// build's version. Offer modify / repair / uninstall.
@@ -222,8 +222,8 @@ pub enum InstallState {
     /// Recorded, but files or registrations are missing/corrupt. Offer
     /// repair.
     Damaged,
-    /// A manifest or registry entry exists but its counterpart is missing
-    /// — an interrupted install/uninstall. Route to recovery.
+    /// A manifest or registry entry exists but its counterpart is missing:
+    /// an interrupted install/uninstall. Route to recovery.
     Partial,
     /// Installed, but an older version than this wizard carries. Offer
     /// update/reinstall.
@@ -267,7 +267,7 @@ pub struct DetectionInputs {
 /// happy-path classification.
 pub fn assess(inputs: &DetectionInputs) -> InstallState {
     // A manifest too new to understand is a partial/recovery signal, never
-    // a healthy one — acting on a shape we do not grasp is how data gets
+    // a healthy one: acting on a shape we do not grasp is how data gets
     // corrupted.
     if inputs.schema_too_new {
         return InstallState::Partial;
@@ -279,7 +279,7 @@ pub fn assess(inputs: &DetectionInputs) -> InstallState {
         (false, false) => InstallState::NotInstalled,
         (false, true) => {
             if inputs.registry_is_ours {
-                // Registered as ours but no manifest — an interrupted
+                // Registered as ours but no manifest: an interrupted
                 // install or a half-finished uninstall.
                 InstallState::Partial
             } else {
@@ -317,7 +317,7 @@ pub struct Detection {
 }
 
 impl Detection {
-    /// A "nothing here" detection — the fresh-install starting point.
+    /// A "nothing here" detection: the fresh-install starting point.
     pub fn not_installed() -> Self {
         Self {
             state: InstallState::NotInstalled,
@@ -489,7 +489,7 @@ mod tests {
 
     #[test]
     fn a_manifest_predating_preferences_reads_as_the_shipped_defaults() {
-        // Additive field, so no schema bump — but an install made before it
+        // Additive field, so no schema bump, but an install made before it
         // existed must not read back as "everything declined".
         let json = r#"{
             "schemaVersion": 1,

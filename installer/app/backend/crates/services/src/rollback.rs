@@ -1,4 +1,4 @@
-//! The rollback executor — the I/O counterpart to
+//! The rollback executor: the I/O counterpart to
 //! [`installer_domain::journal`].
 //!
 //! The domain records *what* each mutating action did and *how* to reverse
@@ -6,7 +6,7 @@
 //! [`OperationJournal::pending_reversals`] (applied actions, newest-first)
 //! and undoes each by its [`ActionKind`]: a created file is deleted, a
 //! replaced file is restored from its backup, a created registry key is
-//! removed, and so on. It is deliberately conservative — a reversal that
+//! removed, and so on. It is deliberately conservative: a reversal that
 //! cannot be done safely (a replace/delete with no surviving backup) is
 //! logged and skipped rather than guessed at, so rollback never destroys
 //! data it cannot put back.
@@ -27,7 +27,7 @@ use crate::{clock, journal_store};
 
 /// Reverse every applied action in `journal`, newest-first, then mark the
 /// journal `RolledBack` and flush it. Individual reversal failures are
-/// logged and do not abort the rest — a best-effort rollback that reverses
+/// logged and do not abort the rest: a best-effort rollback that reverses
 /// as much as it safely can is better than stopping at the first stuck file.
 ///
 /// Returns the number of actions successfully reversed.
@@ -87,7 +87,7 @@ pub fn reverse_action(action: &Action) -> InstallerResult<()> {
                 Ok(())
             }
             _ => {
-                // No surviving backup — cannot safely restore. Leave the
+                // No surviving backup: cannot safely restore. Leave the
                 // current state and report; never fabricate a file.
                 tracing::warn!(
                     target = %action.target,
@@ -107,7 +107,7 @@ pub fn reverse_action(action: &Action) -> InstallerResult<()> {
         ActionKind::WriteRegistryValue | ActionKind::WriteRegistryKey => reverse_registry(action),
         // A shortcut we created.
         ActionKind::CreateShortcut => windows_ops::remove_shortcut_path(Path::new(&action.target)),
-        // The maintenance/uninstaller copy — it may be the running exe, so
+        // The maintenance/uninstaller copy: it may be the running exe, so
         // schedule its removal for reboot if a direct delete is refused.
         ActionKind::PlaceMaintenanceExe => {
             let target = Path::new(&action.target);
@@ -126,8 +126,8 @@ pub fn reverse_action(action: &Action) -> InstallerResult<()> {
 
 /// Reverse a registry write. The `target` is "hive\\subkey" (for a key) or
 /// "hive\\subkey\\value" (for a value); the concrete platform helpers own
-/// the parse. For the Add/Remove Programs entry — the one whole-key write
-/// the installer makes — reversal is the scope-correct ARP delete already
+/// the parse. For the Add/Remove Programs entry (the one whole-key write
+/// the installer makes) reversal is the scope-correct ARP delete already
 /// implemented, so we route through it.
 fn reverse_registry(action: &Action) -> InstallerResult<()> {
     // The only registrations the installer creates today are the ARP

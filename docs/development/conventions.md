@@ -30,7 +30,7 @@
 - Respect the crate DAG (`infra → domain → platform/vision → services →
   src-tauri`); never add an upward edge. Emit events via
   `clippity-infra::events`, not the app crate.
-- `domain` stays pure — no I/O, no Tauri. If a type needs the outside world,
+- `domain` stays pure: no I/O, no Tauri. If a type needs the outside world,
   it belongs in a service.
 - Command handlers in `app::commands` stay thin: validate via `domain`, call a
   service, return a serializable result.

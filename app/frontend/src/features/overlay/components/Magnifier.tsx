@@ -18,7 +18,7 @@ interface Sample {
 }
 
 /**
- * Precision magnifier — sub-pixel-accurate, intelligently placed,
+ * Precision magnifier: sub-pixel-accurate, intelligently placed,
  * resize-aware.
  *
  * Capabilities:
@@ -41,7 +41,7 @@ interface Sample {
  *   - idle / dragging: visible at the cursor (legacy parity).
  *   - active resize: visible at the active edge regardless of phase.
  *   - velocity widens the sample window (more context) instead of
- *     hiding the loupe — the legacy "hide on fast swipe" rule was
+ *     hiding the loupe: the legacy "hide on fast swipe" rule was
  *     surprising in practice and disappeared the loupe on routine
  *     cursor moves.
  */
@@ -61,7 +61,7 @@ export function Magnifier() {
   // rect being manipulated. Otherwise follow the cursor.
   const anchor = computeAnchor(cursor, rect, activeResize);
 
-  // Sample the pixel inline during render — sampling via useEffect +
+  // Sample the pixel inline during render: sampling via useEffect +
   // setState added an extra render cycle that made the loupe visibly
   // lag the cursor by one frame. `getImageData(px, py, 1, 1)` is cheap
   // enough to do every render. Cache the last successful sample so a
@@ -89,7 +89,7 @@ export function Magnifier() {
       };
       lastSample.current = sample;
     } catch {
-      // Out-of-canvas read — fall back to the last good sample at the
+      // Out-of-canvas read: fall back to the last good sample at the
       // current anchor so the loupe doesn't flicker out mid-drag.
       const prev = lastSample.current;
       sample = prev ? { ...prev, x: anchor.x, y: anchor.y } : null;
@@ -179,7 +179,7 @@ export function Magnifier() {
             }}
           />
         )}
-        {/* Minimal reticle — thin crosshair + small accent square. */}
+        {/* Minimal reticle: thin crosshair + small accent square. */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/55 mix-blend-difference" />
           <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-white/55 mix-blend-difference" />
@@ -199,7 +199,7 @@ export function Magnifier() {
               borderRadius: 1,
             }}
           />
-          {/* Active-resize edge stripe inside the loupe — bright accent
+          {/* Active-resize edge stripe inside the loupe: bright accent
               along the manipulated edge so the user can verify they're
               dragging the right side. */}
           {activeResize && <InsideEdgeMarker dir={activeResize} />}
@@ -335,7 +335,7 @@ function chooseQuadrant(
   const offset = activeResize ? loupe * 0.65 : 28;
   const toolbarTop = vh - 80; // reserve the bottom 80px for the toolbar
 
-  // Candidates around the anchor — order by directional preference
+  // Candidates around the anchor: order by directional preference
   // depending on which edge is being resized.
   const candidates: Array<{ left: number; top: number; score: number }> = [];
   const dirs = [
@@ -364,7 +364,7 @@ function chooseQuadrant(
     // Penalize toolbar overlap.
     if (top + loupe > toolbarTop) score += (top + loupe - toolbarTop) * 2;
     // Penalize overlapping the rect's other handles when actively
-    // resizing — prefer the side opposite the manipulated edge.
+    // resizing: prefer the side opposite the manipulated edge.
     if (activeResize && rect) {
       if (activeResize.includes("n") && d.dy > 0) score -= 30;
       if (activeResize.includes("s") && d.dy < 0) score -= 30;

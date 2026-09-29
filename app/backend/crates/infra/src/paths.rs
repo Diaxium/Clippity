@@ -7,7 +7,7 @@
 //! reverse-DNS directories. An **installed** Clippity roots at
 //! `%LOCALAPPDATA%\Clippity`; a **portable** one roots at a `Data` folder
 //! beside the executable, so the whole app travels on a USB stick and
-//! leaves nothing behind — see [`portable_root`]. Both share the same
+//! leaves nothing behind; see [`portable_root`]. Both share the same
 //! sub-layout: `data\` (settings, library DB, captures), `cache\`,
 //! `models\`, and `webview\`.
 //!
@@ -23,12 +23,12 @@ use tauri::{AppHandle, Manager};
 use crate::error::{AppError, AppResult};
 
 /// On-disk name of the single root folder that holds all Clippity user
-/// data — `%LOCALAPPDATA%\Clippity` on an installed Windows machine.
+/// data: `%LOCALAPPDATA%\Clippity` on an installed Windows machine.
 ///
 /// Deliberately the product name, NOT the bundle identifier
 /// (`com.clippity.app`). The identifier stays reverse-DNS so OS-level
 /// bundling, installer, and single-instance registration are correct,
-/// while user-visible storage gets a clean, mainstream-looking folder —
+/// while user-visible storage gets a clean, mainstream-looking folder:
 /// the same split Electron apps use (`%APPDATA%\Discord`, not a
 /// reverse-DNS folder). `apply_gpu_preference` in `lib.rs` reuses this
 /// constant to locate `settings.json` during early boot.
@@ -36,7 +36,7 @@ pub const DATA_DIR_NAME: &str = "Clippity";
 
 /// Marker file that switches Clippity into portable mode.
 ///
-/// Its presence beside the executable is the whole trigger — no registry
+/// Its presence beside the executable is the whole trigger: no registry
 /// key, no environment variable, nothing outside the folder. Deleting it
 /// turns the same binary back into a normal installed app, and the
 /// portable build script is the only thing that creates it.
@@ -107,7 +107,7 @@ pub fn webview_data_dir(app: &AppHandle) -> AppResult<PathBuf> {
 /// [`AppPaths::resolve`] would produce for the same process: `settings.json`
 /// under `data\` beneath the single root. On the very first boot after an
 /// upgrade this runs before [`migrate_legacy_layout`], so it may not find
-/// the file yet — that is a benign miss (GPU stays on, the default) and
+/// the file yet: that is a benign miss (GPU stays on, the default) and
 /// self-corrects once migration has moved the file into place.
 pub fn early_settings_file() -> Option<PathBuf> {
     Some(early_data_dir()?.join("settings.json"))
@@ -151,7 +151,7 @@ impl AppPaths {
         let captures = data.join("captures");
         let models = root.join("models");
 
-        // Ensure layout exists. Idempotent — safe on every boot.
+        // Ensure layout exists. Idempotent: safe on every boot.
         for dir in [&data, &cache, &captures, &models] {
             std::fs::create_dir_all(dir)?;
         }
@@ -174,12 +174,12 @@ impl AppPaths {
 ///
 /// 1. Move the Roaming payload (settings, library DB, `last-region.json`,
 ///    `captures\`) into `data\` under the root.
-/// 2. Drop the orphaned top-level `EBWebView` cache — WebView2 now recreates
+/// 2. Drop the orphaned top-level `EBWebView` cache: WebView2 now recreates
 ///    it under `webview\`.
 ///
 /// Best-effort and idempotent: it never clobbers a file that already exists
 /// at the destination (so a half-finished move just resumes), and every step
-/// swallows its error — a migration that can't complete must not stop the app
+/// swallows its error: a migration that can't complete must not stop the app
 /// from booting. Portable mode never had the split, so it is skipped.
 pub fn migrate_legacy_layout(app: &AppHandle) {
     if portable_root().is_some() {

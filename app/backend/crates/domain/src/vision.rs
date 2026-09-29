@@ -1,14 +1,14 @@
-//! Vision domain — pure object-detection post-processing. **No I/O,
+//! Vision domain: pure object-detection post-processing. **No I/O,
 //! no ort.** `services::vision_service` owns the ONNX session and feeds
 //! raw output tensors through these helpers; everything here is
 //! unit-testable with hand-built slices.
 //!
 //! Supported detector head formats (dispatched on output shape):
 //!
-//! - **End-to-end** `[1, N, 6]` — YOLOv10-style NMS-free export. Each
+//! - **End-to-end** `[1, N, 6]`: YOLOv10-style NMS-free export. Each
 //!   row is `(x1, y1, x2, y2, score, class_id)` in letterboxed input
 //!   pixels.
-//! - **Raw** `[1, 4 + C, A]` — YOLOv8-style export (OmniParser's icon
+//! - **Raw** `[1, 4 + C, A]`: YOLOv8-style export (OmniParser's icon
 //!   detector). Channels are `(cx, cy, w, h, class scores…)` over `A`
 //!   anchors; needs score-filtering + NMS here.
 //!
@@ -19,7 +19,7 @@ use serde::Serialize;
 
 use crate::overlay::Region;
 
-/// One detected object in canvas-local physical pixels — the wire
+/// One detected object in canvas-local physical pixels: the wire
 /// shape served to the overlay's Object mode.
 #[derive(Serialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -42,13 +42,13 @@ pub struct RawDetection {
 }
 
 /// Minimum side (px) a detection must have to be a usable capture
-/// target — mirrors `MIN_REGION_PX` with headroom for the click UX.
+/// target: mirrors `MIN_REGION_PX` with headroom for the click UX.
 pub const MIN_DETECTION_PX: f32 = 12.0;
 
 /// IoU threshold for the raw-head NMS pass and the cross-tile merge.
 pub const NMS_IOU: f32 = 0.45;
 
-/// Hard cap on detections returned per request — keeps the overlay
+/// Hard cap on detections returned per request: keeps the overlay
 /// render + hit-test cheap even when a busy desktop yields hundreds.
 pub const MAX_DETECTIONS: usize = 192;
 
@@ -199,7 +199,7 @@ pub fn nms(mut dets: Vec<RawDetection>, iou_thresh: f32) -> Vec<RawDetection> {
 /// `overlap` px (detections split across a seam survive the merge
 /// NMS). Degenerates to a single canvas-sized tile when the canvas is
 /// smaller than `tile`. Caps the grid at `max_tiles` by growing the
-/// effective tile size — a 3-monitor desktop shouldn't queue 40
+/// effective tile size: a 3-monitor desktop shouldn't queue 40
 /// inferences.
 pub fn plan_tiles(w: u32, h: u32, tile: u32, overlap: u32, max_tiles: usize) -> Vec<Region> {
     if w == 0 || h == 0 {
@@ -234,7 +234,7 @@ pub fn plan_tiles(w: u32, h: u32, tile: u32, overlap: u32, max_tiles: usize) -> 
             }
             return out;
         }
-        // Too many tiles — grow by half a tile and re-plan.
+        // Too many tiles: grow by half a tile and re-plan.
         tile = tile.saturating_add(tile / 2).min(w.max(h));
     }
 }
@@ -394,7 +394,7 @@ mod tests {
         let dets = vec![
             det(0.0, 0.0, 100.0, 100.0, 0.7),
             det(5.0, 5.0, 105.0, 105.0, 0.9), // heavy overlap, higher score
-            det(300.0, 300.0, 400.0, 400.0, 0.5), // far away — survives
+            det(300.0, 300.0, 400.0, 400.0, 0.5), // far away, survives
         ];
         let kept = nms(dets, 0.45);
         assert_eq!(kept.len(), 2);
@@ -452,7 +452,7 @@ mod tests {
     fn finalize_clamps_drops_slivers_and_labels() {
         let dets = vec![
             det(-10.0, -10.0, 50.0, 50.0, 0.8),   // clamped to 0
-            det(100.0, 100.0, 104.0, 200.0, 0.9), // 4px wide — dropped
+            det(100.0, 100.0, 104.0, 200.0, 0.9), // 4px wide, dropped
         ];
         let out = finalize(dets, 1920, 1080, &["button"]);
         assert_eq!(out.len(), 1);

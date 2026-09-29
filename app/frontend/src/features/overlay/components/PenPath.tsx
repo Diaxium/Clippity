@@ -8,7 +8,7 @@ import { useOverlayStore } from "../state/overlayStore";
  * the path can be closed. A faint rubber-band segment trails the cursor
  * from the last anchor while drawing.
  *
- * Pointer-transparent — the canvas-wide handlers own input. Self-
+ * Pointer-transparent: the canvas-wide handlers own input. Self-
  * subscribes so anchor/handle edits re-render only this layer. Stroke /
  * fill use the `--color-accent` token via inline CSS (SVG presentation
  * attributes don't resolve `var()`, CSS properties do).
@@ -60,7 +60,7 @@ export function PenPath() {
         }}
       />
 
-      {/* Curve handles (only while editing — clutter once closed). */}
+      {/* Curve handles (only while editing; clutter once closed). */}
       {!closed &&
         anchors.map((a, i) => (
           <Handles key={`h${i}`} anchor={a} accent={accent} />

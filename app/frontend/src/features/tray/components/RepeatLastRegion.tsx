@@ -5,12 +5,12 @@ interface RepeatLastRegionProps {
 }
 
 /**
- * "Same region as last time" — a one-shot repeat of the previous
+ * "Same region as last time": a one-shot repeat of the previous
  * rectangular selection, with no overlay in between.
  *
  * A slim full-width row rather than a fifth capture tile: the four tiles
  * are the capture *types*, and this is a shortcut through one of them,
- * not a peer. It also has no useful disabled state to render — whether a
+ * not a peer. It also has no useful disabled state to render: whether a
  * region is remembered lives in the backend, and asking for it on every
  * tray open would cost an IPC round trip to grey out a button. The
  * backend rejects with a readable message instead (nothing remembered

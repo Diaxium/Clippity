@@ -1,5 +1,5 @@
 /**
- * Grab-Text toast body — the recognized text (clipped to a few lines,
+ * Grab-Text toast body: the recognized text (clipped to a few lines,
  * preserving OCR line breaks) plus a copied note. The text is already on
  * the clipboard; this toast is sticky (no auto-dismiss) so the user can
  * read it and dismiss via the chrome ×.

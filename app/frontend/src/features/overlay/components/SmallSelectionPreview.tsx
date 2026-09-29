@@ -11,7 +11,7 @@ import type { Rect } from "../types";
 export const SMALL_THRESHOLD = 45;
 
 /**
- * Whether a selection is small enough that the magnified preview takes over —
+ * Whether a selection is small enough that the magnified preview takes over,
  * which also means the selection's own size badge should hide (the preview
  * carries its own px readout, so showing both is a duplicate). Exported so
  * `RegionSelection` can suppress its badge in lock-step with this component.
@@ -24,7 +24,7 @@ export function isTinySelection(rect: Rect | null): boolean {
     Math.max(rect.w, rect.h) < SMALL_THRESHOLD
   );
 }
-/** Target for the preview's larger side (logical px) — how big the zoomed crop
+/** Target for the preview's larger side (logical px): how big the zoomed crop
  *  is drawn. */
 const PREVIEW_MAX = 160;
 /** Cap the magnification so an extremely tiny (near-`MIN_SIZE`) selection
@@ -39,11 +39,11 @@ const LABEL_H = 18; // the px-readout chip below the preview image
  * Zoomed content preview for a *small* region selection.
  *
  * When the selection box's larger side is under {@link SMALL_THRESHOLD} px the
- * user can't actually see what's inside it — and the cursor loupe disappears
+ * user can't actually see what's inside it, and the cursor loupe disappears
  * the moment the selection commits (`selected` phase), leaving a tiny box with
  * no way to confirm its contents. This floats a magnified view of the
- * selection's pixels — sampled from the same cached desktop snapshot the loupe
- * uses — beside the box, both while dragging a tiny region and after it
+ * selection's pixels (sampled from the same cached desktop snapshot the loupe
+ * uses) beside the box, both while dragging a tiny region and after it
  * commits.
  *
  * Self-gating: renders nothing unless a region-like selection exists, it is
@@ -52,7 +52,7 @@ const LABEL_H = 18; // the px-readout chip below the preview image
  */
 interface SmallSelectionPreviewProps {
   /** Move handlers from `useRegionSelection`. When supplied, the magnified view
-   *  becomes a drag-to-move handle in the committed phase — a tiny box's resize
+   *  becomes a drag-to-move handle in the committed phase: a tiny box's resize
    *  handles cover its entire body, leaving nowhere to grab to move it, so this
    *  larger surface takes over the move gesture. */
   beginMove?: (rect: Rect, e: PointerEventReact) => void;
@@ -81,7 +81,7 @@ export function SmallSelectionPreview({
 
   if (!rect || !dataUri || !sampleCtx) return null;
   if (phase !== "dragging" && phase !== "selected") return null;
-  // A comfortably-sized selection shows its own contents fine — only help when
+  // A comfortably-sized selection shows its own contents fine: only help when
   // the whole box is small.
   if (!isTinySelection(rect)) return null;
 
@@ -94,7 +94,7 @@ export function SmallSelectionPreview({
   // The cached snapshot spans the whole overlay window (OverlayLayout stretches
   // it 100%/100%), so 1 logical desktop px maps to `dpr` snapshot px. Scale the
   // background so 1 logical px → `zoom` preview px, then offset to the rect's
-  // top-left — same windowing trick the magnifier uses, framed to the
+  // top-left: same windowing trick the magnifier uses, framed to the
   // selection instead of a cursor-centred sample window.
   const bgW = (sampleCtx.canvas.width / dpr) * zoom;
   const bgH = (sampleCtx.canvas.height / dpr) * zoom;
@@ -102,7 +102,7 @@ export function SmallSelectionPreview({
   const bgY = -rect.y * zoom;
 
   // The contextual action bar (Copy / Save / Edit & annotate …) renders just
-  // outside the selection in region mode once it commits — give the preview its
+  // outside the selection in region mode once it commits: give the preview its
   // rect so placement steers clear of it.
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -171,7 +171,7 @@ export function SmallSelectionPreview({
 
 /**
  * Place the preview centred horizontally on the selection and stacked above or
- * below it — on the vertical side *opposite* the contextual action bar, which
+ * below it: on the vertical side *opposite* the contextual action bar, which
  * is wide (≈250 px) and centred on the selection, so the only reliable way to
  * miss it is to keep the preview on a different row. Falls back to stacking
  * beyond the bar (then the other side) when the preferred side is off-screen,
@@ -179,7 +179,7 @@ export function SmallSelectionPreview({
  * toolbar. Exported for unit testing.
  *
  * @param actionBar the action bar's rect to avoid, or `null` when it isn't
- *   shown (mid-drag, or non-region modes) — then the preview simply prefers
+ *   shown (mid-drag, or non-region modes); then the preview simply prefers
  *   above the selection.
  */
 export function place(
@@ -236,7 +236,7 @@ export function place(
 }
 
 /**
- * The contextual action bar's rect — mirrors `SelectionActionBar`'s own
+ * The contextual action bar's rect: mirrors `SelectionActionBar`'s own
  * positioning (centred on the selection, 12 px below by default, flipping above
  * near the bottom toolbar). Kept in lock-step with that component so the preview
  * avoids exactly where the bar lands.

@@ -9,7 +9,7 @@ import { nodeBounds, type Rect, type SceneNode } from "../types";
 import { imageFill } from "./paint";
 
 export interface BaseImage {
-  /** Id of the node carrying the image fill — the capture itself. The page
+  /** Id of the node carrying the image fill: the capture itself. The page
    *  model (`lib/page.ts`) pads and treats *this* node, so it needs the id
    *  rather than re-deriving "which node is the capture" from scratch. */
   id: string;
@@ -22,7 +22,7 @@ export interface BaseImage {
  * The base image to sample: the largest-area image node in the scene. Robust
  * for the common single-capture document, and a sensible heuristic if several
  * images are present (the capture is the biggest). Returns null when there's no
- * image — sample regions then render only their stroke.
+ * image: sample regions then render only their stroke.
  */
 export function findBaseImage(
   nodes: Record<string, SceneNode>
@@ -44,7 +44,7 @@ export function findBaseImage(
 }
 
 /**
- * Draw `img` to `rect` with "cover" sizing — fill the box, overflowing whichever
+ * Draw `img` to `rect` with "cover" sizing: fill the box, overflowing whichever
  * axis is too long, centered. The single source of this math, shared by the
  * export's image fills/sample regions and the pixelate helper below so they all
  * align identically.
@@ -92,7 +92,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
  *
  * The grid is anchored to the region's top-left and the algorithm is identical
  * on both sides, so the live SVG (`SceneNodeView`) and the Canvas2D export
- * (`render.ts`) — which both call this — produce the same mosaic.
+ * (`render.ts`), which both call this, produce the same mosaic.
  */
 export function pixelateRegion(
   img: HTMLImageElement,

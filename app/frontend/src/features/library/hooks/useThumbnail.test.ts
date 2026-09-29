@@ -17,7 +17,7 @@ import {
 
 // Per-test IntersectionObserver mock that captures the callback so
 // the test can simulate the element scrolling into view. Local type
-// alias for the DOM-global callback signature — matches the
+// alias for the DOM-global callback signature: matches the
 // `ObserverCallback` shape `useToastResize.test.ts` uses for
 // `ResizeObserverCallback` to satisfy ESLint's `no-undef` rule.
 type IOCallback = (
@@ -88,7 +88,7 @@ describe("useThumbnail", () => {
       return useThumbnail(ref, "/tmp/captures/lazy.png", 480);
     });
 
-    // Not fetched yet — element hasn't intersected.
+    // Not fetched yet: element hasn't intersected.
     expect(libraryThumbnailMock).not.toHaveBeenCalled();
     expect(observeMock).toHaveBeenCalledWith(el);
 
@@ -110,7 +110,7 @@ describe("useThumbnail", () => {
     );
     expect(libraryThumbnailMock).toHaveBeenCalledTimes(1);
 
-    // Second mount of the same (id, width) hits the cache — no new IPC.
+    // Second mount of the same (id, width) hits the cache: no new IPC.
     const second = renderHook(() =>
       useThumbnail(null, "/tmp/captures/c.png", 480)
     );

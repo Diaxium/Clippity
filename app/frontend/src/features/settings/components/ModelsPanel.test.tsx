@@ -46,7 +46,7 @@ const seed: ModelInfo[] = [
   },
   {
     id: "yolov10n",
-    label: "General Objects — Fast",
+    label: "General Objects: Fast",
     description: "80 everyday classes.",
     task: "object-detection",
     version: "1",
@@ -145,7 +145,7 @@ describe("ModelsPanel", () => {
     await act(async () => {
       update.click();
     });
-    // Update reuses the download command — it swaps changed artifacts in place.
+    // Update reuses the download command: it swaps changed artifacts in place.
     expect(modelsDownloadMock).toHaveBeenCalledWith("ui-elements");
   });
 
@@ -238,7 +238,7 @@ describe("ModelsPanel", () => {
       render(<ModelsPanel value={settings} onChange={onChange} />);
     });
     await act(async () => {
-      screen.getByRole("button", { name: /General Objects — Fast/ }).click();
+      screen.getByRole("button", { name: /General Objects: Fast/ }).click();
     });
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ objectModel: "yolov10n" })

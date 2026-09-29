@@ -8,7 +8,7 @@ pnpm install
 
 That installs every JavaScript workspace package and links the internal
 packages (`@clippity/shared` is symlinked into the frontend). There is a
-single lockfile at the root — [`pnpm-lock.yaml`](../../pnpm-lock.yaml).
+single lockfile at the root: [`pnpm-lock.yaml`](../../pnpm-lock.yaml).
 
 ## Reproducible installs
 
@@ -28,9 +28,9 @@ network requirements (`ort` binaries).
 
 ## What got installed where
 
-- Root `node_modules/` — shared dev tooling (TypeScript, ESLint, Prettier).
-- `app/frontend/node_modules/` — React/Vite/Vitest and the `@clippity/shared`
+- Root `node_modules/`: shared dev tooling (TypeScript, ESLint, Prettier).
+- `app/frontend/node_modules/`: React/Vite/Vitest and the `@clippity/shared`
   symlink.
-- `app/backend/src-tauri/node_modules/` — the Tauri CLI.
+- `app/backend/src-tauri/node_modules/`: the Tauri CLI.
 
 Next: [development.md](development.md).

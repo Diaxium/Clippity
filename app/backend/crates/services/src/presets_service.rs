@@ -1,4 +1,4 @@
-//! Capture-presets persistence — JSON file + in-memory snapshot behind a
+//! Capture-presets persistence: JSON file + in-memory snapshot behind a
 //! `RwLock`, mirroring `settings_service`.
 //!
 //! Persistence:
@@ -132,7 +132,7 @@ fn read_file(path: &Path) -> Option<Vec<CapturePreset>> {
     serde_json::from_str(&text).ok()
 }
 
-/// Load presets from disk, falling back to empty — but log why. A
+/// Load presets from disk, falling back to empty, but log why. A
 /// missing file is the expected first-run case (`debug`); a present-
 /// but-unparseable file means the user's saved presets just vanished,
 /// which warrants a `warn`. The on-disk file is left intact until the
@@ -141,14 +141,14 @@ fn read_or_log(path: &Path) -> Vec<CapturePreset> {
     if !path.exists() {
         tracing::debug!(
             path = %path.display(),
-            "no presets file — starting empty (fresh install)"
+            "no presets file; starting empty (fresh install)"
         );
         return Vec::new();
     }
     read_file(path).unwrap_or_else(|| {
         tracing::warn!(
             path = %path.display(),
-            "presets file could not be read or parsed — starting empty; the \
+            "presets file could not be read or parsed; starting empty; the \
              file is left untouched until the next change so it can be recovered"
         );
         Vec::new()
@@ -240,7 +240,7 @@ mod tests {
     }
 
     // The AppHandle-taking CRUD methods (create/update/delete) are
-    // covered by the manual gate — they only add validate + emit on top
+    // covered by the manual gate: they only add validate + emit on top
     // of the persist/read helpers exercised above, matching the
     // settings_service test split.
 }

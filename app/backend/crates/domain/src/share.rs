@@ -4,7 +4,7 @@
 //! [sharing roadmap](../../../../docs/roadmaps/sharing-export.md): hand a
 //! capture that already exists on disk to something outside Clippity.
 //! Nothing in this module uploads, and nothing here decides *when* to
-//! share — the caller has already saved a file and the user has already
+//! share: the caller has already saved a file and the user has already
 //! picked a target. That keeps the privacy baseline the roadmap asks
 //! for: sharing is always an explicit, per-capture act.
 //!

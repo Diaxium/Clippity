@@ -24,7 +24,7 @@ describe("chromeSide", () => {
   });
 
   it("pins above the rail when the selection spans the viewport", () => {
-    // No room above and the bottom runs past the rail — neither side fits.
+    // No room above and the bottom runs past the rail: neither side fits.
     expect(chromeSide(4, 900, CANVAS, H)).toBe("pinned");
   });
 });
@@ -89,7 +89,7 @@ describe("chromeXSide / chromeXPos (Annotation inspector)", () => {
   });
 
   it("never places the panel off the left edge on a narrow canvas", () => {
-    // Canvas narrower than the panel itself — the clamp still stays on-screen.
+    // Canvas narrower than the panel itself: the clamp still stays on-screen.
     expect(chromeXPos("clamped", 0, 100, 200, W)).toBe(CHROME_MARGIN);
   });
 

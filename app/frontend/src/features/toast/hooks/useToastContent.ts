@@ -11,8 +11,8 @@ import { EXIT_DURATION_MS, RECONCILE_GRACE_MS } from "../constants";
 
 interface UseToastContentResult {
   /** The full `clippity://toast/show` event (payload fields + durationMs)
-   *  or `null` when no toast is active. Pass directly to `renderBody`
-   *  — `ToastShowEvent` is structurally a `ToastPayload` plus the
+   *  or `null` when no toast is active. Pass directly to `renderBody`;
+   *  `ToastShowEvent` is structurally a `ToastPayload` plus the
    *  extra `durationMs` field. */
   event: ToastShowEvent | null;
   /** True when the user / auto-dismiss has triggered the exit
@@ -23,7 +23,7 @@ interface UseToastContentResult {
   /** Start the dismiss flow: flip `exiting=true`. The effect below
    *  handles `hideToast()` IPC + state reset after the animation. */
   dismiss: () => void;
-  /** Whether toast transitions may animate at all — false while the page
+  /** Whether toast transitions may animate at all: false while the page
    *  is not visible to the compositor. See the note on `canAnimate` in
    *  the hook body. */
   canAnimate: boolean;
@@ -57,13 +57,13 @@ interface UseToastContentResult {
 export function useToastContent(): UseToastContentResult {
   const [event, setEvent] = useState<ToastShowEvent | null>(null);
   const [exiting, setExiting] = useState(false);
-  /** Whether toast transitions may animate — i.e. whether frames are
+  /** Whether toast transitions may animate, i.e. whether frames are
    *  actually being produced for this page.
    *
    *  Animations are driven by `requestAnimationFrame`, which does not run
    *  while the page is not visible to the compositor. A toast that mounts
    *  in that state stays parked on its `initial` keyframe, `opacity: 0`,
-   *  with the content present in the DOM but nothing painted — and one
+   *  with the content present in the DOM but nothing painted, and one
    *  that leaves stays mounted forever, because `AnimatePresence` holds
    *  removed children until an exit animation that will never advance
    *  completes. Both leave the window wrong: empty, or showing a toast
@@ -72,7 +72,7 @@ export function useToastContent(): UseToastContentResult {
    *  This is reachable in the real app because the backend reveals the
    *  window and emits the payload in the same breath, while WebView2
    *  clears the window's occluded state asynchronously after
-   *  `ShowWindow` — so a payload can genuinely arrive while the page
+   *  `ShowWindow`, so a payload can genuinely arrive while the page
    *  still counts as hidden, and a sticky HUD then never recovers.
    *  Dropping the transition there costs an animation nobody could have
    *  seen, and makes "content decides what is on screen" true in every
@@ -85,13 +85,13 @@ export function useToastContent(): UseToastContentResult {
   const hideRequestedRef = useRef(false);
 
   // Backend pushes a new event each time it shows the toast. Replace
-  // immediately (no entry animation flicker — AnimatePresence keys on
+  // immediately (no entry animation flicker; AnimatePresence keys on
   // the kind, which handles the visual swap when kind changes).
   useEffect(() => {
     return onToastShow((e) => {
       hideRequestedRef.current = false;
       // Sampled here as well as on `visibilitychange` because the mount
-      // that matters happens in this same tick — the event routinely
+      // that matters happens in this same tick: the event routinely
       // arrives before the compositor has reported the window visible.
       setCanAnimate(pageIsVisible());
       setEvent(e);
@@ -111,7 +111,7 @@ export function useToastContent(): UseToastContentResult {
 
   // Backend can also push an explicit hide (e.g. after its own
   // `hide_toast` command, including our own post-animation call).
-  // Idempotent — we may already be cleared.
+  // Idempotent: we may already be cleared.
   useEffect(() => {
     return onToastHide(() => {
       setEvent(null);
@@ -126,7 +126,7 @@ export function useToastContent(): UseToastContentResult {
   // The hide is requested *before* the content is dropped, and the state
   // reset waits for it to settle: clearing first (the old order) blanks
   // the window for the length of the IPC round-trip, and if that invoke
-  // never lands — a rejected command, a backend busy mid-encode — the
+  // never lands (a rejected command, a backend busy mid-encode) the
   // window was left visible and empty for good. A failure now un-arms
   // `hideRequestedRef` so the reconciler below picks the retry up.
   useEffect(() => {
@@ -147,7 +147,7 @@ export function useToastContent(): UseToastContentResult {
 
   // Reconciler: an empty toast window has no reason to be on screen.
   //
-  // The grace period is what makes this safe rather than racy — an empty
+  // The grace period is what makes this safe rather than racy: an empty
   // stretch is normal for the instant between two toasts, and hiding
   // eagerly could cancel a show that is still in flight (the backend
   // reveals the window before its payload event reaches us). Waiting,

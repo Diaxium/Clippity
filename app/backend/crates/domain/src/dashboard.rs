@@ -1,4 +1,4 @@
-//! Dashboard cross-window handoff types — pure, no I/O.
+//! Dashboard cross-window handoff types: pure, no I/O.
 //!
 //! The dashboard is the main window's internal-routing concept:
 //! "Library" / "Editor" / "Settings" are views rendered inside one
@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 pub enum DashboardView {
     Library,
     Editor,
-    /// The video surface — playback, scrubbing and trim for a saved
+    /// The video surface: playback, scrubbing and trim for a saved
     /// recording (the clip's id rides in `DashboardRequest::capture_id`,
     /// same as Editor). A peer of `Editor` rather than a mode of it: the
     /// two share a purpose and almost no machinery.
@@ -38,7 +38,7 @@ pub enum DashboardView {
 
 /// What `request_dashboard_view` stashes + `consume_pending_dashboard_view`
 /// returns. `capture_id` is meaningful for `view = Editor` (the image to
-/// load) and `view = Palette` (the palette aux entry to show) — every
+/// load) and `view = Palette` (the palette aux entry to show): every
 /// other view ignores it.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

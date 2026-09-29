@@ -2,7 +2,7 @@
  * Turning annotations into what the encoder composites.
  *
  * This is where the "one renderer" decision is cashed in. The export
- * does not describe annotations to the backend — it *draws* them, with
+ * does not describe annotations to the backend: it *draws* them, with
  * `drawAnnotations`, the same function that paints the live preview, on
  * a canvas the size of the source's frames. The backend receives PNGs
  * and alpha-blends them. So there is no second implementation of a text
@@ -37,7 +37,7 @@ function base64Of(dataUrl: string): string {
  * Render one interval's annotations to a PNG data URL, at native size.
  *
  * Split out so the canvas work can be driven by a test with a stub
- * factory — jsdom has no rasteriser, and what is worth checking here is
+ * factory: jsdom has no rasteriser, and what is worth checking here is
  * *how many* canvases get made and at what size, not what lands on them.
  */
 export type CanvasFactory = (
@@ -84,7 +84,7 @@ export async function renderOverlays(
   if (intervals.length === 0) return [];
 
   // One canvas, reused across intervals. `drawAnnotations` clears before
-  // it draws, so there is nothing to carry over — and allocating a fresh
+  // it draws, so there is nothing to carry over, and allocating a fresh
   // 5120×1440 canvas per interval would cost far more than it saves.
   const canvas = factory(width, height);
   const ctx = canvas.getContext("2d");
@@ -95,7 +95,7 @@ export async function renderOverlays(
   const refs: OverlayRef[] = [];
   for (const interval of intervals) {
     // Drawn at the interval's *start*, which is the moment the set is
-    // constant from — any point inside it would give the same picture.
+    // constant from: any point inside it would give the same picture.
     drawAnnotations(ctx, annotations, interval.startMs, width, height);
     const path = await stage(base64Of(canvas.toDataURL("image/png")));
     refs.push({ path, startMs: interval.startMs, endMs: interval.endMs });

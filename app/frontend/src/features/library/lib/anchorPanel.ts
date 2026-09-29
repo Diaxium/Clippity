@@ -24,7 +24,7 @@ export interface AnchorRect {
 
 export interface PanelSize {
   width: number;
-  /** `0` before the panel has been measured — it then places below,
+  /** `0` before the panel has been measured: it then places below,
    *  which is the common case, and re-places once it has a height. */
   height: number;
 }
@@ -39,7 +39,7 @@ export interface Viewport {
  *
  * Right-aligned, because every trigger here sits at the right end of an
  * action cluster and a left-aligned panel would hang off the card.
- * Flipped above the trigger when the space below can't hold it — which
+ * Flipped above the trigger when the space below can't hold it, which
  * is the *only* option for the selection bar, where "below" is off the
  * bottom of the window entirely. Clamped on every side, so a card at the
  * edge of the window still gets a fully visible panel.

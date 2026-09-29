@@ -17,7 +17,7 @@ interface StudioLayoutProps {
 }
 
 /**
- * Studio — the video surface.
+ * Studio: the video surface.
  *
  * A peer of the annotation editor, not a mode of it. The two share a
  * purpose (explain a captured moment) and almost none of their
@@ -50,7 +50,7 @@ export function StudioLayout({ id, onOpenLibrary }: StudioLayoutProps) {
           <Timeline />
           <TransportBar />
           {/* Above the export row, because it edits the thing being
-              exported — and below the transport, so adding an annotation
+              exported, and below the transport, so adding an annotation
               never moves the playback controls. */}
           <AnnotationInspector />
           <ExportBar />
@@ -74,7 +74,7 @@ interface StudioPlaceholderProps {
 
 /**
  * The three non-playing states, in one component so they share a centre
- * of gravity — a surface whose empty state sits somewhere different from
+ * of gravity: a surface whose empty state sits somewhere different from
  * its error state feels like two screens.
  */
 function StudioPlaceholder({

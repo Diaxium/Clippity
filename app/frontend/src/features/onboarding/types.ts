@@ -1,8 +1,8 @@
 /**
- * Onboarding feature — local types.
+ * Onboarding feature: local types.
  *
  * The wizard reads/writes through the `Settings` wire types
- * (`GeneralSettings`, `AppearanceSettings`) — no new IPC shape. Only
+ * (`GeneralSettings`, `AppearanceSettings`): no new IPC shape. Only
  * the step-index union and a tiny preset row type live here.
  */
 

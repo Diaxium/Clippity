@@ -1,5 +1,5 @@
 /**
- * Studio — the video surface.
+ * Studio: the video surface.
  *
  * Playback, scrubbing and trim for a saved recording, as a dashboard
  * view alongside the annotation editor rather than inside it. See

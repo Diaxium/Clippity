@@ -60,14 +60,14 @@ pub enum AppError {
     #[error("share failed: {0}")]
     Share(String),
 
-    /// Screen recording — capture source, encoder or muxer. Separate
+    /// Screen recording: capture source, encoder or muxer. Separate
     /// from `Capture` because the UI branches on it: a still capture
     /// that fails can simply be retaken, while a recording failure has
     /// to explain what happened to the partial file.
     #[error("recording failed: {0}")]
     Recorder(String),
 
-    /// Reading or re-cutting a clip that already exists — probing a
+    /// Reading or re-cutting a clip that already exists: probing a
     /// file, decoding it, or encoding a trim of it. Separate from
     /// `Recorder`, which is about a *live* session: the recoveries have
     /// nothing in common. A failed recording is about a moment that is

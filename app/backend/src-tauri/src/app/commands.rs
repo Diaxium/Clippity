@@ -1,7 +1,7 @@
 //! Tauri `#[command]` handlers.
 //!
 //! New commands are added here and registered in `lib.rs` via
-//! `tauri::generate_handler!`. Keep each handler thin — the
+//! `tauri::generate_handler!`. Keep each handler thin; the
 //! convention is: parse → delegate to a service → return.
 
 use crate::app::state::AppState;
@@ -78,7 +78,7 @@ pub fn capture_fullscreen(
 /// material tint in sync; `effects` carries `performance.window_effects`
 /// so the same call clears the backdrop when the user has turned
 /// transparency off. `tuning` is the selected material's own
-/// fine-tuning — the frontend resolves it out of
+/// fine-tuning: the frontend resolves it out of
 /// `appearance.backdropTuning` so this command stays one material wide.
 /// No-op on non-Windows targets.
 #[tauri::command]
@@ -112,7 +112,7 @@ const TRAY_ICON_ID: &str = "clippity-tray";
 
 /// Swap the running process's icons to the chosen style. Applies the
 /// selected mark to the system-tray icon and every open window's taskbar
-/// icon at runtime — the frontend fires this on mount and whenever
+/// icon at runtime: the frontend fires this on mount and whenever
 /// `appearance.appIcon` changes, mirroring the `apply_window_theme`
 /// pattern. The built *executable* icon can't change at runtime, so this
 /// covers exactly the icons the running process owns.
@@ -141,7 +141,7 @@ pub fn apply_app_icon(app: tauri::AppHandle, style: String) -> AppResult<()> {
 
     // Per-window taskbar icons. Overlay/countdown/toast/tray are
     // chromeless and never surface a taskbar icon, but setting them is
-    // harmless — the OS simply ignores it for those.
+    // harmless: the OS simply ignores it for those.
     for (label, window) in app.webview_windows() {
         if let Err(e) = window.set_icon(icon.clone()) {
             tracing::warn!("app icon: could not set '{label}' window icon: {e}");
@@ -197,7 +197,7 @@ pub fn begin_region_capture(
 /// Switch the active selection method on the open overlay session in
 /// place (Rectangle / Freehand / Pen / Magnetic Lasso / Brush all share
 /// the same cached snapshot). Updates only the session mode so the saved
-/// file is labelled after the method the user actually drew — no
+/// file is labelled after the method the user actually drew: no
 /// re-snapshot. No-op when no overlay session is open.
 #[tauri::command]
 pub fn set_overlay_mode(state: tauri::State<'_, AppState>, mode: OverlayMode) -> AppResult<()> {
@@ -228,7 +228,7 @@ pub fn finish_region_capture(
 
 /// Fullscreen capture taken from inside the overlay (`F` / the
 /// Fullscreen tab). Crops the monitor the cursor is on out of the cached
-/// snapshot — the frozen backdrop the user is looking at — rather than
+/// snapshot (the frozen backdrop the user is looking at) rather than
 /// closing the overlay and re-grabbing the screen. Saves, optionally
 /// copies to clipboard, emits `clippity://capture/finished`.
 #[tauri::command]
@@ -242,10 +242,10 @@ pub fn finish_fullscreen_capture(
 
 /// Hand an already-saved capture to the OS: reveal it in the file
 /// manager, open it with the registered default app, or copy its
-/// absolute path to the clipboard. Nothing leaves the machine — see
+/// absolute path to the clipboard. Nothing leaves the machine; see
 /// `domain::share::ShareTarget`.
 ///
-/// The path is checked against the captures root before it is used — see
+/// The path is checked against the captures root before it is used; see
 /// `share_service::share`, which does the validating so it can be tested.
 #[tauri::command]
 pub fn share_capture(
@@ -295,7 +295,7 @@ pub fn finish_multi_area_capture(
 /// Color-Picker mode: sample the pixel at `(x, y)` (canvas-local
 /// physical px) from the cached snapshot, copy its `#RRGGBB` hex to the
 /// clipboard, and surface the result as a `color` toast. Returns the
-/// sampled color. Not a capture — no file, no `capture/finished`.
+/// sampled color. Not a capture: no file, no `capture/finished`.
 #[tauri::command]
 pub fn pick_color(
     app: tauri::AppHandle,
@@ -305,7 +305,7 @@ pub fn pick_color(
 ) -> AppResult<PickedColor> {
     let color = state.overlay_service.pick_color(&app, x, y)?;
     // Persist a `color` library entry (aux catalog) + refresh the library.
-    // Best-effort — the hex is already on the clipboard.
+    // Best-effort: the hex is already on the clipboard.
     let aux = AuxColor {
         hex: color.hex.clone(),
         r: color.r,
@@ -319,7 +319,7 @@ pub fn pick_color(
     } else {
         let _ = events::emit(&app, events::names::LIBRARY_UPDATED, ());
     }
-    // Surface the pick as a bottom-right toast. Best-effort — the hex is
+    // Surface the pick as a bottom-right toast. Best-effort: the hex is
     // already on the clipboard, so a toast failure shouldn't fail the pick.
     if let Err(e) = state.toast_service.show(
         &app,
@@ -336,7 +336,7 @@ pub fn pick_color(
 /// `palette` library entry, and surface a palette toast (preview +
 /// swatches). The swatch `count` comes from the IPC arg when present
 /// (clamped), else from the user's configured `capture.paletteCount`
-/// setting (default 6). Returns the persisted entry. Not a file capture —
+/// setting (default 6). Returns the persisted entry. Not a file capture:
 /// no `capture/finished`.
 #[tauri::command]
 pub fn finish_palette_capture(
@@ -382,7 +382,7 @@ pub fn finish_palette_capture(
 /// copy the text to the clipboard (in the service), persist a `text`
 /// library entry, and surface a text toast. Returns the recognized
 /// text. `Err(ocr)` when the region has no readable text. Not a file
-/// capture — no `capture/finished`.
+/// capture: no `capture/finished`.
 #[tauri::command]
 pub fn finish_grab_text_capture(
     app: tauri::AppHandle,
@@ -408,12 +408,12 @@ pub fn finish_grab_text_capture(
 }
 
 /// Longest-edge cap (physical px) for the Clipboard-image toast preview
-/// thumbnail — the toast shows it at ~56 px, so 96 leaves headroom for
+/// thumbnail: the toast shows it at ~56 px, so 96 leaves headroom for
 /// HiDPI without shipping the full bitmap through the event channel.
 const CLIPBOARD_PREVIEW_MAX_EDGE: u32 = 96;
 
 /// Clipboard custom mode: ingest whatever the system clipboard holds.
-/// Unlike every other custom mode this opens **no** overlay — the data
+/// Unlike every other custom mode this opens **no** overlay: the data
 /// already exists. An image is saved as a file-backed capture (and
 /// emits `capture/finished`, so the "Preview in Editor" toggle opens the
 /// editor like any other capture); text is persisted as an aux library
@@ -432,7 +432,7 @@ pub fn ingest_clipboard(
             let capture = state
                 .capture_service
                 .save_clipboard_image(&app, &image, preview)?;
-            // Best-effort toast — the capture is already saved + emitted.
+            // Best-effort toast: the capture is already saved + emitted.
             if let Err(e) = state.toast_service.show(
                 &app,
                 ToastPayload::Clipboard {
@@ -447,7 +447,7 @@ pub fn ingest_clipboard(
             Ok(ClipboardIngest::Image { capture })
         }
         ClipboardContent::Text(text) => {
-            // Aux text entry (no file) + library refresh — mirrors Grab-Text.
+            // Aux text entry (no file) + library refresh; mirrors Grab-Text.
             if let Err(e) = state.library_service.add_text(text.clone()) {
                 tracing::warn!("clipboard text library persist failed: {e}");
             } else {
@@ -471,8 +471,8 @@ pub fn ingest_clipboard(
 }
 
 /// Start a Scrolling-Window recording: begin the capture worker (which
-/// hides the overlay so the user can scroll) and show the recording HUD
-/// — a sticky `Recording` toast excluded from capture so it never lands
+/// hides the overlay so the user can scroll) and show the recording HUD:
+/// a sticky `Recording` toast excluded from capture so it never lands
 /// in a frame. The user scrolls; `stop_scroll_capture` commits/discards.
 #[tauri::command]
 pub fn start_scroll_capture(
@@ -498,7 +498,7 @@ pub fn start_scroll_capture(
 }
 
 /// Start a Panoramic (auto-scroll) capture: like Scrolling, but the
-/// worker drives the scroll itself — it parks the cursor over the region
+/// worker drives the scroll itself: it parks the cursor over the region
 /// and sends wheel input each tick, capturing persistently until the
 /// content stops advancing (end reached) or the user stops. Shows the
 /// same recording HUD (in Panoramic mode) and excludes it from capture.
@@ -539,7 +539,7 @@ pub fn stop_scroll_capture(
     // The HUD's exclusion is *not* cleared here: every Clippity window is
     // capture-shielded for the whole session at startup
     // (`capture_shield::shield_windows`), so clearing it would leave the
-    // toast the one un-shielded window from the first recording onward —
+    // toast the one un-shielded window from the first recording onward,
     // free to appear in every later grab.
     let _ = state.toast_service.hide(&app);
     if let Some(ref res) = result {
@@ -549,8 +549,8 @@ pub fn stop_scroll_capture(
     Ok(result)
 }
 
-/// Start a video / GIF recording (ADR 0031) and raise the recorder HUD
-/// — a sticky toast, excluded from capture so it never lands in a
+/// Start a video / GIF recording (ADR 0031) and raise the recorder HUD:
+/// a sticky toast, excluded from capture so it never lands in a
 /// frame. Returns the opening status so the HUD renders before the
 /// first `recorder/tick`.
 ///
@@ -582,7 +582,7 @@ pub fn start_recording(
     let system = carries_audio && request.audio.system;
 
     // A region / window recording is started *from* the overlay, which
-    // must come down the instant the session does — left up it keeps
+    // must come down the instant the session does: left up it keeps
     // swallowing clicks and reads as still selecting. Dismissing hands
     // back the primary window it hid, which the recorder puts back on
     // stop rather than now: the user is about to record that screen.
@@ -593,7 +593,7 @@ pub fn start_recording(
     let status = state
         .recorder_service
         .start(&app, request, restore_on_stop)?;
-    // Only raise the HUD once the session is genuinely running — a
+    // Only raise the HUD once the session is genuinely running: a
     // failed start must not leave a stop-button toast on screen with no
     // session behind it.
     state.toast_service.show(
@@ -608,7 +608,7 @@ pub fn start_recording(
     Ok(status)
 }
 
-/// Hold a running recording. The file's timeline has no gap — the
+/// Hold a running recording. The file's timeline has no gap: the
 /// session clock stops rather than recording a frozen stretch.
 #[tauri::command]
 pub fn pause_recording(state: tauri::State<'_, AppState>) -> AppResult<RecorderStatus> {
@@ -635,7 +635,7 @@ pub fn recording_status(state: tauri::State<'_, AppState>) -> AppResult<Recorder
 /// caller bug. Turning it into an error would put a toast on screen
 /// about a recording that is already finished.
 ///
-/// Affects the live session only — the persisted default lives in
+/// Affects the live session only; the persisted default lives in
 /// Settings → Recording.
 #[tauri::command]
 pub fn set_recording_gain(state: tauri::State<'_, AppState>, source: AudioSource, pct: u16) {
@@ -653,7 +653,7 @@ pub fn set_recording_mute(state: tauri::State<'_, AppState>, source: AudioSource
 /// Stop a recording. `discard` deletes the working file; otherwise it
 /// is promoted into the captures directory and `recorder/finished` +
 /// `library/updated` fire. Always tears the HUD down, including on
-/// failure — a session that ended badly still has to release the
+/// failure: a session that ended badly still has to release the
 /// screen.
 #[tauri::command]
 pub fn stop_recording(
@@ -662,7 +662,7 @@ pub fn stop_recording(
     discard: bool,
 ) -> AppResult<Option<RecorderResult>> {
     let result = state.recorder_service.stop(&app, discard);
-    // Exclusion stays on — see the note in `stop_scroll_capture`.
+    // Exclusion stays on; see the note in `stop_scroll_capture`.
     let _ = state.toast_service.hide(&app);
     result
 }
@@ -672,7 +672,7 @@ pub fn stop_recording(
 /// capture endpoints (microphones).
 ///
 /// Returns an empty list rather than erroring when the machine has none
-/// of that kind — a laptop with no microphone is a configuration, not a
+/// of that kind: a laptop with no microphone is a configuration, not a
 /// fault.
 #[tauri::command]
 pub fn list_audio_devices(system: bool) -> AppResult<Vec<AudioDeviceInfo>> {
@@ -747,7 +747,7 @@ pub struct WebcamDeviceInfo {
 
 /// Wire shape for an audio endpoint. Declared here rather than in
 /// `domain` because it describes a platform capability rather than a
-/// domain concept — there is no pure rule about it to test.
+/// domain concept: there is no pure rule about it to test.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AudioDeviceInfo {
@@ -763,7 +763,7 @@ pub struct AudioDeviceInfo {
 ///
 /// Deliberately an id and not the image. The overlay builds a
 /// `clippity-snapshot` URL from it and lets the webview fetch the bytes,
-/// which keeps this IPC a few bytes wide regardless of desktop size —
+/// which keeps this IPC a few bytes wide regardless of desktop size:
 /// the previous shape returned a base64 data URI, which at 1920×1200 was
 /// an 11 MiB JSON string to serialize, transfer and decode before the
 /// magnifier could show anything.
@@ -783,13 +783,13 @@ pub fn last_region(state: tauri::State<'_, AppState>) -> AppResult<Option<Region
     Ok(state.overlay_service.last_region(false))
 }
 
-/// One-shot repeat of the last rectangular selection — no overlay, no
+/// One-shot repeat of the last rectangular selection: no overlay, no
 /// drag. Grabs a fresh snapshot, crops the remembered rect, saves,
 /// optionally copies to the clipboard, emits
 /// `clippity://capture/finished`.
 ///
 /// Errors when nothing is remembered, or when the virtual desktop has
-/// changed size since (strict resolution — nothing is shown for the user
+/// changed size since (strict resolution: nothing is shown for the user
 /// to sanity-check before the shutter fires).
 #[tauri::command]
 pub fn recapture_last_region(
@@ -805,7 +805,7 @@ pub fn recapture_last_region(
 /// Empty unless the overlay is currently open in Window mode. The
 /// frontend hit-tests these on pointer-move to highlight the window
 /// under the cursor, then hands the chosen rect straight back to
-/// `finish_region_capture` on click — a window capture is just a
+/// `finish_region_capture` on click: a window capture is just a
 /// pre-snapped region.
 #[tauri::command]
 pub fn overlay_windows(state: tauri::State<'_, AppState>) -> AppResult<Vec<OverlayWindow>> {
@@ -858,7 +858,7 @@ pub fn show_capture_window(app: tauri::AppHandle) -> AppResult<()> {
     Ok(())
 }
 
-/// Library — enumerate the captures dir (and `.trash` if requested)
+/// Library: enumerate the captures dir (and `.trash` if requested)
 /// into a newest-first list of `CaptureMeta`. Missing dir is silent
 /// (returns empty vec).
 #[tauri::command]
@@ -869,7 +869,7 @@ pub fn library_list(
     state.library_service.list(include_trashed)
 }
 
-/// How a [`LibraryQueryArgs`] orders its page — the wire twin of the
+/// How a [`LibraryQueryArgs`] orders its page: the wire twin of the
 /// frontend `LibrarySort` and the services `QuerySort`.
 #[derive(Default, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -896,7 +896,7 @@ impl From<LibrarySortArg> for clippity_services::library_index::QuerySort {
 /// The grid's filters, search, sort and page, as they arrive from the
 /// frontend. Every field defaults, so `{}` is "the first page of
 /// everything, newest first".
-/// Which half of the library a page reads — the wire twin of the services
+/// Which half of the library a page reads: the wire twin of the services
 /// `TrashFilter`. `only` is what the trash view asks for; `include` is the
 /// superset `library_list` returns.
 #[derive(Default, serde::Deserialize)]
@@ -932,7 +932,7 @@ pub struct LibraryQueryArgs {
     pub offset: u32,
 }
 
-/// One page of the library plus the total rows the filters match — the
+/// One page of the library plus the total rows the filters match: the
 /// shape a virtualized grid needs to render a window and size its
 /// scrollbar without holding every row.
 #[derive(serde::Serialize)]
@@ -942,7 +942,7 @@ pub struct CapturePage {
     pub total: u64,
 }
 
-/// Library — one filtered/searched/sorted **page** of the listing, with
+/// Library: one filtered/searched/sorted **page** of the listing, with
 /// the narrowing pushed into SQL so a large library materializes only the
 /// rows a page shows (performance roadmap P5). Smart collections and
 /// collection membership are not expressible as a single query and stay
@@ -971,7 +971,7 @@ pub fn library_query(
 
 /// The thresholds the rail's derived sets are cut at, as they arrive from
 /// the frontend. They come from the client because they are anchored to
-/// the user's clock and local midnight — see `library_index::FacetsQuery`.
+/// the user's clock and local midnight; see `library_index::FacetsQuery`.
 #[derive(Default, serde::Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct LibraryFacetsArgs {
@@ -998,7 +998,7 @@ pub struct SmartCounts {
     pub untagged: u64,
 }
 
-/// Whole-library counts for the destination rail — the aggregate half of
+/// Whole-library counts for the destination rail: the aggregate half of
 /// a paged library. Kinds arrive as an object keyed by the kind's wire
 /// spelling, so a caller reads `kinds.image` rather than searching a list.
 #[derive(serde::Serialize)]
@@ -1012,7 +1012,7 @@ pub struct LibraryFacets {
     pub smart: SmartCounts,
 }
 
-/// Library — every count the destination rail shows, over the whole
+/// Library: every count the destination rail shows, over the whole
 /// library rather than the page the grid holds (performance roadmap P5).
 ///
 /// Separate from `library_query` on purpose: a page cannot answer "how
@@ -1052,7 +1052,7 @@ pub fn library_facets(
     })
 }
 
-/// Library — decode + downscale the file at `id`, return a
+/// Library: decode + downscale the file at `id`, return a
 /// base64 PNG data URI. Frontend `useThumbnail` caches the result;
 /// the backend re-decodes on every call.
 #[tauri::command]
@@ -1064,7 +1064,7 @@ pub fn library_thumbnail(
     state.library_service.thumbnail(&id, max_width)
 }
 
-/// Library — soft-delete the file at `id` (move to `<captures>/.trash/`).
+/// Library: soft-delete the file at `id` (move to `<captures>/.trash/`).
 /// Returns the new path (= the new id). Emits `library/updated`.
 #[tauri::command]
 pub fn library_delete(
@@ -1077,7 +1077,7 @@ pub fn library_delete(
     Ok(new_id)
 }
 
-/// Library — restore a trashed capture back to `<captures>/`.
+/// Library: restore a trashed capture back to `<captures>/`.
 /// Returns the new path. Emits `library/updated`.
 #[tauri::command]
 pub fn library_restore(
@@ -1090,7 +1090,7 @@ pub fn library_restore(
     Ok(new_id)
 }
 
-/// Library — permanently delete the file at `id`. Emits
+/// Library: permanently delete the file at `id`. Emits
 /// `library/updated`.
 #[tauri::command]
 pub fn library_purge(
@@ -1103,20 +1103,20 @@ pub fn library_purge(
     Ok(())
 }
 
-/// Library — recursive byte-count of the captures dir + a fixed
+/// Library: recursive byte-count of the captures dir + a fixed
 /// 10 GiB display cap. Used by a future storage-progress footer.
 #[tauri::command]
 pub fn library_storage(state: tauri::State<'_, AppState>) -> AppResult<StorageInfo> {
     state.library_service.storage()
 }
 
-/// Library — throw the listing cache away and rebuild it from disk,
+/// Library: throw the listing cache away and rebuild it from disk,
 /// returning the row count. Emits `library/updated`.
 ///
 /// Not needed in normal operation: every listing reconciles the index
 /// against the filesystem first, so it cannot drift. This is the escape
 /// hatch that makes "the index is rebuildable at any time" a property
-/// you can exercise rather than a claim — and the repair for the one
+/// you can exercise rather than a claim, and the repair for the one
 /// case reconciliation can't see, a capture rewritten within the same
 /// millisecond and to the same byte count as the row it replaced.
 #[tauri::command]
@@ -1126,12 +1126,12 @@ pub fn library_reindex(app: tauri::AppHandle, state: tauri::State<'_, AppState>)
     Ok(rows)
 }
 
-/// Library — star or unstar every id. Emits `library/updated`.
+/// Library: star or unstar every id. Emits `library/updated`.
 ///
 /// Every label command takes a **list**, so one capture and a
 /// forty-capture selection are the same call: bulk operations cost the
 /// UI no fan-out and the backend no second code path (ADR 0029). The
-/// return value is how many entries actually changed — an edit that asks
+/// return value is how many entries actually changed: an edit that asks
 /// for what is already true writes nothing.
 #[tauri::command]
 pub fn library_set_favorite(
@@ -1147,7 +1147,7 @@ pub fn library_set_favorite(
     Ok(changed)
 }
 
-/// Library — merge `tags` into every id's existing tags.
+/// Library: merge `tags` into every id's existing tags.
 #[tauri::command]
 pub fn library_add_tags(
     app: tauri::AppHandle,
@@ -1162,7 +1162,7 @@ pub fn library_add_tags(
     Ok(changed)
 }
 
-/// Library — drop `tags` from every id, ignoring case.
+/// Library: drop `tags` from every id, ignoring case.
 #[tauri::command]
 pub fn library_remove_tags(
     app: tauri::AppHandle,
@@ -1177,7 +1177,7 @@ pub fn library_remove_tags(
     Ok(changed)
 }
 
-/// Library — replace every id's tag list wholesale (the tag editor's
+/// Library: replace every id's tag list wholesale (the tag editor's
 /// "done").
 #[tauri::command]
 pub fn library_set_tags(
@@ -1203,13 +1203,13 @@ fn emit_library_updated(app: &tauri::AppHandle, changed: u64) -> AppResult<()> {
     events::emit(app, events::names::LIBRARY_UPDATED, ())
 }
 
-/// Collections — every collection, in creation order.
+/// Collections: every collection, in creation order.
 #[tauri::command]
 pub fn collections_list(state: tauri::State<'_, AppState>) -> AppResult<Vec<Collection>> {
     Ok(state.collections_service.list())
 }
 
-/// Collections — create an empty collection. A blank name is refused.
+/// Collections: create an empty collection. A blank name is refused.
 #[tauri::command]
 pub fn collections_create(
     app: tauri::AppHandle,
@@ -1221,7 +1221,7 @@ pub fn collections_create(
     Ok(created)
 }
 
-/// Collections — rename. The id is the identity, so this is safe for
+/// Collections: rename. The id is the identity, so this is safe for
 /// membership and duplicate names are allowed.
 #[tauri::command]
 pub fn collections_rename(
@@ -1235,7 +1235,7 @@ pub fn collections_rename(
     Ok(renamed)
 }
 
-/// Collections — delete the collection. The captures in it are
+/// Collections: delete the collection. The captures in it are
 /// untouched: a collection arranges files, it doesn't hold them.
 #[tauri::command]
 pub fn collections_remove(
@@ -1247,7 +1247,7 @@ pub fn collections_remove(
     events::emit(&app, events::names::COLLECTIONS_UPDATED, ())
 }
 
-/// Collections — append captures, skipping ones already in it.
+/// Collections: append captures, skipping ones already in it.
 #[tauri::command]
 pub fn collections_add_members(
     app: tauri::AppHandle,
@@ -1260,7 +1260,7 @@ pub fn collections_add_members(
     Ok(updated)
 }
 
-/// Collections — remove captures from the collection.
+/// Collections: remove captures from the collection.
 #[tauri::command]
 pub fn collections_remove_members(
     app: tauri::AppHandle,
@@ -1275,7 +1275,7 @@ pub fn collections_remove_members(
     Ok(updated)
 }
 
-/// Collections — rearrange. Ids the order forgets keep their relative
+/// Collections: rearrange. Ids the order forgets keep their relative
 /// place at the end, so a reorder computed before another window added a
 /// capture can't delete it.
 #[tauri::command]
@@ -1290,7 +1290,7 @@ pub fn collections_set_order(
     Ok(updated)
 }
 
-/// Editor — load the file at `id` as a base64 image data URI (the MIME
+/// Editor: load the file at `id` as a base64 image data URI (the MIME
 /// follows the file's extension) plus the decoded width/height. Rejects
 /// ids that escape the captures dir (defense-in-depth via
 /// `library::validate_id`).
@@ -1299,10 +1299,10 @@ pub fn editor_load(state: tauri::State<'_, AppState>, id: String) -> AppResult<E
     state.editor_service.load(&id)
 }
 
-/// Editor — persist a flattened image (annotations + effects already
+/// Editor: persist a flattened image (annotations + effects already
 /// baked into pixels by the frontend Canvas2D flatten) as a new
-/// capture file in the captures dir. The data URI's format — PNG, JPEG
-/// or WebP — picks the on-disk extension. Emits `library/updated` so the
+/// capture file in the captures dir. The data URI's format (PNG, JPEG
+/// or WebP) picks the on-disk extension. Emits `library/updated` so the
 /// library refreshes if it's currently mounted. Returns the new
 /// absolute path.
 #[tauri::command]
@@ -1316,7 +1316,7 @@ pub fn editor_save(
     Ok(path)
 }
 
-/// Editor — persist the editable scene (a JSON document, frontend-owned
+/// Editor: persist the editable scene (a JSON document, frontend-owned
 /// format) as a sidecar beside capture `id`, under the hidden `.scenes`
 /// dir. Non-destructive (the capture file is untouched); does not emit
 /// `library/updated` because the library listing is unchanged. Returns
@@ -1330,12 +1330,12 @@ pub fn editor_save_scene(
     state.editor_service.save_scene(&id, &scene)
 }
 
-/// Studio — describe the recording at `id` and mint the token its bytes
+/// Studio: describe the recording at `id` and mint the token its bytes
 /// are fetchable under.
 ///
 /// Note what this deliberately does *not* return: the media itself. A
 /// recording is far too large to cross the IPC bridge, and a `<video>`
-/// element needs to seek into it rather than receive it — so the bytes
+/// element needs to seek into it rather than receive it, so the bytes
 /// travel over the `clippity-media` URI scheme instead, which resolves
 /// the returned token back to this file. See `media_scheme`.
 ///
@@ -1346,14 +1346,14 @@ pub fn media_probe(state: tauri::State<'_, AppState>, id: String) -> AppResult<M
     state.media_service.probe(&id)
 }
 
-/// Studio — encode the requested range of a recording as a new capture.
+/// Studio: encode the requested range of a recording as a new capture.
 ///
 /// Runs on a blocking thread, not the async runtime: the encode is a
 /// long, synchronous COM call chain (Media Foundation is `!Send` and
 /// has no async surface), and parking a runtime worker on it for the
 /// length of an export would stall every other command the app makes.
 ///
-/// The result comes back as the return value rather than as an event —
+/// The result comes back as the return value rather than as an event:
 /// unlike a recording, which can end with nobody having called
 /// anything, an export always has a caller waiting. Progress travels as
 /// `media/trim-progress` because there is no other way to report it
@@ -1378,17 +1378,17 @@ pub async fn media_trim(app: tauri::AppHandle, request: TrimRequest) -> AppResul
     .map_err(|e| AppError::Media(format!("the export did not finish: {e}")))?
 }
 
-/// Studio — stage one rendered annotation overlay for an export.
+/// Studio: stage one rendered annotation overlay for an export.
 ///
-/// The webview draws its annotations to a canvas — the same code that
+/// The webview draws its annotations to a canvas (the same code that
 /// draws them on screen, which is what stops the preview and the export
-/// from ever disagreeing — and hands the PNG here. `media_trim` then
+/// from ever disagreeing) and hands the PNG here. `media_trim` then
 /// names the returned paths and the encoder composites them.
 ///
 /// Staged as files rather than carried inline in the trim request for
 /// the reason ADR 0032 gave for the clip itself: IPC serialises a
 /// payload whole, and a handful of full-resolution bitmaps is megabytes.
-/// One call per interval between annotation boundaries — not per frame.
+/// One call per interval between annotation boundaries, not per frame.
 ///
 /// The service picks the path and verifies the bytes are a PNG; the
 /// caller supplies only base64. Staged files are deleted when the export
@@ -1401,7 +1401,7 @@ pub fn media_stage_overlay(
     state.media_service.stage_overlay(&png_base64)
 }
 
-/// Studio — ask the running export to stop.
+/// Studio: ask the running export to stop.
 ///
 /// Cooperative and idempotent: a no-op when nothing is running, and the
 /// encode unwinds at a frame boundary, deleting its working file rather
@@ -1412,7 +1412,7 @@ pub fn media_cancel_trim(state: tauri::State<'_, AppState>) -> AppResult<()> {
     Ok(())
 }
 
-/// Dashboard — stash a "switch to this view" request, hide other
+/// Dashboard: stash a "switch to this view" request, hide other
 /// primary windows, then show + focus the main window. Emits
 /// `clippity://dashboard/view` for the already-shown case. The
 /// dashboard reads the stash via `consume_pending_dashboard_view`
@@ -1443,7 +1443,7 @@ pub fn request_dashboard_view(
     Ok(())
 }
 
-/// Dashboard — drain and return the pending view request, if any.
+/// Dashboard: drain and return the pending view request, if any.
 /// Called by the dashboard on mount. Idempotent: calling twice
 /// returns `None` the second time.
 #[tauri::command]
@@ -1457,7 +1457,7 @@ pub fn consume_pending_dashboard_view(
     Ok(slot.take())
 }
 
-/// Settings — snapshot the current persisted settings. The dashboard's
+/// Settings: snapshot the current persisted settings. The dashboard's
 /// `useSettings` hook calls this once on mount; subsequent changes
 /// arrive via `clippity://settings/changed` events.
 #[tauri::command]
@@ -1465,7 +1465,7 @@ pub fn settings_get(state: tauri::State<'_, AppState>) -> AppResult<Settings> {
     Ok(state.settings_service.snapshot())
 }
 
-/// Countdown — position the strip on the cursor monitor's work-area
+/// Countdown: position the strip on the cursor monitor's work-area
 /// bottom edge, show, and emit `clippity://countdown/start` with the
 /// starting seconds. The frontend's `useCountdown` listener owns the
 /// per-second tick + Esc handling; this command only sets up the
@@ -1479,14 +1479,14 @@ pub fn start_countdown(
     state.countdown_service.start(&app, request)
 }
 
-/// Countdown — hide the strip and abort the in-flight tick. Used by
+/// Countdown: hide the strip and abort the in-flight tick. Used by
 /// the frontend's Esc handler. Idempotent.
 #[tauri::command]
 pub fn cancel_countdown(app: tauri::AppHandle, state: tauri::State<'_, AppState>) -> AppResult<()> {
     state.countdown_service.cancel(&app)
 }
 
-/// Countdown — hide the strip after a successful tick-to-zero. Same
+/// Countdown: hide the strip after a successful tick-to-zero. Same
 /// effect as `cancel_countdown` from the service's perspective; kept
 /// as a distinct command so the caller can branch on intent
 /// (proceed-with-capture vs. user-aborted).
@@ -1495,7 +1495,7 @@ pub fn finish_countdown(app: tauri::AppHandle, state: tauri::State<'_, AppState>
     state.countdown_service.finish(&app)
 }
 
-/// Settings — return the default captures directory the backend would
+/// Settings: return the default captures directory the backend would
 /// use when `general.capturesDir` is empty (i.e. `AppPaths.captures`).
 /// Used by the onboarding wizard's Storage step to show a real path as
 /// the "Current location" hint rather than the bare word "default".
@@ -1508,10 +1508,10 @@ pub fn settings_default_captures_dir(state: tauri::State<'_, AppState>) -> AppRe
         .into_owned())
 }
 
-/// Settings — merge `patch` into persisted settings, validate, write
+/// Settings: merge `patch` into persisted settings, validate, write
 /// to disk, emit `clippity://settings/changed` with the full new
 /// state. Each `SettingsPatch` section (`general`/`appearance`/
-/// `notifications`) is optional — present sections replace the whole
+/// `notifications`) is optional: present sections replace the whole
 /// sub-struct, absent sections are preserved.
 #[tauri::command]
 pub fn settings_update(
@@ -1520,7 +1520,7 @@ pub fn settings_update(
     patch: SettingsPatch,
 ) -> AppResult<Settings> {
     // Re-register the OS-global capture hotkey only when the patch
-    // actually carried the `shortcuts` section — most updates (accent,
+    // actually carried the `shortcuts` section: most updates (accent,
     // toast durations, …) don't, and re-registering on every save would
     // needlessly churn the accelerator. The command boundary is the
     // single choke point where every settings write meets the `AppHandle`
@@ -1549,7 +1549,7 @@ pub fn settings_update(
 ///
 /// The frontend reads this once on mount and hides the features it reports
 /// as unavailable, so a declined component is absent from the UI rather than
-/// present-and-failing. Every gated command refuses independently — this is
+/// present-and-failing. Every gated command refuses independently: this is
 /// for presentation, never the enforcement point.
 #[tauri::command]
 pub fn provisioning_get(state: tauri::State<'_, AppState>) -> InstallationProfile {
@@ -1569,7 +1569,7 @@ pub struct InstallationProfile {
     pub source: &'static str,
 }
 
-/// Tray — hide the flyout panel. Called by the frontend after an action
+/// Tray: hide the flyout panel. Called by the frontend after an action
 /// fires or when the user presses Esc inside the panel. Idempotent (a
 /// hide on an already-hidden panel is a silent no-op).
 #[tauri::command]
@@ -1578,7 +1578,7 @@ pub fn hide_tray_panel(app: tauri::AppHandle, state: tauri::State<'_, AppState>)
 }
 
 /// Quit the whole application. The tray panel's Quit affordance and the
-/// native tray menu's "Quit Clippity" both end the process here — with
+/// native tray menu's "Quit Clippity" both end the process here: with
 /// minimize-to-tray on window close (see `lib.rs`), this is the
 /// deliberate exit path.
 #[tauri::command]
@@ -1589,7 +1589,7 @@ pub fn quit_app(app: tauri::AppHandle) -> AppResult<()> {
 
 /// Restart the whole application. The Performance settings panel's
 /// "Restart now" affordance calls this after the user flips GPU
-/// acceleration — the WebView2 GPU browser arg is fixed at
+/// acceleration: the WebView2 GPU browser arg is fixed at
 /// webview-environment creation, so the new preference only takes hold
 /// on a fresh process. `restart()` diverges (never returns), which
 /// coerces to the `AppResult<()>` the invoke handler expects.
@@ -1598,13 +1598,13 @@ pub fn restart_app(app: tauri::AppHandle) -> AppResult<()> {
     app.restart()
 }
 
-/// Presets — list every saved capture preset (insertion order).
+/// Presets: list every saved capture preset (insertion order).
 #[tauri::command]
 pub fn presets_list(state: tauri::State<'_, AppState>) -> AppResult<Vec<CapturePreset>> {
     Ok(state.presets_service.list())
 }
 
-/// Presets — create a preset from `input` (backend mints the id),
+/// Presets: create a preset from `input` (backend mints the id),
 /// persist, and emit `clippity://presets/changed` with the full list.
 #[tauri::command]
 pub fn presets_create(
@@ -1615,7 +1615,7 @@ pub fn presets_create(
     state.presets_service.create(&app, input)
 }
 
-/// Presets — replace the preset with the same id. Errors if none match.
+/// Presets: replace the preset with the same id. Errors if none match.
 #[tauri::command]
 pub fn presets_update(
     app: tauri::AppHandle,
@@ -1625,7 +1625,7 @@ pub fn presets_update(
     state.presets_service.update(&app, preset)
 }
 
-/// Presets — delete the preset with `id`. Idempotent.
+/// Presets: delete the preset with `id`. Idempotent.
 #[tauri::command]
 pub fn presets_delete(
     app: tauri::AppHandle,
@@ -1635,7 +1635,7 @@ pub fn presets_delete(
     state.presets_service.delete(&app, &id)
 }
 
-/// Models — every registry model with its live status (installed /
+/// Models: every registry model with its live status (installed /
 /// downloading / error / not installed). The Models settings page
 /// fetches this on mount; subsequent transitions arrive via
 /// `clippity://models/changed`.
@@ -1644,7 +1644,7 @@ pub fn models_list(state: tauri::State<'_, AppState>) -> AppResult<Vec<ModelInfo
     Ok(state.model_service.list())
 }
 
-/// Models — start downloading `id` on a worker thread. Idempotent
+/// Models: start downloading `id` on a worker thread. Idempotent
 /// (no-op when already installed or already downloading). Progress
 /// streams via `clippity://models/progress`; the final status lands
 /// with `clippity://models/changed`.
@@ -1657,7 +1657,7 @@ pub fn models_download(
     state.model_service.download(&app, &id)
 }
 
-/// Models — flag an in-flight download for cancellation. The worker
+/// Models: flag an in-flight download for cancellation. The worker
 /// cleans up its partial file and emits `models/changed`. No-op when
 /// nothing is downloading.
 #[tauri::command]
@@ -1665,7 +1665,7 @@ pub fn models_cancel_download(state: tauri::State<'_, AppState>, id: String) -> 
     state.model_service.cancel(&id)
 }
 
-/// Models — delete an installed model from disk (cancelling any
+/// Models: delete an installed model from disk (cancelling any
 /// in-flight download first) and drop the cached inference session so
 /// a stale in-memory model can't outlive its artifact.
 #[tauri::command]
@@ -1678,7 +1678,7 @@ pub fn models_remove(
     state.model_service.remove(&app, &id)
 }
 
-/// Models — best-effort live check of every GitHub-hosted model against
+/// Models: best-effort live check of every GitHub-hosted model against
 /// its latest published release. The Models settings page fires this on
 /// open (alongside `models_list`) to tell the user whether what's on disk
 /// is the newest published version. Returns one `ReleaseCheck` per model
@@ -1690,7 +1690,7 @@ pub fn models_check_updates(state: tauri::State<'_, AppState>) -> AppResult<Vec<
     Ok(state.model_service.check_updates())
 }
 
-/// Models — self-update `id` to the latest published GitHub release,
+/// Models: self-update `id` to the latest published GitHub release,
 /// fetching that release's live assets (not the pinned registry bytes).
 /// Idempotent like `models_download`: a no-op when a fetch is already in
 /// flight. Progress + final status ride the same `models/progress` +
@@ -1704,7 +1704,7 @@ pub fn models_update(
     state.model_service.update_latest(&app, &id)
 }
 
-/// Object capture mode — readiness check + auto-download policy for
+/// Object capture mode: readiness check + auto-download policy for
 /// the configured detector. The capture window calls this before
 /// opening the overlay in Object mode: `ready` → open; `downloading` →
 /// surface a "fetching the model" toast and bail; `missing` → point the
@@ -1718,9 +1718,9 @@ pub fn ensure_object_model(
     state.model_service.ensure_object_model(&app, &prefs)
 }
 
-/// Object capture mode — run the configured detector over the cached
+/// Object capture mode: run the configured detector over the cached
 /// overlay snapshot and return canvas-space boxes (physical px,
-/// virtual-desktop origin — the same space `finish_region_capture`
+/// virtual-desktop origin: the same space `finish_region_capture`
 /// crops in). Requires an open overlay session (the snapshot) and an
 /// installed model; errors carry the `vision` code so the overlay can
 /// surface them inline.
@@ -1752,15 +1752,15 @@ pub fn detect_objects(state: tauri::State<'_, AppState>) -> AppResult<Vec<Detect
 }
 
 // ---------------------------------------------------------------------
-// Developer & diagnostics — Settings → Advanced.
+// Developer & diagnostics: Settings → Advanced.
 //
 // Every handler here is read-only except three: `developer_clear_cache`,
 // `developer_clear_logs`, and `developer_restart_safe_mode`. Those three
 // take a fixed enum or no argument at all, so the surface can never be
-// asked to delete an arbitrary path — see `domain::developer`.
+// asked to delete an arbitrary path; see `domain::developer`.
 // ---------------------------------------------------------------------
 
-/// Developer — everything the system-information card shows, and the
+/// Developer: everything the system-information card shows, and the
 /// first file in an exported bundle.
 ///
 /// The WebView2 version is asked for here rather than in the service
@@ -1776,7 +1776,7 @@ pub fn developer_system_info(state: tauri::State<'_, AppState>) -> AppResult<Sys
 /// Registry ids of every model currently on disk, with the version the
 /// bytes are from when it is known.
 ///
-/// `UpdateAvailable` counts as installed — a complete older release is
+/// `UpdateAvailable` counts as installed: a complete older release is
 /// on disk, and "which model files does this machine have?" is the
 /// question a diagnostics bundle is answering.
 fn installed_model_ids(state: &tauri::State<'_, AppState>) -> Vec<String> {
@@ -1797,7 +1797,7 @@ fn installed_model_ids(state: &tauri::State<'_, AppState>) -> Vec<String> {
         .collect()
 }
 
-/// Developer — live runtime state: windows, capture shielding, the
+/// Developer: live runtime state: windows, capture shielding, the
 /// global hotkey's real registration, the index and cache sizes.
 ///
 /// Answers the class of complaint the app otherwise cannot: "the hotkey
@@ -1827,7 +1827,7 @@ pub fn developer_runtime_status(
             }
         })
         .collect();
-    // `webview_windows` hands back a map, so the order is arbitrary —
+    // `webview_windows` hands back a map, so the order is arbitrary:
     // sorted here so the table does not reshuffle on every refresh.
     windows.sort_by(|a, b| a.label.cmp(&b.label));
 
@@ -1840,13 +1840,13 @@ pub fn developer_runtime_status(
     ))
 }
 
-/// Developer — open (or close) the WebView developer tools for the
+/// Developer: open (or close) the WebView developer tools for the
 /// window that asked.
 ///
 /// Per-window rather than app-wide: each Tauri window is its own
 /// webview, and the tools a user wants are the ones for the surface they
 /// are looking at. In a release build this needs the `devtools` Cargo
-/// feature, which the app enables — the alternative is a button that
+/// feature, which the app enables: the alternative is a button that
 /// works only in development, which is where it is least needed.
 #[tauri::command]
 pub fn developer_open_devtools(window: tauri::WebviewWindow, open: bool) -> AppResult<()> {
@@ -1868,7 +1868,7 @@ pub fn developer_open_devtools(window: tauri::WebviewWindow, open: bool) -> AppR
     }
 }
 
-/// Developer — record one log line forwarded from the frontend, so both
+/// Developer: record one log line forwarded from the frontend, so both
 /// halves of the app share a single ordered timeline in the log file.
 ///
 /// Deliberately not gated on developer mode: the frontend's own level
@@ -1885,7 +1885,7 @@ pub fn developer_log(
     Ok(())
 }
 
-/// Developer — the last `limit` lines of the log, oldest first, parsed
+/// Developer: the last `limit` lines of the log, oldest first, parsed
 /// into timestamp / level / message for the viewer.
 ///
 /// Polled by the live viewer, so it reads a bounded window from the end
@@ -1903,14 +1903,14 @@ pub fn developer_log_tail(limit: usize) -> AppResult<Vec<LogLine>> {
         .collect())
 }
 
-/// Developer — delete every rotated log file and empty the live one.
+/// Developer: delete every rotated log file and empty the live one.
 /// Returns the bytes freed.
 #[tauri::command]
 pub fn developer_clear_logs(state: tauri::State<'_, AppState>) -> AppResult<u64> {
     state.diagnostics_service.clear_cache(CacheTarget::Logs)
 }
 
-/// Developer — open one of the app's own folders in the file manager.
+/// Developer: open one of the app's own folders in the file manager.
 #[tauri::command]
 pub fn developer_open_folder(
     state: tauri::State<'_, AppState>,
@@ -1923,11 +1923,11 @@ pub fn developer_open_folder(
     Ok(opened.display().to_string())
 }
 
-/// Developer — write a diagnostics bundle and return where it landed.
+/// Developer: write a diagnostics bundle and return where it landed.
 ///
 /// The settings snapshot is serialized here (rather than read off disk
 /// by the service) so the bundle records the state the app is actually
-/// running with — which, on a launch where developer mode expired, is
+/// running with, which, on a launch where developer mode expired, is
 /// not what the file says.
 #[tauri::command]
 pub fn developer_export_bundle(
@@ -1944,7 +1944,7 @@ pub fn developer_export_bundle(
         .export_bundle(&options, &system_json, &settings_json)
 }
 
-/// Developer — clear one cache, returning the bytes freed.
+/// Developer: clear one cache, returning the bytes freed.
 #[tauri::command]
 pub fn developer_clear_cache(
     state: tauri::State<'_, AppState>,
@@ -1953,7 +1953,7 @@ pub fn developer_clear_cache(
     state.diagnostics_service.clear_cache(target)
 }
 
-/// Developer — statistics from the last recording session, or `None`
+/// Developer: statistics from the last recording session, or `None`
 /// when nothing has been recorded since launch.
 #[tauri::command]
 pub fn developer_recorder_diagnostics(
@@ -1962,7 +1962,7 @@ pub fn developer_recorder_diagnostics(
     Ok(state.recorder_service.last_diagnostics())
 }
 
-/// Developer — arm safe mode and restart.
+/// Developer: arm safe mode and restart.
 ///
 /// Safe mode is a marker file consumed by the next launch (see
 /// `infra::runtime`), because `restart` re-executes with this process's
@@ -1992,7 +1992,7 @@ pub struct RuntimeFlags {
     pub devtools_available: bool,
 }
 
-/// Developer — the facts above.
+/// Developer: the facts above.
 ///
 /// Read by the settings page so it can say what is actually in force
 /// rather than showing controls that quietly do nothing.

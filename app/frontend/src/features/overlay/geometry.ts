@@ -3,7 +3,7 @@
  *
  * Per-pointer-event work. No React, no state, no IPC. The unit tests
  * exercise every branch without spinning up a DOM. Coordinates are
- * logical pixels (CSS px) throughout — DPR scaling happens at the
+ * logical pixels (CSS px) throughout: DPR scaling happens at the
  * IPC seam.
  */
 
@@ -17,16 +17,16 @@ import type {
 } from "./types";
 
 /** Minimum side length (logical px) for a usable Region selection.
- *  Keep in lock-step with the backend `MIN_REGION_PX` (8 — the value
+ *  Keep in lock-step with the backend `MIN_REGION_PX` (8; the value
  *  becomes 8 × DPR physical px at the IPC seam). */
 export const MIN_SIZE = 8;
 
 /** Minimum pointer travel (logical px) before a freehand path appends a
- *  new point — subsamples the ~120 Hz move stream so the polygon stays
+ *  new point: subsamples the ~120 Hz move stream so the polygon stays
  *  light. Mirrors the legacy 3 px gate. */
 export const MIN_FREEHAND_DIST = 3;
 
-/** Minimum points for a usable freehand path — fewer encloses no area.
+/** Minimum points for a usable freehand path: fewer encloses no area.
  *  Keep in lock-step with the backend `MIN_FREEHAND_POINTS`. */
 export const MIN_FREEHAND_POINTS = 3;
 
@@ -43,7 +43,7 @@ export function pointInRect(p: Pt, r: Rect): boolean {
 }
 
 /**
- * Snap `cur` so the rect (`start` → `cur`) is a perfect square — the
+ * Snap `cur` so the rect (`start` → `cur`) is a perfect square: the
  * "Shift while dragging" behaviour. Side length is the larger of the
  * two pointer deltas so the square always contains the cursor.
  */
@@ -86,7 +86,7 @@ export function applyResize(
     w += dx;
   }
 
-  // Aspect-ratio lock — recompute the secondary dimension so the rect
+  // Aspect-ratio lock: recompute the secondary dimension so the rect
   // keeps its original shape, then re-anchor so the corner the user
   // is NOT dragging stays fixed.
   if (lockRatio && start.w > 0 && start.h > 0) {
@@ -140,7 +140,7 @@ export function clampToViewport(rect: Rect, vw: number, vh: number): Rect {
  * Hit-test `pt` (logical px, overlay-local) against the Window-mode
  * target list; returns the window under the cursor, or `null` over bare
  * desktop. `windows` is front-to-back Z-order, so the FIRST containing
- * rect is the topmost — exactly what a hover/click should grab.
+ * rect is the topmost: exactly what a hover/click should grab.
  *
  * Window rects arrive in physical px (virtual-desktop origin); the
  * overlay works in logical px, so each rect is divided by `dpr` before
@@ -169,7 +169,7 @@ export function windowAtPoint(
  * Hit-test `pt` (logical px, overlay-local) against Object-mode
  * detections; returns the INDEX of the best hit, or `null` over bare
  * desktop. Unlike `windowAtPoint` (Z-ordered list, first wins),
- * detections have no Z-order — when boxes nest or overlap, the
+ * detections have no Z-order: when boxes nest or overlap, the
  * SMALLEST containing box wins so the user can always reach the most
  * specific element (an icon inside a toolbar inside a window).
  *
@@ -203,7 +203,7 @@ export function objectIndexAtPoint(
   return best;
 }
 
-/** True when `b` is at least `min` logical px from `a` — the freehand
+/** True when `b` is at least `min` logical px from `a`: the freehand
  *  subsample gate. */
 export function farEnough(a: Pt, b: Pt, min: number): boolean {
   return Math.hypot(b.x - a.x, b.y - a.y) >= min;
@@ -214,7 +214,7 @@ export function farEnough(a: Pt, b: Pt, min: number): boolean {
 export const MIN_PEN_POINTS = MIN_FREEHAND_POINTS;
 
 /** Cubic-bézier point sampling count per curved segment. A flat
- *  fixed-step subdivision is plenty for a screen-resolution mask — the
+ *  fixed-step subdivision is plenty for a screen-resolution mask: the
  *  backend point-in-polygon test is the consumer, not a printer. */
 const BEZIER_STEPS = 16;
 
@@ -270,7 +270,7 @@ export function flattenBezier(anchors: readonly PenAnchor[]): Pt[] {
   return out;
 }
 
-/** Axis-aligned bounding box of a Pen path's anchors (handles excluded —
+/** Axis-aligned bounding box of a Pen path's anchors (handles excluded;
  *  the curve never bulges past a hull built from sampled points, and the
  *  bbox is only used for the on-screen selection readout). `null` for an
  *  empty path. */

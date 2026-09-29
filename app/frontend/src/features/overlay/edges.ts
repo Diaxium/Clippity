@@ -3,7 +3,7 @@
  *
  * The lasso snaps the cursor to the strongest nearby image edge so the
  * user can trace an object without pixel-precise mouse work. Edges come
- * from a Sobel gradient over the cached desktop snapshot's luminance —
+ * from a Sobel gradient over the cached desktop snapshot's luminance:
  * the same `snapshot.sampleCtx` the magnifier samples (physical-pixel
  * canvas; logical → physical is `* devicePixelRatio`, matching
  * `Magnifier.tsx`).
@@ -15,7 +15,7 @@
 import type { Pt } from "./types";
 
 /** Sobel gradient magnitude below this (0–~1448 scale) is treated as
- *  "no edge" — the lasso keeps the raw cursor instead of snapping to
+ *  "no edge": the lasso keeps the raw cursor instead of snapping to
  *  flat-region noise. */
 export const MIN_EDGE_MAG = 130;
 
@@ -63,7 +63,7 @@ export function sobelAt(
  * luminance buffer, biased toward the centre so the snap doesn't leap to
  * a marginally-stronger edge far from the cursor. Returns the winning
  * `{ x, y, mag }`, or `null` when no candidate clears `MIN_EDGE_MAG`.
- * Pure — the canvas-free heart of `snapToEdge`.
+ * Pure: the canvas-free heart of `snapToEdge`.
  */
 export function strongestEdge(
   lum: readonly number[] | Float32Array,

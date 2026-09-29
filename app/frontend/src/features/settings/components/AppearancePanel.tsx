@@ -254,7 +254,7 @@ export function AppearancePanel({ value, onChange }: AppearancePanelProps) {
  *
  * The note at the top is the honest part. Mica and Tabbed are
  * wallpaper-derived, so no slider anywhere can make live content show
- * through them — saying so beats letting the user drag every knob to
+ * through them: saying so beats letting the user drag every knob to
  * its end looking for the one that will.
  */
 function BackdropTuningCard({ value, onChange }: AppearancePanelProps) {
@@ -285,7 +285,7 @@ function BackdropTuningCard({ value, onChange }: AppearancePanelProps) {
         <p className="min-w-0 flex-1 text-[12px] text-[var(--color-slate)]">
           {BACKDROP_SAMPLES_LIVE_CONTENT[backdrop]
             ? `${label} samples what is actually behind the window, so these knobs change how much of it reaches you.`
-            : `${label} is drawn by Windows from your desktop wallpaper, not from what is behind the window — apps behind Clippity can never show through it at any transparency. Switch to Acrylic or Clear for that. These knobs still control how much of the material itself you see.`}
+            : `${label} is drawn by Windows from your desktop wallpaper, not from what is behind the window; apps behind Clippity can never show through it at any transparency. Switch to Acrylic or Clear for that. These knobs still control how much of the material itself you see.`}
         </p>
         <button
           type="button"
@@ -310,7 +310,7 @@ function BackdropTuningCard({ value, onChange }: AppearancePanelProps) {
           control={
             // `TickedSlider` drives its own draft + readout and commits
             // on release, so these rows need no preview state of their
-            // own — unlike the transparency / scale sliders above, whose
+            // own: unlike the transparency / scale sliders above, whose
             // draft the window preview card also renders.
             <TickedSlider
               value={tuning[control.key]}
@@ -395,7 +395,7 @@ function WindowPreview({
 
 /**
  * Generic text-segmented control. Reused for corner roundness, density,
- * and the app-icon style — each an enum with a small, fixed option set.
+ * and the app-icon style: each an enum with a small, fixed option set.
  * Mirrors the visual language of the Theme picker above (a pill track
  * with a raised active segment) but without the leading icons.
  */

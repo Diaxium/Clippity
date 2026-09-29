@@ -1,5 +1,5 @@
 /**
- * "Recent captures" card — a strip of the newest capture thumbnails with
+ * "Recent captures" card: a strip of the newest capture thumbnails with
  * name + relative time. Clicking a tile opens it in the editor; "View
  * all" jumps to the Library.
  */

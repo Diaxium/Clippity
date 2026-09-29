@@ -11,8 +11,8 @@ interface AccentPickerProps {
 
 /**
  * Preset palette swatches + a custom hex input. The custom input
- * uppercases on every change so the displayed string is canonical
- * — matches the legacy normalization.
+ * uppercases on every change so the displayed string is canonical;
+ * matches the legacy normalization.
  */
 export function AccentPicker({ value, onChange }: AccentPickerProps) {
   const normalised = useMemo(() => normaliseHex(value), [value]);

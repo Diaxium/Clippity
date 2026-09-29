@@ -25,7 +25,7 @@ import {
 } from "../constants";
 import type { RecordingSettings } from "../types";
 
-/** Bits per megabit — the bitrate override is stored in bits per second
+/** Bits per megabit: the bitrate override is stored in bits per second
  *  (what Media Foundation wants) and typed in megabits (what a person
  *  reasons in). */
 const BITS_PER_MBIT = 1_000_000;
@@ -33,7 +33,7 @@ const BITS_PER_MBIT = 1_000_000;
 /** What the bitrate field shows before it is switched on, and the value
  *  switching it on commits. A reasonable 1080p30 starting point.
  *
- *  Shown rather than a disabled 0 — the field's own minimum is 2, so a
+ *  Shown rather than a disabled 0: the field's own minimum is 2, so a
  *  0 reads as broken, and a number that jumps the instant you enable the
  *  toggle reads as the toggle having done something it didn't. */
 const DEFAULT_FIXED_MBPS = 8;
@@ -51,7 +51,7 @@ interface RecordingPanelProps {
 
 /**
  * Settings → Recording (ADR 0031). Edits the defaults every recording
- * session starts from — there is no per-session options panel for the
+ * session starts from: there is no per-session options panel for the
  * recorder the way there is for captures, because the launcher fires
  * immediately, so these *are* the controls.
  *
@@ -61,7 +61,7 @@ interface RecordingPanelProps {
  * the user should make once, here, deliberately.
  *
  * The two level sliders set what a session *starts* at. Moving one
- * mid-recording is the HUD's job and does not write back here — a level
+ * mid-recording is the HUD's job and does not write back here: a level
  * nudged for one awkward recording shouldn't become the level every
  * future recording begins at.
  *
@@ -264,7 +264,7 @@ export function RecordingPanel({ value, onChange }: RecordingPanelProps) {
         />
         <Row
           label="GIF frame rate"
-          description="Kept separate from video — GIF stores delays in hundredths of a second, so its usable range is lower."
+          description="Kept separate from video: GIF stores delays in hundredths of a second, so its usable range is lower."
           control={
             <Stepper
               value={value.gifFps}
@@ -393,7 +393,7 @@ export function RecordingPanel({ value, onChange }: RecordingPanelProps) {
         />
         <Row
           label="Use the GPU's encoder"
-          description="On by default — software encoding can't keep up at 4K60. Turn it off if recordings look worse than they should; a few graphics drivers encode poorly."
+          description="On by default: software encoding can't keep up at 4K60. Turn it off if recordings look worse than they should; a few graphics drivers encode poorly."
           control={
             <ToggleSwitch
               checked={encoding.preferHardware ?? true}
@@ -420,7 +420,7 @@ export function RecordingPanel({ value, onChange }: RecordingPanelProps) {
  * Enumeration failing is not worth surfacing: the list falls back to
  * just the default option, which is exactly what an un-pinned setting
  * already means. A device that has since been unplugged simply stops
- * appearing — the backend falls back to the default for a pinned id it
+ * appearing: the backend falls back to the default for a pinned id it
  * can no longer resolve, so the recording still happens.
  */
 function useAudioDevices(system: boolean): SelectOption[] {

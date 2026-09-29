@@ -21,7 +21,7 @@ const INFO: MediaInfo = {
  * inside the action rather than taking it as an argument. A component
  * computes its handler from the values it *rendered* with, so two rapid
  * edits in one tick would otherwise both start from the same stale
- * annotation and the second would undo the first — the same bug the
+ * annotation and the second would undo the first: the same bug the
  * store's existing note on `stepFrames` describes.
  */
 describe("studioStore annotations", () => {
@@ -137,7 +137,7 @@ describe("studioStore annotations", () => {
 
   it("keeps annotations when the same clip is re-opened", () => {
     // The dashboard re-emits its view request on every cross-window
-    // jump, including ones that land back here — the same reason the
+    // jump, including ones that land back here: the same reason the
     // trim range survives it.
     store().addAnnotation("box");
     store().open(INFO.id);

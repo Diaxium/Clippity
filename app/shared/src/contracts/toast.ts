@@ -1,12 +1,12 @@
 /**
- * Toast wire-format contracts — mirror Rust `domain::toast`.
+ * Toast wire-format contracts: mirror Rust `domain::toast`.
  *
  * **MVP scope**: only the `error` variant is reachable. The reserved
- * variants exist for wire-shape stability — each owning port flips its
+ * variants exist for wire-shape stability: each owning port flips its
  * variant from "reserved" to "armable" when it lands.
  */
 
-/** Sampled colour — reserved for Color-Pick custom mode. */
+/** Sampled colour: reserved for Color-Pick custom mode. */
 export interface PickedColor {
   r: number;
   g: number;
@@ -14,7 +14,7 @@ export interface PickedColor {
   hex: string;
 }
 
-/** Palette swatch — reserved for Palette-Capture custom mode. */
+/** Palette swatch: reserved for Palette-Capture custom mode. */
 export interface PaletteSwatch {
   r: number;
   g: number;
@@ -25,14 +25,14 @@ export interface PaletteSwatch {
   proportion?: number;
 }
 
-/** Recording style — reserved for the recording-engine port. */
+/** Recording style: reserved for the recording-engine port. */
 export type RecordingMode = "scrolling" | "panoramic";
 
 /** Which output a running recorder session is producing (ADR 0031). */
 export type RecorderToastFormat = "mp4" | "gif";
 
 /**
- * Toast payload — discriminated on `kind`, kebab-case end-to-end.
+ * Toast payload: discriminated on `kind`, kebab-case end-to-end.
  *
  * **Only `error` is reachable through `showToast` in MVP.** The other
  * variants are typed here so a future port can flip its body armable
@@ -56,7 +56,7 @@ export type ToastPayload =
    * The video/GIF recorder HUD. Distinct from `recording`, which is the
    * scroll stitcher's: that one counts frames toward a still image and
    * offers Stop & Stitch, this one runs a clock and offers
-   * pause/resume. Always sticky — it is the only way to stop a session.
+   * pause/resume. Always sticky: it is the only way to stop a session.
    */
   | {
       kind: "recorder";
@@ -68,7 +68,7 @@ export type ToastPayload =
       system: boolean;
     };
 
-/** Convenience extractor — the discriminant. */
+/** Convenience extractor: the discriminant. */
 export type ToastKind = ToastPayload["kind"];
 
 /** Per-kind auto-dismiss timeouts in milliseconds. `0` = sticky. */

@@ -20,14 +20,14 @@ interface UseLibraryListResult {
  * restore / purge from anywhere) refreshes the list automatically.
  *
  * Errors surface as an error toast (the toast port landed before
- * library) and leave the list empty rather than throwing — the page
+ * library) and leave the list empty rather than throwing: the page
  * renders its empty-state instead of crashing.
  *
  * `enabled` exists because loading the whole library is now the
  * exception rather than the rule: the grid reads pages through
  * `useLibraryQuery`, and only the two scopes a query cannot express (a
  * smart collection's rule, a collection's curated membership) still need
- * every row. Passing `false` holds the fetch entirely — a disabled list
+ * every row. Passing `false` holds the fetch entirely: a disabled list
  * is empty and not loading, never a stale set of rows from the last time
  * it ran.
  */
@@ -63,7 +63,7 @@ export function useLibraryList(
     void refresh();
   }, [refresh]);
 
-  // Event-driven refresh — a capture landing or a trash op anywhere
+  // Event-driven refresh: a capture landing or a trash op anywhere
   // fires `library/updated`.
   useEffect(() => {
     return onLibraryUpdated(() => void refresh());

@@ -22,7 +22,7 @@ interface UseCollectionsResult {
  * event would make the whole grid re-fetch over an arrangement it isn't
  * showing.
  *
- * A failed fetch surfaces as a toast and leaves the list empty — the
+ * A failed fetch surfaces as a toast and leaves the list empty: the
  * rail renders as "no collections yet" rather than taking the page down,
  * matching how `useLibraryList` treats a failed listing.
  */

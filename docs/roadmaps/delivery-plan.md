@@ -51,7 +51,7 @@ the security/data/CI packages meet their exit signals.
 
 ## Months 2–6: two coordinated product streams
 
-### Stream A — workflow engine and searchable memory
+### Stream A: workflow engine and searchable memory
 
 1. Typed cancellable job service and recipe schema.
 2. OCR/FTS index, saved searches, background derived assets and batch actions.
@@ -61,7 +61,7 @@ the security/data/CI packages meet their exit signals.
 Exit: ≥25% of weekly users run a recipe; p95 search <150 ms at 50k entries;
 repeated workflow actions fall ≥50%.
 
-### Stream B — recorder
+### Stream B: recorder
 
 1. Deterministic audio/video providers, permission UX and crash-safe media job.
 2. Region/window/fullscreen capture with mic/system audio and cursor treatment.

@@ -1,5 +1,5 @@
 /**
- * Onboarding — static tables (steps, labels). The accent / theme
+ * Onboarding: static tables (steps, labels). The accent / theme
  * tables are intentionally NOT duplicated here: the wizard reads them
  * from `features/settings/constants.ts` (`ACCENT_PRESETS`) and from
  * the same `ThemePref` union the settings panel uses, so flipping a

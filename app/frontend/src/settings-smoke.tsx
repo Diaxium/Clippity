@@ -2,8 +2,8 @@
  * Settings design-review harness (dev only).
  *
  * Seeds the settings store with a representative snapshot and mounts the
- * real `SettingsLayout` so the panels — in particular the new Capture
- * panel — can be reviewed in a plain browser via the dev server, no
+ * real `SettingsLayout` so the panels, in particular the new Capture
+ * panel, can be reviewed in a plain browser via the dev server, no
  * Tauri runtime required. `useSettings` still fires its `getSettings`
  * IPC on mount, but that rejects harmlessly outside Tauri and never
  * clears the pre-seeded snapshot.

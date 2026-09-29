@@ -2,8 +2,8 @@
  * Control chrome shared by the inspector's form fields.
  *
  * `NumberField` bakes its own copy of this into its container; everything that
- * isn't a NumberField — chiefly the shared `Select`, which is styled by the
- * caller through `triggerClassName` — reads it from here. Before this existed
+ * isn't a NumberField (chiefly the shared `Select`, which is styled by the
+ * caller through `triggerClassName`) reads it from here. Before this existed
  * the same class string was pasted at seven call sites, so a field height or
  * radius change silently reached only the ones that got edited.
  */

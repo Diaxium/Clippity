@@ -12,7 +12,7 @@ import { StepShell } from "../components/StepShell";
 /**
  * A data row. Checking the box marks the category for removal; an explicit
  * status pill states the outcome ("Kept" / "Will be removed") so a row never
- * relies on a section header to be understood — the previous "Keep" section
+ * relies on a section header to be understood: the previous "Keep" section
  * full of "Remove …" checkboxes read as a contradiction.
  */
 function DataRow({ cat }: { cat: DataCategory }) {
@@ -47,7 +47,7 @@ function DataRow({ cat }: { cat: DataCategory }) {
   );
 }
 
-/** Uninstall step 3 — pick which data categories to delete vs keep. */
+/** Uninstall step 3: pick which data categories to delete vs keep. */
 export function ChooseDataStep() {
   const back = useWizardStore((s) => s.back);
   const goToStep = useWizardStore((s) => s.goToStep);
@@ -75,7 +75,7 @@ export function ChooseDataStep() {
           <div className="py-2.5 text-[12px] font-semibold text-[var(--color-slate)]">
             Application data
             <span className="ml-1.5 font-normal text-[var(--color-hint)]">
-              — removed by default
+              (removed by default)
             </span>
           </div>
           <div className="divide-y divide-[var(--hairline)] border-t border-[var(--hairline)]">
@@ -89,7 +89,7 @@ export function ChooseDataStep() {
           <div className="py-2.5 text-[12px] font-semibold text-[var(--color-slate)]">
             Your personal data
             <span className="ml-1.5 font-normal text-[var(--color-hint)]">
-              — kept unless you check it
+              (kept unless you check it)
             </span>
           </div>
           <div className="divide-y divide-[var(--hairline)] border-t border-[var(--hairline)]">

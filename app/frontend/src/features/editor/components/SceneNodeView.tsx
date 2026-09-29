@@ -66,7 +66,7 @@ interface SceneNodeViewProps {
 
 /**
  * Pure visual renderer for one scene node (and, for frames, its subtree), in
- * scene coordinates. The whole tree is `pointer-events: none` — EditorCanvas
+ * scene coordinates. The whole tree is `pointer-events: none`: EditorCanvas
  * owns picking via the geometry engine, so this component never handles
  * input. Rotation is applied as an SVG transform about the frame center.
  */
@@ -97,7 +97,7 @@ function SceneNodeViewImpl({ node, nodes }: SceneNodeViewProps) {
 }
 
 /**
- * Re-render a node view only when its own `node` object changes — with two
+ * Re-render a node view only when its own `node` object changes: with two
  * exceptions that legitimately depend on the wider `nodes` map: containers
  * (a descendant may have moved while the frame object stayed referentially
  * equal) and sample nodes (blur/pixelate/magnify read the shared base image
@@ -123,7 +123,7 @@ function nodeViewPropsEqual(
 
 /**
  * Pure visual renderer for one scene node (and, for frames, its subtree).
- * Memoized so an unrelated scene mutation doesn't recompute every node — see
+ * Memoized so an unrelated scene mutation doesn't recompute every node; see
  * {@link nodeViewPropsEqual}.
  */
 export const SceneNodeView = memo(SceneNodeViewImpl, nodeViewPropsEqual);
@@ -133,7 +133,7 @@ function renderNode(node: SceneNode, nodes: Record<string, SceneNode>) {
     case "frame":
       return <FrameView node={node} nodes={nodes} />;
     case "rectangle":
-      // A stamp replaces the box's own shape entirely — its fills and strokes
+      // A stamp replaces the box's own shape entirely: its fills and strokes
       // paint the glyph, not the rectangle. Dispatched here rather than inside
       // `RectView` so the branch sits above that component's effects wrapper:
       // `render.ts` casts shadows from the *box* silhouette, so letting an SVG
@@ -177,7 +177,7 @@ function pointsAttr(pts: { x: number; y: number }[]): string {
 }
 
 /** Renders a closed polygon outline (used by polygon + star nodes) with the
- *  node's fills, strokes, and effects — mirrors {@link EllipseView}. A sample
+ *  node's fills, strokes, and effects; mirrors {@link EllipseView}. A sample
  *  (blur/pixelate/magnify) paints behind the fills, clipped to the polygon, so a
  *  translucent fill tints the sampled region. */
 function PolyShape({
@@ -294,7 +294,7 @@ function PathView({
 
 /**
  * The node's outline. With window chrome the outline is the whole window (bar +
- * capture, `lib/chrome.ts`), not just the box — which is what makes the clip,
+ * capture, `lib/chrome.ts`), not just the box, which is what makes the clip,
  * the strokes and the lift shadow treat the framed screenshot as one object
  * instead of leaving a seam across the title bar. Mirrored by `render.ts`'s
  * `shapePath`.
@@ -314,7 +314,7 @@ function cornerPath(node: FrameNode | RectangleNode | ImageNode): string {
 /**
  * The title bar itself: background, buttons, title, and the hairline onto the
  * capture. Every number comes from `lib/chrome.ts`, so this and `render.ts`'s
- * `drawChrome` are two spellings of one drawing — the parity contract
+ * `drawChrome` are two spellings of one drawing: the parity contract
  * `calloutOutline` already set for the callout tail.
  *
  * The bar's own background is a rounded rect with square *bottom* corners; the
@@ -386,7 +386,7 @@ function ChromeBar({ node }: { node: SceneNode }) {
  * Filter element for a node's effects: layer blur (gaussian on the source),
  * drop shadow (spread via `feMorphology` → offset → blur → flood), and inner
  * shadow (offset → blur → composited inside the shape). One of each type is
- * honored. Kept in sync with `lib/render.ts` (the export path) — see ADR 0009.
+ * honored. Kept in sync with `lib/render.ts` (the export path); see ADR 0009.
  */
 function EffectsDefs({
   node,
@@ -499,7 +499,7 @@ function hasEffects(node: SceneNode): boolean {
 /** Whether a node paints its sampled image: it carries a sample and the effect
  *  is enabled. The sample renders *behind* the fills, so fills stay visible (a
  *  translucent fill tints the sample); a hidden sample (the Effects panel eye
- *  toggle) just isn't drawn, leaving the fills — or, for a fill-less annotation
+ *  toggle) just isn't drawn, leaving the fills, or, for a fill-less annotation
  *  region, the capture beneath. */
 function sampleVisible(node: SceneNode): boolean {
   return Boolean(node.sample) && node.sample!.enabled !== false;
@@ -508,7 +508,7 @@ function sampleVisible(node: SceneNode): boolean {
 /**
  * Whether anything this node actually renders references its clip path: a
  * sample (blur/pixelate/magnify), an image fill, or an inside-aligned stroke.
- * A plain shape — solid/gradient fill with a centre/outside stroke — references
+ * A plain shape, solid/gradient fill with a centre/outside stroke, references
  * no clip, so emitting the `<clipPath>` (and the `<defs>` that wraps it) for it
  * is pure DOM + reconciliation waste: in a typical annotation scene the vast
  * majority of shapes are plain, and each was previously paying for an unused
@@ -533,7 +533,7 @@ function usesClip(node: SceneNode): boolean {
  * to the region shape. Blur uses a `feGaussianBlur` scoped to the region;
  * Magnifier scales the image about the region center. Drawn the same way the
  * normal image fill is (cover), so it aligns with the image beneath. Kept in
- * sync with `lib/render.ts`'s `drawSample` — see ADR 0010.
+ * sync with `lib/render.ts`'s `drawSample`; see ADR 0010.
  */
 function SampledImage({
   node,
@@ -619,7 +619,7 @@ function SampledImage({
  * Pixelate region (live view). SVG has no reliable native mosaic filter, so we
  * rasterise the mosaic on an offscreen canvas (shared `pixelateRegion`, same as
  * the export) and show it as an `<image>`. While the first mosaic computes we
- * paint a neutral block — never the original pixels — so sensitive content is
+ * paint a neutral block, never the original pixels, so sensitive content is
  * never briefly revealed. On resize/cell change the previous mosaic stays up
  * (still obscured) until the new one is ready, avoiding a flicker.
  */
@@ -636,7 +636,7 @@ function PixelatedImage({
 }) {
   const [url, setUrl] = useState<string | null>(null);
   // Depend on the primitive fields (not the node/base objects) so the mosaic is
-  // only recomputed when geometry actually changes — and exhaustive-deps is happy.
+  // only recomputed when geometry actually changes, and exhaustive-deps is happy.
   const { x, y, width, height } = node;
   const { src } = base;
   const { x: rx, y: ry, width: rw, height: rh } = base.rect;
@@ -689,8 +689,8 @@ function PixelatedImage({
 
 /**
  * The spotlight scrim: the page dimmed with this node's shape punched out. One
- * even-odd `<path>` from the shared module — the page rect concatenated with the
- * node's hole — filled the same way `render.ts`'s `Path2D` is, so the live SVG
+ * even-odd `<path>` from the shared module (the page rect concatenated with the
+ * node's hole) filled the same way `render.ts`'s `Path2D` is, so the live SVG
  * and the export can't diverge (ADR 0023). Drawn in place of the node's fills,
  * so it covers everything painted earlier in z-order and the hole reveals it.
  */
@@ -758,7 +758,7 @@ function FrameView({
 /**
  * A stamp: the bundled glyph fit into the node's box, painted from the two path
  * strings `lib/stamps.ts` computes. This and `render.ts`'s `drawStamp` fill and
- * stroke the *same* `d`, so — like the spotlight scrim (ADR 0023) — there is no
+ * stroke the *same* `d`, so, like the spotlight scrim (ADR 0023), there is no
  * per-renderer drawing left to drift.
  *
  * Paint order is halo (the node's strokes, widened underneath) then ink (its
@@ -984,7 +984,7 @@ function TextView({ node }: { node: TextNode }) {
  * A dimension line: shaft (broken around the label), end caps, and the length
  * label pill. Every number comes from `lib/measure.ts`, so this and `render.ts`'s
  * `drawMeasure` are two spellings of one drawing rather than two implementations
- * to keep in agreement — the contract `ChromeBar` and the spotlight scrim
+ * to keep in agreement: the contract `ChromeBar` and the spotlight scrim
  * already hold (ADR 0022/0023).
  *
  * The stroke's opacity is applied to the group so the shaft, caps, and label
@@ -1041,7 +1041,7 @@ function MeasureMarks({ node }: { node: LineNode | ArrowNode }) {
 }
 
 function LineView({ node }: { node: LineNode | ArrowNode }) {
-  // A dimension replaces the plain shaft entirely — its own shaft is broken
+  // A dimension replaces the plain shaft entirely: its own shaft is broken
   // around the label and inset for the caps (`lib/measure.ts`).
   if (node.measure) return <MeasureMarks node={node} />;
   const { a, b } = lineEndpoints(node);
@@ -1257,7 +1257,7 @@ function GradientFill({
 }
 
 /**
- * Raster gradient (live view) — freeform or mesh, which have no SVG primitive.
+ * Raster gradient (live view): freeform or mesh, which have no SVG primitive.
  * The supplied `render` rasterizes to an offscreen canvas (the same fn the export
  * uses), shown as an `<image>` clipped to the shape. The capped-resolution bitmap
  * is upscaled by `preserveAspectRatio="none"`; the blend is smooth so it's clean.

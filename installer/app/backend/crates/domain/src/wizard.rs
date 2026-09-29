@@ -72,7 +72,7 @@ pub struct ProductInfo {
 /// process was started with. Backs the fix for the Add/Remove Programs
 /// buttons: `ClippityWizard.exe --uninstall` (and `--modify`) open the
 /// GUI, and without this the shell had no way to tell the frontend which
-/// flow to enter — so it always fell back to the fresh-install wizard.
+/// flow to enter, so it always fell back to the fresh-install wizard.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LaunchRoute {

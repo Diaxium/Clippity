@@ -4,7 +4,7 @@
  * resolves the first non-modifier press to an author combo (via
  * {@link comboFromEvent}), hands it to `onCapture`, and stops.
  *
- * Escape cancels the recording without binding anything — so Escape is not
+ * Escape cancels the recording without binding anything, so Escape is not
  * itself rebindable through the recorder (it's the universal "back out"
  * key; a binding that defaults to it is restored via Reset, not re-recorded).
  * The listener runs in the capture phase and stops propagation so a press
@@ -54,7 +54,7 @@ export function useComboRecorder(
       }
 
       const combo = comboFromEvent(e);
-      if (!combo) return; // lone modifier — keep waiting for the main key
+      if (!combo) return; // lone modifier; keep waiting for the main key
       setRecording(false);
       onCaptureRef.current(combo);
     };

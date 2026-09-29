@@ -49,10 +49,10 @@ interface ModelsPanelProps {
 /**
  * Settings → Models. Two concerns:
  *
- * 1. **Behaviour** — auto-download policy, which detector backs the
+ * 1. **Behaviour**: auto-download policy, which detector backs the
  *    Object capture mode, and its confidence threshold. Persisted via
  *    the `models` settings section like every other panel.
- * 2. **Library** — every model Clippity can manage, with live status
+ * 2. **Library**: every model Clippity can manage, with live status
  *    from {@link useModels}: download (with progress + cancel),
  *    remove, retry-after-error. The backend owns the files; this
  *    panel only issues commands and renders the event stream.
@@ -163,7 +163,7 @@ export function ModelsPanel({ value, onChange }: ModelsPanelProps) {
         ))}
         {models && (
           <p className="px-5 py-3 text-[12px] text-[var(--color-hint)]">
-            Models run entirely on this device — nothing you capture leaves it.
+            Models run entirely on this device; nothing you capture leaves it.
             Installed: {formatMB(installedBytes)}.
           </p>
         )}
@@ -196,11 +196,11 @@ function ModelRow({
     void action().finally(() => setBusy(false));
   };
 
-  // A live release is newer than what's on disk and fetchable — the real
+  // A live release is newer than what's on disk and fetchable: the real
   // self-update path. Takes precedence over the compile-time
   // `update-available` phase, which only knows releases baked into the app.
   const liveUpdate = hasLiveUpdate(check);
-  // The latest published release is resolvable and fetchable — so a
+  // The latest published release is resolvable and fetchable, so a
   // not-installed model can be installed straight at the newest tag rather
   // than the older one the registry URL pins.
   const canFetchLatest = !!check && check.updatable;
@@ -366,7 +366,7 @@ function ReleaseLine({
       <span className="text-[var(--color-hint)]">latest published release</span>
     );
   } else if (!isInstalled && check) {
-    // Not installed but we know the latest published release — name it so
+    // Not installed but we know the latest published release: name it so
     // the Download button's tag has context.
     status = (
       <span className="text-[var(--color-hint)]">
@@ -374,7 +374,7 @@ function ReleaseLine({
       </span>
     );
   } else if (model.checkable && checking) {
-    // Only GitHub-checkable models get a "checking…" — others never
+    // Only GitHub-checkable models get a "checking…"; others never
     // resolve a verdict and shouldn't claim to be checking one.
     status = (
       <span className="text-[var(--color-hint)]">checking for updates…</span>
@@ -419,7 +419,7 @@ function DownloadProgress({
           className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-200"
           style={{ width: `${pct}%` }}
         />
-        {/* Quarter-way interval marks — same tick treatment as the
+        {/* Quarter-way interval marks: same tick treatment as the
             sensitivity slider, for a sense of how far along the fetch is. */}
         <TrackTicks at={[0.25, 0.5, 0.75]} />
       </div>

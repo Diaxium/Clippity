@@ -4,7 +4,7 @@
 //! writable folder never needs administrator rights, and asking for them
 //! up front would put a UAC prompt in front of every user regardless.
 //! Elevation is requested only once the destination is known to require
-//! it — see `installer_domain::install::needs_elevation`.
+//! it; see `installer_domain::install::needs_elevation`.
 //!
 //! Windows has no way to add privileges to a running process, so the only
 //! route is to start a second copy under the `runas` verb and let the
@@ -24,8 +24,8 @@ use windows::Win32::UI::WindowsAndMessaging::{SW_HIDE, SW_NORMAL};
 use installer_infra::error::{other, InstallerError, InstallerResult};
 
 /// `ShellExecuteW` returns a value >32 on success; at or below that it is
-/// an error code. `SE_ERR_ACCESSDENIED` (5) is the one users actually hit
-/// — it means they dismissed the UAC prompt.
+/// an error code. `SE_ERR_ACCESSDENIED` (5) is the one users actually hit:
+/// it means they dismissed the UAC prompt.
 const SE_ERR_ACCESSDENIED: isize = 5;
 
 /// Relaunch `exe` elevated, passing `args` on the command line.

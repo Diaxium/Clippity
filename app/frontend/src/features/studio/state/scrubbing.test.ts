@@ -22,7 +22,7 @@ const store = () => useStudioStore.getState();
  * stick roughly half a second in and refuse to go further, jittering.
  *
  * A drag seeks the element on every pointer move, but an element seeks
- * *asynchronously* — `seeked` and `timeupdate` arrive afterwards
+ * *asynchronously*: `seeked` and `timeupdate` arrive afterwards
  * carrying the position it has just finished reaching, not the one the
  * pointer is at now. Written back, that stale position overwrites the
  * fresh one. Dragging towards zero, every late report is larger than
@@ -83,7 +83,7 @@ describe("scrubbing ownership", () => {
 
   it("starts idle and resets to idle", () => {
     // A flag left set would freeze the playhead for the rest of the
-    // session — it would stop following playback entirely.
+    // session: it would stop following playback entirely.
     expect(store().scrubbing).toBe(false);
     store().setScrubbing(true);
     store().reset();

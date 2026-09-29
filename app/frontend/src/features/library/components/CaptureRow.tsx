@@ -35,9 +35,9 @@ interface CaptureRowProps {
 }
 
 /**
- * List-variant capture row. Same interaction contract as the card —
- * click focuses, double-click opens, Ctrl/⌘-click and Shift-click
- * multi-select (see `useCaptureClick`) — with the room a row has for the
+ * List-variant capture row. Same interaction contract as the card
+ *: click focuses, double-click opens, Ctrl/⌘-click and Shift-click
+ * multi-select (see `useCaptureClick`), with the room a row has for the
  * columns a card can't show: dimensions and size side by side, and the
  * tags inline rather than wrapped.
  */
@@ -60,11 +60,11 @@ export function CaptureRow({
   const isPalette = meta.kind === "palette" && !!meta.palette?.length;
   const thumb = useThumbnail(rowRef, isAux ? null : meta.id, width);
   const { copied, copy } = useCopyFeedback();
-  // Short, stable part inline; the full window title in the tooltip —
+  // Short, stable part inline; the full window title in the tooltip;
   // see `formatProvenance`.
   const provenance = formatProvenance(meta);
   // Dimensions for a file, hex / swatch count / word count for the aux
-  // kinds. The bare detail, not `captureSubtitle` — the row shows the
+  // kinds. The bare detail, not `captureSubtitle`: the row shows the
   // kind badge as its own chip further along, so prefixing it here would
   // print "MP4" twice.
   const detail = captureDetail(meta);

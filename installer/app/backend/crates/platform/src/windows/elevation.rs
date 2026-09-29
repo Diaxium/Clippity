@@ -6,7 +6,7 @@ use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 
 /// Query the current process token for its elevation flag.
 ///
-/// Returns false on any error (no token, query failure) — the caller
+/// Returns false on any error (no token, query failure): the caller
 /// treats "unknown" as "not elevated", which only ever *restricts* the
 /// all-users install scope, never wrongly enables it.
 pub fn is_elevated() -> bool {

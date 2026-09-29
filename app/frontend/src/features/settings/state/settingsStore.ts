@@ -8,7 +8,7 @@
  * because:
  *   - it is feature-scoped (only settings UI + `Providers.tsx` read it),
  *   - the global `themeStore` continues to hold the *resolved* theme
- *     (light|dark) used by Tailwind + Mica — `Providers.tsx` is the
+ *     (light|dark) used by Tailwind + Mica: `Providers.tsx` is the
  *     bridge that resolves pref → theme.
  */
 

@@ -43,7 +43,7 @@ jobs:
           languages: ${{ matrix.language }}
           # `none` for every language here: the JS and Actions extractors never
           # needed a build, and the Rust one parses sources rather than linking,
-          # which is what lets this run on Linux at all — the backend is
+          # which is what lets this run on Linux at all: the backend is
           # Windows-only and would not compile on this runner.
           build-mode: none
 

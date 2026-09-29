@@ -32,7 +32,7 @@ interface SelectionOverlayProps {
   marquee: Rect | null;
   /** Suppress handles while a transform/marquee gesture is in flight. */
   interacting: boolean;
-  /** Fill id whose gradient is being edited on-canvas — shows its handles. */
+  /** Fill id whose gradient is being edited on-canvas: shows its handles. */
   gradientEditFillId: string | null;
 }
 
@@ -53,7 +53,7 @@ const HANDLE_CURSOR: Record<ResizeHandle, string> = {
 /**
  * Screen-space selection chrome: bounding box, resize/rotate handles (single
  * box selection), endpoint handles (single line), a plain box for multi-select,
- * plus the hover outline and marquee rect. Purely presentational — handles
+ * plus the hover outline and marquee rect. Purely presentational: handles
  * carry `data-handle` / `data-endpoint` / `data-rotate` attributes that
  * EditorCanvas reads on pointer-down to start the matching gesture.
  */
@@ -144,7 +144,7 @@ export function SelectionOverlay({
 /**
  * Draggable handles for editing a gradient fill on the canvas (Workstream G2).
  * Linear shows start/end; radial shows center, a radius handle (+x edge), and
- * the focal point — each a dot carrying `data-grad` that EditorCanvas reads on
+ * the focal point: each a dot carrying `data-grad` that EditorCanvas reads on
  * pointer-down. Positions track the node's rotation, like the resize handles.
  */
 function GradientHandles({
@@ -286,7 +286,7 @@ function GradientHandles({
 /**
  * The drag handle on a callout's tail tip. A press on it starts EditorCanvas's
  * `tail` gesture (via `data-callout`), which swings the tail's angle and sets
- * its length from the pointer — the on-canvas counterpart to CalloutSection's
+ * its length from the pointer: the on-canvas counterpart to CalloutSection's
  * angle/length fields. The tip is placed by the same `calloutTailGeometry` both
  * renderers use, then rotated with the frame so it tracks a rotated bubble.
  */

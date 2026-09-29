@@ -9,8 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaptureMeta } from "../types";
 
-// Reaching the steady state is a cascade — fetch the first page, mount
-// it, then auto-fetch the next — and each of these cases mounts a batch
+// Reaching the steady state is a cascade (fetch the first page, mount
+// it, then auto-fetch the next) and each of these cases mounts a batch
 // of real cards. The default 1s `waitFor` window is too tight for that
 // when the whole suite runs in parallel on a loaded machine.
 configure({ asyncUtilTimeout: 10_000 });
@@ -158,7 +158,7 @@ function sentinel() {
  *  caller has only awaited the *last card* of the batch; the sentinel is
  *  registered by an effect, and an effect is not guaranteed to have run
  *  by the time that text query resolves. Asserting synchronously turned
- *  that ordering into a coin flip — "expected undefined to be defined",
+ *  that ordering into a coin flip: "expected undefined to be defined",
  *  on a run where nothing about the component had changed. */
 async function scrollToSentinel() {
   await waitFor(() => expect(sentinel()).toBeDefined());
@@ -173,7 +173,7 @@ async function scrollToSentinel() {
 
 /** Each case mounts a batch of real cards (motion wrapper, thumbnail
  *  observer, two store subscriptions apiece), which is comfortably the
- *  heaviest render in the suite — the default 5s can be tight when the
+ *  heaviest render in the suite: the default 5s can be tight when the
  *  whole suite runs in parallel on a loaded machine. */
 const RENDER_TIMEOUT = 20_000;
 
@@ -272,7 +272,7 @@ describe("LibraryLayout paged library", () => {
       await waitFor(() =>
         expect(screen.getByText(`cap-${INITIAL_RENDERED}`)).toBeInTheDocument()
       );
-      // Still bounded — one step, not the whole library.
+      // Still bounded: one step, not the whole library.
       expect(screen.queryByText(`cap-${TOTAL - 1}`)).not.toBeInTheDocument();
 
       // Scrolling is what pulls rows through the backend: pages were
@@ -292,7 +292,7 @@ describe("LibraryLayout paged library", () => {
     async () => {
       render(<LibraryLayout />);
       // Settle at the steady state (a full budget mounted) before growing
-      // it — until then the sentinel has nothing to observe.
+      // it: until then the sentinel has nothing to observe.
       await waitFor(() =>
         expect(
           screen.getByText(`cap-${INITIAL_RENDERED - 1}`)
@@ -303,7 +303,7 @@ describe("LibraryLayout paged library", () => {
         expect(screen.getByText(`cap-${INITIAL_RENDERED}`)).toBeInTheDocument()
       );
 
-      // A different list — the rows scrolled past aren't in it. The search
+      // A different list: the rows scrolled past aren't in it. The search
       // goes to the backend, so the grid restarts from a fresh first page.
       act(() => useLibraryStore.getState().setSearch("cap-4"));
 

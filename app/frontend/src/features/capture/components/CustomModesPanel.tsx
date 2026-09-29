@@ -15,14 +15,14 @@ interface CustomModesPanelProps {
 
 /**
  * The Standard + Advanced custom-modes panel. Visible only when the
- * top-level Capture Type is `custom`. Every tile is disabled in MVP
- * — the catalogue is shown so the user sees the full product shape,
+ * top-level Capture Type is `custom`. Every tile is disabled in MVP:
+ * the catalogue is shown so the user sees the full product shape,
  * with `unavailableHint` tooltips pointing at the responsible later
  * ports.
  *
  * A tile is also disabled when its component was declined at install time
  * (Grab Text without the OCR engine); it stays in the grid, badged "Not
- * installed", for the same reason the unshipped tiles do — the catalogue is
+ * installed", for the same reason the unshipped tiles do: the catalogue is
  * the product shape, and this one the user can get back through the
  * installer's Modify flow.
  */

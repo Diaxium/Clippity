@@ -3,7 +3,7 @@ import type { Effect, Paint, SceneNode, Stroke } from "../types";
 /**
  * Multi-select reading primitives (Workstream P3).
  *
- * The inspector has always rendered the **primary** selection — `sel[0]` — and
+ * The inspector has always rendered the **primary** selection, `sel[0]`, and
  * disabled the numeric fields whenever more than one node was selected. P3
  * replaces that with Figma's model: a field shows the shared value when the
  * selection agrees and **"Mixed"** when it doesn't, and editing it applies to
@@ -17,7 +17,7 @@ import type { Effect, Paint, SceneNode, Stroke } from "../types";
 /** A property read across a selection. */
 export interface Shared<T> {
   /**
-   * The primary node's value. Deliberately a real value even when `mixed` — a
+   * The primary node's value. Deliberately a real value even when `mixed`: a
    * scrub or arrow-nudge on a mixed field has to start *somewhere*, and the
    * primary is the node the user most recently reached for.
    */
@@ -30,7 +30,7 @@ export interface Shared<T> {
  * Read `pick` across `items`, reporting the primary's value and whether the
  * rest agree.
  *
- * `identity` projects a value down to what "the same" means for it — the
+ * `identity` projects a value down to what "the same" means for it: the
  * default compares with `Object.is`, which is right for the numbers, strings
  * and booleans that make up most node properties. Structural values (corner
  * radii, callout specs, paint previews) pass a projection instead so two equal
@@ -56,7 +56,7 @@ export function shared<I, T>(
 }
 
 /**
- * `shared` for values that only make sense on *some* nodes — text properties on
+ * `shared` for values that only make sense on *some* nodes: text properties on
  * a mixed-type selection, a callout's tail angle, a sample's amount. Nodes the
  * picker rejects (returning `undefined`) sit out the comparison entirely rather
  * than reading as a disagreement, which is what lets a selection of three
@@ -93,7 +93,7 @@ export const MIXED_LABEL = "Mixed";
  * three outlined shapes and dragging the first stroke's width therefore thickens
  * all three, while a node with fewer entries is skipped instead of having rows
  * invented for it. Replace-all would have destroyed per-node paint stacks on
- * every edit — a far more surprising outcome for an annotation tool.
+ * every edit: a far more surprising outcome for an annotation tool.
  */
 export type EntryList = "fills" | "strokes" | "effects";
 
@@ -103,7 +103,7 @@ export type EntryOf<K extends EntryList> = K extends "fills"
     ? Stroke
     : Effect;
 
-/** Addresses one node's list entry — what the batch store actions take. */
+/** Addresses one node's list entry: what the batch store actions take. */
 export interface EntryRef {
   nodeId: string;
   entryId: string;
@@ -116,7 +116,7 @@ export interface EntryPeer<K extends EntryList> {
 }
 
 /**
- * The entry at `index` of `key` on every node that has one — the batch target
+ * The entry at `index` of `key` on every node that has one: the batch target
  * for a row edit. Nodes with a shorter list are simply absent.
  */
 export function entriesAt<K extends EntryList>(
@@ -141,7 +141,7 @@ export function refsOf<K extends EntryList>(
   return peers.map((p) => ({ nodeId: p.nodeId, entryId: p.entry.id }));
 }
 
-/** `shared` over the peers at a row — the read half of edit-by-index. */
+/** `shared` over the peers at a row: the read half of edit-by-index. */
 export function sharedEntry<K extends EntryList, T>(
   peers: readonly EntryPeer<K>[],
   pick: (entry: EntryOf<K>) => T,
@@ -172,7 +172,7 @@ export function triState<I>(
 }
 
 /**
- * What a toggle click should write. A split selection resolves *on* — pressing
+ * What a toggle click should write. A split selection resolves *on*: pressing
  * a mixed toggle unifies the selection rather than flipping each node
  * independently, so one press always produces a state you can see.
  */

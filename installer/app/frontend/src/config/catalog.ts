@@ -1,5 +1,5 @@
 /**
- * The concrete Clippity install manifest for the frontend — the mirror of
+ * The concrete Clippity install manifest for the frontend: the mirror of
  * the Rust `installer_services::manifest`. Kept here so the wizard renders
  * real component names, sizes, and product facts in browser preview
  * (where the backend commands aren't reachable). Under the real Tauri

@@ -1,4 +1,4 @@
-//! `installer-platform` — OS-specific installer operations.
+//! `installer-platform`: OS-specific installer operations.
 //!
 //! Higher layers speak in domain terms ("register an uninstall entry",
 //! "create a desktop shortcut", "am I elevated?"). The cross-platform

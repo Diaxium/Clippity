@@ -7,7 +7,7 @@ import { useOverlayStore } from "../state/overlayStore";
 
 /**
  * Minimal bottom chrome for Color-Picker mode. Color-Pick has no
- * selection and no Capture action — one click samples the pixel — so the
+ * selection and no Capture action, one click samples the pixel, so the
  * full `BottomToolbar` (mode tabs / Capture CTA / utility toggles)
  * doesn't apply. This is just a hint pill + a Cancel button.
  */

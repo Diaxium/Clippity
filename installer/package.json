@@ -2,7 +2,7 @@
   "name": "clippity-installer",
   "version": "0.3.2",
   "private": true,
-  "description": "Clippity Setup — the install / modify / update / repair / uninstall wizard. Root workspace.",
+  "description": "Clippity Setup: the install / modify / update / repair / uninstall wizard. Root workspace.",
   "license": "MIT",
   "packageManager": "pnpm@11.17.0",
   "engines": {

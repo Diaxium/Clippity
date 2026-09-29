@@ -115,7 +115,7 @@ export function CopyButton({
         timer.current = setTimeout(() => setCopied(false), 1600);
       },
       () => {
-        /* clipboard refused — the button simply doesn't confirm */
+        /* clipboard refused: the button simply doesn't confirm */
       }
     );
   }, [text]);
@@ -137,7 +137,7 @@ export function CopyButton({
  *
  * `confirm` mirrors `developer.confirmDestructive`: when the user has
  * turned that off, the first click acts. When it is on, the first click
- * arms and the label becomes the consequence — a two-step that costs a
+ * arms and the label becomes the consequence: a two-step that costs a
  * click and has saved a library index more than once.
  */
 export function DangerButton({
@@ -148,7 +148,7 @@ export function DangerButton({
   disabled = false,
 }: {
   label: string;
-  /** What will be removed — shown on the armed button. */
+  /** What will be removed: shown on the armed button. */
   confirmLabel: string;
   confirm: boolean;
   onConfirm: () => void;
@@ -205,7 +205,7 @@ export function DangerButton({
   );
 }
 
-/** A short status note under a row — the result of the last action. */
+/** A short status note under a row: the result of the last action. */
 export function ResultNote({ children }: { children: ReactNode }) {
   if (!children) return null;
   return (

@@ -48,7 +48,7 @@ describe("stepFrame", () => {
 
   it("advances from a mid-frame scrub position to the next frame", () => {
     // The bug this guards: without snapping first, stepping forward
-    // from 20ms lands at 53ms — inside frame 1 either way, so the
+    // from 20ms lands at 53ms, inside frame 1 either way, so the
     // picture never changes and the button looks dead.
     const next = stepFrame(20, 30, 1, duration);
     expect(msToFrame(next, 30)).toBe(1);

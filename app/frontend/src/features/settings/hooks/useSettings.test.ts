@@ -75,7 +75,7 @@ describe("useSettings", () => {
     renderHook(() => useSettings());
     // Wait for the async hydration to flush so the React state update
     // happens inside `act` (otherwise the testing-library wrapper
-    // logs an "update not wrapped in act" warning — harmless but
+    // logs an "update not wrapped in act" warning, harmless but
     // noisy for `npm test`'s clean output).
     await waitFor(() => expect(onSettingsChangedMock).toHaveBeenCalledTimes(1));
   });

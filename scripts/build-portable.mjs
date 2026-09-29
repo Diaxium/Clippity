@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Assembles the portable distribution of Clippity.
 //
-// A portable build is the same binary as the installed one — the only
+// A portable build is the same binary as the installed one: the only
 // difference is the `Clippity.portable` marker file sitting next to it,
 // which `clippity_infra::paths::portable_root` looks for. With the marker
 // present the app keeps settings, the library database, captures, caches,
@@ -63,15 +63,15 @@ async function main() {
 
   await cp(sourceExe, join(stageDir, "Clippity.exe"));
 
-  // The marker's contents are never read — only its presence matters —
+  // The marker's contents are never read, only its presence matters,
   // so use it to explain itself to anyone who opens the folder.
   await writeFile(
     join(stageDir, "Clippity.portable"),
     [
       "Deleting this file turns portable mode off.",
       "",
-      "While it is here, Clippity keeps everything it saves — settings,",
-      "your library, captures, caches, and its browser profile — in the",
+      "While it is here, Clippity keeps everything it saves (settings,",
+      "your library, captures, caches, and its browser profile) in the",
       "Data folder next to Clippity.exe.",
       "",
       "Move this whole folder wherever you like; your data travels with it.",
@@ -84,7 +84,7 @@ async function main() {
     [
       `Clippity ${version} (portable)`,
       "",
-      "Run Clippity.exe — there is nothing to install.",
+      "Run Clippity.exe; there is nothing to install.",
       "",
       "Everything Clippity saves goes in the Data folder beside the",
       "executable, so you can run this from a USB stick and take it",
@@ -105,7 +105,7 @@ async function main() {
 
   const zipInfo = await stat(zipPath);
   console.log(
-    `[portable] Built ${folderName} — folder + zip ` +
+    `[portable] Built ${folderName}: folder + zip ` +
       `(${(zipInfo.size / 1_000_000).toFixed(1)} MB) in build/portable/`,
   );
 }

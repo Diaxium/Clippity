@@ -4,13 +4,13 @@
  * One `library_list` fetch feeds three cards, each a different slice of
  * the same newest-first list:
  *
- *  - **recent**   — the newest file-backed captures (the thumbnail strip)
- *  - **editing**  — resume-in-editor list: editor exports (`mode:
+ *  - **recent**  : the newest file-backed captures (the thumbnail strip)
+ *  - **editing** : resume-in-editor list: editor exports (`mode:
  *                   "Edited"`) first, then filled with the most recent
  *                   captures so the card isn't empty on a fresh library
- *  - **activity** — the newest captures as a compact log
+ *  - **activity**: the newest captures as a compact log
  *
- * Aux entries (color / palette / text) are excluded everywhere — they
+ * Aux entries (color / palette / text) are excluded everywhere: they
  * have no file to reopen in the editor and no thumbnail to show. Refetches
  * automatically on `clippity://library/updated` (a capture landing, or a
  * delete / restore anywhere). Errors leave the lists empty and render the
@@ -37,7 +37,7 @@ export interface HomeCaptures {
   recent: CaptureMeta[];
   editing: CaptureMeta[];
   activity: CaptureMeta[];
-  /** Total file-backed captures (not sliced) — for the Storage card. */
+  /** Total file-backed captures (not sliced): for the Storage card. */
   count: number;
   loading: boolean;
 }
@@ -54,7 +54,7 @@ export function useHomeCaptures(): HomeCaptures {
         const next = await libraryList(false);
         if (!cancelled) setItems(next ?? []);
       } catch {
-        // Browser preview / no captures dir yet — render empty states.
+        // Browser preview / no captures dir yet: render empty states.
         if (!cancelled) setItems([]);
       } finally {
         if (!cancelled) setLoading(false);

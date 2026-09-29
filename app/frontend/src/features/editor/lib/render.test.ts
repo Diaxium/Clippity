@@ -27,7 +27,7 @@ const ALL: readonly ExportFormat[] = ["png", "jpeg", "webp"];
 describe("export format helpers", () => {
   it("maps each format to its canvas MIME type", () => {
     expect(formatMime("png")).toBe("image/png");
-    // JPG's MIME subtype is "jpeg" — the canvas rejects "image/jpg".
+    // JPG's MIME subtype is "jpeg"; the canvas rejects "image/jpg".
     expect(formatMime("jpeg")).toBe("image/jpeg");
     expect(formatMime("webp")).toBe("image/webp");
   });
@@ -70,7 +70,7 @@ describe("exportBounds", () => {
 
   it("grows upward by the bar, so a one-node export doesn't slice it off", () => {
     // `rotatedAABB` measures the node's *frame*, but a chromed node draws a
-    // title bar above it — exporting the capture alone would otherwise crop it.
+    // title bar above it: exporting the capture alone would otherwise crop it.
     expect(exportBounds(capture(BAR))).toEqual({
       x: 0,
       y: -36,
@@ -81,7 +81,7 @@ describe("exportBounds", () => {
 
   it("grows around a dimension's caps and label, which hang off its segment", () => {
     // A horizontal line's frame is zero-height, so `rotatedAABB` alone would
-    // size a one-node export to a 1px strip and crop the whole mark away —
+    // size a one-node export to a 1px strip and crop the whole mark away:
     // the same trap window chrome hit, from a second direction.
     __resetNodeIdForTests();
     const n = makeLine(
@@ -98,7 +98,7 @@ describe("exportBounds", () => {
 
   it("rotates the window about the node's centre, not the window's", () => {
     // That's the transform both renderers apply to the whole group, bar
-    // included — and the distinction is observable. The window's centre sits
+    // included, and the distinction is observable. The window's centre sits
     // half a bar (18px) *above* the node's; a quarter turn clockwise about the
     // node's centre therefore lands it 18px to the **right**, not back on the
     // node's centre as rotating about the window's own centre would.

@@ -2,7 +2,7 @@ version: 2
 
 # Clippity is two products in one repository: the app (`/`, `/app/backend`)
 # and the installer that ships it (`/installer`, `/installer/app/backend`).
-# Both carry their own lockfiles, so both need their own ecosystem entries —
+# Both carry their own lockfiles, so both need their own ecosystem entries:
 # a single root entry would leave the installer's tree unwatched.
 updates:
   # --- GitHub Actions ---

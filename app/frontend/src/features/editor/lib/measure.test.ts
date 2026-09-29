@@ -22,7 +22,7 @@ import {
 
 const SPEC: MeasureSpec = { caps: "tick", scale: 1, unit: "px" };
 
-/** A dimension line from (x,y) running (dx,dy) — line-like nodes encode their
+/** A dimension line from (x,y) running (dx,dy): line-like nodes encode their
  *  direction in signed width/height. */
 function dimension(
   dx: number,
@@ -139,7 +139,7 @@ describe("measureGeometry", () => {
     expect(arrow.heads[0]![0]).toEqual({ x: 100, y: 200 });
     expect(arrow.heads[1]![0]).toEqual({ x: 700, y: 200 });
     expect(arrow.heads[0]![1]!.x).toBeGreaterThan(100);
-    // The shaft stops short of the barbs so they stay sharp — the same inset a
+    // The shaft stops short of the barbs so they stay sharp: the same inset a
     // plain arrow node already applies.
     expect(arrow.shaft[0]![0]!.x).toBeGreaterThan(tick.shaft[0]![0]!.x);
   });

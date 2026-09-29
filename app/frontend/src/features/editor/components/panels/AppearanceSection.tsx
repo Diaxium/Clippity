@@ -28,7 +28,7 @@ const BLEND_OPTIONS = [
  * How the node composites: opacity, blend mode, and visibility.
  *
  * Opacity is a slider with the percentage read out beside its label rather than
- * a number field — it's the one property here that's judged by eye against the
+ * a number field: it's the one property here that's judged by eye against the
  * canvas, so it wants a control you can sweep. Corner radius used to share this
  * section and now has its own (see `CornersSection`).
  *
@@ -46,7 +46,7 @@ export function AppearanceSection() {
 
   const opacity = shared(sel, (n) => n.opacity)!;
   const visible = triState(sel, (n) => n.visible);
-  // Absent blendMode is "normal" — normalized here so a mix of unset and
+  // Absent blendMode is "normal": normalized here so a mix of unset and
   // explicitly-normal nodes doesn't read as disagreement.
   const blend = shared(sel, (n) => n.blendMode ?? "normal")!;
 

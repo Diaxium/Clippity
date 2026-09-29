@@ -14,8 +14,8 @@ import type {
  * What this installation may offer, as reported by the backend from the
  * installer's recorded choices.
  *
- * App-wide rather than feature-local — the Home launcher, the capture-mode
- * panel, and three Settings panels all read it — so it lives beside
+ * App-wide rather than feature-local (the Home launcher, the capture-mode
+ * panel, and three Settings panels all read it) so it lives beside
  * `themeStore` instead of under `features/`.
  *
  * Not a `useSettings`-style live subscription: the installer's configuration
@@ -31,7 +31,7 @@ import type {
 interface CapabilitiesState {
   capabilities: Capabilities;
   source: ProvisioningSource;
-  /** False until the backend has answered — the optimistic default is in
+  /** False until the backend has answered: the optimistic default is in
    *  place. UI that would rather wait than flicker can check this. */
   hydrated: boolean;
   setProfile: (profile: InstallationProfile) => void;
@@ -65,7 +65,7 @@ let inFlight: Promise<void> | null = null;
  * A failure leaves the optimistic default in place and marks the store
  * hydrated anyway: the backend refuses declined features on its own, so the
  * cost of guessing wrong here is a control that reports "not installed" when
- * pressed — not a broken app. Retrying (or blocking the UI) would trade that
+ * pressed, not a broken app. Retrying (or blocking the UI) would trade that
  * for something worse.
  */
 export function hydrateCapabilities(): Promise<void> {
@@ -76,7 +76,7 @@ export function hydrateCapabilities(): Promise<void> {
   return inFlight;
 }
 
-/** Reset the fetch guard. Test-only — production windows hydrate once and
+/** Reset the fetch guard. Test-only: production windows hydrate once and
  *  live with the result for the process's lifetime. */
 export function resetCapabilitiesHydration(): void {
   inFlight = null;

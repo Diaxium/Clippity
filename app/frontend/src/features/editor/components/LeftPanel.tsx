@@ -1,7 +1,7 @@
 import { LayersTree } from "./LayersTree";
 
 /**
- * Left rail of the editor — a fixed column hosting the scene's layer tree.
+ * Left rail of the editor: a fixed column hosting the scene's layer tree.
  * (Pages/Assets were intentionally dropped: this is a single-capture editor,
  * not a multi-page design tool, so they served no purpose here.) Its header
  * shares the inspector's `h-9` band so the chrome lines up under the top bar.

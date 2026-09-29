@@ -36,7 +36,7 @@ describe("textStats", () => {
   });
 
   it("counts no words in blank or whitespace-only text", () => {
-    // `"".split(/\s+/)` is `[""]` — the classic off-by-one here.
+    // `"".split(/\s+/)` is `[""]`: the classic off-by-one here.
     expect(textStats("").words).toBe(0);
     expect(textStats("   \n  ").words).toBe(0);
   });
@@ -134,7 +134,7 @@ describe("formatProvenance", () => {
 
   it("names the display and the preset when they are known", () => {
     // Most captures are interactive, so a display without a preset is
-    // the common shape — the tail must not leave a dangling separator.
+    // the common shape: the tail must not leave a dangling separator.
     expect(formatProvenance({ mode: "Region", monitor: "Display 1" })).toBe(
       "Region · Display 1"
     );

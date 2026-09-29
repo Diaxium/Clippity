@@ -4,7 +4,7 @@
  * The legacy version inlined an ~80-line per-mode string switch in
  * the render path; this is the same data as a tiny strategy table
  * keyed by `(mode, phase)`. Only Region populates real strings for
- * MVP — other modes return their "deferred" copy so the wire shape
+ * MVP: other modes return their "deferred" copy so the wire shape
  * doesn't break when those ports land.
  */
 
@@ -31,7 +31,7 @@ type IconComponent = ComponentType<{
 }>;
 type Tint = "warm" | "cool";
 
-/** Region-mode banner copy — primary string changes with phase so
+/** Region-mode banner copy: primary string changes with phase so
  *  the user always sees a next-step prompt. */
 const REGION_BY_PHASE: Record<Phase, BannerCopy> = {
   empty: {
@@ -64,7 +64,7 @@ export function bannerCopy(mode: OverlayMode, phase: Phase): BannerCopy {
     };
   }
   // The recording modes reuse Region's and Window's interactions but say
-  // "record", not "capture" — the commit starts a session that keeps
+  // "record", not "capture": the commit starts a session that keeps
   // running, which is a different promise from taking a shot.
   if (mode === "record-region") {
     return {
@@ -110,7 +110,7 @@ export function bannerCopy(mode: OverlayMode, phase: Phase): BannerCopy {
       primary:
         phase === "selected"
           ? "Press Capture or Enter · drag again to retrace"
-          : "Drag to trace — Clippity snaps to the nearest edges",
+          : "Drag to trace · Clippity snaps to the nearest edges",
       shortcut: "ESC to cancel",
     };
   }
@@ -167,7 +167,7 @@ export function bannerCopy(mode: OverlayMode, phase: Phase): BannerCopy {
     return {
       primary:
         phase === "selected"
-          ? "Press Start or Enter — Clippity scrolls and captures for you"
+          ? "Press Start or Enter · Clippity scrolls and captures for you"
           : "Select the scrollable area to auto-capture",
       shortcut: "ESC to cancel",
     };
@@ -235,7 +235,7 @@ export const REGION_METHODS: readonly RegionMethod[] = [
     id: "magnetic-lasso",
     label: "Magnetic Lasso",
     icon: Magnet,
-    hint: "Trace — snaps to edges",
+    hint: "Trace, snaps to edges",
     available: true,
   },
   {

@@ -18,7 +18,7 @@ const CLOSE_DIST = 11;
  *
  *   - Click drops a hard-corner anchor.
  *   - Click-and-drag pulls out symmetric curve handles for that anchor
- *     (Alt while dragging breaks the symmetry into a cusp — only the
+ *     (Alt while dragging breaks the symmetry into a cusp: only the
  *     outgoing handle is set).
  *   - Clicking back on the first anchor (≥ 3 anchors) closes the path →
  *     `selected`. `Enter` does the same via `useOverlayKeybinds`.

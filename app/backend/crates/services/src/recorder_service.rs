@@ -2,7 +2,7 @@
 //!
 //! One session, two outputs. A worker thread captures the selected
 //! rectangle on a fixed cadence and feeds every frame to whichever
-//! encoder the requested [`RecorderFormat`] selected — Media
+//! encoder the requested [`RecorderFormat`] selected: Media
 //! Foundation's H.264/AAC muxer, or a streaming GIF encoder. Everything
 //! before that fork (target resolution, pacing, the pause clock, audio
 //! mixing, the HUD's status) is shared.
@@ -61,7 +61,7 @@ use sink::{RecordingSink, SinkFrame};
 /// One grabbed frame, in whatever channel order its source produced.
 ///
 /// The buffer is handed back to the source after it has been encoded so
-/// the steady state allocates nothing — a 5120x1440 frame is 28 MiB, and
+/// the steady state allocates nothing: a 5120x1440 frame is 28 MiB, and
 /// asking the allocator for that sixty times a second is its own cost.
 struct Captured {
     pixels: Vec<u8>,
@@ -71,7 +71,7 @@ struct Captured {
 
 impl Captured {
     /// A borrowed view for the sink. The geometry is the region's,
-    /// because that is what the grab was asked for — a buffer that
+    /// because that is what the grab was asked for: a buffer that
     /// disagrees is a bug the sink refuses rather than reads past.
     fn view(&self, region: Region) -> SinkFrame<'_> {
         SinkFrame {
@@ -91,7 +91,7 @@ impl Captured {
 /// the toast WebView sixty times to redraw the same "00:07".
 const TICK_INTERVAL: Duration = Duration::from_millis(500);
 
-/// How often the audio meters are emitted. Ten a second — fast enough
+/// How often the audio meters are emitted. Ten a second: fast enough
 /// that speech reads as movement rather than as a bar that flicks
 /// between two values, slow enough that it costs the toast WebView a
 /// fraction of what a per-frame event would.
@@ -111,7 +111,7 @@ const CONTROL_POLL: Duration = Duration::from_millis(20);
 /// being written again.
 ///
 /// A still desktop produces no new frames at all, and the held frame
-/// simply lasts longer — which is correct, and free. But the container
+/// simply lasts longer, which is correct, and free. But the container
 /// is *fragmented* so a killed session still plays (ADR 0031), and a
 /// fragment only commits when something is written to it. Left
 /// unbounded, a recording of a static screen would have nothing on disk
@@ -139,7 +139,7 @@ struct SessionControl {
     /// call. The worker re-reads them every poll, so a slider drag takes
     /// effect within one audio packet.
     ///
-    /// Mute lives here too, as gain zero — see
+    /// Mute lives here too, as gain zero; see
     /// `domain::recorder::clamp_gain_pct` for why it needs no field of
     /// its own. `muted_gain` remembers the pre-mute value so unmuting
     /// restores the slider rather than snapping it to unity.
@@ -193,7 +193,7 @@ impl SessionControl {
     ///
     /// Unmuting a source that was dragged to zero *and then* muted has
     /// nothing meaningful to restore, so it lands on unity rather than
-    /// silently staying silent — an unmute that changes nothing reads as
+    /// silently staying silent: an unmute that changes nothing reads as
     /// a broken button.
     fn set_muted(&self, source: recorder::AudioSource, muted: bool) {
         let (current, premute) = self.gain_slots(source);
@@ -236,7 +236,7 @@ impl SessionControl {
 struct ActiveSession {
     control: Arc<SessionControl>,
     worker: JoinHandle<SessionOutcome>,
-    /// What this session was *asked* to do — format, encoded size,
+    /// What this session was *asked* to do: format, encoded size,
     /// frame rate, hardware preference. Captured at start because those
     /// are the only facts the outcome can't reconstruct, and completed
     /// with the session's counters on stop (see
@@ -245,7 +245,7 @@ struct ActiveSession {
     /// Primary window to put back when the session ends, for a
     /// recording that took over from the overlay (`OverlayService::dismiss`
     /// hid it and handed the label over). `None` for a session started
-    /// directly — nothing was hidden, so restoring would *show* a window
+    /// directly: nothing was hidden, so restoring would *show* a window
     /// the user never had open.
     restore_on_stop: Option<String>,
 }
@@ -334,7 +334,7 @@ impl RecorderService {
     /// render immediately rather than waiting for the first tick.
     ///
     /// `restore_on_stop` is the primary window to put back when the
-    /// session ends — `Some` only when a recording took over from the
+    /// session ends: `Some` only when a recording took over from the
     /// overlay, which hid it. See `OverlayService::dismiss`.
     pub fn start(
         &self,
@@ -343,8 +343,8 @@ impl RecorderService {
         restore_on_stop: Option<String>,
     ) -> AppResult<RecorderStatus> {
         let mut active = self.lock_active()?;
-        // Reap a session that ended on its own — a duration limit, or a
-        // failure — and was never stopped by anyone. Without this, one
+        // Reap a session that ended on its own (a duration limit, or a
+        // failure) and was never stopped by anyone. Without this, one
         // self-stopped session would refuse every later recording for
         // the rest of the process's life.
         if active.as_ref().is_some_and(|s| s.worker.is_finished()) {
@@ -419,7 +419,7 @@ impl RecorderService {
 
         // Frame the recorded area for the length of the session. Shown
         // after the worker is running so it can't be left on screen by a
-        // start that failed — and it is the only thing on screen saying
+        // start that failed, and it is the only thing on screen saying
         // what is being recorded once the overlay is down.
         if self.prefs.recording().outline {
             show_outline(app, validated_region);
@@ -451,7 +451,7 @@ impl RecorderService {
             .ok_or_else(|| AppError::Recorder("no recording is in progress".into()))?;
         session.control.paused.store(paused, Ordering::Relaxed);
         // Reflect the transition immediately rather than waiting for the
-        // worker's next tick — the HUD button must not appear stuck.
+        // worker's next tick: the HUD button must not appear stuck.
         let mut status = session.control.snapshot();
         status.state = if paused {
             RecorderState::Paused
@@ -464,14 +464,14 @@ impl RecorderService {
 
     /// Set one input's level mid-session, as a percentage of unity.
     ///
-    /// **A no-op when nothing is recording**, unlike `pause` — which
+    /// **A no-op when nothing is recording**, unlike `pause`, which
     /// errors on an idle session because pausing nothing is a caller
     /// bug. This one is a slider: the HUD can be closing while the user
     /// is still dragging, and turning that race into an error toast
     /// would be noise about something that no longer matters.
     ///
     /// Adjusts only the live session. The persisted default lives in
-    /// `RecordingSettings` and is deliberately not written here — a
+    /// `RecordingSettings` and is deliberately not written here: a
     /// level nudged for one recording should not silently become the
     /// level every future recording starts at.
     pub fn set_gain(&self, source: recorder::AudioSource, pct: u16) {
@@ -508,7 +508,7 @@ impl RecorderService {
     /// when nothing was recording.
     ///
     /// Emits nothing: `recorder/finished` is the **worker's** to send,
-    /// because a session can also end without anyone calling this — a
+    /// because a session can also end without anyone calling this: a
     /// duration limit, or a capture failure. Emitting here too would
     /// double-fire for every ordinary stop. The HUD listens for the
     /// event and calls this to reap, so both paths converge.
@@ -543,7 +543,7 @@ impl RecorderService {
             .map_err(|_| AppError::Recorder("the recording worker stopped unexpectedly".into()))?;
         self.remember(session.plan, &final_status, &outcome);
 
-        // Put back the window the overlay hid on the way in — after the
+        // Put back the window the overlay hid on the way in, after the
         // worker has stopped, so it can't appear in the last frames.
         // Skipped entirely for a session started outside the overlay:
         // nothing was hidden, and `restore_window` *shows* its target,
@@ -576,7 +576,7 @@ const FRAME_WINDOW: &str = "recorder-frame";
 ///
 /// The rect is in canvas coordinates, so the virtual-desktop origin is
 /// added back to reach the physical screen coordinates the window
-/// manager wants — `(0, 0)` on the canvas is the top-left of the
+/// manager wants: `(0, 0)` on the canvas is the top-left of the
 /// *virtual* desktop, which on a multi-monitor setup is frequently
 /// negative in screen space.
 fn show_outline(app: &AppHandle, region: Region) {
@@ -601,7 +601,7 @@ fn show_outline(app: &AppHandle, region: Region) {
     }
     let _ = frame.set_always_on_top(true);
     // Pure indicator: never intercept a click meant for whatever is
-    // being recorded — the user is working inside this rectangle.
+    // being recorded; the user is working inside this rectangle.
     let _ = frame.set_ignore_cursor_events(true);
     if let Err(e) = frame.show() {
         tracing::warn!("recording outline not shown: {e}");
@@ -637,7 +637,7 @@ fn emit_finished(app: &AppHandle, outcome: &SessionOutcome) {
 /// The worker body: set up the encoder, run the capture loop, then
 /// commit or discard.
 ///
-/// Never returns `Err` — every exit path produces a [`SessionOutcome`],
+/// Never returns `Err`: every exit path produces a [`SessionOutcome`],
 /// because a recording that failed halfway still has a file the user
 /// should get. The error travels in the outcome instead.
 fn run_session(
@@ -665,7 +665,7 @@ fn run_session(
     };
 
     // Announced here, not in `stop`, because the worker is the only
-    // party present on every exit path — including the ones nobody
+    // party present on every exit path, including the ones nobody
     // asked for (a duration limit, a failed encoder). The HUD reacts to
     // this event and calls `stop` to reap, so a user-pressed Stop and a
     // self-stop end the same way.
@@ -691,7 +691,7 @@ fn run_session_inner(
     std::fs::create_dir_all(captures_dir)?;
     // The working file sits in the destination directory so the commit
     // is a same-volume rename. Dot-prefixed so the library scan skips
-    // it — an in-progress recording must not appear as a row, and a
+    // it: an in-progress recording must not appear as a row, and a
     // file orphaned by a crash must not either.
     let working = captures_dir.join(format!(
         ".clippity-recording-{}.{}",
@@ -742,7 +742,7 @@ fn run_session_inner(
     let mut last_levels = Instant::now();
     let mut frames: u64 = 0;
     let mut dropped: u64 = 0;
-    // Assigned on every path out of the loop below — there is no
+    // Assigned on every path out of the loop below: there is no
     // default outcome, and letting the compiler prove that is better
     // than seeding a value that would silently stand in if a future
     // `break` forgot to set one.
@@ -790,25 +790,25 @@ fn run_session_inner(
         //
         // `Ok(None)` means the screen has not changed. Nothing is
         // written: the frame already held simply lasts longer, which is
-        // exactly what it should do and costs nothing — and on a screen
+        // exactly what it should do and costs nothing, and on a screen
         // recording, most frames are that.
         match source.next(request.region, recycle.take()) {
             // Unchanged. The held frame goes on covering this instant,
-            // at no cost at all — until `MAX_HELD_MS` has passed, when
+            // at no cost at all, until `MAX_HELD_MS` has passed, when
             // it is written once so the fragmented container keeps
             // committing and a killed session still plays (ADR 0031).
             //
             // Written *in place* rather than cloned and re-grabbed: the
             // picture is the one already in hand, so copying 28 MiB to
             // hand it back to itself bought nothing. It also stops a
-            // motionless screen inflating the HUD's frame counter —
+            // motionless screen inflating the HUD's frame counter:
             // nothing was captured here, so nothing is counted.
             Ok(None) => {
                 if let Some((held, since)) = pending.as_mut() {
                     if elapsed_ms.saturating_sub(*since) >= MAX_HELD_MS {
                         // The screen has not changed, but a source may
                         // have. Restore the captured pixels under each
-                        // source and blend again — without this the
+                        // source and blend again: without this the
                         // webcam freezes exactly when it is the only
                         // thing still moving, and a translucent source
                         // compounds over its own output (ADR 0033).
@@ -846,7 +846,7 @@ fn run_session_inner(
                 // keeps up: at 5120x1440 a grab can take a third of a
                 // second, so each sample claimed 33 ms and the next
                 // began 300 ms later. Everything between was a hole with
-                // no frame in it — a player cannot seek into one, so the
+                // no frame in it: a player cannot seek into one, so the
                 // playhead skids to the far side, and playback runs out
                 // of pictures long before the clip's stated end.
                 if let Some((previous, previous_ms)) = pending.take() {
@@ -868,7 +868,7 @@ fn run_session_inner(
                     }
                 }
                 // Draw the session's sources over the capture before
-                // anything reads it — the poster included, so the
+                // anything reads it, the poster included, so the
                 // library's thumbnail shows the same picture the file
                 // does.
                 let mut frame = frame;
@@ -881,7 +881,7 @@ fn run_session_inner(
                             frame.order,
                         )
                     });
-                    // Empty when every source failed to open — a
+                    // Empty when every source failed to open: a
                     // camera another app holds, an image since deleted.
                     // The session records regardless (ADR 0033).
                     if !compositor.is_empty() {
@@ -910,7 +910,7 @@ fn run_session_inner(
                     break;
                 }
                 // A single failed grab (a mode switch, a UAC prompt
-                // taking the desktop) must not end the recording — the
+                // taking the desktop) must not end the recording: the
                 // user is still recording something. Count it and carry
                 // on; a climbing dropped count is what the HUD shows.
                 dropped += 1;
@@ -968,7 +968,7 @@ fn run_session_inner(
             // one frame each time round and used to report one drop per
             // pass, which reads as a light stutter; a loop running at a
             // tenth skips nine and reported the same. The count only
-            // means anything to the user — "lower the frame rate" — if
+            // means anything to the user, "lower the frame rate", if
             // it says how many frames the file does not have.
             let behind = now.saturating_duration_since(next_frame) + frame_interval;
             dropped += (behind.as_nanos() / frame_interval.as_nanos().max(1)).max(1) as u64;
@@ -980,7 +980,7 @@ fn run_session_inner(
 
     // The frame still in hand has no successor to measure against, so it
     // runs to wherever the session actually stopped. Without this the
-    // recording loses its final frame *and* ends early — the container
+    // recording loses its final frame *and* ends early: the container
     // would stop at the second-to-last capture, which on a slow grab is
     // a visible fraction of a second missing from the end.
     //
@@ -1000,12 +1000,12 @@ fn run_session_inner(
 
     // The encoded size, not the captured one. They differ whenever a
     // resolution cap or GIF's pixel budget applied, and this number is
-    // what the library indexes and the inspector shows — reporting the
+    // what the library indexes and the inspector shows: reporting the
     // region would describe a file that doesn't exist.
     let (width, height) = request.output_size();
     let has_audio = audio.captured_anything();
 
-    // Close the encoder before touching the file — the trailer has to
+    // Close the encoder before touching the file: the trailer has to
     // be on disk before the rename.
     let close = sink.finish();
     if let Err(e) = close {
@@ -1016,7 +1016,7 @@ fn run_session_inner(
     }
 
     if !reason.keeps_output() || frames == 0 {
-        // Discarded, or nothing was ever captured — a zero-frame file
+        // Discarded, or nothing was ever captured: a zero-frame file
         // is not a recording, and promoting it would put an unplayable
         // row in the library.
         let _ = std::fs::remove_file(&working);
@@ -1039,7 +1039,7 @@ fn run_session_inner(
     )?;
 
     // After the promotion, so the poster is keyed to the recording's
-    // final name — a poster written against the working file's name
+    // final name: a poster written against the working file's name
     // would be orphaned the moment it was renamed.
     if let Some(png) = poster {
         if let Err(e) = sidecar::write_poster(&path, &png) {
@@ -1172,7 +1172,7 @@ fn cursor_position() -> Option<(i32, i32)> {
 /// Grab one frame of the recorded rectangle.
 ///
 /// Prefers a direct region grab from the single monitor that contains
-/// the rectangle — a BitBlt of just those pixels. Falls back to
+/// the rectangle: a BitBlt of just those pixels. Falls back to
 /// compositing the whole virtual desktop and cropping only when the
 /// rectangle straddles two monitors, which is both rare and much more
 /// expensive; doing it always would put a full multi-monitor capture in
@@ -1181,13 +1181,13 @@ fn cursor_position() -> Option<(i32, i32)> {
 ///
 /// A recording asks for a frame thirty times a second, and the one-shot
 /// grab every other capture in the app uses builds and destroys a
-/// capture session around each call — 34 ms of it on a 5120x1440 output,
+/// capture session around each call: 34 ms of it on a 5120x1440 output,
 /// against a 33 ms budget. This holds a duplication open instead, so
 /// that cost is paid once per session rather than once per frame.
 ///
 /// Falls back to the one-shot path rather than failing. Duplication is
-/// legitimately refusable — a remote session, another tool holding the
-/// output, a region spanning two monitors — and none of those should
+/// legitimately refusable (a remote session, another tool holding the
+/// output, a region spanning two monitors) and none of those should
 /// cost the user their recording. A slow recording beats no recording.
 #[cfg(target_os = "windows")]
 enum FrameSource {
@@ -1233,8 +1233,8 @@ impl FrameSource {
             Ok(duplicator) => {
                 let (origin_x, origin_y) = duplicator.origin();
                 let (local_x, local_y) = (absolute_x - origin_x, absolute_y - origin_y);
-                // A region hanging off the output — or starting before
-                // it — has to go the long way round, which composites
+                // A region hanging off the output, or starting before
+                // it, has to go the long way round, which composites
                 // the whole virtual desktop.
                 if local_x < 0
                     || local_y < 0
@@ -1277,12 +1277,12 @@ impl FrameSource {
     /// Next frame, or `Ok(None)` when the screen has not changed.
     ///
     /// `recycle` hands back a previous frame's buffer to be written into
-    /// again. Nothing depends on it being the right size — it is
-    /// resized — only on it being large enough to have stopped growing.
+    /// again. Nothing depends on it being the right size, it is
+    /// resized, only on it being large enough to have stopped growing.
     ///
     /// The frame comes back in whatever order its source produced:
     /// BGRA from a duplication read-back, RGBA from the one-shot
-    /// fallback. Neither is normalised here — see
+    /// fallback. Neither is normalised here; see
     /// `sink::SinkFrame` for why the order travels instead.
     fn next(&mut self, region: Region, recycle: Option<Vec<u8>>) -> AppResult<Option<Captured>> {
         use clippity_platform::windows::duplication_capture::Grab;
@@ -1313,8 +1313,8 @@ impl FrameSource {
                 };
                 match grab {
                     // Nothing moved. The caller keeps the frame it has,
-                    // which — because a frame now lasts until the next
-                    // one arrives — simply stays on screen for longer.
+                    // which (because a frame now lasts until the next
+                    // one arrives) simply stays on screen for longer.
                     Ok(Grab::Unchanged) => Ok(None),
                     Ok(Grab::Fresh) => {
                         let expected = region.width as usize
@@ -1331,7 +1331,7 @@ impl FrameSource {
                             hdr: *hdr,
                         }))
                     }
-                    // The duplication is finished — a resolution change,
+                    // The duplication is finished: a resolution change,
                     // a full-screen app, a lock screen. Drop to the
                     // one-shot path for the rest of the session rather
                     // than ending the recording.
@@ -1354,7 +1354,7 @@ impl FrameSource {
 /// A single grab through the per-call path, as a [`Captured`].
 ///
 /// `xcap` and the virtual-canvas fallback both hand back RGBA, so that
-/// is the order this reports — the whole point of carrying it is that
+/// is the order this reports: the whole point of carrying it is that
 /// the two capture paths no longer have to agree.
 fn one_shot(region: Region) -> AppResult<Captured> {
     capture_frame(region).map(|frame| Captured {
@@ -1423,7 +1423,7 @@ struct AudioMixer {
     ///
     /// The meters are emitted at a tenth of the rate audio is polled, so
     /// reading only the packet that happens to coincide with an emit
-    /// would miss most transients — a meter that misses the loud part is
+    /// would miss most transients: a meter that misses the loud part is
     /// worse than no meter. `take_levels` drains this, so each reading
     /// covers exactly the interval since the last one.
     peaks: recorder::RecorderLevels,
@@ -1536,7 +1536,7 @@ impl AudioMixer {
         Ok(())
     }
 
-    /// Drop whatever the endpoints have queued without writing it —
+    /// Drop whatever the endpoints have queued without writing it;
     /// used while paused.
     #[cfg(target_os = "windows")]
     fn discard(&mut self) {
@@ -1569,7 +1569,7 @@ impl AudioMixer {
         self.enabled = false;
     }
 
-    /// Whether an audio track was genuinely produced — the honest
+    /// Whether an audio track was genuinely produced: the honest
     /// answer for `RecorderResult::has_audio`.
     fn captured_anything(&self) -> bool {
         self.enabled && self.frames_written > 0
@@ -1608,7 +1608,7 @@ mod tests {
     /// real size.
     ///
     /// A capture that cannot keep up does not fail, it just produces
-    /// fewer frames — so the only way to find out *which* stage is slow
+    /// fewer frames, so the only way to find out *which* stage is slow
     /// is to time them separately against a real screen.
     #[cfg(target_os = "windows")]
     #[test]
@@ -1648,7 +1648,7 @@ mod tests {
         println!("  virtual_bounds()      {:?}", mean(bounds_total));
         println!("  Monitor::from_point() {:?}", mean(lookup_total));
 
-        // 2. The grab itself — one whole capture_frame call.
+        // 2. The grab itself: one whole capture_frame call.
         let mut grab_total = std::time::Duration::ZERO;
         let mut frame = None;
         for _ in 0..RUNS {
@@ -1682,7 +1682,7 @@ mod tests {
         }
         println!("  to_nv12()             {:?}", mean(convert_total));
 
-        // 4. The source the recorder actually uses — a duplication held
+        // 4. The source the recorder actually uses: a duplication held
         //    open across frames, which is the whole point.
         let mut source = FrameSource::open(region, false).expect("SDR source always falls back");
         match &source {
@@ -1736,7 +1736,7 @@ mod tests {
             mode_label(&request(RecorderFormat::Mp4, RecorderTarget::Region)),
             "Recording"
         );
-        // A GIF is a GIF whatever it was framed on — the extension and
+        // A GIF is a GIF whatever it was framed on: the extension and
         // the label should agree with each other.
         assert_eq!(
             mode_label(&request(RecorderFormat::Gif, RecorderTarget::Fullscreen)),

@@ -7,7 +7,7 @@ import type { Viewport } from "../state/editorStore";
 const BASE_STEP = 8;
 const MIN_SCREEN_PITCH = 14;
 
-/** Pure: the dot-grid layer style for a viewport. Scene-locked — the pitch
+/** Pure: the dot-grid layer style for a viewport. Scene-locked: the pitch
  *  scales with zoom and the pattern is pinned to the pan origin, so dots track
  *  the content. Exported for unit testing. */
 export function gridLayerStyle(viewport: Viewport): CSSProperties {

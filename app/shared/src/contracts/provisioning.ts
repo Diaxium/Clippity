@@ -1,5 +1,5 @@
 /**
- * Installation-profile contracts — mirror Rust `domain::provisioning`.
+ * Installation-profile contracts: mirror Rust `domain::provisioning`.
  *
  * The Clippity installer lets a user decline components (OCR engine, GIF
  * encoder, capture integration, cloud sync) and clear preferences
@@ -9,8 +9,8 @@
  *
  * The UI's job with these is **presentation**: hide or explain a feature the
  * installation does not include, so the user never reaches a control that is
- * guaranteed to fail. Enforcement lives in the backend — every gated command
- * refuses on its own and returns the `not-installed` error code — because the
+ * guaranteed to fail. Enforcement lives in the backend (every gated command
+ * refuses on its own and returns the `not-installed` error code) because the
  * overlay, presets, hotkeys, and the tray all reach the same features by
  * different routes.
  */
@@ -37,7 +37,7 @@ export interface Capabilities {
   usageReporting: boolean;
   /**
    * True when no installer answers were found and every flag above is an
-   * assumption rather than the user's choice — a portable build, a
+   * assumption rather than the user's choice: a portable build, a
    * development run, or an unreadable configuration.
    *
    * Load-bearing for wording: an unmanaged install must not be told "you
@@ -50,7 +50,7 @@ export interface Capabilities {
 export type ProvisioningSource =
   /** A usable installer configuration was read. */
   | "installer"
-  /** Portable build — there was no installer to ask. */
+  /** Portable build: there was no installer to ask. */
   | "portable"
   /** No configuration beside the executable (e.g. a development run). */
   | "absent"
@@ -68,7 +68,7 @@ export interface InstallationProfile {
  * where there is no backend at all): everything available, flagged as not
  * coming from an installer.
  *
- * Optimistic on purpose, and the same default the backend falls back to —
+ * Optimistic on purpose, and the same default the backend falls back to:
  * briefly showing a feature that turns out to be unavailable is a far
  * smaller failure than hiding features the user paid for on every launch
  * while the first IPC call is in flight.

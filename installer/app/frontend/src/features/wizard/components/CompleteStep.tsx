@@ -107,8 +107,8 @@ export function CompleteStep() {
         >
           {isUninstall ? (
             <>
-              {/* After a removal there is no primary action to push — the
-                  footer's Done is the exit — so both options stay secondary. */}
+              {/* After a removal there is no primary action to push, the
+                  footer's Done is the exit, so both options stay secondary. */}
               <Button size="lg" variant="secondary" onClick={openData}>
                 <FolderOpen size={16} strokeWidth={2} />
                 Open retained data folder
@@ -191,7 +191,7 @@ export function CompleteStep() {
 
 /**
  * Shown when the operation finished but a locked file was scheduled for
- * removal at the next reboot — so the Complete screen tells the truth
+ * removal at the next reboot, so the Complete screen tells the truth
  * instead of claiming an unqualified success.
  */
 function RebootNotice() {

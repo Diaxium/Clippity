@@ -1,8 +1,8 @@
 //! Locked-file fallback: schedule a delete for the next reboot.
 //!
 //! When a Clippity-owned file cannot be removed because it is still in use
-//! — most importantly the maintenance/uninstaller executable removing its
-//! own directory — the last-resort correct move is
+//! (most importantly the maintenance/uninstaller executable removing its
+//! own directory) the last-resort correct move is
 //! `MoveFileExW(MOVEFILE_DELAY_UNTIL_REBOOT)`, which the OS honors during
 //! the next boot. Directories scheduled this way are removed only when
 //! empty, so children must be scheduled before their parent. Using the

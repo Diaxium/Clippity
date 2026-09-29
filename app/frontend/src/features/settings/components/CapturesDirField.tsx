@@ -12,7 +12,7 @@ interface CapturesDirFieldProps {
 
 /**
  * Text field + Browse button. Empty value means "use the backend
- * fallback dir" — the placeholder communicates that explicitly.
+ * fallback dir": the placeholder communicates that explicitly.
  */
 export function CapturesDirField({
   value,

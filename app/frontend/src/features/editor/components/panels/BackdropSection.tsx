@@ -17,19 +17,19 @@ import { FIELD_LABEL, PanelSection } from "./section";
 const SUB = FIELD_LABEL;
 
 /**
- * The "beautiful screenshot" controls — page padding, a backdrop behind the
+ * The "beautiful screenshot" controls: page padding, a backdrop behind the
  * capture, and the capture's own corner rounding + lift shadow. The second half
  * of Fork F4; see ADR 0020 and `lib/page.ts` for the model.
  *
  * **Why this section is document-scoped, not selection-scoped.** Every other
- * inspector section edits the selection. These four fields edit the *page* —
+ * inspector section edits the selection. These four fields edit the *page*,
  * and the page is exactly what you have "selected" when you have nothing
  * selected, the same way Figma surfaces the canvas background on an empty
  * selection. So it renders on an empty selection or when the page frame itself
  * is selected, and nowhere else: with a mark selected it would be an unrelated
  * control sitting under that mark's properties.
  *
- * That placement also solves an Annotation-mode problem — the Layers rail is
+ * That placement also solves an Annotation-mode problem: the Layers rail is
  * hidden there (Workstream M2), so selecting the page frame to reach its fills
  * isn't practical. Pressing Escape is.
  */
@@ -66,7 +66,7 @@ export function BackdropSection() {
   const activePreset = matchBackdropPreset(pageNode.fills);
   const shadow = hasContentShadow(contentNode);
   // A capture is normally an image node, but "the capture" is whatever carries
-  // the largest image fill — an ellipse could. Only offer Corners when the node
+  // the largest image fill: an ellipse could. Only offer Corners when the node
   // actually has a radius for both renderers to draw.
   const roundable = hasCornerRadius(contentNode);
 
@@ -94,7 +94,7 @@ export function BackdropSection() {
                 background:
                   preset.id === "none"
                     ? // Checkerboard reads as "transparent" the way every
-                      // design tool spells it — a flat swatch would just look
+                      // design tool spells it: a flat swatch would just look
                       // like another dark color against the panel.
                       "repeating-conic-gradient(var(--ed-elev) 0% 25%, transparent 0% 50%) 50% / 8px 8px"
                     : preset.swatch,

@@ -5,7 +5,7 @@
 //! `install-config.json` the application reads at startup. Install and
 //! modify write it (both go through `install_service::run`), repair
 //! restores it, and uninstall removes it as one of the manifest's owned
-//! files — nothing here has to know about that last part, which is the
+//! files: nothing here has to know about that last part, which is the
 //! point of recording it in the manifest rather than special-casing it.
 //!
 //! Pretty-printed on purpose: a user who wonders why Grab Text is missing
@@ -73,7 +73,7 @@ pub fn read(install_dir: &Path) -> InstallerResult<Option<AppProvisioning>> {
             tracing::warn!(
                 path = %path.display(),
                 error = %e,
-                "application configuration is unreadable — it will be rewritten"
+                "application configuration is unreadable; it will be rewritten"
             );
             Ok(None)
         }

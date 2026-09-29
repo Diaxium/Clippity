@@ -20,7 +20,7 @@ import {
  * fit.
  *
  * **Idempotent skip**: the hook tracks the last height it sent and
- * short-circuits if the new measurement matches — saves an IPC trip
+ * short-circuits if the new measurement matches; saves an IPC trip
  * on every content swap that happens to measure to the same size
  * (most error toasts measure identically, for instance).
  *
@@ -30,7 +30,7 @@ import {
  * own cards bare (ToastLayout drops the outer card for that kind).
  *
  * **Takes the element, not a ref.** The body only exists while a toast is
- * on screen, so at mount there is nothing to measure — and a `RefObject`
+ * on screen, so at mount there is nothing to measure, and a `RefObject`
  * keeps the same identity when `.current` is filled in, so an effect
  * keyed on the ref never re-runs to pick the element up. That left the
  * observer permanently unattached for every toast after the first mount:

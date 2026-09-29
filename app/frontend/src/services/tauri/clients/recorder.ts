@@ -35,7 +35,7 @@ export type {
 } from "@clippity/shared";
 
 /** Cameras available as a recording source. An empty list is a valid
- *  answer — a machine with no camera is a configuration, not an error. */
+ *  answer: a machine with no camera is a configuration, not an error. */
 export function listWebcams(): Promise<WebcamDeviceInfo[]> {
   return invoke<WebcamDeviceInfo[]>("list_webcams");
 }
@@ -81,7 +81,7 @@ export function resumeRecording(): Promise<RecorderStatus> {
   return invoke<RecorderStatus>("resume_recording");
 }
 
-/** Current status — lets a HUD that mounted late catch up without
+/** Current status: lets a HUD that mounted late catch up without
  *  waiting for the next tick. */
 export function recordingStatus(): Promise<RecorderStatus> {
   return invoke<RecorderStatus>("recording_status");
@@ -91,7 +91,7 @@ export function recordingStatus(): Promise<RecorderStatus> {
  * Move one input's level on the running session, as a percentage of
  * unity (0–200; the backend clamps).
  *
- * Resolves even when nothing is recording, unlike `pauseRecording` — a
+ * Resolves even when nothing is recording, unlike `pauseRecording`: a
  * slider release that lands just after a session ended is a race, not an
  * error worth putting a toast on screen for.
  *
@@ -137,7 +137,7 @@ export function stopRecording(
 /**
  * Audio endpoints for the settings UI. `system: true` lists render
  * endpoints (captured in loopback); otherwise microphones. An empty
- * list is a valid answer — a machine with no microphone is a
+ * list is a valid answer: a machine with no microphone is a
  * configuration, not an error.
  */
 export function listAudioDevices(system: boolean): Promise<AudioDeviceInfo[]> {
@@ -152,7 +152,7 @@ export function listAudioDevices(system: boolean): Promise<AudioDeviceInfo[]> {
  * A region or window recording is started *from the overlay*, which is
  * a different window and has no idea what the Record screen selected.
  * Sent just before opening the overlay, exactly as the scroll direction
- * is mirrored for Scrolling/Panoramic. Frontend-to-frontend — no
+ * is mirrored for Scrolling/Panoramic. Frontend-to-frontend: no
  * backend leg.
  */
 export async function emitOverlayRecordFormat(
@@ -169,7 +169,7 @@ export function onOverlayRecordFormat(
 }
 
 /**
- * Mirror a recording **preset's** request to the overlay — everything
+ * Mirror a recording **preset's** request to the overlay: everything
  * but the rectangle, which is what the overlay is about to pick.
  *
  * The format mirror above is not enough for a preset: a preset also
@@ -207,7 +207,7 @@ export function onRecorderLevels(cb: (e: RecorderLevels) => void): () => void {
   return on<RecorderLevels>(EVENT_NAMES.recorderLevels, cb);
 }
 
-/** Fires once when a session ends, whatever the reason — including a
+/** Fires once when a session ends, whatever the reason, including a
  *  duration limit the worker hit on its own, which no caller asked for
  *  and which the HUD must still react to. */
 export function onRecorderFinished(

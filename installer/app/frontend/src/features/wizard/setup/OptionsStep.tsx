@@ -17,7 +17,7 @@ import { useWizardStore } from "@state/wizardStore";
 import { StepShell } from "../components/StepShell";
 
 /**
- * Roots a standard user can't write to — mirrors Rust
+ * Roots a standard user can't write to: mirrors Rust
  * `installer_domain::install` PROTECTED_ROOTS. Installing under any of these
  * needs administrator approval, so the wizard can say so up front instead of
  * only surfacing it as an error on the Review step.
@@ -67,7 +67,7 @@ function ToggleRow({
   );
 }
 
-/** Setup step 2 — install destination + the toggleable behaviors. */
+/** Setup step 2: install destination + the toggleable behaviors. */
 export function OptionsStep() {
   const options = useWizardStore((s) => s.options);
   const setOptions = useWizardStore((s) => s.setOptions);

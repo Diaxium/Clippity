@@ -29,9 +29,9 @@ import { ActionRow, CopyButton, StatLine } from "./DevRow";
 /**
  * Fetch the system information and runtime status together.
  *
- * Exported because three surfaces want the same pair — this card, the
+ * Exported because three surfaces want the same pair: this card, the
  * capture-diagnostics card (monitors) and the bundle card (path to show
- * after an export) — and three independent fetches of the same two
+ * after an export), and three independent fetches of the same two
  * commands on one page render is a cost with no reader.
  */
 export function useDiagnostics() {
@@ -78,7 +78,7 @@ export function SystemInfoCard({
     <SectionCard title="System information">
       <ActionRow
         label="This installation"
-        description="Versions, folders and displays, as this process resolved them. The copy is unredacted — it includes your real paths."
+        description="Versions, folders and displays, as this process resolved them. The copy is unredacted: it includes your real paths."
       >
         <CopyButton
           text={() => (info ? formatSystemSummary(info, status) : "")}
@@ -157,7 +157,7 @@ export function SystemInfoCard({
           </p>
           {info.monitors.length === 0 && (
             <p className="px-5 py-1.5 text-[12px] text-[var(--color-slate)]">
-              No monitors reported — which is itself the diagnosis if captures
+              No monitors reported, which is itself the diagnosis if captures
               are failing.
             </p>
           )}

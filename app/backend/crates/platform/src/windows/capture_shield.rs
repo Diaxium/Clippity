@@ -2,7 +2,7 @@
 //!
 //! `SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)` tells DWM to
 //! keep a window on the visible display but omit it from the capture
-//! pipeline — a capturer sees straight through to whatever is behind it.
+//! pipeline: a capturer sees straight through to whatever is behind it.
 //! Applied to every Clippity window, it means the desktop snapshot the
 //! overlay grabs can never contain our own chrome, *regardless of whether
 //! that chrome has finished hiding*. That is what lets the open path drop
@@ -19,9 +19,9 @@ use tauri::{AppHandle, Manager};
 use windows::Win32::Foundation::HWND;
 
 /// Every Clippity window. All of them are shielded: the desktop snapshot
-/// must never contain *any* of our chrome — the capture window it was
+/// must never contain *any* of our chrome (the capture window it was
 /// launched from, the overlay drawing the snapshot, or a dashboard/toast
-/// that happens to be up — so the shield is what makes "grab the desktop
+/// that happens to be up) so the shield is what makes "grab the desktop
 /// without waiting for our windows to hide" correct.
 #[cfg(target_os = "windows")]
 const SHIELDED_WINDOWS: &[&str] = &[
@@ -41,7 +41,7 @@ const SHIELDED_WINDOWS: &[&str] = &[
 ///
 /// Best-effort per window: a window that isn't built yet, or an older
 /// Windows that rejects the flag, is skipped. Returns whether *every*
-/// present window was shielded — the overlay open path uses that to
+/// present window was shielded: the overlay open path uses that to
 /// decide whether it can trust the snapshot to be self-clean or must
 /// fall back to hiding-and-waiting.
 #[cfg(target_os = "windows")]
@@ -49,7 +49,7 @@ pub fn shield_windows(app: &AppHandle) -> bool {
     let mut all_ok = true;
     for label in SHIELDED_WINDOWS {
         let Some(win) = app.get_webview_window(label) else {
-            continue; // not created yet — nothing on screen to leak
+            continue; // not created yet: nothing on screen to leak
         };
         // Tauri pins an older `windows` crate, so re-wrap its `HWND` into
         // ours; both are `HWND(*mut c_void)` over the same handle. Same
@@ -66,7 +66,7 @@ pub fn shield_windows(app: &AppHandle) -> bool {
 }
 
 /// Ask DWM to exclude `hwnd` from all screen capture while leaving it
-/// visible on the monitor. Returns whether the call succeeded — `false`
+/// visible on the monitor. Returns whether the call succeeded: `false`
 /// on Windows older than 2004, where the caller must not assume the
 /// snapshot is self-clean.
 #[cfg(target_os = "windows")]
@@ -84,7 +84,7 @@ pub fn exclude_from_capture(hwnd: HWND) -> bool {
 mod tests {
     //! Empirical check that capture exclusion actually works on *this*
     //! machine and display, through the exact capture path the app uses
-    //! (xcap's GDI `BitBlt`). Ignored by default — it creates a real
+    //! (xcap's GDI `BitBlt`). Ignored by default: it creates a real
     //! on-screen window and grabs the primary monitor, so it needs a
     //! desktop session, and it flashes a small magenta square. Run when
     //! deciding whether the affinity approach is viable here:
@@ -113,7 +113,7 @@ mod tests {
         DefWindowProcW(hwnd, msg, wp, lp)
     }
 
-    /// Opaque magenta — vivid and vanishingly unlikely to occur on a real
+    /// Opaque magenta: vivid and vanishingly unlikely to occur on a real
     /// desktop, so counting it in the capture is a reliable presence test.
     const MAGENTA: u32 = 0x00FF_00FF; // COLORREF 0x00bbggrr → B=FF,G=00,R=FF
 
@@ -184,7 +184,7 @@ mod tests {
             let _ = ShowWindow(hwnd, SW_SHOWNOACTIVATE);
             settle();
 
-            // 1. Sanity — without the flag the window is plainly in the grab.
+            // 1. Sanity: without the flag the window is plainly in the grab.
             let before = magenta_pixels_in_primary_capture();
 
             // 2. The flag under test.
@@ -216,7 +216,7 @@ mod tests {
 
             assert!(
                 before > 0,
-                "probe window wasn't even captured — test setup is wrong"
+                "probe window wasn't even captured; test setup is wrong"
             );
         }
     }

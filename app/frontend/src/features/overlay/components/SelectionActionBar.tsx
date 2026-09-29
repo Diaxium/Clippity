@@ -34,13 +34,13 @@ interface ActionDef {
     className?: string;
   }>;
   /** How the action finishes:
-   *  - `capture` — commit the selection with a toggle override.
-   *  - `ocr` — read the text instead of saving an image.
-   *  - `share` — open the target menu; the pick commits, then hands
+   *  - `capture`: commit the selection with a toggle override.
+   *  - `ocr`: read the text instead of saving an image.
+   *  - `share`: open the target menu; the pick commits, then hands
    *    the saved file to the OS. */
   kind: "capture" | "ocr" | "share";
   /** Toggle overrides for `kind: "capture"`. Everything not named here
-   *  keeps whatever the user set in the toolbar — Smart enhance and
+   *  keeps whatever the user set in the toolbar: Smart enhance and
    *  Capture cursor ride along on every action. */
   override?: Partial<OverlayToggles>;
 }
@@ -95,7 +95,7 @@ const SHARE_OPTIONS: readonly ShareOption[] = [
 ];
 
 /**
- * Contextual action bar — appears just outside the selection once it
+ * Contextual action bar: appears just outside the selection once it
  * commits, giving the user one-click access to common post-capture
  * actions without traveling all the way to the BottomToolbar.
  *
@@ -106,7 +106,7 @@ const SHARE_OPTIONS: readonly ShareOption[] = [
  *   - Horizontal: aligned to the rect's center, clamped into the
  *     viewport with a 14 px gutter.
  *
- * The bar is purely additive — the BottomToolbar still owns the
+ * The bar is purely additive: the BottomToolbar still owns the
  * primary Capture CTA + mode switching.
  */
 export function SelectionActionBar() {
@@ -201,7 +201,7 @@ export function SelectionActionBar() {
     }
     if (a.kind === "ocr") {
       fireCaptureFlash();
-      // OCR produces a text library entry + a toast, not a file — the
+      // OCR produces a text library entry + a toast, not a file: the
       // backend closes the overlay and copies the text itself.
       finishGrabText(wireRect())
         .then(() => reset())
@@ -215,7 +215,7 @@ export function SelectionActionBar() {
 
   const onShare = (target: ShareTarget) => {
     setShareOpen(false);
-    // Share always saves first — there has to be a file to hand over —
+    // Share always saves first (there has to be a file to hand over)
     // but never opens the editor: the user asked to send it somewhere,
     // not to keep working on it.
     commit({ preview: false })

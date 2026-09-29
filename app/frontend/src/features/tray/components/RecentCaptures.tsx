@@ -8,7 +8,7 @@ interface RecentCapturesProps {
 }
 
 /**
- * The "Recent" strip — up to four latest image captures as thumbnails.
+ * The "Recent" strip: up to four latest image captures as thumbnails.
  * Falls back to a dashed empty state ("Loading…" / "No captures yet").
  */
 export function RecentCaptures({

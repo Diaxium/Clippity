@@ -14,8 +14,8 @@ import { cn } from "@shared/lib/cn";
  * one action that puts something new in it.
  *
  * Search lives here rather than in the toolbar below because it cuts
- * across every destination in the rail — it narrows whichever one is
- * open instead of belonging to any of them — and because Ctrl/⌘-K
+ * across every destination in the rail (it narrows whichever one is
+ * open instead of belonging to any of them) and because Ctrl/⌘-K
  * should always land somewhere visible.
  *
  * The capture button is a split control: the left half does the common
@@ -36,7 +36,7 @@ export function LibraryTopBar({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Ctrl/⌘-K focuses the box, Escape leaves it — the two shortcuts every
+  // Ctrl/⌘-K focuses the box, Escape leaves it: the two shortcuts every
   // search field is expected to answer. Scoped to this window, which is
   // enough: the library is one view of one window, and a global
   // accelerator would fight the capture hotkeys.

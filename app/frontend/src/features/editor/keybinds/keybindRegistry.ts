@@ -29,7 +29,7 @@ import {
 } from "./keybindUtils";
 
 /**
- * The default map with user overrides applied — the list every dispatch,
+ * The default map with user overrides applied: the list every dispatch,
  * help-overlay, and palette read goes through. An overridden binding gets
  * its `keys` replaced and its hand-authored `helpKeys` cleared, so the
  * help chips regenerate from the new combo instead of showing the stale
@@ -44,7 +44,7 @@ export function effectiveEditorKeybinds(): readonly EditorKeybind[] {
 const SCOPE = "editor" as const;
 
 // Memoized on the override version so a burst of dispatches doesn't rebuild
-// the list/indices per keystroke — only when the user actually remaps a key.
+// the list/indices per keystroke: only when the user actually remaps a key.
 let cachedVersion = -1;
 let effectiveList: readonly EditorKeybind[] = EDITOR_KEYBINDS;
 let keydownIndex = new Map<string, EditorKeybind[]>();
@@ -199,13 +199,13 @@ export interface PaletteState {
 }
 
 /** A palette row: the binding plus whether it can run right now. Unavailable
- *  commands are returned (not filtered) so the palette can show them disabled —
+ *  commands are returned (not filtered) so the palette can show them disabled:
  *  in an editor this deep, "exists but needs a selection" teaches the model,
  *  while hiding the row just reads as a broken search. */
 export interface PaletteCommand {
   kb: EditorKeybind;
   enabled: boolean;
-  /** Set when `enabled` is false — a short reason for the UI. */
+  /** Set when `enabled` is false: a short reason for the UI. */
   disabledReason?: string;
 }
 

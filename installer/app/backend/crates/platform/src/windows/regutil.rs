@@ -19,10 +19,10 @@ use windows::Win32::System::Registry::{
 use installer_domain::state::RegistryHive;
 use installer_infra::error::{other, InstallerResult};
 
-/// `ERROR_FILE_NOT_FOUND` — "no such key/value", which we treat as success
+/// `ERROR_FILE_NOT_FOUND`: "no such key/value", which we treat as success
 /// when deleting or probing.
 const ERROR_FILE_NOT_FOUND: u32 = 2;
-/// `ERROR_MORE_DATA` — a probe found the value but our buffer was null.
+/// `ERROR_MORE_DATA`: a probe found the value but our buffer was null.
 const ERROR_MORE_DATA: u32 = 234;
 
 /// The root `HKEY` for a hive.

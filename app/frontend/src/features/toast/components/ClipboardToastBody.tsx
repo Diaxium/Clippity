@@ -5,14 +5,14 @@ import { FileText } from "lucide-react";
  * the system clipboard holds, so this renders two shapes from one wire
  * variant (the `clipboard` payload carries an optional `text`):
  *
- * - **image** (`text` absent) — a thumbnail of the saved capture plus
+ * - **image** (`text` absent): a thumbnail of the saved capture plus
  *   its dimensions. The PNG is already on disk + in the library, and the
  *   editor opens on its own when "Preview in Editor" was on.
- * - **text** (`text` present) — a snippet of the captured text (already
+ * - **text** (`text` present): a snippet of the captured text (already
  *   on the clipboard), persisted as a library entry.
  *
  * Informational + sticky (the `clipboard` duration is 0): dismiss via the
- * chrome ×. No action buttons — editor-open rides the preview toggle, the
+ * chrome ×. No action buttons: editor-open rides the preview toggle, the
  * modern single decision point.
  */
 export function ClipboardToastBody({

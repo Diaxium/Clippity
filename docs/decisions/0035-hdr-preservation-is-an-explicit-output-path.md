@@ -1,9 +1,9 @@
-# 0035 — HDR preservation is an explicit output path
+# 0035: HDR preservation is an explicit output path
 
 - **Status:** Accepted
 - **Date:** 2026-09-08
 - **Area:** HDR still capture, desktop duplication, recorder, Media Foundation
-- **Relates to:** [0031 — recording is Media Foundation](0031-recording-is-media-foundation-one-session-two-outputs.md)
+- **Relates to:** [0031: recording is Media Foundation](0031-recording-is-media-foundation-one-session-two-outputs.md)
 
 ## Context
 

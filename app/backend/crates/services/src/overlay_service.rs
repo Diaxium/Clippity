@@ -14,7 +14,7 @@
 //!    `clippity://capture/finished`. All three share the private
 //!    `finalize` lifecycle helper (ADR 0005).
 //! 3. **pick_color**: sample one pixel from the cached snapshot, copy
-//!    the hex to the clipboard, restore the window — no PNG, no
+//!    the hex to the clipboard, restore the window; no PNG, no
 //!    `capture/finished` (the Color-Picker mode).
 //! 4. **cancel**: hide the overlay window, restore the previous primary
 //!    window, drop the cached canvas. No PNG produced.
@@ -58,7 +58,7 @@ use clippity_infra::error::{AppError, AppResult};
 use clippity_infra::events;
 
 /// Longest-edge cap (physical px) for the Palette-Capture toast preview
-/// thumbnail. Small — it's a 12×12-rem swatch source, not the artifact.
+/// thumbnail. Small: it's a 12×12-rem swatch source, not the artifact.
 const PALETTE_PREVIEW_MAX_EDGE: u32 = 96;
 
 /// What a mode's crop/mask/stitch produced, before it becomes a file.
@@ -66,7 +66,7 @@ const PALETTE_PREVIEW_MAX_EDGE: u32 = 96;
 /// Deliberately the decoded image rather than encoded PNG bytes: the
 /// optional Smart-enhance pass and the PNG encode then live in exactly
 /// one place ([`OverlayService::persist_and_emit`]) instead of being
-/// duplicated — and forgettable — in every mode's producer. It also lets
+/// duplicated, and forgettable, in every mode's producer. It also lets
 /// the clipboard copy skip a full PNG decode of the bytes we just wrote.
 struct ProducedOverlayCapture {
     image: RgbaImage,
@@ -86,14 +86,14 @@ struct HdrSelection {
 /// One display of the snapshotted desktop, rebased onto the canvas.
 /// `name` is already the label the record stores
 /// (`domain::metadata::monitor_label`), so `finalize` only has to pick a
-/// winner — the formatting decision doesn't travel with the session.
+/// winner: the formatting decision doesn't travel with the session.
 #[derive(Clone, Debug)]
 struct SessionMonitor {
     name: String,
     rect: Region,
 }
 
-/// Per-process overlay state — the cached snapshot stays alive from
+/// Per-process overlay state: the cached snapshot stays alive from
 /// `show` until either `finish` or `cancel` consumes it. Holding it
 /// in the service (vs. on `AppState` as a sibling field) keeps the
 /// state unreachable from outside the service.
@@ -113,7 +113,7 @@ pub struct OverlayState {
     /// for cursor compositing's `(origin_x, origin_y)` arg so the
     /// system cursor lands at the right place when not pinned.
     origin: (i32, i32),
-    /// PNG bytes of the cached snapshot — the SAME cursor-free pixels as
+    /// PNG bytes of the cached snapshot: the SAME cursor-free pixels as
     /// `canvas`, so the overlay's backdrop and the loupe's RGB readout
     /// both match what `finalize` will actually crop. The cursor, when
     /// the user asked for one, is composited at finalize against
@@ -123,14 +123,14 @@ pub struct OverlayState {
     /// the `clippity-snapshot` URI scheme instead of receiving them as a
     /// command result. A full-desktop PNG is ~8 MiB, which as a data URI
     /// became an 11 MiB JSON string to serialize, ship and `atob` before
-    /// the webview could decode it — and it was then decoded three times
+    /// the webview could decode it, and it was then decoded three times
     /// over, once per `url(…)` consumer. Behind an `Arc` so the protocol
     /// handler can answer without holding the state lock across the
     /// response.
     snapshot_png: Option<Arc<Vec<u8>>>,
     /// Identifies the current snapshot in its URL, so a new session's
     /// pixels can never be served from the webview's cache for the
-    /// previous session's URL — and so that *within* a session the three
+    /// previous session's URL, and so that *within* a session the three
     /// consumers share one cached decode. Monotonic; never reused.
     snapshot_id: u64,
     /// Label of the primary window that was visible immediately
@@ -145,7 +145,7 @@ pub struct OverlayState {
     /// Window mode, but retained privately for Region/Freehand/Multi-Area
     /// filename attribution.
     windows: Vec<OverlayWindow>,
-    /// The displays making up the snapshot, in canvas-local coords —
+    /// The displays making up the snapshot, in canvas-local coords:
     /// captured at `show` alongside `windows` and for the same reason:
     /// resolving them at `finalize` would mean re-enumerating hardware
     /// after the desktop may already have changed. `finalize` attributes
@@ -156,16 +156,16 @@ pub struct OverlayState {
     /// Stashed at `show`, consumed at `finish_region`, cleared at
     /// `cancel`. `None` = the live captures dir. See ADR 0004.
     output_dir: Option<String>,
-    /// Name of the preset that opened this overlay, if any — the same
+    /// Name of the preset that opened this overlay, if any: the same
     /// stash-at-`show` / consume-at-`finalize` lifetime as `output_dir`,
     /// because the capture it describes happens several IPC calls later.
     preset: Option<String>,
-    /// Title of the window that was focused when the overlay opened —
+    /// Title of the window that was focused when the overlay opened:
     /// captured at `show` (before we hide our own chrome) and used as a
     /// filename fallback if window enumeration is unavailable. `None`
     /// when the overlay was opened from Clippity's own UI.
     source_title: Option<String>,
-    /// The mode this overlay session opened in — sets the capture-type
+    /// The mode this overlay session opened in: sets the capture-type
     /// label for the file name at `finalize` (Region / Window / Freehand
     /// / Multi-Area). `None` between sessions.
     mode: Option<OverlayMode>,
@@ -174,7 +174,7 @@ pub struct OverlayState {
 pub struct OverlayService {
     captures: Arc<dyn CapturesDirSource>,
     naming: Arc<dyn NameTemplateSource>,
-    /// Remembered last rectangular selection — written by every
+    /// Remembered last rectangular selection: written by every
     /// rect-shaped finalize, read by `last_region` (overlay restore) and
     /// `recapture_last` (the one-shot repeat).
     last_region: Arc<LastRegionStore>,
@@ -228,7 +228,7 @@ impl OverlayService {
     /// The remembered region resolved against the CURRENT virtual
     /// desktop, or `None` when nothing is remembered / it no longer
     /// fits. `strict` refuses a region taken on a differently-sized
-    /// canvas — see [`resolve_last_region`].
+    /// canvas; see [`resolve_last_region`].
     pub fn last_region(&self, strict: bool) -> Option<Region> {
         let last = self.last_region.get()?;
         let (_, _, vw, vh) = virtual_bounds().ok()?;
@@ -236,8 +236,8 @@ impl OverlayService {
     }
 
     /// Record `rect` as the last rectangular selection. Called from every
-    /// finalize that crops an axis-aligned rect the user actually dragged
-    /// — the shapes a "same spot again" repeat can reproduce. Freehand /
+    /// finalize that crops an axis-aligned rect the user actually dragged:
+    /// the shapes a "same spot again" repeat can reproduce. Freehand /
     /// Pen / Brush deliberately do not, since their bounding box is not
     /// what the user selected.
     fn remember_region(&self, rect: Region, canvas_w: u32, canvas_h: u32) {
@@ -274,12 +274,12 @@ impl OverlayService {
 
         // Remember which primary window was visible so we can restore
         // it after the overlay closes. If both are visible (shouldn't
-        // be — the single-primary-window invariant is enforced
+        // be; the single-primary-window invariant is enforced
         // elsewhere), prefer the capture window since the overlay is
         // usually invoked from there.
         let previous_primary = window_service::current_visible_primary(app).map(str::to_string);
         // Capture the focused window's title now, before we hide our own
-        // chrome — afterwards the foreground is ours (or nothing) and the
+        // chrome: afterwards the foreground is ours (or nothing) and the
         // namer would discard it. `finalize` uses it only as a fallback
         // when window enumeration cannot attribute the selected pixels.
         let source_title = foreground_window_title();
@@ -301,7 +301,7 @@ impl OverlayService {
         // Whether we then WAIT before grabbing depends on the capture
         // shield. With it, every Clippity window is excluded from capture
         // (`WDA_EXCLUDEFROMCAPTURE`), so the snapshot can't contain our
-        // chrome even while the hide is still in flight — the grab starts
+        // chrome even while the hide is still in flight: the grab starts
         // immediately, which is the bulk of the open-latency win. Without
         // it (pre-2004 Windows, or the flag was refused) we fall back to
         // `settle_after_hide`, which waits for the hide to actually land
@@ -317,13 +317,13 @@ impl OverlayService {
         // cursor-free canvas now; the loupe's PNG is encoded on a
         // background thread (see below) so the visible handoff doesn't
         // wait on compression.
-        // failure is logged but non-fatal — the overlay still opens.
+        // failure is logged but non-fatal; the overlay still opens.
         let mut loupe_canvas = None;
         let cursor_position = cursor_canvas_position(min_x, min_y, vw, vh);
         let snapshot_ok = match build_virtual_canvas() {
             Ok(canvas) => {
-                // One buffer, two holders — the session and the encoder
-                // thread — rather than a full-desktop memcpy per holder.
+                // One buffer, two holders, the session and the encoder
+                // thread, rather than a full-desktop memcpy per holder.
                 let canvas = Arc::new(canvas);
                 if let Ok(mut s) = self.state.lock() {
                     s.canvas = Some(Arc::clone(&canvas));
@@ -346,9 +346,9 @@ impl OverlayService {
             }
         };
 
-        // Enumerate capturable top-level windows now — our primary
+        // Enumerate capturable top-level windows now (our primary
         // windows are hidden and the overlay isn't shown yet, so none of
-        // our own chrome is in the list — rebased onto the snapshot
+        // our own chrome is in the list) rebased onto the snapshot
         // canvas. Window mode uses this for hover/click selection; other
         // file-producing modes use it privately to name the capture after
         // the visible window that dominates the selected area.
@@ -365,7 +365,7 @@ impl OverlayService {
 
         // Spawn the loupe-PNG encode now so it runs in parallel with
         // `overlay.show()`. The thread emits OVERLAY_SNAPSHOT_READY
-        // once the bytes land in state — the frontend listens for that
+        // once the bytes land in state: the frontend listens for that
         // and loads them over the `clippity-snapshot` scheme. Decoupling
         // from OVERLAY_SHOWN lets the rest of the overlay UI become
         // interactive before the (expensive) encode finishes. Skipped
@@ -405,7 +405,7 @@ impl OverlayService {
         // Notify the overlay so it (re)loads the snapshot reliably
         // even if the focus event is missed. Payload tells it which
         // interaction model to render. The snapshot data URI may not
-        // be ready yet — the frontend's mount-time fetch handles the
+        // be ready yet: the frontend's mount-time fetch handles the
         // race (snapshot returns None until the encoder thread lands
         // it), and OVERLAY_SNAPSHOT_READY catches the late case.
         events::emit(
@@ -418,7 +418,7 @@ impl OverlayService {
 
     /// Hide the overlay window without consuming the cached canvas
     /// (the canvas is still useful if the next overlay session opens
-    /// without a fresh snapshot — but we drop it here so subsequent
+    /// without a fresh snapshot, but we drop it here so subsequent
     /// sessions always rebuild). Restores whichever primary window
     /// was visible when `show` ran.
     pub fn cancel(&self, app: &AppHandle) -> AppResult<()> {
@@ -432,7 +432,7 @@ impl OverlayService {
     /// it.
     ///
     /// [`Self::cancel`] split in two, for a session that *takes over*
-    /// from the overlay rather than ending with it — a recording (ADR
+    /// from the overlay rather than ending with it: a recording (ADR
     /// 0031). Such a session must dismiss the overlay immediately, or it
     /// stays on screen swallowing clicks and the user reads it as still
     /// selecting. But it must **not** put the capture window back yet:
@@ -454,7 +454,7 @@ impl OverlayService {
                 visible
             })
             .unwrap_or(false);
-        // Cleared unconditionally — this is also the recovery path, and
+        // Cleared unconditionally: this is also the recovery path, and
         // leaving a half-session behind because the window happened to
         // be down already is how a stale canvas reaches the next open.
         // Drop the cached canvas: next `show` will rebuild.
@@ -509,7 +509,7 @@ impl OverlayService {
             // clamps, but the backend never trusts client coords).
             let region = validate_region(request.rect, canvas.width(), canvas.height())
                 .map_err(|e| AppError::Overlay(e.into()))?;
-            // Remember the validated (clamped) rect, not the raw request —
+            // Remember the validated (clamped) rect, not the raw request:
             // a later repeat should reproduce the pixels we actually
             // cropped, not the coordinates the client asked for.
             self.remember_region(region, canvas.width(), canvas.height());
@@ -532,7 +532,7 @@ impl OverlayService {
     /// `F` keybind / Fullscreen tab). Crops the monitor the cursor is on
     /// out of the cached snapshot rather than re-grabbing the screen, so
     /// the saved pixels are exactly the frozen backdrop the user was
-    /// looking at — no window-hide dance, no chance of catching our own
+    /// looking at: no window-hide dance, no chance of catching our own
     /// chrome.
     ///
     /// Deliberately does NOT `remember_region`: the user didn't drag this
@@ -551,7 +551,7 @@ impl OverlayService {
         let target = monitor_rect_under_cursor()?;
         self.finalize(app, toggles, Some("Fullscreen"), |canvas, origin| {
             let region = rect_on_canvas(target, origin, canvas.width(), canvas.height())?;
-            // No cursor pin — the whole monitor is in frame, so the
+            // No cursor pin: the whole monitor is in frame, so the
             // cursor's live position is already correct (same as the
             // non-overlay fullscreen pipeline).
             let image = crop_with_optional_cursor(canvas, region, origin, toggles.cursor, None)?;
@@ -660,7 +660,7 @@ impl OverlayService {
     /// `persist_and_emit`, so no mode has to remember them.
     ///
     /// `label_override` names the capture type in the saved file name
-    /// when the session's own mode isn't the right answer — Fullscreen
+    /// when the session's own mode isn't the right answer: Fullscreen
     /// fires from inside a Region/Window session but should not be
     /// filed as one. `None` = derive it from the session mode.
     fn finalize(
@@ -712,8 +712,8 @@ impl OverlayService {
         };
 
         // Prefer the cached canvas (overlay chrome guaranteed absent);
-        // fall back to a live re-grab if the snapshot failed at show time
-        // — giving the compositor a beat + a DWM swap so the re-grab
+        // fall back to a live re-grab if the snapshot failed at show time,
+        // giving the compositor a beat + a DWM swap so the re-grab
         // doesn't capture the overlay's own pixels.
         let produced = match canvas {
             Some(c) => produce(&c, origin)?,
@@ -729,7 +729,7 @@ impl OverlayService {
             match dominant_overlay_window(&windows, &produced.attribution_regions) {
                 Some((title, app)) => (Some(title), app),
                 // A window list that attributed nothing is still an
-                // answer — don't fall back over it.
+                // answer: don't fall back over it.
                 None if !windows.is_empty() => (None, None),
                 // No window list at all (a mode that doesn't attribute):
                 // the session's remembered foreground title is the best
@@ -760,18 +760,18 @@ impl OverlayService {
     /// every overlay capture shares once its pixels exist (ADR 0005).
     ///
     /// This is the single place Smart-enhance and the PNG encode happen,
-    /// so every mode — including ones added later — gets both by
+    /// so every mode, including ones added later, gets both by
     /// construction. Enhancement runs before the encode so the saved file
     /// and the clipboard copy are the same pixels.
     ///
     /// `restore` is the primary-window label to bring back, or `None` to
     /// leave the desktop as it is. The one-shot recapture passes `None`
-    /// when it was fired from the tray with no Clippity window open —
+    /// when it was fired from the tray with no Clippity window open:
     /// popping the capture window up afterwards would be a window the
     /// user never asked for.
     ///
     /// `source` arrives fully attributed *except* for the pixel
-    /// dimensions, which only exist once the image does — so this is the
+    /// dimensions, which only exist once the image does, so this is the
     /// one field it fills in. Passing the whole [`CaptureSource`] rather
     /// than a widening list of loose provenance arguments is what keeps a
     /// new field (monitor, preset, whatever comes next) from being
@@ -814,10 +814,10 @@ impl OverlayService {
         let source = source.with_size(width, height);
         let path = save_capture_png(&dir, &png_bytes, &self.naming.name_template(), &source)?;
         if toggles.clipboard {
-            // From the RGBA we still hold — no PNG round-trip through the
+            // From the RGBA we still hold: no PNG round-trip through the
             // bytes we just encoded.
             if let Err(e) = copy_rgba_to_clipboard(&image) {
-                // Clipboard failure shouldn't fail the capture itself —
+                // Clipboard failure shouldn't fail the capture itself:
                 // the file is on disk; surface to logs and continue.
                 tracing::warn!("overlay clipboard copy failed: {e}");
             }
@@ -838,14 +838,14 @@ impl OverlayService {
             window_service::restore_window(app, label);
         }
 
-        // Tell the library to refresh — best-effort; the capture
+        // Tell the library to refresh. Best-effort; the capture
         // succeeded regardless of whether the event fires.
         let _ = events::emit(app, events::names::LIBRARY_UPDATED, ());
         events::emit(app, events::names::CAPTURE_FINISHED, result.clone())?;
         Ok(result)
     }
 
-    /// One-shot repeat of the last rectangular selection — no overlay,
+    /// One-shot repeat of the last rectangular selection: no overlay,
     /// no drag. Grabs a fresh desktop snapshot and crops the remembered
     /// rect out of it.
     ///
@@ -866,12 +866,12 @@ impl OverlayService {
 
         // Whatever is on screen now goes back afterwards. `None` here
         // means the flow was triggered with no Clippity window visible
-        // (the tray path) — nothing to restore.
+        // (the tray path): nothing to restore.
         let previous_primary = window_service::current_visible_primary(app);
         let source_title = foreground_window_title();
 
         // Hide our own chrome and let the compositor unpaint it before
-        // grabbing, exactly as the overlay's `show` does — otherwise the
+        // grabbing, exactly as the overlay's `show` does, otherwise the
         // tray flyout ends up baked into the shot.
         if window_service::hide_primary_windows(app, "overlay") > 0 {
             window_service::sleep_compositor_unpaint(CompositorWait::Capture);
@@ -880,7 +880,7 @@ impl OverlayService {
 
         let (min_x, min_y, vw, vh) = virtual_bounds()?;
         let region = resolve_last_region(last, vw, vh, true).map_err(|e| {
-            // Put the user's window back before surfacing the failure —
+            // Put the user's window back before surfacing the failure:
             // we already hid it.
             if let Some(label) = previous_primary {
                 window_service::restore_window(app, label);
@@ -895,7 +895,7 @@ impl OverlayService {
             region,
             (min_x, min_y),
             toggles.cursor,
-            // No overlay session means no pinned cursor point — the live
+            // No overlay session means no pinned cursor point: the live
             // system cursor position is the honest one here.
             None,
         )?;
@@ -907,8 +907,8 @@ impl OverlayService {
             Some((title, app)) => (Some(title), app),
             None => (source_title, None),
         };
-        // No session to inherit from — this path never opened an overlay
-        // — so the displays are enumerated here, against the same fresh
+        // No session to inherit from, this path never opened an overlay,
+        // so the displays are enumerated here, against the same fresh
         // snapshot the crop came from. No preset either: a repeat is the
         // user asking for the same rect, not a preset re-running.
         let monitors = gather_monitors(min_x, min_y, vw, vh);
@@ -933,11 +933,11 @@ impl OverlayService {
         )
     }
 
-    /// Sample a single pixel from the cached desktop snapshot — the
+    /// Sample a single pixel from the cached desktop snapshot: the
     /// Color-Picker mode. `(x, y)` are canvas-local physical pixels.
     /// Copies the `#RRGGBB` hex to the clipboard (best-effort), restores
     /// the previous primary window, and returns the sampled color. NOT a
-    /// capture — produces no file and no `capture/finished` (ADR 0005).
+    /// capture: produces no file and no `capture/finished` (ADR 0005).
     pub fn pick_color(&self, app: &AppHandle, x: u32, y: u32) -> AppResult<PickedColor> {
         if let Some(overlay) = app.get_webview_window("overlay") {
             overlay.hide().map_err(AppError::from)?;
@@ -983,7 +983,7 @@ impl OverlayService {
 
     /// Palette-Capture finalize: crop the selected `rect` out of the
     /// cached snapshot and quantize it to up to `count` representative
-    /// colors. Returns `(preview_data_uri, colors)` — the preview is a
+    /// colors. Returns `(preview_data_uri, colors)`: the preview is a
     /// small PNG data URI for the toast (not persisted; the library
     /// entry is colors-only, ADR 0006). Like `pick_color`, this is NOT a
     /// file capture: the overlay closes and the previous window is
@@ -1051,7 +1051,7 @@ impl OverlayService {
 
     /// Grab-Text finalize: crop the selected `rect` out of the cached
     /// snapshot and OCR it; returns the trimmed recognized text. Like
-    /// `finish_palette`, NOT a file capture — the overlay closes and the
+    /// `finish_palette`, NOT a file capture: the overlay closes and the
     /// previous window is restored. The window is restored *before* the
     /// (~100-500 ms) recognize so the user isn't left on a frozen
     /// overlay. `Err(Ocr)` on an empty result so the caller surfaces "no
@@ -1111,7 +1111,7 @@ impl OverlayService {
 
         let text = crate::ocr_service::recognize(&crop).map_err(|e| {
             // The detailed WinRT step reason is the most useful signal for
-            // triaging "Grab Text didn't work" — keep it in the backend log
+            // triaging "Grab Text didn't work": keep it in the backend log
             // even though the caller only surfaces a toast to the user.
             tracing::warn!(error = %e, "grab-text OCR failed");
             AppError::Ocr(e)
@@ -1122,7 +1122,7 @@ impl OverlayService {
             return Err(AppError::Ocr("no text found in the selected region".into()));
         }
         tracing::debug!(chars = text.len(), "grab-text OCR succeeded");
-        // Auto-copy to the clipboard (best-effort) — mirrors pick_color.
+        // Auto-copy to the clipboard (best-effort); mirrors pick_color.
         if let Err(e) = copy_text_to_clipboard(&text) {
             tracing::warn!("grab-text clipboard copy failed: {e}");
         }
@@ -1135,7 +1135,7 @@ impl OverlayService {
     /// The overlay turns this into a `clippity-snapshot` URL and lets the
     /// webview fetch the bytes, so this IPC stays a few bytes wide no
     /// matter how large the desktop is. Only `Some` once the bytes are
-    /// actually servable — a URL that 404s would leave the loupe blank
+    /// actually servable: a URL that 404s would leave the loupe blank
     /// with nothing to retry on.
     pub fn snapshot_id(&self) -> Option<u64> {
         self.state
@@ -1145,7 +1145,7 @@ impl OverlayService {
     }
 
     /// The cached snapshot's PNG bytes, for the `clippity-snapshot`
-    /// protocol handler. `id` must match the current session's — a stale
+    /// protocol handler. `id` must match the current session's: a stale
     /// URL (the previous overlay's, still in the webview's cache) gets
     /// `None` rather than this session's pixels under the wrong name.
     pub fn snapshot_png(&self, id: u64) -> Option<Arc<Vec<u8>>> {
@@ -1158,7 +1158,7 @@ impl OverlayService {
     /// The cached desktop snapshot for object detection (Object mode).
     /// `None` when no overlay session is active or its snapshot failed at
     /// show time. A handle (not a lock-held borrow) so the ~0.5–2 s
-    /// inference never blocks finalize/cancel on the state lock — and,
+    /// inference never blocks finalize/cancel on the state lock, and,
     /// since the buffer is shared, without copying 8–33 MiB to get one.
     pub fn detection_canvas(&self) -> Option<Arc<RgbaImage>> {
         self.state.lock().ok().and_then(|s| s.canvas.clone())
@@ -1172,7 +1172,7 @@ impl OverlayService {
             .ok()
             .and_then(|s| {
                 // Record-Window hovers and hit-tests the same list Window
-                // does — it differs only in what the click starts.
+                // does: it differs only in what the click starts.
                 matches!(
                     s.mode,
                     Some(OverlayMode::Window) | Some(OverlayMode::RecordWindow)
@@ -1260,7 +1260,7 @@ pub(crate) fn virtual_bounds() -> AppResult<(i32, i32, u32, u32)> {
     ))
 }
 
-/// A monitor's bounds in virtual-screen physical pixels — what
+/// A monitor's bounds in virtual-screen physical pixels: what
 /// Fullscreen-from-the-overlay crops to. Distinct from
 /// [`SessionMonitor`], which is canvas-local and named, for provenance.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1276,7 +1276,7 @@ struct MonitorBounds {
 /// unavailable (non-Windows) or lands in a gap between mismatched
 /// monitors.
 ///
-/// "The monitor under the cursor" — not the primary — is what Fullscreen
+/// "The monitor under the cursor", not the primary, is what Fullscreen
 /// means from inside the overlay: the overlay spans every display, so the
 /// screen the user is pointing at is the one they mean. (The capture
 /// window's own Fullscreen tile still grabs the primary monitor; it has
@@ -1325,7 +1325,7 @@ fn contains_point(rect: MonitorBounds, x: i32, y: i32) -> bool {
 
 /// Pure: rebase a virtual-screen monitor rect onto the snapshot canvas
 /// (whose `(0, 0)` is `origin`) and clip it to the canvas. Errors when
-/// the monitor doesn't overlap the canvas at all — a display that
+/// the monitor doesn't overlap the canvas at all: a display that
 /// appeared after the snapshot was taken.
 fn rect_on_canvas(
     rect: MonitorBounds,
@@ -1384,7 +1384,7 @@ fn cursor_canvas_position(
 /// *frame* of a straddling recording (where 60 of them happen a second).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum CanvasColor {
-    /// Grab each monitor the way it is actually composed — the scRGB
+    /// Grab each monitor the way it is actually composed: the scRGB
     /// float path on a display running in HDR, tone-mapped down. Costs
     /// a display-config query per monitor, plus a D3D device and a
     /// staging read-back for each HDR one.
@@ -1406,7 +1406,7 @@ pub(crate) fn build_virtual_canvas() -> AppResult<RgbaImage> {
 /// For callers that run this per frame rather than per capture. The
 /// recorder is the one that matters: its straddling-region path rebuilds
 /// the whole canvas for every frame, and setting up a Direct3D device
-/// and a staging read-back 60 times a second — per HDR monitor — would
+/// and a staging read-back 60 times a second, per HDR monitor, would
 /// cost far more than the recording is worth. A recording off an HDR
 /// display therefore has the same washed-out look a screenshot used to;
 /// fixing that properly means holding one duplication open across the
@@ -1426,7 +1426,7 @@ fn build_virtual_canvas_with(color: CanvasColor) -> AppResult<RgbaImage> {
         // Per monitor, not per canvas: HDR is a per-display mode, so a
         // desk with one HDR panel and one SDR panel has to grab each
         // one the way that display is actually composed. `None` is the
-        // ordinary path — see `platform::windows::hdr_capture`.
+        // ordinary path; see `platform::windows::hdr_capture`.
         let hdr = match color {
             CanvasColor::Accurate => hdr_grab_at(mx, my),
             CanvasColor::Sdr => None,
@@ -1446,7 +1446,7 @@ fn build_virtual_canvas_with(color: CanvasColor) -> AppResult<RgbaImage> {
 /// monitor is running in HDR. `None` means "use the ordinary grab".
 ///
 /// Mirrors `capture_service::hdr_grab_at`, including the one-pixel
-/// nudge inside the origin — a monitor's top-left corner is shared with
+/// nudge inside the origin: a monitor's top-left corner is shared with
 /// its neighbour, and `MonitorFromPoint` may resolve it either way.
 /// Duplicated rather than promoted: each is a three-line `cfg` shim over
 /// the same platform call, and the shared thing they would be promoted
@@ -1506,7 +1506,7 @@ fn gather_windows(_: i32, _: i32, _: u32, _: u32, _: OverlayMode) -> Vec<Overlay
 /// per-mode is how a future file-producing mode ships without a display.
 ///
 /// A monitor whose device name can't be read is skipped rather than
-/// listed nameless — an entry that can win attribution and then record
+/// listed nameless: an entry that can win attribution and then record
 /// nothing is worse than not competing.
 fn gather_monitors(min_x: i32, min_y: i32, vw: u32, vh: u32) -> Vec<SessionMonitor> {
     let Ok(monitors) = Monitor::all() else {
@@ -1526,7 +1526,7 @@ fn gather_monitors(min_x: i32, min_y: i32, vw: u32, vh: u32) -> Vec<SessionMonit
 /// CURRENT display layout.
 ///
 /// For producers with no overlay session to inherit a frozen monitor
-/// list from — the scroll/panoramic recorder, which resolves this once at
+/// list from: the scroll/panoramic recorder, which resolves this once at
 /// `start` because a stitch has no single instant to resolve it at.
 pub(crate) fn monitor_for_regions(regions: &[Region]) -> Option<String> {
     let (min_x, min_y, vw, vh) = virtual_bounds().ok()?;
@@ -1578,7 +1578,7 @@ fn mode_uses_window_attribution(mode: OverlayMode) -> bool {
 /// Rebase an absolute virtual-screen window frame `(fx, fy, fw, fh)`
 /// onto the snapshot canvas described by `(min_x, min_y, vw, vh)` (the
 /// `virtual_bounds()` tuple) and clip to it, returning the on-canvas
-/// portion as a `Region` — or `None` if the window lies entirely off
+/// portion as a `Region`, or `None` if the window lies entirely off
 /// the captured desktop. Pure; unit-tested below.
 #[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 fn frame_to_region(frame: (i32, i32, u32, u32), canvas: (i32, i32, u32, u32)) -> Option<Region> {
@@ -1603,7 +1603,7 @@ fn frame_to_region(frame: (i32, i32, u32, u32), canvas: (i32, i32, u32, u32)) ->
 
 /// The window contributing the most visible pixels to `capture_regions`
 /// as `(title, app)`. The app is `None` when the process couldn't be
-/// resolved — `domain::metadata` and the `{app}` naming token both read
+/// resolved: `domain::metadata` and the `{app}` naming token both read
 /// a blank as absent, so it is normalised once, here.
 ///
 /// Returns both together (rather than a title now and an app later) so
@@ -1994,7 +1994,7 @@ fn mask_freehand(
     let w = (x1 - x0 + 1) as u32;
     let h = (y1 - y0 + 1) as u32;
 
-    // Optional cursor compositing — clip to the bbox so a pinned cursor's
+    // Optional cursor compositing: clip to the bbox so a pinned cursor's
     // body can't fall outside the crop (mirrors crop_with_optional_cursor).
     let canvas_owned;
     let canvas_ref: &RgbaImage = if include_cursor {
@@ -2058,7 +2058,7 @@ fn mask_brush(
     let (cw, ch) = (canvas.width() as i32, canvas.height() as i32);
     let (w, h) = (mask.width, mask.height);
 
-    // Optional cursor compositing — clip to the mask bbox so a pinned
+    // Optional cursor compositing: clip to the mask bbox so a pinned
     // cursor's body can't fall outside the crop (mirrors mask_freehand).
     let canvas_owned;
     let canvas_ref: &RgbaImage = if include_cursor {
@@ -2187,15 +2187,15 @@ fn composite_multi_area(
 /// The cursor is deliberately NOT composited in. This image is the
 /// overlay's frozen-desktop backdrop, the magnifier's magnified view,
 /// AND the source of its RGB readout, so it has to be the same pixels
-/// `finalize` will crop — anything extra is a lie in all three places:
+/// `finalize` will crop; anything extra is a lie in all three places:
 ///
 ///   - The backdrop would show a cursor that isn't in the capture
 ///     whenever the Capture-cursor toggle is off.
 ///   - The loupe's sampled colour would disagree with `pick_color`,
 ///     which samples the cursor-free canvas.
 ///   - Even with the toggle ON it was wrong: this is baked at `show`
-///     time, but the capture composites the cursor at `cursor_pin` —
-///     wherever the pointer ended up inside the selection — so the
+///     time, but the capture composites the cursor at `cursor_pin`
+///     (wherever the pointer ended up inside the selection) so the
 ///     preview drew it in a stale position.
 ///
 /// With the toggle on, the cursor therefore isn't previewed at all. The
@@ -2204,7 +2204,7 @@ fn composite_multi_area(
 /// Uses `CompressionType::Fast` (zlib level 1) + `FilterType::NoFilter`
 /// rather than the default zlib level 6. These bytes live for one overlay
 /// session and travel over a local socket, so encode time matters and
-/// size barely does — measured on a real desktop, this level compresses a
+/// size barely does: measured on a real desktop, this level compresses a
 /// 1920×1200 canvas from 8.79 MiB to ~8.25 MiB, so the higher levels
 /// would be paying tens of milliseconds for a rounding error.
 ///
@@ -2227,7 +2227,7 @@ fn render_loupe_png(canvas: &RgbaImage) -> Option<Vec<u8>> {
 }
 
 // Post-capture PNG / clipboard / id helpers live in
-// `services::capture_io` — single source of truth once the overlay
+// `services::capture_io`: single source of truth once the overlay
 // port made them dual-consumer with capture_service.
 
 #[cfg(test)]
@@ -2236,7 +2236,7 @@ mod tests {
     use crate::settings_service::{StaticCapturesDir, StaticNameTemplate};
     use std::path::PathBuf;
 
-    // Sanity: the OverlayService's pure-helper boundary — anything that
+    // Sanity: the OverlayService's pure-helper boundary; anything that
     // crosses into xcap or the AppHandle stays uncovered here (covered
     // by Step 4 manual validation). What we CAN unit-test is that the
     // service constructs without panicking and that mode dispatch
@@ -2254,7 +2254,7 @@ mod tests {
     /// The invariant that forbids it: what the overlay is shown must be
     /// pixel-identical to the canvas `finalize` crops.
     ///
-    /// Caveat on how much this catches — `composite_cursor` draws at the
+    /// Caveat on how much this catches: `composite_cursor` draws at the
     /// LIVE cursor position, so against this small canvas it would only
     /// perturb the pixels when the pointer happens to sit in the
     /// top-left 8×4 of the screen (and not at all on a headless runner).
@@ -2328,7 +2328,7 @@ mod tests {
 
     #[test]
     fn frame_to_region_clips_overhang_at_canvas_edge() {
-        // Window starts inside but runs past the right edge — width is
+        // Window starts inside but runs past the right edge: width is
         // clipped to the visible portion.
         let r = frame_to_region((1800, 0, 800, 600), (0, 0, 1920, 1080)).unwrap();
         assert_eq!(
@@ -2599,7 +2599,7 @@ mod tests {
 
     #[test]
     fn encode_png_round_trips_pixels_and_alpha() {
-        // The single encode site every mode now funnels through — a
+        // The single encode site every mode now funnels through: a
         // regression here would silently change every saved capture.
         let mut img = solid(3, 2, [10, 20, 30, 255]);
         img.put_pixel(1, 1, image::Rgba([200, 100, 50, 0]));
@@ -2730,7 +2730,7 @@ mod tests {
         assert!(composite_multi_area(&canvas, &[], (0, 0), false, None, 12).is_err());
     }
 
-    /// Opt-in timing probe for the overlay open path — NOT a CI test.
+    /// Opt-in timing probe for the overlay open path: NOT a CI test.
     ///
     /// The criterion suite can only measure the deterministic half of
     /// `show` (clone / encode / base64 over a synthetic canvas); the
@@ -2742,7 +2742,7 @@ mod tests {
     /// cargo test -p clippity-services --lib overlay_show_path_timings -- --ignored --nocapture
     /// ```
     ///
-    /// Prints timings and byte sizes only — nothing about the captured
+    /// Prints timings and byte sizes only: nothing about the captured
     /// content is recorded, which is the same constraint the benchmark
     /// harness works under.
     #[test]
@@ -2758,7 +2758,7 @@ mod tests {
         let canvas = build_virtual_canvas().expect("canvas");
         println!("build_virtual_canvas    {:>8.2} ms", ms(t));
 
-        // Reference only — `show` shares one buffer behind an `Arc`, so
+        // Reference only: `show` shares one buffer behind an `Arc`, so
         // this no longer happens. Kept so the saving stays visible, and
         // so anyone tempted to hand a consumer its own copy can see the
         // price first.
@@ -2794,7 +2794,7 @@ mod tests {
             png.len() / (1024 * 1024)
         );
 
-        // The compositor half of `settle_after_hide` — the floor + flush.
+        // The compositor half of `settle_after_hide`: the floor + flush.
         // The deterministic wait-for-hidden that precedes it needs a live
         // `AppHandle` (there is no window to hide here), so it can't be
         // measured from this probe; in the app it exits within a frame or

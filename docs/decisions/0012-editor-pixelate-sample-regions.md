@@ -1,14 +1,14 @@
-# 0012 — Editor pixelate sample regions
+# 0012: Editor pixelate sample regions
 
 - **Status:** Accepted (implemented, Workstream A2.1)
 - **Date:** 2026-06-08 · *recorded 2026-06-09*
-- **Area:** `app/frontend/src/features/editor` — both renderers
-- **Extends:** [0010 — sample regions: blur + magnifier](0010-editor-sample-regions-blur-magnifier.md)
+- **Area:** `app/frontend/src/features/editor`, both renderers
+- **Extends:** [0010: sample regions: blur + magnifier](0010-editor-sample-regions-blur-magnifier.md)
 
 ## Context
 
 ADR 0010 introduced `sample?: SampleSpec` regions and shipped Blur + Magnifier.
-The third mode, `pixelate`, was modelled but unimplemented — it fell back to
+The third mode, `pixelate`, was modelled but unimplemented: it fell back to
 blur. It was deferred because **SVG has no reliable native mosaic/pixelate
 filter**: nested-scaling and `image-rendering: pixelated` tricks don't compose to
 a true downsample-then-nearest-upsample in the SVG vector pipeline, and behave
@@ -35,8 +35,8 @@ identical on both sides, so **live == export**.
 - **Live** (`SceneNodeView`): a new `PixelatedImage` component async-rasterises
   via a cached `loadImage` + `pixelateRegion` inside an effect keyed on the
   **primitive** geometry fields. Until the first mosaic is ready it paints a
-  neutral `#8b8f96` **privacy placeholder** — it must never briefly reveal the
-  original pixels — and keeps the previous mosaic up during a recompute (still
+  neutral `#8b8f96` **privacy placeholder** (it must never briefly reveal the
+  original pixels) and keeps the previous mosaic up during a recompute (still
   obscured) to avoid a gray flicker on resize.
 - `drawCover` moved into `lib/sample.ts` as the single shared cover-math source.
 - `SampleSection` is now 3-mode via `SAMPLE_CFG` (blur "Amount" px / pixelate
@@ -48,7 +48,7 @@ rectangle + `sample { mode: "pixelate", amount: 12 }`.
 
 ## Consequences
 
-- The live view now needs an **async image decode + component state** — heavier
+- The live view now needs an **async image decode + component state**: heavier
   than Blur/Magnifier's stateless pure-SVG approach. Accepted: pure-SVG pixelate
   is unreliable, and this is the deterministic path.
 - Pixel output is **not unit-testable** in jsdom (no canvas 2D, and `loadImage`
@@ -60,13 +60,13 @@ rectangle + `sample { mode: "pixelate", amount: 12 }`.
 
 ### Why a new ADR rather than amending 0010
 
-The rendering **mechanism** is fundamentally different — offscreen-canvas raster
-vs. SVG filter/transform — and carries its own privacy-placeholder and
+The rendering **mechanism** is fundamentally different, offscreen-canvas raster
+vs. SVG filter/transform, and carries its own privacy-placeholder and
 async-decode consequences. That's a distinct decision, so it gets its own record.
 
 ## Alternatives considered
 
-- **SVG `feImage` / `image-rendering: pixelated` hacks** — rejected; unreliable
+- **SVG `feImage` / `image-rendering: pixelated` hacks**: rejected; unreliable
   across engines, the reason pixelate was deferred from A2.
-- **Storing the pixelated bitmap on the node** — rejected; bloats the document
+- **Storing the pixelated bitmap on the node**: rejected; bloats the document
   and breaks re-pixelation when the region is resized.

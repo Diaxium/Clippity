@@ -1,4 +1,4 @@
-//! Installation detection — the Phase-6 correlation of every signal into
+//! Installation detection: the Phase-6 correlation of every signal into
 //! a single [`Detection`].
 //!
 //! No single source is trusted alone: the on-disk manifest, the Add/Remove
@@ -31,7 +31,7 @@ pub fn locate_manifest(paths: &InstallerPaths) -> Option<(PathBuf, InstallationM
 }
 
 /// An interrupted operation found on disk, plus the pure recovery decision
-/// for it. `None` means every maintenance directory is clean — the common
+/// for it. `None` means every maintenance directory is clean: the common
 /// case (a journal exists only while an operation is in flight).
 #[derive(Debug, Clone)]
 pub struct PendingOperation {
@@ -85,7 +85,7 @@ pub fn scan_pending_operation(paths: &InstallerPaths) -> Option<PendingOperation
 
 /// Whether any maintenance directory holds a manifest whose schema is
 /// newer than this build understands (even if it would fail to fully
-/// parse) — a signal to route the user to a newer wizard.
+/// parse): a signal to route the user to a newer wizard.
 fn any_schema_too_new(paths: &InstallerPaths) -> bool {
     for all_users in [true, false] {
         let dir = paths.maintenance_dir(all_users);
@@ -100,7 +100,7 @@ fn any_schema_too_new(paths: &InstallerPaths) -> bool {
 
 /// Resolve the full [`Detection`] shown on the maintenance hub.
 pub fn detect(paths: &InstallerPaths, wizard_version: &str) -> Detection {
-    // Registry signal — present in either hive, and is it ours?
+    // Registry signal: present in either hive, and is it ours?
     let hive = windows_ops::uninstall_hive_present();
     let registry_present = hive.is_some();
     let registry_is_ours = hive

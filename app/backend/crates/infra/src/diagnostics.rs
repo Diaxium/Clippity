@@ -3,7 +3,7 @@
 //! One place to emit the environment summary that turns a vague bug
 //! report ("capture didn't save") into an actionable one ("captures dir
 //! was a read-only network path"). Everything here logs through
-//! `tracing` and stays on the machine — nothing is transmitted. The
+//! `tracing` and stays on the machine: nothing is transmitted. The
 //! paths recorded are the app's *own* data directories, which are
 //! exactly what "where did my capture go?" triage needs and are safe to
 //! write to a local log.

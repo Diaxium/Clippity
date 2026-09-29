@@ -1,5 +1,5 @@
 /**
- * Live log viewer — the tail of the on-disk log, refreshed on a timer,
+ * Live log viewer: the tail of the on-disk log, refreshed on a timer,
  * filterable by level and by text.
  *
  * Polled rather than streamed: an event per log line would mean the act
@@ -48,7 +48,7 @@ const LEVEL_CLASS: Record<string, string> = {
  * Pure: apply the level floor and the text query.
  *
  * A line with no level (a panic backtrace, a wrapped field) always
- * passes the level filter — those are the lines a crash produces, and
+ * passes the level filter: those are the lines a crash produces, and
  * filtering them out would hide exactly what the viewer exists for.
  */
 export function filterLines(
@@ -101,7 +101,7 @@ export function LogViewer() {
     [lines, level, query]
   );
 
-  // Stick to the bottom while following — but only when following, so a
+  // Stick to the bottom while following, but only when following, so a
   // user reading back through the buffer isn't yanked forward.
   useEffect(() => {
     if (!following) return;

@@ -122,12 +122,12 @@ describe("useAutoDismiss", () => {
     // Burn 300ms with the timer running.
     act(() => advance(300));
 
-    // Hover — timer should clear; further time should not fire onExpire.
+    // Hover: timer should clear; further time should not fire onExpire.
     rerender({ hovered: true });
     act(() => advance(2000));
     expect(onExpire).not.toHaveBeenCalled();
 
-    // Un-hover — timer resumes from ~700ms remaining. After ~700ms it
+    // Un-hover: timer resumes from ~700ms remaining. After ~700ms it
     // should expire.
     rerender({ hovered: false });
     act(() => advance(699));

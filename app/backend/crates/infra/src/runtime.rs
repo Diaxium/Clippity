@@ -2,7 +2,7 @@
 //! owns: when it started, and whether it was started in safe mode.
 //!
 //! Process globals rather than fields on `AppState`, because both are
-//! read before that state exists — safe mode has to be decided before
+//! read before that state exists: safe mode has to be decided before
 //! the first webview is created (it forces the GPU off, and that browser
 //! arg is frozen at webview-environment creation), and the start instant
 //! has to be stamped in `main` for uptime to mean anything.
@@ -26,7 +26,7 @@ static STARTED: OnceLock<Instant> = OnceLock::new();
 static SAFE_MODE: AtomicBool = AtomicBool::new(false);
 
 /// Stamp the process start. Call once, first thing in `run()`.
-/// Idempotent — a second call keeps the original instant.
+/// Idempotent: a second call keeps the original instant.
 pub fn mark_started() {
     let _ = STARTED.set(Instant::now());
 }
@@ -54,7 +54,7 @@ pub fn consume_safe_mode_marker(data_dir: &Path) -> bool {
     let marker = data_dir.join(SAFE_MODE_MARKER);
     let armed = marker.is_file();
     if armed {
-        // A marker that cannot be deleted would make safe mode sticky —
+        // A marker that cannot be deleted would make safe mode sticky:
         // worth a log line, but not worth refusing to boot over.
         if let Err(e) = std::fs::remove_file(&marker) {
             tracing::warn!(error = %e, "safe-mode marker could not be cleared");

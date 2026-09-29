@@ -1,4 +1,4 @@
-//! Headless command execution — the process-side of
+//! Headless command execution: the process-side of
 //! [`installer_domain::cli`].
 //!
 //! The domain parses a command line into a [`CliCommand`]; this module runs
@@ -91,7 +91,7 @@ fn run_install(cmd: &CliCommand, paths: &InstallerPaths) -> ExitCode {
     // A silent install that needs elevation this process does not hold
     // cannot proceed (relaunching would show a UAC prompt).
     if needs_elevation(&options) && !installer_platform::is_elevated() {
-        tracing::error!("silent install needs elevation — relaunch the installer as administrator");
+        tracing::error!("silent install needs elevation; relaunch the installer as administrator");
         return ExitCode::UacCancelled;
     }
 
@@ -191,7 +191,7 @@ fn run_uninstall(cmd: &CliCommand, paths: &InstallerPaths) -> ExitCode {
         selection.remove_ids.push("settings".to_string());
     }
     if cmd.keep_user_data {
-        // Keep everything the user owns — restrict removal to non-destructive
+        // Keep everything the user owns: restrict removal to non-destructive
         // application machinery only.
         let destructive: Vec<String> = manifest::data_categories()
             .into_iter()

@@ -1,5 +1,5 @@
 /**
- * Settings wire-format contracts — mirror Rust `domain::settings`.
+ * Settings wire-format contracts: mirror Rust `domain::settings`.
  *
  * Persisted sections: `general`, `appearance`, `notifications`,
  * `performance`, `capture`, `models`, and `shortcuts`. The remaining
@@ -23,14 +23,14 @@ export type RadiusScale = "sharp" | "default" | "round";
  *  `domain::settings::Density`. */
 export type Density = "comfortable" | "compact";
 
-/** Application-icon style — which bundled mark drives the tray / taskbar
+/** Application-icon style, which bundled mark drives the tray / taskbar
  *  / in-app icon. Mirrors the Rust `domain::settings::AppIconStyle`. */
 export type AppIconStyle = "color" | "monochrome";
 
 /** Native window backdrop material for transparent app chrome. Mirrors
  *  Rust `domain::settings::WindowBackdrop` (kebab-case on the wire).
  *
- *  `mica` / `tabbed` are wallpaper-derived — DWM blurs the desktop
+ *  `mica` / `tabbed` are wallpaper-derived: DWM blurs the desktop
  *  wallpaper, so live content behind the window never shows through
  *  however transparent the chrome is made. `acrylic` / `blur` sample
  *  live content. `clear` removes the material entirely, leaving the
@@ -47,16 +47,16 @@ export type WindowBackdrop =
  * Every field is a percent; the backend clamps each into its envelope on
  * save (see `settings/constants.ts` for the mirrored bounds).
  *
- * - `tintStrength` (0–100) — alpha of the colour blended into the
+ * - `tintStrength` (0–100): alpha of the colour blended into the
  *   *native* material. Only Acrylic and Blur take one; on Windows 11
  *   22H2+ acrylic is a DWM system backdrop that tints itself, so this
  *   lands on Windows 10 / older builds only.
- * - `glassStrength` (0–150) — multiplier on the stacked in-app glass
+ * - `glassStrength` (0–150): multiplier on the stacked in-app glass
  *   layers. The knob that decides how much of the native material is
  *   visible through the app's own panels; 0 stops them painting.
- * - `blurStrength` (0–200) — multiplier on the CSS `backdrop-filter`
+ * - `blurStrength` (0–200): multiplier on the CSS `backdrop-filter`
  *   blur radii. Lower reads sharper through the chrome.
- * - `saturation` (50–200) — CSS `backdrop-filter: saturate()`. Pushes
+ * - `saturation` (50–200): CSS `backdrop-filter: saturate()`. Pushes
  *   colour back into materials that wash out under transparent chrome.
  */
 export interface BackdropTuning {
@@ -81,7 +81,7 @@ export interface GeneralSettings {
   /**
    * Capture file-name template. Empty string = the backend's built-in
    * default (`DEFAULT_NAME_TEMPLATE`). Tokens: `{label}` `{window}`
-   * `{type}` `{date}` `{time}` — see `NAME_TEMPLATE_TOKENS`.
+   * `{type}` `{date}` `{time}`; see `NAME_TEMPLATE_TOKENS`.
    */
   nameTemplate: string;
   /** Seeded on first launch from the installer's "Start Clippity at login"
@@ -89,14 +89,14 @@ export interface GeneralSettings {
   startOnStartup: boolean;
   /**
    * Whether Clippity may check for and apply updates on its own. Seeded on
-   * first launch from the installer's answer. **Intent only in this build**
-   * — there is no updater yet, so nothing acts on it.
+   * first launch from the installer's answer. **Intent only in this build**:
+   * there is no updater yet, so nothing acts on it.
    */
   automaticUpdates: boolean;
   /**
    * Whether Clippity may share anonymous usage and diagnostic data. Seeded
    * on first launch from the installer's answer. **Intent only in this
-   * build** — Clippity sends no telemetry.
+   * build**: Clippity sends no telemetry.
    */
   helpImprove: boolean;
   /** True once the user has completed the first-launch onboarding
@@ -120,7 +120,7 @@ export interface AppearanceSettings {
   backdropTuning: BackdropTuningSet;
   /**
    * UI zoom, percent (80–120). Applied as a CSS `zoom` on the full-window
-   * chrome (main / capture) so px type + layout scale together — kept off
+   * chrome (main / capture) so px type + layout scale together, kept off
    * the coordinate-sensitive overlay + backend-sized utility windows.
    * Backend clamps into `[MIN,MAX]_UI_SCALE_PCT` on save.
    */
@@ -147,7 +147,7 @@ export interface NotificationSettings {
  *   takes effect after an app restart.
  * - `windowEffects`: Win11 Mica backdrop + `backdrop-filter` blur. Off =
  *   flat opaque chrome, lighter on the DWM compositor + GPU. Live.
- * - `reducedAnimations`: the single motion master — `Providers.tsx`
+ * - `reducedAnimations`: the single motion master; `Providers.tsx`
  *   maps it onto `data-motion` (ORed with the OS `prefers-reduced-motion`).
  * - `captureCompression`: PNG encode effort for the capture pipeline.
  */
@@ -159,7 +159,7 @@ export interface PerformanceSettings {
 }
 
 /**
- * Capture-behaviour knobs — the defaults a fresh capture window opens
+ * Capture-behaviour knobs: the defaults a fresh capture window opens
  * with. Mirrors Rust `domain::settings::CaptureSettings`. The capture
  * window seeds its per-session store from these on launch, so a user's
  * preferred toggles / delay survive restarts.
@@ -194,7 +194,7 @@ export interface CaptureSettings {
  * struct's toggles.
  *
  * - `microphone` / `systemAudio`: which inputs to mix in. **Both ship
- *   off** — a recorder that silently starts listening to the room, or
+ *   off**: a recorder that silently starts listening to the room, or
  *   captures whatever music is playing, is a privacy surprise rather
  *   than a convenience.
  * - `microphoneDevice` / `systemDevice`: pinned endpoint ids, or null to
@@ -203,27 +203,27 @@ export interface CaptureSettings {
  * - `microphoneGainPct` / `systemGainPct`: the level each input *starts*
  *   a session at, as a percentage of unity (100 = unchanged, 0 = silent,
  *   200 = the ceiling). The HUD's live sliders move the running session
- *   and deliberately do not write back here — a level nudged for one
+ *   and deliberately do not write back here: a level nudged for one
  *   recording shouldn't become the level every future one begins at.
  * - `videoFps` / `gifFps`: separate because GIF's usable frame-rate
  *   range is far lower. The backend clamps both on save.
  * - `maxHeight`: cap on the encoded frame's height. `0` records at the
  *   captured size and is the default. One value across both formats,
- *   unlike the frame rates — GIF's own pixel budget is tighter than any
+ *   unlike the frame rates: GIF's own pixel budget is tighter than any
  *   offered height and simply wins, so a shared setting can't produce a
  *   value either format refuses.
- * - `encoding`: H.264 encoder settings a session starts from — quality
+ * - `encoding`: H.264 encoder settings a session starts from: quality
  *   step, optional fixed bitrate, keyframe interval, rate control, and
  *   the hardware-encoder preference. Nested rather than five flat fields
  *   because they are read together and mean nothing individually. GIF
  *   ignores all of it.
  * - `cursor`: composite the pointer into recorded frames.
  * - `outline`: draw a border around the recorded area for the length of
- *   the session. **Ships on** — between choosing a region and stopping,
+ *   the session. **Ships on**: between choosing a region and stopping,
  *   nothing else says what is being recorded. Click-through and excluded
  *   from capture, so it never lands in the file.
  * - `clipboard`: copy every finished clip to the clipboard as a file
- *   reference. **Ships off**, matching `CaptureSettings.clipboard` —
+ *   reference. **Ships off**, matching `CaptureSettings.clipboard`:
  *   replacing what the user had copied is a surprise either way.
  */
 export interface RecordingSettings {
@@ -267,9 +267,9 @@ export interface ModelsSettings {
  * `domain::settings::ShortcutsSettings`.
  *
  * - `overrides`: per-binding remaps for the in-app keybind registries.
- *   The key is a fully-qualified binding id — `"<scope>:<id>"`, e.g.
+ *   The key is a fully-qualified binding id: `"<scope>:<id>"`, e.g.
  *   `"editor:select-all"`, `"library:trash-selection"`,
- *   `"quickCapture:screenshot"` — and the value is the list of combos
+ *   `"quickCapture:screenshot"`, and the value is the list of combos
  *   (author notation, `"Mod+Shift+A"`) that *replace* that binding's
  *   registry default. A missing id = "use the default"; an explicit empty
  *   array = "deliberately unbound".
@@ -286,7 +286,7 @@ export interface ShortcutsSettings {
 
 /**
  * Severity floor for one half of the app's logging. Mirrors the Rust
- * `domain::settings::LogLevel` (kebab-case on the wire) — the backend
+ * `domain::settings::LogLevel` (kebab-case on the wire): the backend
  * maps it onto a `tracing` `EnvFilter` directive, the frontend onto its
  * console logger's threshold, so both halves of a log file agree on
  * what "debug" means.
@@ -295,7 +295,7 @@ export type LogLevel = "off" | "error" | "warn" | "info" | "debug" | "trace";
 
 /**
  * How long an armed developer mode survives. Mirrors the Rust
- * `domain::settings::DeveloperExpiry`. `restart` is the default —
+ * `domain::settings::DeveloperExpiry`. `restart` is the default:
  * developer mode reveals destructive actions and can record IPC
  * payloads, so leaving it armed after one debugging session is the
  * failure mode this guards against.
@@ -303,7 +303,7 @@ export type LogLevel = "off" | "error" | "warn" | "info" | "debug" | "trace";
 export type DeveloperExpiry = "never" | "restart" | "day";
 
 /**
- * Developer + diagnostics preferences — Settings → Advanced. Mirrors
+ * Developer + diagnostics preferences: Settings → Advanced. Mirrors
  * Rust `domain::settings::DeveloperSettings`.
  *
  * Two kinds of field, and the difference matters:
@@ -313,7 +313,7 @@ export type DeveloperExpiry = "never" | "restart" | "day";
  *   are inert while developer mode is off.
  * - **Machinery** (`backendLog`, `frontendLog`, `logToDisk`,
  *   `logMaxFileMb`, `logRetainFiles`) configures logging on **every**
- *   launch, developer mode or not — which is what makes an exported
+ *   launch, developer mode or not, which is what makes an exported
  *   diagnostics bundle worth anything for a user who never opened this
  *   page.
  */
@@ -351,7 +351,7 @@ export interface DeveloperSettings {
   /** Show recorder statistics (frames, drops, encoder, file growth). */
   recordingDiagnostics: boolean;
   /** Strip user names, paths and capture names from an exported
-   *  bundle. Ships on — a bundle is made to be sent to someone else. */
+   *  bundle. Ships on: a bundle is made to be sent to someone else. */
   redactDiagnostics: boolean;
   /** Per-flag overrides for the frontend's experiment registry. A
    *  missing id = "use the build default". */
@@ -365,7 +365,7 @@ export interface DeveloperSettings {
  * A value rather than a type because three surfaces need one: test
  * fixtures, the settings smoke page, and any future code that has to
  * construct a full `Settings` without a backend. Keep it in lock-step
- * with the Rust `Default` impl — the Rust side is authoritative, and
+ * with the Rust `Default` impl: the Rust side is authoritative, and
  * this exists so nothing has to guess at what it says.
  */
 export const DEFAULT_DEVELOPER_SETTINGS: DeveloperSettings = {
@@ -403,7 +403,7 @@ export interface Settings {
 
 /**
  * Patch shape for `settings_update`. Each section is optional and
- * replaces the whole sub-struct when present — omit a section to
+ * replaces the whole sub-struct when present: omit a section to
  * leave it unchanged.
  */
 export interface SettingsPatch {

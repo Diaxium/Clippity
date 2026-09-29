@@ -4,7 +4,7 @@
 //! `EnumWindows` (which yields them in front-to-back Z-order),
 //! filters out the ones a user can't meaningfully "click to capture"
 //! (hidden, minimized, cloaked, tool windows, untitled, sub-pixel),
-//! and returns each survivor's **tight visible frame** —
+//! and returns each survivor's **tight visible frame**:
 //! `DWMWA_EXTENDED_FRAME_BOUNDS`, which excludes the invisible
 //! resize-border / drop-shadow padding that `GetWindowRect` includes,
 //! so the eventual crop hugs the window instead of leaving a halo of
@@ -12,14 +12,14 @@
 //!
 //! Coordinates are **absolute** virtual-screen physical pixels. The
 //! caller (`overlay_service`) rebases them onto the snapshot canvas
-//! origin and clips to canvas bounds — see `frame_to_region` there —
+//! origin and clips to canvas bounds, see `frame_to_region` there,
 //! so this module stays free of any virtual-desktop / `domain`
 //! knowledge, mirroring `monitor.rs`'s primitive-tuple boundary.
 //!
 //! Why raw Win32 rather than `xcap::Window::all()` (used by the legacy
 //! picker): hover hit-testing on overlapping windows needs a reliable
 //! front-to-back Z-order, and clean crops need DWM extended-frame
-//! bounds — neither of which xcap exposes dependably.
+//! bounds, neither of which xcap exposes dependably.
 
 use std::ffi::c_void;
 use std::mem::size_of;
@@ -42,7 +42,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 /// A capturable top-level window in **absolute** virtual-screen
 /// physical pixels. `id` is the source HWND's bits (opaque,
 /// session-stable). `app` is the friendly name of the owning
-/// application, or `""` when the process couldn't be queried — a
+/// application, or `""` when the process couldn't be queried: a
 /// protected or elevated process refuses the handle, which is expected,
 /// not an error.
 #[derive(Debug, Clone)]
@@ -56,17 +56,17 @@ pub struct WindowFrame {
     pub height: u32,
 }
 
-/// Drop windows smaller than this (px²) — splash/IME/helper husks that
+/// Drop windows smaller than this (px²): splash/IME/helper husks that
 /// pass the other filters but aren't worth a capture target.
 const MIN_WINDOW_AREA_PX: u64 = 16 * 16;
 
 /// Enumerate capturable top-level windows, front-to-back (topmost
-/// first — so a hit-test should take the first containing rect).
+/// first, so a hit-test should take the first containing rect).
 ///
 /// Each survivor's owning process is resolved here rather than lazily,
 /// so window attribution can name the app without a second pass. The
 /// cost is one `OpenProcess` + `QueryFullProcessImageNameW` per *kept*
-/// window — tens of microseconds each, and only for windows that
+/// window: tens of microseconds each, and only for windows that
 /// already passed the filter, which keeps it comfortably inside the
 /// overlay-open budget.
 pub fn list_capturable_windows() -> Vec<WindowFrame> {
@@ -133,7 +133,7 @@ fn keep_window(
         && area_px >= MIN_WINDOW_AREA_PX
 }
 
-/// `EnumWindows` callback — pushes each HWND into the `Vec<HWND>`
+/// `EnumWindows` callback: pushes each HWND into the `Vec<HWND>`
 /// borrowed through `lparam`. Returns `TRUE` to keep enumerating.
 unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
     let hwnds = &mut *(lparam.0 as *mut Vec<HWND>);
@@ -176,7 +176,7 @@ unsafe fn is_cloaked(hwnd: HWND) -> bool {
     ok.is_ok() && cloaked != 0
 }
 
-/// `WS_EX_TOOLWINDOW` — floating palettes / helper windows that don't
+/// `WS_EX_TOOLWINDOW`: floating palettes / helper windows that don't
 /// appear in the Alt-Tab list. Same filter the shell uses for task
 /// switching, so it matches the user's mental model of "a window".
 unsafe fn is_tool_window(hwnd: HWND) -> bool {
@@ -184,11 +184,11 @@ unsafe fn is_tool_window(hwnd: HWND) -> bool {
     (ex & WS_EX_TOOLWINDOW.0) != 0
 }
 
-/// `WS_EX_LAYERED | WS_EX_TRANSPARENT` — input-transparent overlay
+/// `WS_EX_LAYERED | WS_EX_TRANSPARENT`: input-transparent overlay
 /// surfaces (screen-edge indicators, HUDs, notification scrims). They
 /// can pass every other filter while being invisible or near-invisible
 /// on screen: hit-testing one highlights "a window" the user cannot
-/// see — or click — so they aren't meaningful capture targets.
+/// see, or click, so they aren't meaningful capture targets.
 unsafe fn is_click_through(hwnd: HWND) -> bool {
     let ex = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
     let mask = WS_EX_LAYERED.0 | WS_EX_TRANSPARENT.0;
@@ -196,7 +196,7 @@ unsafe fn is_click_through(hwnd: HWND) -> bool {
 }
 
 /// The window the user was working in when a capture fired, as
-/// `(title, app)` — used to give the saved file a recognisable name
+/// `(title, app)`: used to give the saved file a recognisable name
 /// (`domain::naming`) and to fill its provenance record
 /// (`domain::metadata`). `app` is `""` when the process couldn't be
 /// queried.
@@ -207,7 +207,7 @@ unsafe fn is_click_through(hwnd: HWND) -> bool {
 /// from Clippity's own UI would otherwise be labelled "Clippity"; the
 /// naming engine then falls back to the capture-type label instead. A
 /// capture triggered by a global hotkey while another app is focused
-/// yields that app's title — the case where this is most useful.
+/// yields that app's title: the case where this is most useful.
 pub fn foreground_window_source() -> Option<(String, String)> {
     // SAFETY: each call is a plain Win32 query against the live
     // foreground HWND; no pointers escape and the handle isn't retained.
@@ -219,7 +219,7 @@ pub fn foreground_window_source() -> Option<(String, String)> {
         let mut pid: u32 = 0;
         GetWindowThreadProcessId(hwnd, Some(&mut pid));
         if pid == GetCurrentProcessId() {
-            // Our own window — let the caller fall back to the type label.
+            // Our own window: let the caller fall back to the type label.
             return None;
         }
         let title = window_title(hwnd);
@@ -231,7 +231,7 @@ pub fn foreground_window_source() -> Option<(String, String)> {
     }
 }
 
-/// [`foreground_window_source`], title only — for callers that record
+/// [`foreground_window_source`], title only, for callers that record
 /// no provenance.
 pub fn foreground_window_title() -> Option<String> {
     foreground_window_source().map(|(title, _)| title)
@@ -258,7 +258,7 @@ unsafe fn window_title(hwnd: HWND) -> String {
 /// `GetFileVersionInfo` round-trip per window plus a new Win32 feature,
 /// for a string that varies by locale and installer. The executable
 /// name is stable, cheap, and what a user recognises anyway once it is
-/// capitalised — see [`friendly_app_name`].
+/// capitalised; see [`friendly_app_name`].
 ///
 /// `PROCESS_QUERY_LIMITED_INFORMATION` is deliberately the narrowest
 /// right that answers the question, and is the one access level that
@@ -270,7 +270,7 @@ unsafe fn app_name(hwnd: HWND) -> String {
         return String::new();
     }
     let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) else {
-        // Elevated / protected processes refuse the handle. Expected —
+        // Elevated / protected processes refuse the handle. Expected:
         // the window still lists, it just goes unattributed.
         return String::new();
     };
@@ -297,7 +297,7 @@ unsafe fn app_name(hwnd: HWND) -> String {
 /// executable is shipped: `chrome.exe` → `Chrome`, `Code.exe` → `Code`,
 /// `explorer.exe` → `Explorer`.
 ///
-/// A name that already carries capitals is left exactly as-is — the
+/// A name that already carries capitals is left exactly as-is: the
 /// vendor cased it deliberately (`WINWORD`, `iTunes`), and
 /// "prettifying" it would mean a hardcoded table that goes stale.
 /// Returns `""` for a path with no file component.

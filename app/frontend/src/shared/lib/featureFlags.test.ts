@@ -49,7 +49,7 @@ describe("feature flags", () => {
 
   it("an unknown flag is off, not on", () => {
     // A caller asking about a flag that isn't catalogued is asking about
-    // a code path that doesn't exist — "on" is the dangerous guess.
+    // a code path that doesn't exist: "on" is the dangerous guess.
     expect(isFeatureEnabled("nope.missing")).toBe(false);
   });
 

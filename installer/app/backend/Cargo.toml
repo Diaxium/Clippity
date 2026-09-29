@@ -52,10 +52,10 @@ windows = { version = "0.62.2", features = [
   "Win32_Security",
   # ShellExecuteW + SW_NORMAL, used to relaunch the installer elevated.
   "Win32_UI_WindowsAndMessaging",
-  # MoveFileExW(MOVEFILE_DELAY_UNTIL_REBOOT) — the locked-file fallback that
+  # MoveFileExW(MOVEFILE_DELAY_UNTIL_REBOOT): the locked-file fallback that
   # schedules deletion of files still in use for the next reboot.
   "Win32_Storage_FileSystem",
-  # Restart Manager (RmStartSession/RmRegisterResources/RmGetList) — enumerate
+  # Restart Manager (RmStartSession/RmRegisterResources/RmGetList): enumerate
   # exactly which processes hold a file a maintenance operation must change,
   # so Clippity-owned lockers can be cleared and unrelated apps surfaced.
   "Win32_System_RestartManager",

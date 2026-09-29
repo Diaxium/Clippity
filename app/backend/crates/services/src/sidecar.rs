@@ -1,16 +1,16 @@
-//! Sidecar files — the small records that live *beside* a capture
+//! Sidecar files: the small records that live *beside* a capture
 //! rather than inside it, and the rules that keep them attached to it.
 //!
 //! Three families exist today, all hidden subdirectories of whatever
 //! directory the capture itself landed in:
 //!
-//! - [`METADATA_DIRNAME`] (`.meta`) — the provenance record written at
+//! - [`METADATA_DIRNAME`] (`.meta`): the provenance record written at
 //!   save time (`domain::metadata`): source app + window, capture mode,
 //!   timestamp, dimensions.
-//! - [`SCENES_DIRNAME`] (`.scenes`) — the editor's editable scene
+//! - [`SCENES_DIRNAME`] (`.scenes`): the editor's editable scene
 //!   document (ADR 0017), written when a capture is saved from the
 //!   editor.
-//! - [`LABELS_DIRNAME`] (`.labels`) — the user's tags and favorite flag
+//! - [`LABELS_DIRNAME`] (`.labels`): the user's tags and favorite flag
 //!   (`domain::labels`, ADR 0029), rewritten whenever they are edited.
 //!   Deliberately *not* folded into `.meta`: provenance is written once
 //!   and never touched again, and a tag edit has no business rewriting a
@@ -21,7 +21,7 @@
 //! 0004) and the trash is a subdirectory, so a root-relative layout
 //! would strand the record the first time a capture landed anywhere
 //! else. Parent-relative means the pair travels together by
-//! construction — `<dir>/Shot.png` ↔ `<dir>/.meta/Shot.png.json` — and
+//! construction, `<dir>/Shot.png` ↔ `<dir>/.meta/Shot.png.json`, and
 //! `.trash/` gets its own `.meta`/`.scenes` for the same reason.
 //!
 //! Both families use `library::sidecar_file_name`, so a capture's
@@ -32,10 +32,10 @@
 //!
 //! Every operation here is **best-effort**. A missing, unreadable, or
 //! unwritable sidecar must never fail the capture, the trash move, or
-//! the library listing — the pixels are the product; this is
+//! the library listing: the pixels are the product; this is
 //! description. Failures are logged and swallowed. The one exception is
 //! [`write_metadata`], which surfaces its error so a caller that
-//! genuinely wants to know can look — the capture pipelines log and
+//! genuinely wants to know can look; the capture pipelines log and
 //! continue.
 
 use std::fs;
@@ -109,7 +109,7 @@ pub fn read_metadata(capture_path: &Path) -> Option<CaptureMetadata> {
 /// Where a capture's poster frame lives.
 ///
 /// Deliberately **not** [`path_for`]: that appends `.json`, which is
-/// right for the three record families and wrong for image bytes — the
+/// right for the three record families and wrong for image bytes: the
 /// `image` crate picks its decoder from the extension, so a PNG named
 /// `.json` is one it refuses to open. Posters get `.png` instead.
 fn poster_path_for(capture_path: &Path) -> Option<PathBuf> {
@@ -118,7 +118,7 @@ fn poster_path_for(capture_path: &Path) -> Option<PathBuf> {
     Some(parent.join(POSTERS_DIRNAME).join(format!("{name}.png")))
 }
 
-/// Write a capture's poster frame — already-encoded PNG bytes.
+/// Write a capture's poster frame: already-encoded PNG bytes.
 ///
 /// Best-effort by the same reasoning as the metadata record: a poster
 /// that cannot be written costs the library a thumbnail, and a
@@ -167,7 +167,7 @@ pub fn write_labels(capture_path: &Path, labels: &CaptureLabels) -> AppResult<()
 }
 
 /// Read the capture's label record, or `None` when it has none, it can't
-/// be read, or it doesn't parse — all the same answer to the library:
+/// be read, or it doesn't parse: all the same answer to the library:
 /// an untagged, unfavorited capture.
 pub fn read_labels(capture_path: &Path) -> Option<CaptureLabels> {
     let path = path_for(capture_path, LABELS_DIRNAME)?;
@@ -175,7 +175,7 @@ pub fn read_labels(capture_path: &Path) -> Option<CaptureLabels> {
     serde_json::from_slice::<CaptureLabels>(&bytes).ok()
 }
 
-/// Move every sidecar belonging to `from` alongside `to` — the trash
+/// Move every sidecar belonging to `from` alongside `to`: the trash
 /// and restore moves. Best-effort per family: a capture with no scene
 /// document simply has nothing to move there.
 ///
@@ -201,7 +201,7 @@ pub fn relocate(from: &Path, to: &Path) {
     }
 }
 
-/// Delete every sidecar belonging to `path` — the permanent-delete
+/// Delete every sidecar belonging to `path`: the permanent-delete
 /// counterpart of [`relocate`]. Best-effort; a missing one is success.
 pub fn remove(path: &Path) {
     for dirname in SIDECAR_DIRNAMES {
@@ -224,7 +224,7 @@ mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    /// Hermetic temp root, removed on Drop — the same no-extra-crate
+    /// Hermetic temp root, removed on Drop: the same no-extra-crate
     /// harness shape `capture_io` and `library_service` use.
     struct TempDir(PathBuf);
 
@@ -301,7 +301,7 @@ mod tests {
     #[test]
     fn read_metadata_is_none_for_a_corrupt_sidecar() {
         // A truncated or hand-edited record is the same answer as no
-        // record — it must not take the library listing down with it.
+        // record: it must not take the library listing down with it.
         let t = temp_dir();
         let capture = t.0.join("Corrupt.png");
         fs::write(&capture, b"pixels").unwrap();
@@ -366,7 +366,7 @@ mod tests {
     #[test]
     fn writing_empty_labels_removes_the_record() {
         // Un-starring the last label standing has to leave the same
-        // filesystem state as never having labelled the capture — an
+        // filesystem state as never having labelled the capture: an
         // empty record would keep stamping a sidecar the row no longer
         // depends on.
         let t = temp_dir();

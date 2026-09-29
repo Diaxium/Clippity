@@ -1,14 +1,14 @@
 //! Draws a session's sources over its captured frames (ADR 0033).
 //!
-//! The pure arithmetic — placement, alpha, backdrops — is
+//! The pure arithmetic (placement, alpha, backdrops) is
 //! `domain::composition`. What lives here is the I/O half: opening a
 //! camera or an image file, keeping the camera on its own thread, and
 //! knowing *when* to blend.
 //!
 //! **Two entry points, because the frame loop writes frames two ways.**
 //! A freshly grabbed frame is composited once, at grab
-//! ([`Compositor::draw`]). A *held* frame — the one re-written in place
-//! every `MAX_HELD_MS` while the screen is motionless (ADR 0031) — is
+//! ([`Compositor::draw`]). A *held* frame, the one re-written in place
+//! every `MAX_HELD_MS` while the screen is motionless (ADR 0031), is
 //! restored to its captured pixels and blended again
 //! ([`Compositor::redraw`]), which is what keeps a webcam moving while
 //! the screen is still and stops a semi-transparent source compounding
@@ -16,7 +16,7 @@
 //!
 //! **Every failure degrades to not drawing.** A camera another app holds,
 //! an image the user deleted, a device unplugged mid-session: none of
-//! them may end a recording. Same rule ADR 0031 set for audio — the
+//! them may end a recording. Same rule ADR 0031 set for audio: the
 //! screen content is what the user came for.
 
 use std::sync::mpsc::{Receiver, TryRecvError};
@@ -45,7 +45,7 @@ enum Feed {
         order: PixelOrder,
     },
     /// Fed by a camera thread. `latest` holds the most recent delivery,
-    /// which is what gets blended — a camera that stalls leaves the
+    /// which is what gets blended: a camera that stalls leaves the
     /// previous image up rather than stalling the recording.
     Camera {
         rx: Receiver<CameraFrame>,
@@ -66,7 +66,7 @@ struct OpenSource {
     place: Placement,
     opacity_pct: u16,
     /// The capture's own pixels under this source, saved on the last
-    /// [`Compositor::draw`]. Empty until then — a `redraw` with nothing
+    /// [`Compositor::draw`]. Empty until then: a `redraw` with nothing
     /// saved does nothing rather than painting stale pixels over a fresh
     /// frame.
     backdrop: Vec<u8>,
@@ -79,8 +79,8 @@ pub struct Compositor {
     ///
     /// **Not fixed for a session.** `FrameSource` can fall back from
     /// a held Desktop Duplication (BGRA) to per-call grabs (RGBA)
-    /// partway through — a resolution change, a full-screen app, a
-    /// lock screen — and a source aligned to the old order would swap
+    /// partway through (a resolution change, a full-screen app, a
+    /// lock screen) and a source aligned to the old order would swap
     /// red and blue from that moment on. So the order travels with
     /// each frame and the sources follow it.
     aligned: PixelOrder,
@@ -111,7 +111,7 @@ impl Compositor {
     /// `order`.
     ///
     /// Sources that fail to open are logged and dropped, so a session
-    /// with a broken camera still records — and one with no working
+    /// with a broken camera still records, and one with no working
     /// sources costs the frame loop a single `is_empty` check.
     pub fn open(sources: &[Source], frame_w: u32, frame_h: u32, order: PixelOrder) -> Self {
         let want = Arc::new(AtomicU8::new(order_code(order)));
@@ -140,7 +140,7 @@ impl Compositor {
     /// Follow the capture's channel order if it has changed.
     ///
     /// Cheap and almost always a no-op: the comparison is two bytes,
-    /// and a re-align costs one pass over each *source* — the small
+    /// and a re-align costs one pass over each *source*, the small
     /// buffer, not the frame.
     fn align_to(&mut self, order: PixelOrder) {
         if self.aligned == order {
@@ -165,7 +165,7 @@ impl Compositor {
         for source in &mut self.sources {
             source.pull();
             if !composition::save_backdrop(frame, frame_w, &source.place, &mut source.backdrop) {
-                // The frame and the placement disagree — a geometry bug,
+                // The frame and the placement disagree: a geometry bug,
                 // not something to paint over. Skipping leaves the
                 // capture intact.
                 continue;
@@ -178,7 +178,7 @@ impl Compositor {
     /// capture back, then draw again with whatever the camera has now.
     ///
     /// Without the restore, a held frame's overlay would freeze and a
-    /// semi-transparent one would darken on every re-write — see
+    /// semi-transparent one would darken on every re-write; see
     /// `domain::composition::save_backdrop`.
     pub fn redraw(&mut self, frame: &mut [u8], frame_w: u32, frame_h: u32, order: PixelOrder) {
         self.align_to(order);
@@ -198,8 +198,8 @@ impl Compositor {
 impl OpenSource {
     /// Re-align this source's pixels to a new capture order.
     ///
-    /// A camera feed needs nothing ongoing here — its thread reads
-    /// the shared `want` and aligns each delivery — but the frame
+    /// A camera feed needs nothing ongoing here (its thread reads
+    /// the shared `want` and aligns each delivery) but the frame
     /// already in hand is in the old order, so it is swapped too
     /// rather than showing one wrong frame at the seam.
     fn align_to(&mut self, order: PixelOrder) {
@@ -230,7 +230,7 @@ impl OpenSource {
                 match rx.try_recv() {
                     Ok(frame) => *latest = Some(frame),
                     Err(TryRecvError::Empty) => break,
-                    // The thread ended — keep showing the last frame
+                    // The thread ended: keep showing the last frame
                     // rather than blanking the overlay.
                     Err(TryRecvError::Disconnected) => break,
                 }
@@ -292,7 +292,7 @@ fn open_still(path: &str, order: PixelOrder) -> Result<Feed, String> {
     let rgba = image.to_rgba8();
     let (width, height) = (rgba.width(), rgba.height());
     let mut pixels = rgba.into_raw();
-    // Once, at open — the per-frame cost is then a straight blend.
+    // Once, at open: the per-frame cost is then a straight blend.
     composition::align_order(&mut pixels, PixelOrder::Rgba, order);
     Ok(Feed::Still {
         pixels,
@@ -339,7 +339,7 @@ fn open_camera(device_id: Option<&str>, want: &Arc<AtomicU8>) -> Result<Feed, St
             match cam.read(recycle.take()) {
                 Ok(Some(mut pixels)) => {
                     // Aligned here, on the camera's thread and at the
-                    // camera's rate — a 30 fps camera into a 60 fps
+                    // camera's rate: a 30 fps camera into a 60 fps
                     // recording pays half as often as a per-recorded-frame
                     // swap would.
                     // Re-read every delivery so a mid-session capture-
@@ -473,7 +473,7 @@ mod tests {
 
     #[test]
     fn redraw_before_any_draw_does_nothing() {
-        // No backdrop has been saved, so there is nothing to restore —
+        // No backdrop has been saved, so there is nothing to restore,
         // and restoring stale pixels over a fresh frame would be worse
         // than not drawing.
         let dir =

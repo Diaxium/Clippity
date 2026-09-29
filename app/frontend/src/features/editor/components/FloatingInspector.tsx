@@ -20,7 +20,7 @@ const TOP_MARGIN = 8;
 const BOTTOM_RAIL = 56;
 
 /**
- * The inspector in its floating form — a panel over the canvas rather than a
+ * The inspector in its floating form: a panel over the canvas rather than a
  * rail beside it. Annotation defaults to this (the canvas is the point there),
  * but either mode can be dragged into it.
  *
@@ -56,7 +56,7 @@ export function FloatingInspector({ mode }: { mode: EditorMode }) {
   // re-subscribing to the store mid-drag.
   const target = useRef<DockSide | null>(null);
 
-  // Identity of the selection, not its geometry — the "anchor once" trigger.
+  // Identity of the selection, not its geometry: the "anchor once" trigger.
   const selKey = selectedIds.join(",");
   const hasSelection = selectedIds.length > 0;
 
@@ -95,7 +95,7 @@ export function FloatingInspector({ mode }: { mode: EditorMode }) {
 
   if (!hasSelection || dismissed || !pos) return null;
 
-  /** Workspace bounds the snap is measured against — the canvas area itself,
+  /** Workspace bounds the snap is measured against: the canvas area itself,
    *  so an edge means "the edge of the space a rail would occupy". */
   const workspaceRect = (): { left: number; right: number } => {
     const area = ref.current?.closest("[data-canvas-area]");
@@ -139,7 +139,7 @@ export function FloatingInspector({ mode }: { mode: EditorMode }) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        title="Drag to move — release near an edge to dock"
+        title="Drag to move; release near an edge to dock"
         className="flex cursor-grab items-center active:cursor-grabbing"
       >
         <div className="min-w-0 flex-1">

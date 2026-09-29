@@ -34,7 +34,7 @@ describe("filterLines", () => {
   });
 
   it("keeps level-less lines whatever the floor", () => {
-    // Those are the lines a crash produces — filtering them out would
+    // Those are the lines a crash produces: filtering them out would
     // hide exactly what the viewer exists for.
     const errorsOnly = filterLines(lines, "error", "");
     expect(errorsOnly.map((l) => l.seq)).toEqual([4, 5]);

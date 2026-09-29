@@ -47,7 +47,7 @@ export function captureFullscreen(
 }
 
 /**
- * Clipboard custom mode — ingest whatever the system clipboard holds.
+ * Clipboard custom mode: ingest whatever the system clipboard holds.
  * Opens no overlay (the data already exists). `preview` rides through to
  * the saved capture's "Preview in Editor" flag for the image branch.
  *
@@ -62,9 +62,9 @@ export function ingestClipboard(preview: boolean): Promise<ClipboardIngest> {
 /**
  * Subscribe to capture completion events from any window. Backend
  * emits `clippity://capture/finished` after every successful capture
- * (fullscreen OR region — both go through the same event channel).
+ * (fullscreen OR region; both go through the same event channel).
  *
- * Returns a sync unsubscribe — return it directly from a `useEffect`.
+ * Returns a sync unsubscribe: return it directly from a `useEffect`.
  */
 export function onCaptureFinished(
   handler: (result: CaptureResult) => void

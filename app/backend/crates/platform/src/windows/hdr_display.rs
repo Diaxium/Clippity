@@ -35,7 +35,7 @@ use clippity_domain::hdr::DEFAULT_SDR_WHITE_NITS;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct DisplayColorInfo {
     /// The output is presenting in an HDR colour space right now. This
-    /// is a *mode*, not a capability — a monitor that supports HDR with
+    /// is a *mode*, not a capability: a monitor that supports HDR with
     /// the toggle off is `false`, and correctly so: with HDR off the
     /// ordinary 8-bit capture path is already right.
     pub hdr_active: bool,
@@ -56,7 +56,7 @@ impl Default for DisplayColorInfo {
 /// Describe `hmonitor`'s colour handling.
 ///
 /// Returns the SDR default for any monitor that cannot be interrogated,
-/// which routes the caller down the ordinary capture path — the safe
+/// which routes the caller down the ordinary capture path: the safe
 /// direction to fail in, since that is what shipped before this existed.
 pub fn describe(hmonitor: HMONITOR) -> DisplayColorInfo {
     DisplayColorInfo {
@@ -70,7 +70,7 @@ pub fn describe(hmonitor: HMONITOR) -> DisplayColorInfo {
 ///
 /// ST.2084 (PQ) over Rec.2020 is what Windows switches an output to when
 /// the HDR toggle goes on, and is the only colour space where the
-/// desktop is composed in scRGB — which is the thing that makes an
+/// desktop is composed in scRGB, which is the thing that makes an
 /// 8-bit grab wrong.
 fn output_is_hdr(hmonitor: HMONITOR) -> Option<bool> {
     // SAFETY: DXGI enumeration. Every interface is released by `windows`
@@ -90,8 +90,8 @@ fn output_is_hdr(hmonitor: HMONITOR) -> Option<bool> {
                     Err(e) if e.code() == DXGI_ERROR_NOT_FOUND => break,
                     Err(_) => break,
                 };
-                // Output6 is where `GetDesc1` — and therefore the colour
-                // space — lives. Absent on very old drivers, which is
+                // Output6 is where `GetDesc1`, and therefore the colour
+                // space, lives. Absent on very old drivers, which is
                 // itself a reliable "this is not an HDR setup".
                 let Ok(output6) = output.cast::<IDXGIOutput6>() else {
                     continue;
@@ -112,13 +112,13 @@ fn output_is_hdr(hmonitor: HMONITOR) -> Option<bool> {
 ///
 /// Matched by GDI device name (`\\.\DISPLAY1`), because that is the only
 /// identifier both `GetMonitorInfoW` and the display-config path table
-/// agree on — the config API is keyed by adapter LUID and target id,
+/// agree on: the config API is keyed by adapter LUID and target id,
 /// neither of which an `HMONITOR` carries.
 fn sdr_white_nits(hmonitor: HMONITOR) -> Option<f32> {
     let wanted = monitor_device_name(hmonitor)?;
 
     // SAFETY: the two-call sizing pattern the display-config API
-    // documents — ask for the counts, allocate exactly that, then fill.
+    // documents; ask for the counts, allocate exactly that, then fill.
     unsafe {
         let (mut path_count, mut mode_count) = (0u32, 0u32);
         if GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &mut path_count, &mut mode_count)
@@ -157,7 +157,7 @@ fn sdr_white_nits(hmonitor: HMONITOR) -> Option<f32> {
                 continue;
             }
 
-            // Keyed off the *target* for the white level — the source is
+            // Keyed off the *target* for the white level: the source is
             // the desktop surface, the target is the panel, and
             // brightness is a property of the panel.
             let mut white = DISPLAYCONFIG_SDR_WHITE_LEVEL {
@@ -185,7 +185,7 @@ fn sdr_white_nits(hmonitor: HMONITOR) -> Option<f32> {
 /// [`crate::windows::hdr_capture::rgba_monitor_at`] has one: callers
 /// above the platform crate (the diagnostics service, which reports
 /// per-monitor HDR state) should never have to name an `HMONITOR`.
-/// `None` when the point is on no monitor — stale geometry, rather than
+/// `None` when the point is on no monitor: stale geometry, rather than
 /// a monitor that failed to answer.
 pub fn describe_at(x: i32, y: i32) -> Option<DisplayColorInfo> {
     use windows::Win32::Foundation::POINT;
@@ -201,7 +201,7 @@ pub fn describe_at(x: i32, y: i32) -> Option<DisplayColorInfo> {
 /// Convert the display-config API's `SDRWhiteLevel` to nits.
 ///
 /// The API reports the level as a multiple of the scRGB reference white
-/// scaled by 1000 — so the documented identity is
+/// scaled by 1000, so the documented identity is
 /// `nits = level / 1000 * 80`, and the value 1000 means "SDR white is
 /// the 80-nit reference", which is what a display in SDR mode reports.
 ///
@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn a_typical_hdr_desktop_reports_around_two_hundred_nits() {
         // What Windows lands on at the middle of the "SDR content
-        // brightness" slider — the value this whole conversion exists
+        // brightness" slider: the value this whole conversion exists
         // to pick up.
         assert_eq!(white_level_to_nits(2500), 200.0);
     }
@@ -324,8 +324,8 @@ mod tests {
 
     /// Live check against whatever this machine has attached.
     ///
-    /// `#[ignore]`d: it asserts nothing about *which* answer is right —
-    /// that depends on the desk it runs on — only that the queries
+    /// `#[ignore]`d: it asserts nothing about *which* answer is right
+    /// (that depends on the desk it runs on) only that the queries
     /// complete and produce a self-consistent, physically plausible
     /// description. Run it with `-- --ignored` to see the real values.
     #[test]

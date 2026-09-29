@@ -10,7 +10,7 @@ export const THUMBNAIL_GRID_W = 480;
 /** List-row thumbnail width (logical px). */
 export const THUMBNAIL_LIST_W = 120;
 
-/** Smaller thumbnails in trash mode — the user is reviewing for
+/** Smaller thumbnails in trash mode: the user is reviewing for
  *  delete/restore, not admiring detail. Matches legacy. */
 export const THUMBNAIL_GRID_W_TRASH = 240;
 export const THUMBNAIL_LIST_W_TRASH = 96;

@@ -1,4 +1,4 @@
-//! Clippity backend — the `src-tauri` app crate.
+//! Clippity backend: the `src-tauri` app crate.
 //!
 //! This crate is the top of a Cargo workspace whose layers are separate
 //! crates (top-down dependency direction):
@@ -43,8 +43,8 @@ const MEDIA_SCHEME: &str = "clippity-media";
 
 /// Serve the current overlay snapshot's PNG bytes to the overlay webview.
 ///
-/// The overlay needs these pixels in three places — the frozen backdrop,
-/// the magnifier, and the small-selection preview — and needs them to be
+/// The overlay needs these pixels in three places (the frozen backdrop,
+/// the magnifier, and the small-selection preview) and needs them to be
 /// exactly the pixels `finalize` will crop. They used to travel as a
 /// base64 data URI returned from a command, which meant an 11 MiB JSON
 /// string (at 1920×1200) to serialize, ship, `atob` and then decode three
@@ -53,7 +53,7 @@ const MEDIA_SCHEME: &str = "clippity-media";
 ///
 /// The URL carries the snapshot's id, so a stale URL left in the
 /// webview's cache from the previous session resolves to a 404 rather
-/// than to this session's pixels — the id check lives in
+/// than to this session's pixels; the id check lives in
 /// `OverlayService::snapshot_png`.
 fn serve_desktop_snapshot<R: tauri::Runtime>(
     ctx: tauri::UriSchemeContext<'_, R>,
@@ -74,7 +74,7 @@ fn serve_desktop_snapshot<R: tauri::Runtime>(
 ///
 /// Worth testing rather than eyeballing, because two of these headers are
 /// load-bearing in ways that fail quietly. Without CORS the loupe's
-/// `fetch` is refused while the CSS `url(…)` backdrop still paints — so
+/// `fetch` is refused while the CSS `url(…)` backdrop still paints, so
 /// the overlay looks correct and the magnifier simply never samples. And
 /// a wrong id must 404 rather than fall through to the current session's
 /// pixels, or a cached URL from the previous overlay would silently show
@@ -136,7 +136,7 @@ mod snapshot_scheme_tests {
     #[test]
     fn allows_the_overlays_cross_origin_fetch() {
         // Without this the magnifier silently never gets pixels while the
-        // backdrop still paints — see `snapshot_response`.
+        // backdrop still paints; see `snapshot_response`.
         let res = snapshot_response("/7", |_| Some(PNG.to_vec()));
         assert_eq!(res.headers()[header::ACCESS_CONTROL_ALLOW_ORIGIN], "*");
     }
@@ -209,14 +209,14 @@ pub fn run() {
     clippity_infra::logging::init();
 
     // Consumed before anything reads a preference, because safe mode
-    // overrides several of them — starting with GPU acceleration, whose
+    // overrides several of them, starting with GPU acceleration, whose
     // browser arg is frozen when the first webview environment is
     // created a few lines below. The marker is deleted as it is read,
     // so safe mode lasts exactly one launch.
     if let Some(data) = clippity_infra::paths::early_data_dir() {
         if clippity_infra::runtime::consume_safe_mode_marker(&data) {
             tracing::warn!(
-                "starting in SAFE MODE — GPU acceleration, window effects and the \
+                "starting in SAFE MODE: GPU acceleration, window effects and the \
                  global capture hotkey are off for this session"
             );
         }
@@ -225,7 +225,7 @@ pub fn run() {
     let context = tauri::generate_context!();
 
     // The GPU-acceleration preference must become a WebView2 browser arg
-    // BEFORE any webview is built — that arg is frozen when the webview's
+    // BEFORE any webview is built: that arg is frozen when the webview's
     // environment is created during `.run()`, so it can't be applied from
     // `setup()` (which runs after the config-declared windows already
     // exist). It reads settings.json straight from disk because no
@@ -240,7 +240,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             // Two global accelerators can be live: Escape (registered by
-            // the countdown service while its strip is up — the strip is
+            // the countdown service while its strip is up; the strip is
             // click-through + unfocused, so a global shortcut is the only
             // keyboard cancel) and the user's `shortcuts.global_capture`
             // hotkey (registered by `GlobalShortcutService`). The handler
@@ -262,8 +262,8 @@ pub fn run() {
                     // thread runs INLINE (re-locking the non-reentrant
                     // registry → deadlock). Hop OFF the main thread first;
                     // from a worker `run_on_main_thread` genuinely defers
-                    // the work to a later event-loop turn — after this
-                    // dispatch returns and drops the registry lock — while
+                    // the work to a later event-loop turn (after this
+                    // dispatch returns and drops the registry lock) while
                     // still running the window ops on the UI thread.
                     let defer_on_main = |f: fn(&tauri::AppHandle)| {
                         let app_handle = app.clone();
@@ -308,20 +308,20 @@ pub fn run() {
             // Build every application window up front. These used to be
             // declared in `tauri.conf.json` (`app.windows`); they live in
             // code now so each can pin its WebView2 data directory under
-            // `Clippity` instead of `%LOCALAPPDATA%\<identifier>` — see
+            // `Clippity` instead of `%LOCALAPPDATA%\<identifier>`; see
             // `create_app_windows`. Must run before anything below looks a
             // window up by label (corner rounding, the tray icon).
             // Fold any pre-consolidation split layout (Roaming data +
             // top-level cache) into the single `%LOCALAPPDATA%\Clippity`
-            // root before anything reads a path. Best-effort and idempotent
-            // — see `migrate_legacy_layout`. Runs first so the webview and
+            // root before anything reads a path. Best-effort and idempotent;
+            // see `migrate_legacy_layout`. Runs first so the webview and
             // AppPaths below see the migrated files.
             clippity_infra::paths::migrate_legacy_layout(app.handle());
 
             let webview_data_dir = clippity_infra::paths::webview_data_dir(app.handle())?;
             // Resolve paths once at startup, then hand them to the
             // capture (and future) services through AppState. Done
-            // inside setup() so the AppHandle is available — Tauri's
+            // inside setup() so the AppHandle is available: Tauri's
             // path resolver depends on it.
             let paths =
                 std::sync::Arc::new(clippity_infra::paths::AppPaths::resolve(app.handle())?);
@@ -475,7 +475,7 @@ pub fn run() {
                 if clippity_infra::runtime::is_safe_mode() {
                     // A hotkey registered by a build that won't start is
                     // one more thing to rule out; safe mode rules it out.
-                    tracing::info!("safe mode — the OS-global capture hotkey is not registered");
+                    tracing::info!("safe mode: the OS-global capture hotkey is not registered");
                 } else if state.provisioning_service.capabilities().global_hotkeys {
                     let shortcuts = state.settings_service.snapshot().shortcuts;
                     state
@@ -483,7 +483,7 @@ pub fn run() {
                         .apply(app.handle(), &shortcuts);
                 } else {
                     tracing::info!(
-                        "capture integration was not installed — no OS-global \
+                        "capture integration was not installed; no OS-global \
                          capture hotkey will be registered"
                     );
                 }
@@ -627,8 +627,8 @@ pub fn run() {
             // exit paths are the tray's "Quit Clippity" menu item and the
             // flyout panel's Quit affordance (both via `app.exit(0)` /
             // `quit_app`). So we prevent the default single-window destroy
-            // — preserving the capture/main webview + its state for a fast
-            // tray re-show — and hide to the tray instead. (Every window
+            // (preserving the capture/main webview + its state for a fast
+            // tray re-show) and hide to the tray instead. (Every window
             // is created at startup, so destroying just this one wouldn't
             // exit anyway.) See ADR 0003.
             tauri::WindowEvent::CloseRequested { api, .. }
@@ -639,7 +639,7 @@ pub fn run() {
                 // If hiding this window leaves no primary window visible,
                 // the app has effectively dropped to the tray. Free the
                 // cached ONNX detector session (tens of MB of resident
-                // model weights) so background/idle RAM stays low — it's
+                // model weights) so background/idle RAM stays low: it's
                 // lazily rebuilt on the next object-mode capture. Cheap
                 // no-op when object mode was never used.
                 let app = window.app_handle();
@@ -661,7 +661,7 @@ pub fn run() {
 /// These were previously declared in `tauri.conf.json`'s `app.windows`
 /// array. They're built in code so each can pin its WebView2
 /// `data_directory` to `webview_data_dir` (`%LOCALAPPDATA%\Clippity\webview`)
-/// rather than Tauri's default `%LOCALAPPDATA%\<bundle-identifier>` —
+/// rather than Tauri's default `%LOCALAPPDATA%\<bundle-identifier>`:
 /// that default is the one storage location `AppPaths` can't redirect,
 /// because the webview data dir is derived from the identifier, not the
 /// path resolver. Pinning it here keeps every Clippity file under one
@@ -670,8 +670,8 @@ pub fn run() {
 /// All six share the frameless, transparent, shadowless chrome the
 /// frontend paints itself; only `capture` is visible at boot, the rest
 /// are revealed by label on demand. Creating them here preserves the
-/// invariant the rest of the app depends on — every window exists from
-/// startup (see the `CloseRequested` handler in `run`) — and keeps the
+/// invariant the rest of the app depends on: every window exists from
+/// startup (see the `CloseRequested` handler in `run`), and keeps the
 /// labels the `default` capability and per-label services expect.
 fn create_app_windows(
     handle: &tauri::AppHandle,
@@ -679,7 +679,7 @@ fn create_app_windows(
 ) -> tauri::Result<()> {
     use tauri::{WebviewUrl, WebviewWindowBuilder};
 
-    // The startup window — the only one shown at boot.
+    // The startup window: the only one shown at boot.
     WebviewWindowBuilder::new(handle, "capture", WebviewUrl::App("index.html".into()))
         .title("Clippity")
         .inner_size(940.0, 640.0)
@@ -692,7 +692,7 @@ fn create_app_windows(
         .data_directory(webview_data_dir.to_path_buf())
         .build()?;
 
-    // The dashboard — revealed on first navigation to it.
+    // The dashboard: revealed on first navigation to it.
     WebviewWindowBuilder::new(handle, "main", WebviewUrl::App("index.html#/main".into()))
         .title("Clippity")
         .inner_size(1280.0, 820.0)
@@ -706,7 +706,7 @@ fn create_app_windows(
         .data_directory(webview_data_dir.to_path_buf())
         .build()?;
 
-    // The slim "recording starts in…" strip — click-through, unfocused.
+    // The slim "recording starts in…" strip: click-through, unfocused.
     WebviewWindowBuilder::new(
         handle,
         "countdown",
@@ -799,15 +799,15 @@ fn create_app_windows(
 
 /// Translate the persisted `performance.gpuAcceleration` preference into
 /// a WebView2 browser arg before any webview exists. This reads
-/// settings.json directly — rather than through `SettingsService`, which
-/// isn't constructed until `setup()` — because the `--disable-gpu` arg
+/// settings.json directly (rather than through `SettingsService`, which
+/// isn't constructed until `setup()`) because the `--disable-gpu` arg
 /// must be in the environment before the webviews are built in `setup()`
 /// (see `create_app_windows`), which happens during `.run()`.
 ///
 /// The path comes from [`paths::early_settings_file`], which mirrors what
-/// `AppPaths` resolves for this process — `%LOCALAPPDATA%\Clippity\data\settings.json`
+/// `AppPaths` resolves for this process: `%LOCALAPPDATA%\Clippity\data\settings.json`
 /// when installed, or the `Data` folder beside the executable in portable
-/// mode. Any read/parse failure is a silent no-op — GPU stays on (the
+/// mode. Any read/parse failure is a silent no-op: GPU stays on (the
 /// default), exactly like a fresh install. Disabling acceleration only
 /// takes effect on the next launch, which the Performance panel
 /// communicates with a "restart to apply" affordance.

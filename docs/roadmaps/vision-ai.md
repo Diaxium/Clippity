@@ -26,7 +26,7 @@ differentiator.
 | V0: trust (0–8 wk) | Cryptographic artifact verification, model cards/licenses/sources, offline mode, clear network/size consent and rollback. | P0 | High | Security/release. |
 | V1: useful text (2–4 mo) | Background OCR index, language selection, copy with layout, editable editor text and confidence/error UI. | P1 | High | Library jobs/FTS, accessibility. |
 | V2: UI understanding (3–6 mo) | Improve object/UI-element models, keyboard cycling, labels/confidence and deterministic fallback selection. | P1 | High | Native benchmark corpus. |
-| V3: privacy/productivity (5–9 mo) | Suggested sensitive-data redaction, asset extraction, auto-tags and related captures—always reviewable and local. | P2 | High | Redaction/export safety. |
+| V3: privacy/productivity (5–9 mo) | Suggested sensitive-data redaction, asset extraction, auto-tags and related captures: always reviewable and local. | P2 | High | Redaction/export safety. |
 | V4: differentiated workflows (6–12 mo) | Change alignment/diff, Live Lens structured output and annotation suggestions. | P3 | Transformative | Capture/editor maturity. |
 | V5: platform (6–18 mo) | OS-native/fallback OCR and inference provider matrix for macOS/Linux and hardware acceleration where safe. | P2 | High | Platform abstraction. |
 

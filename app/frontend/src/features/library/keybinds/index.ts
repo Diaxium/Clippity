@@ -1,5 +1,5 @@
 /**
- * Library keybind system — public surface. See `docs/library-keybinds.md`.
+ * Library keybind system: public surface. See `docs/library-keybinds.md`.
  */
 
 export { useLibraryKeybinds } from "./useLibraryKeybinds";

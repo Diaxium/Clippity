@@ -46,7 +46,7 @@ function summaryChips(p: CapturePreset): string[] {
  * One preset in the manager grid: type icon + name, a summary of what it
  * does, and Run / Edit / Delete. Run reuses the shared `runPreset`
  * orchestrator (same path the tray uses), which branches on the request
- * shape — so this component never has to know how a recording starts.
+ * shape, so this component never has to know how a recording starts.
  */
 export function PresetCard({ preset, onEdit }: PresetCardProps) {
   const request = preset.request;

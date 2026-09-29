@@ -1,5 +1,5 @@
 {
-  "about": "Performance roadmap P2 budgets. Automated metrics map 1:1 to Criterion ids in crates/bench/benches/native.rs (key = '<group>/<function>'); scripts/check-bench-budgets.mjs gates their median against warn_ms/fail_ms. Non-automated metrics need a running app or a model on disk and are tracked here (with roadmap targets) until a native driver lands. Bands are seeded from the first baseline on reference hardware and MUST be re-tuned per runner — treat a regression as a code change only after confirming the baseline. Collect timings and sizes only; corpora are synthetic (no capture content).",
+  "about": "Performance roadmap P2 budgets. Automated metrics map 1:1 to Criterion ids in crates/bench/benches/native.rs (key = '<group>/<function>'); scripts/check-bench-budgets.mjs gates their median against warn_ms/fail_ms. Non-automated metrics need a running app or a model on disk and are tracked here (with roadmap targets) until a native driver lands. Bands are seeded from the first baseline on reference hardware and MUST be re-tuned per runner: treat a regression as a code change only after confirming the baseline. Collect timings and sizes only; corpora are synthetic (no capture content).",
   "metrics": {
     "scroll_stitch/stitch_24x1280x400": {
       "automated": true,
@@ -7,7 +7,7 @@
       "baseline_ms": 45.4,
       "warn_ms": 65,
       "fail_ms": 95,
-      "note": "Stitch 24 overlapping 1280x400 frames — the scroll-capture commit path."
+      "note": "Stitch 24 overlapping 1280x400 frames: the scroll-capture commit path."
     },
     "still_encode/png_encode_4k": {
       "automated": true,
@@ -15,7 +15,7 @@
       "baseline_ms": 159.5,
       "warn_ms": 210,
       "fail_ms": 320,
-      "note": "PNG-encode a 4K RGBA still — dominant CPU cost of selection-to-saved. Feeds the <1.5s end-to-end save budget."
+      "note": "PNG-encode a 4K RGBA still: dominant CPU cost of selection-to-saved. Feeds the <1.5s end-to-end save budget."
     },
     "thumbnail/thumb_4k_to_320": {
       "automated": true,
@@ -23,7 +23,7 @@
       "baseline_ms": 26.8,
       "warn_ms": 40,
       "fail_ms": 60,
-      "note": "Downscale+encode a 4K RGBA to a 320px data-URI thumbnail — the library-card generation path."
+      "note": "Downscale+encode a 4K RGBA to a 320px data-URI thumbnail: the library-card generation path."
     },
     "library_put/put_50k": {
       "automated": true,
@@ -31,7 +31,7 @@
       "baseline_ms": 254,
       "warn_ms": 340,
       "fail_ms": 500,
-      "note": "Insert 50k rows into a fresh in-memory index — worst-case reconcile after a cold catalog rebuild."
+      "note": "Insert 50k rows into a fresh in-memory index: worst-case reconcile after a cold catalog rebuild."
     },
     "library_rows/rows_50k": {
       "automated": true,
@@ -39,7 +39,7 @@
       "baseline_ms": 126,
       "warn_ms": 150,
       "fail_ms": 230,
-      "note": "List 50k rows (newest-first). Native half of library search/first-paint; warn is pinned to the roadmap search p95 <150ms at 50k — the baseline already sits just under it (P5 virtualization/FTS work)."
+      "note": "List 50k rows (newest-first). Native half of library search/first-paint; warn is pinned to the roadmap search p95 <150ms at 50k; the baseline already sits just under it (P5 virtualization/FTS work)."
     },
     "library_stamps/stamps_50k": {
       "automated": true,
@@ -47,7 +47,7 @@
       "baseline_ms": 33.2,
       "warn_ms": 48,
       "fail_ms": 70,
-      "note": "Build the stamp map over 50k rows — the staleness check every library open runs."
+      "note": "Build the stamp map over 50k rows: the staleness check every library open runs."
     },
     "library_query/page_50": {
       "automated": true,
@@ -55,7 +55,7 @@
       "baseline_ms": 2.1,
       "warn_ms": 5,
       "fail_ms": 12,
-      "note": "P5 pushdown: fetch the first 50 of 50k rows (filtered/sorted in SQL). Replaces the 126ms full-list load (rows_50k) — ~60x faster; this is the number the virtualized grid should pay per page."
+      "note": "P5 pushdown: fetch the first 50 of 50k rows (filtered/sorted in SQL). Replaces the 126ms full-list load (rows_50k): ~60x faster; this is the number the virtualized grid should pay per page."
     },
     "library_query/search_50k": {
       "automated": true,
@@ -63,7 +63,7 @@
       "baseline_ms": 7.1,
       "warn_ms": 15,
       "fail_ms": 30,
-      "note": "P5 pushdown: substring search over 50k rows via the precomputed search_blob, returning a page. Native cost of the roadmap's <150ms search budget — ~20x headroom, room to 250k."
+      "note": "P5 pushdown: substring search over 50k rows via the precomputed search_blob, returning a page. Native cost of the roadmap's <150ms search budget: ~20x headroom, room to 250k."
     },
     "library_facets/facets_50k": {
       "automated": true,
@@ -71,7 +71,7 @@
       "baseline_ms": 46.4,
       "warn_ms": 65,
       "fail_ms": 110,
-      "note": "P5 rail aggregates over 50k rows: counts by kind/favorite/trash, the four smart-collection sizes, and the tag vocabulary. Unlike page_50 this is inherently a full-table pass (conditional sums, plus a GROUP BY over json_each for tags), so it is the dominant native cost of opening a large library: 46.4ms + 2.1ms per page, against the 126ms full listing it replaces. It is not on the typing path — it re-runs on library/updated, not per keystroke — and the rail renders zeros until it lands, so it never blocks the grid. If this needs to come down, the tag GROUP BY is the piece to attack (a tags side-table instead of json_each)."
+      "note": "P5 rail aggregates over 50k rows: counts by kind/favorite/trash, the four smart-collection sizes, and the tag vocabulary. Unlike page_50 this is inherently a full-table pass (conditional sums, plus a GROUP BY over json_each for tags), so it is the dominant native cost of opening a large library: 46.4ms + 2.1ms per page, against the 126ms full listing it replaces. It is not on the typing path (it re-runs on library/updated, not per keystroke) and the rail renders zeros until it lands, so it never blocks the grid. If this needs to come down, the tag GROUP BY is the piece to attack (a tags side-table instead of json_each)."
     },
 
     "recorder_frame/readback_1080p": {
@@ -80,7 +80,7 @@
       "baseline_ms": 0.38,
       "warn_ms": 1.0,
       "fail_ms": 2.0,
-      "note": "Copy one 1080p frame out of a mapped staging surface at a 256-byte-aligned row pitch — what a held Desktop Duplication costs per frame."
+      "note": "Copy one 1080p frame out of a mapped staging surface at a 256-byte-aligned row pitch: what a held Desktop Duplication costs per frame."
     },
     "recorder_frame/nv12_1080p": {
       "automated": true,
@@ -112,7 +112,7 @@
       "baseline_ms": 1.97,
       "warn_ms": 3.5,
       "fail_ms": 7.0,
-      "note": "5120x1440 — the size this pipeline first failed to keep up at, and the one worth watching. Was 4.83ms."
+      "note": "5120x1440: the size this pipeline first failed to keep up at, and the one worth watching. Was 4.83ms."
     },
     "recorder_frame/nv12_ultrawide": {
       "automated": true,
@@ -120,7 +120,7 @@
       "baseline_ms": 1.38,
       "warn_ms": 2.8,
       "fail_ms": 5.0,
-      "note": "BGRA->NV12 at 5120x1440 (7.4Mpx). Read-back plus conversion is 3.3ms, a fifth of the 16.7ms budget at 60fps — the headroom the encoder needs. Fail is set at the point where the two stages together would eat half a 60fps frame."
+      "note": "BGRA->NV12 at 5120x1440 (7.4Mpx). Read-back plus conversion is 3.3ms, a fifth of the 16.7ms budget at 60fps: the headroom the encoder needs. Fail is set at the point where the two stages together would eat half a 60fps frame."
     },
 
     "startup_cold": {
@@ -151,7 +151,7 @@
       "automated": false,
       "unit": "fps",
       "target_fps": 55,
-      "note": "Editor drag at >=55fps for 500 ordinary nodes. Frontend/render metric — needs a browser perf harness."
+      "note": "Editor drag at >=55fps for 500 ordinary nodes. Frontend/render metric: needs a browser perf harness."
     },
     "library_first_paint": {
       "automated": false,
@@ -173,7 +173,7 @@
     "installer_size": {
       "automated": false,
       "unit": "bytes",
-      "note": "Installer/bundle size — no >10% regression without an approved tradeoff. Wire from scripts/collect-build.mjs output."
+      "note": "Installer/bundle size: no >10% regression without an approved tradeoff. Wire from scripts/collect-build.mjs output."
     }
   }
 }

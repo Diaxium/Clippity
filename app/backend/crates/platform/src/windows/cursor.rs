@@ -1,10 +1,10 @@
-//! Optional cursor compositing — xcap on Windows uses
+//! Optional cursor compositing: xcap on Windows uses
 //! `Windows.Graphics.Capture` with `SetIsCursorCaptureEnabled(false)`,
 //! so we paint the system cursor onto the captured `RgbaImage`
 //! ourselves when the user toggles "include cursor" on.
 //!
 //! Implementation note: GDI's `DrawIconEx` on a 32-bit DIB does NOT
-//! reliably write the alpha channel — most cursor types leave alpha
+//! reliably write the alpha channel; most cursor types leave alpha
 //! at zero, which makes the result invisible if we trust the alpha
 //! as-is. We render the cursor onto two buffers (one pre-filled
 //! black, one pre-filled white) and derive alpha from the
@@ -14,7 +14,7 @@
 //! monochrome cursors, including the antialiased Windows 11 default
 //! arrow.
 //!
-//! This file is `cfg(target_os = "windows")` only — gated at the
+//! This file is `cfg(target_os = "windows")` only, gated at the
 //! parent `platform::mod` so callers don't need to wrap their
 //! invocations.
 
@@ -41,7 +41,7 @@ pub fn screen_position() -> Option<(i32, i32)> {
 }
 
 /// Composite the current system cursor onto `canvas`. `origin` is the
-/// virtual-screen position of `canvas`'s `(0, 0)` pixel — e.g.
+/// virtual-screen position of `canvas`'s `(0, 0)` pixel, e.g.
 /// `min_x, min_y` from the stitched desktop canvas, or the primary
 /// monitor's `(x, y)`.
 ///
@@ -55,8 +55,8 @@ pub fn screen_position() -> Option<(i32, i32)> {
 /// `clip_region` is a canvas-local `(x, y, w, h)` rectangle that the
 /// caller wants the full cursor bitmap to land inside. When the
 /// override puts the cursor's tip near (or past) a corner, the arrow
-/// body would extend outside the crop and the user would see nothing
-/// — so we shift the cursor inward enough that its bounding box
+/// body would extend outside the crop and the user would see nothing,
+/// so we shift the cursor inward enough that its bounding box
 /// stays inside the clip.
 pub fn composite_cursor(
     canvas: &mut RgbaImage,
@@ -145,7 +145,7 @@ pub fn composite_cursor(
         let screen_dc = GetDC(None);
         let mem_dc = CreateCompatibleDC(Some(screen_dc));
 
-        // Allocate two DIBs — both start zero-initialized by the OS.
+        // Allocate two DIBs: both start zero-initialized by the OS.
         let mut bits_a: *mut std::ffi::c_void = std::ptr::null_mut();
         let mut bits_b: *mut std::ffi::c_void = std::ptr::null_mut();
         let dib_a = CreateDIBSection(
@@ -257,7 +257,7 @@ pub fn composite_cursor(
             if alpha == 0 {
                 rgba.extend_from_slice(&[0, 0, 0, 0]);
             } else if alpha == 255 {
-                // Cursor pixel is fully opaque — buffer A holds the exact
+                // Cursor pixel is fully opaque: buffer A holds the exact
                 // cursor colour (no background contribution).
                 rgba.extend_from_slice(&[ar, ag, ab, 255]);
             } else {

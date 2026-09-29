@@ -1,5 +1,5 @@
 /**
- * Editor keybind system — public surface.
+ * Editor keybind system: public surface.
  *
  * `useEditorKeybinds` is the single window-level handler (mounted by
  * `EditorLayout`). The registry data + helpers are exported for the help

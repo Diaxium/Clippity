@@ -1,5 +1,5 @@
 /**
- * Library feature — public surface.
+ * Library feature: public surface.
  *
  * `LibraryLayout` (the list page) and `PaletteView` (the large
  * single-palette view, mounted by the dashboard's `palette` view) are

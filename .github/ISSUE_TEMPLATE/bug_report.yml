@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Thanks for the report. Clippity touches a lot of Windows-specific
-        surface — capture, OCR, window enumeration, display scaling — so the
+        surface (capture, OCR, window enumeration, display scaling) so the
         environment details below usually decide how fast this gets fixed.
 
   - type: textarea
@@ -80,7 +80,7 @@ body:
     attributes:
       label: Logs
       description: >
-        Clippity logs through `tracing` — see docs/development/debugging.md for
+        Clippity logs through `tracing`; see docs/development/debugging.md for
         where to find them and how to raise the level. Paste anything from
         around the failure.
       render: text

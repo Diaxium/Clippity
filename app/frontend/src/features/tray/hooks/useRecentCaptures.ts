@@ -8,11 +8,11 @@
  *
  * **Favorites come first.** A four-tile strip is the tray's whole view
  * of the library, and a starred capture is the user saying "this is the
- * one I keep coming back to" — which outranks recency in a quick-access
+ * one I keep coming back to", which outranks recency in a quick-access
  * surface. Within each group the order is still newest-first, so the
  * strip never stops behaving like "recent" for anyone who stars nothing.
  *
- * Reuses the shared library IPC client (no `features/library` import —
+ * Reuses the shared library IPC client (no `features/library` import;
  * that boundary is forbidden). Titles render first; thumbnails stream in
  * as their data URIs decode.
  */
@@ -35,12 +35,12 @@ const log = createLogger("tray");
 
 /** How many recent captures the strip shows. */
 const RECENT_LIMIT = 4;
-/** Thumbnail decode width — ~2× the displayed tile for crispness. */
+/** Thumbnail decode width: ~2× the displayed tile for crispness. */
 const THUMB_WIDTH = 132;
 
 /**
  * The image captures the strip shows: favorites first, then the rest,
- * each group newest-first. Pure — exported for tests.
+ * each group newest-first. Pure: exported for tests.
  *
  * The listing already arrives newest-first, so this only has to be a
  * stable partition; it deliberately does not re-sort by time, which

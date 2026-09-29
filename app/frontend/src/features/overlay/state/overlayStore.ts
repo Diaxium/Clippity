@@ -3,7 +3,7 @@
  *
  * Feature-local Zustand slice. The legacy version (`RegionOverlay.tsx`)
  * held all of this in 20+ `useState` calls inside a 2033-line god
- * component — the rebuild keeps the state purpose-shaped and the
+ * component: the rebuild keeps the state purpose-shaped and the
  * components small. Selectors are used everywhere a subscription
  * happens so pointer-move (~120 Hz) doesn't re-render every consumer.
  *
@@ -37,7 +37,7 @@ import type {
 
 interface SnapshotState {
   /** URL of the cached desktop snapshot on the `clippity-snapshot`
-   *  scheme — `null` until the overlay's first `useOverlaySnapshot`
+   *  scheme: `null` until the overlay's first `useOverlaySnapshot`
    *  fetch returns. Distinct per session, so the three `url(…)`
    *  consumers share one cached decode without ever showing the
    *  previous overlay's desktop. */
@@ -52,13 +52,13 @@ interface SnapshotState {
  *  fast-path subscribers (cursor) don't re-render when only velocity
  *  changes. */
 interface InteractionState {
-  /** Pointer velocity in logical px / ms — exponentially smoothed over
+  /** Pointer velocity in logical px / ms: exponentially smoothed over
    *  the last few moves. 0 when idle, > 1 during fast swipes. */
   velocity: number;
   /** Resize handle currently under active drag, or `null`. Drives the
    *  active-edge highlight + magnifier auto-anchor systems. */
   activeResize: ResizeDir | null;
-  /** Hovered resize handle (no drag in progress) — used by directional
+  /** Hovered resize handle (no drag in progress): used by directional
    *  affordance hints. */
   hoverResize: ResizeDir | null;
   /** Set briefly when the selection snapped to a viewport edge / midpoint
@@ -98,25 +98,25 @@ interface OverlayStoreState {
   /** Index into `objects` of the detection under the cursor (smallest
    *  containing box), or null over bare desktop. */
   hoveredObjectIndex: number | null;
-  /** Object-mode detection lifecycle — drives the status pill. */
+  /** Object-mode detection lifecycle: drives the status pill. */
   objectsStatus: ObjectsStatus;
   /** Human-readable failure when `objectsStatus === "error"`. */
   objectsError: string | null;
-  /** Capture-window toggles mirror — updated by `useToggleSync` from
+  /** Capture-window toggles mirror: updated by `useToggleSync` from
    *  the `clippity://overlay/toggles` event. */
   toggles: OverlayToggles;
-  /** Scroll/stitch direction for Scrolling + Panoramic — seeded from the
+  /** Scroll/stitch direction for Scrolling + Panoramic: seeded from the
    *  capture window via the mirror event, changeable from the overlay
    *  toolbar, sent to the backend at finalize. */
   scrollDirection: ScrollDirection;
-  /** Which encoder a Record-Region / Record-Window session should feed —
+  /** Which encoder a Record-Region / Record-Window session should feed:
    *  seeded from the capture window's Record screen via the mirror
    *  event, since the overlay is a different window and cannot see that
    *  selection. Defaults to video, the format a session started without
    *  a mirror (a preset, a future hotkey) should get. */
   recordFormat: RecorderFormat;
   /** A recording **preset's** request, mirrored across when the overlay
-   *  was opened by one — everything but the rectangle, which is what the
+   *  was opened by one: everything but the rectangle, which is what the
    *  overlay is here to pick.
    *
    *  Null for an ordinary Record-Region / Record-Window session, which
@@ -136,10 +136,10 @@ interface OverlayStoreState {
   /** Adaptive-zoom / snap-feedback telemetry. Updated by
    *  `useRegionSelection` on every pointer move. */
   interaction: InteractionState;
-  /** Precision-mode flag — modifier held for finer crosshair + pixel
+  /** Precision-mode flag: modifier held for finer crosshair + pixel
    *  grid inside the magnifier. */
   precision: boolean;
-  /** Flash trigger — bumped on a successful capture so the layout can
+  /** Flash trigger: bumped on a successful capture so the layout can
    *  fire its "freeze frame" animation. */
   captureFlash: number;
   /** Freehand-mode lasso path in logical px, in draw order. Empty
@@ -157,7 +157,7 @@ interface OverlayStoreState {
   /** Bumped on every paint so the `BrushMask` layer re-blits the
    *  offscreen mask canvas (whose pixel mutations React can't see). */
   brushVersion: number;
-  /** Whether the mask currently has any painted pixels — drives the
+  /** Whether the mask currently has any painted pixels: drives the
    *  Capture-ready check. Recomputed on each stroke release. */
   brushHasInk: boolean;
   /** Multi-Area committed rects in logical px. Empty unless in
@@ -167,7 +167,7 @@ interface OverlayStoreState {
   /** The previous session's rectangular selection in logical px, or
    *  `null` when nothing is remembered. Fetched once per overlay mount
    *  by `useLastRegion` and shared by the `L` keybind + the toolbar's
-   *  Last-region button. Deliberately NOT cleared by `reset` — it
+   *  Last-region button. Deliberately NOT cleared by `reset`: it
    *  belongs to the app, not to this selection. */
   lastRegion: Rect | null;
 
@@ -205,7 +205,7 @@ interface OverlayStoreState {
   popPenAnchor(): void;
   setBrushSize(size: number): void;
   setBrushMode(mode: BrushMode): void;
-  /** Note a paint occurred this frame — bump the render version + keep
+  /** Note a paint occurred this frame: bump the render version + keep
    *  the phase in `dragging` while the stroke is live. */
   bumpBrush(): void;
   /** Commit a finished stroke: record whether the mask has ink and move
@@ -214,13 +214,13 @@ interface OverlayStoreState {
   /** Clear the painted mask (the toolbar's Clear button). */
   clearBrush(): void;
   /** Drop the current selection (rect / freehand / pen / areas) without
-   *  touching the cached snapshot, cursor, or toggles — used by the
+   *  touching the cached snapshot, cursor, or toggles: used by the
    *  Region method dropdown to switch selection tools in place. */
   clearSelection(): void;
   commitArea(rect: Rect): void;
   popArea(): void;
   setLastRegion(r: Rect | null): void;
-  /** Drop the remembered rect in as a committed selection — handles on,
+  /** Drop the remembered rect in as a committed selection: handles on,
    *  Capture live, ready to nudge or confirm. No-op when nothing is
    *  remembered. `clamp` fits it to the current viewport. */
   restoreLastRegion(clamp: (r: Rect) => Rect): void;
@@ -445,7 +445,7 @@ export const useOverlayStore = create<OverlayStoreState>((set) => ({
         ? {
             rect: clamp(s.lastRegion),
             phase: "selected",
-            // Any in-progress drag is abandoned — the restored rect is
+            // Any in-progress drag is abandoned: the restored rect is
             // now the selection.
             start: null,
             cur: null,

@@ -9,7 +9,7 @@ pub struct DataCategory {
     pub id: String,
     pub name: String,
     pub size_bytes: u64,
-    /// Destructive user content (captures, projects, credentials) —
+    /// Destructive user content (captures, projects, credentials):
     /// removal is opt-in and off by default. Application machinery is
     /// `false` and removed by default.
     pub destructive: bool,
@@ -34,7 +34,7 @@ pub struct RemovalSummary {
 
 /// The default selection for a fresh uninstall: remove all
 /// non-destructive application machinery, keep everything destructive.
-/// This is the design's core promise — captures and projects survive
+/// This is the design's core promise: captures and projects survive
 /// unless the user explicitly opts in.
 pub fn default_removal(catalog: &[DataCategory]) -> RemovalSelection {
     let remove_ids = catalog

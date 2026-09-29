@@ -1,5 +1,5 @@
 /**
- * Home view root — the dashboard's landing overview.
+ * Home view root: the dashboard's landing overview.
  *
  * A scrollable "welcome back" surface whose cards are fed from live
  * backend data: recent captures, resume-editing, and activity come from
@@ -12,7 +12,7 @@
  * Capture entry points all route through one dispatch: the header
  * Capture button and the Screenshot/Window launcher cards fire the same
  * overlay flow, and the shortcut chips are live via
- * `useQuickCaptureHotkeys` (scoped to this view — see that hook).
+ * `useQuickCaptureHotkeys` (scoped to this view; see that hook).
  */
 
 import { ChevronDown, Focus, Plus } from "lucide-react";
@@ -75,7 +75,7 @@ export function HomeLayout({ onNavigate }: HomeLayoutProps) {
 
         <QuickCapture onLaunch={dispatch} />
 
-        {/* Recent work — captures strip beside the resume-editing list. */}
+        {/* Recent work: captures strip beside the resume-editing list. */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.25fr_1fr]">
           <RecentCaptures
             items={captures.recent}

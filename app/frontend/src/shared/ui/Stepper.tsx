@@ -11,7 +11,7 @@ interface StepperProps {
 }
 
 /**
- * Minus / number / plus integer stepper — the shared control behind the
+ * Minus / number / plus integer stepper: the shared control behind the
  * capture-delay and palette-swatch steppers in both the capture window
  * and the settings panel. Clamps to `min..max`. Plus/minus buttons fire
  * `preventDefault()` so a surrounding row's hover/focus state doesn't

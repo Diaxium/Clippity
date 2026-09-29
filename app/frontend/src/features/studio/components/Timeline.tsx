@@ -14,13 +14,13 @@ import { AnnotationTrack } from "./AnnotationTrack";
 /** How close a scrub has to get to an in/out point to land on it
  *  exactly, as a fraction of the visible track. Tolerance in *pixels*
  *  rather than milliseconds, because that is the unit the gesture is
- *  actually performed in — the same 40 ms is trivially hittable on a
+ *  actually performed in: the same 40 ms is trivially hittable on a
  *  10-second clip and impossible on a 10-minute one. */
 const SNAP_PX = 6;
 
 /** Roughly how far apart the ruler's labelled ticks should sit. The
  *  interval is chosen from a ladder of round numbers so labels land on
- *  values a human reads as round — 0:05, 0:10 — rather than on whatever
+ *  values a human reads as round (0:05, 0:10) rather than on whatever
  *  falls out of dividing the duration by a fixed count. */
 /** How far a press has to travel before it becomes a range slide rather
  *  than a scrub. Small enough that a deliberate drag is recognised at
@@ -30,7 +30,7 @@ const SLIDE_THRESHOLD_PX = 4;
 const TARGET_TICK_PX = 96;
 /** Coarsest rung, and the interval for a clip longer than the ladder
  *  covers. Named rather than read back off the end of the array so the
- *  fallback is total — an hour is the widest spacing that still reads
+ *  fallback is total: an hour is the widest spacing that still reads
  *  as a round number. */
 const COARSEST_TICK_MS = 3_600_000;
 const TICK_LADDER_MS = [
@@ -56,7 +56,7 @@ const TICK_LADDER_MS = [
  * The trim timeline: a ruler, the clip as a track, the selected range,
  * two handles and a playhead.
  *
- * One geometry rule holds the whole thing together — a position's
+ * One geometry rule holds the whole thing together: a position's
  * fraction of the duration is its fraction of the track's width, and
  * both rendering and pointer handling go through `msToFraction` /
  * `fractionToMs` to get it. That is what guarantees the playhead is
@@ -79,7 +79,7 @@ export function Timeline() {
    * The gesture in progress on the track.
    *
    * One ref rather than a handler per element, because the selected band
-   * used to own its own `pointerdown` — and since the band spans the
+   * used to own its own `pointerdown`, and since the band spans the
    * whole track whenever nothing has been trimmed yet, which is how every
    * clip opens, it swallowed every click before `scrubTo` could see one.
    * Clicking the timeline did nothing at all, and the only way to place
@@ -132,7 +132,7 @@ export function Timeline() {
    * Take pointer capture, tolerating failure.
    *
    * `setPointerCapture` throws `NotFoundError` when the pointer is no
-   * longer active — a real possibility for a gesture that starts as the
+   * longer active: a real possibility for a gesture that starts as the
    * pointer leaves the window. Capture is an *improvement* to a drag
    * (it keeps events coming when the cursor leaves the track), not a
    * precondition for one, so a failure must not be allowed to propagate
@@ -157,7 +157,7 @@ export function Timeline() {
     };
 
   const onPointerMove = (event: React.PointerEvent) => {
-    // A handle drag owns the gesture outright — it was started on the
+    // A handle drag owns the gesture outright: it was started on the
     // handle itself, which stops the event before the track sees it.
     if (dragging && gesture.current === null) {
       setRange(
@@ -211,7 +211,7 @@ export function Timeline() {
    * End a drag.
    *
    * Deliberately does **not** release the pointer capture. Capture was
-   * taken on the *handle*, while this handler sits on the *track* — so
+   * taken on the *handle*, while this handler sits on the *track*, so
    * `event.currentTarget.releasePointerCapture(...)` would be called on
    * an element that never had it and throw `NotFoundError`, skipping the
    * state reset below and leaving the timeline permanently convinced a
@@ -223,7 +223,7 @@ export function Timeline() {
     gesture.current = null;
     setDragging(null);
     // Hands the playhead back to the element, which resumes reporting
-    // its own position — by now it has caught up with the last seek.
+    // its own position: by now it has caught up with the last seek.
     setScrubbing(false);
   };
 
@@ -235,7 +235,7 @@ export function Timeline() {
    *
    * The press *also* decides what a subsequent drag means. It only arms
    * a slide when the press landed inside the selection **and** that
-   * selection has somewhere to go — a band that already fills the clip
+   * selection has somewhere to go: a band that already fills the clip
    * cannot move, so treating a drag on it as a slide would spend the
    * gesture achieving nothing, when the user is far more likely to be
    * scrubbing.
@@ -246,7 +246,7 @@ export function Timeline() {
   /**
    * Start a slide from the grab bar.
    *
-   * Immediate — no movement threshold, because the press landed on a
+   * Immediate: no movement threshold, because the press landed on a
    * control that means only one thing. The threshold exists for presses
    * on the band itself, where the same gesture could equally have meant
    * "scrub", and it does not need to apply here.
@@ -270,7 +270,7 @@ export function Timeline() {
     if (dragging) return;
     // Claim the playhead for the whole gesture, before the first seek.
     // Every move from here seeks the element, and the element answers
-    // asynchronously with where it *was* — see `syncPosition`.
+    // asynchronously with where it *was*; see `syncPosition`.
     setScrubbing(true);
     const position = positionAt(event.clientX);
     seek(snapToEdges(position, range, snapToleranceMs()));
@@ -321,7 +321,7 @@ export function Timeline() {
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         // The backstop. If a drag ever ends without a pointerup this
-        // handler sees it — and a stuck `dragging` is not a cosmetic
+        // handler sees it, and a stuck `dragging` is not a cosmetic
         // fault: `scrubTo` refuses to seek while one is in progress, so
         // the whole timeline would go dead until the view remounted.
         onLostPointerCapture={endDrag}
@@ -338,7 +338,7 @@ export function Timeline() {
         ))}
 
         {/* Everything outside the trim, dimmed. Two elements rather than
-            one so the selected band stays the untouched, honest colour —
+            one so the selected band stays the untouched, honest colour:
             dimming is what is being *added* to the excluded parts. */}
         <div
           aria-hidden="true"
@@ -354,7 +354,7 @@ export function Timeline() {
           }}
         />
 
-        {/* The selected band. Decoration only — `pointer-events-none` is
+        {/* The selected band. Decoration only: `pointer-events-none` is
             load-bearing: this element spans the whole track until
             something has been trimmed, so with a hit target of its own it
             intercepts every press meant for the track beneath and
@@ -424,7 +424,7 @@ export function Timeline() {
           onPointerDown={beginHandleDrag("out")}
         />
 
-        {/* Playhead — three siblings at one position, and the split is
+        {/* Playhead: three siblings at one position, and the split is
             load-bearing in two ways.
 
             The marker has to sit *above* the trim handles so it stays
@@ -435,7 +435,7 @@ export function Timeline() {
             `z-20`, `pointer-events-none`.
 
             They are siblings rather than nested because `peer-hover`
-            reaches siblings only — nesting the marker inside the strip
+            reaches siblings only: nesting the marker inside the strip
             would put it out of reach of the hover it is reacting to.
 
             The strip itself has no handler: a press on it bubbles to the
@@ -449,7 +449,7 @@ export function Timeline() {
         {/* The transitions name their properties rather than using
             `transition-all`, and that is not a style preference. `left`
             here *is* the playhead's position, rewritten every frame from
-            `currentMs` — animating it makes the marker chase the true
+            `currentMs`: animating it makes the marker chase the true
             position 150 ms behind, permanently out of step with the
             timecode beside it, and snap into place the moment playback
             stops. Only the hover response may animate. */}
@@ -545,7 +545,7 @@ function Handle({ edge, left, onPointerDown }: HandleProps) {
  * Picks the smallest interval from a ladder of round durations that
  * still leaves roughly [`TARGET_TICK_PX`] between labels, so the ruler
  * reads 0:05 / 0:10 / 0:15 rather than 0:04.37 / 0:08.74. Exported for
- * its test — the arithmetic is easy to get subtly wrong in a way that
+ * its test: the arithmetic is easy to get subtly wrong in a way that
  * only shows up on unusual clip lengths.
  */
 export function rulerTicks(durationMs: number, trackPx = 900): number[] {

@@ -1,5 +1,5 @@
 /**
- * Shortcuts settings catalog — the single, flat enumeration of every
+ * Shortcuts settings catalog: the single, flat enumeration of every
  * *customizable* in-app binding, assembled from the three keybind
  * registries (editor / library / quick-capture) that own the real
  * defaults. The Settings panel renders from this; nothing here re-declares
@@ -9,13 +9,13 @@
  * don't map to a single rebindable combo:
  *  - `hidden` editor aliases (not distinct commands),
  *  - `paletteHidden` editor bindings (the arrow-driven nudge/resize
- *    families and the held-key temp-pan — multi-combo or press-and-hold),
- *  - the unavailable quick-capture cards (Record / GIF — no backend yet).
+ *    families and the held-key temp-pan: multi-combo or press-and-hold),
+ *  - the unavailable quick-capture cards (Record / GIF: no backend yet).
  *
  * Each entry carries its `context` so conflict detection can scope
  * correctly: two bindings clash only when they share a scope *and* an
  * active context (an editor tool letter and a selection-only action may
- * reuse a key on purpose — dispatch layers them by priority).
+ * reuse a key on purpose; dispatch layers them by priority).
  */
 
 import {
@@ -35,7 +35,7 @@ import {
 
 /** One rebindable action in the catalog. */
 export interface ShortcutEntry {
-  /** `"<scope>:<id>"` — the overrides map key. */
+  /** `"<scope>:<id>"`: the overrides map key. */
   fqid: string;
   scope: KeybindScope;
   id: string;
@@ -113,7 +113,7 @@ function captureGroup(): ShortcutGroup {
 
 /**
  * The full catalog, Capture first (the everyday actions), then Library,
- * then the editor's many categories. Computed once — the registries are
+ * then the editor's many categories. Computed once: the registries are
  * static module data.
  */
 export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
@@ -145,7 +145,7 @@ export function isEntryOverridden(
 /**
  * The set of `fqid`s whose current binding collides with another entry in
  * the same scope + context. A combo bucket with two or more distinct
- * entries is a real ambiguity — the dispatch would fire only the
+ * entries is a real ambiguity: the dispatch would fire only the
  * higher-priority one, silently shadowing the other.
  */
 export function findShortcutConflicts(

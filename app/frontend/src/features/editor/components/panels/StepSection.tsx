@@ -13,7 +13,7 @@ const SUB = FIELD_LABEL;
  * **The one field P3 deliberately does not batch.** A badge's number is its
  * identity within a sequence, not a shared style: applying one value across a
  * multi-selection would flatten 1·2·3 into 3·3·3, which is never the intent.
- * So the section shows only for a single badge — renumbering stays a
+ * So the section shows only for a single badge: renumbering stays a
  * one-at-a-time edit rather than a field that silently destroys the sequence.
  */
 export function StepSection() {

@@ -1,4 +1,4 @@
-//! The concrete Clippity install manifest — the component catalog, the
+//! The concrete Clippity install manifest: the component catalog, the
 //! uninstall data categories, and the product facts. This is the single
 //! place that describes *what* Clippity ships, so the domain plan logic
 //! stays generic and this is the only file that changes per release.
@@ -47,7 +47,7 @@ fn apply_live_general(options: &mut InstallOptions, settings: &serde_json::Value
 
 /// Product facts for this build.
 ///
-/// `version` is the application version the wizard *carries* — it must
+/// `version` is the application version the wizard *carries*: it must
 /// match the embedded payload (`payload/payload.json`), which the detection
 /// and update-check logic compares against the installed manifest. Keeping
 /// these in sync is what makes "an update is available" honest; see

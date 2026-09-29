@@ -9,8 +9,8 @@ import type {
  * pointer-down, pointer-up, and click events from bubbling out to
  * the canvas-wide handlers in `useRegionSelection`.
  *
- * This is belt-and-suspenders alongside the canvas-side phase guard
- * — that guard now early-returns when phase isn't "dragging" (see
+ * This is belt-and-suspenders alongside the canvas-side phase guard:
+ * that guard now early-returns when phase isn't "dragging" (see
  * `useRegionSelection.test.ts` regression) but blocking at the chrome
  * boundary keeps event flow clean and saves a few cycles per click.
  *

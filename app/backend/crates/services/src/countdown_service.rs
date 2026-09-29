@@ -11,7 +11,7 @@
 //! was visible when `start` ran, then emits `countdown/cancelled`.
 //!
 //! `finish` hides the strip and emits `countdown/finished` but
-//! deliberately does NOT restore the previous primary — the next
+//! deliberately does NOT restore the previous primary: the next
 //! step (the capture itself) will handle window restoration. Putting
 //! the restore here would briefly flash the capture window between
 //! "timer hits zero" and "capture pipeline takes over".
@@ -19,7 +19,7 @@
 //! The strip is intentionally NOT focus-stealing (`focus: false` in
 //! `tauri.conf.json`) AND click-through (`set_ignore_cursor_events`)
 //! so the user's keyboard focus and mouse both stay with whatever they
-//! were doing while the timer ticks down — it behaves like a passive
+//! were doing while the timer ticks down: it behaves like a passive
 //! system status indicator, never a dialog (design spec: "do not steal
 //! focus", "do not prevent interaction"). Because the window is never
 //! focused, it can't receive a keydown; Escape is therefore handled by
@@ -93,7 +93,7 @@ impl CountdownService {
         countdown.set_always_on_top(true).map_err(AppError::from)?;
         // Pure status overlay: never intercept pointer events so the
         // user can keep clicking the desktop / apps / taskbar behind
-        // the strip while it counts down. Best-effort — a strip that
+        // the strip while it counts down. Best-effort: a strip that
         // can't go click-through is still preferable to no countdown.
         let _ = countdown.set_ignore_cursor_events(true);
         countdown.show().map_err(AppError::from)?;
@@ -141,7 +141,7 @@ impl CountdownService {
     }
 
     /// Hide the strip and emit `countdown/finished`. The previous-
-    /// primary slot is cleared but the window is NOT shown — the
+    /// primary slot is cleared but the window is NOT shown: the
     /// caller (capture-workflow delay branch) takes over from here
     /// and will perform the actual capture, which handles its own
     /// hide/restore cycle. Avoids a brief flash of the capture window
@@ -152,7 +152,7 @@ impl CountdownService {
             countdown.hide().map_err(AppError::from)?;
             let _ = countdown.set_always_on_top(false);
         }
-        // Drop the stash without restoring — the next operation owns
+        // Drop the stash without restoring: the next operation owns
         // the window pipeline. If the caller turns out to NOT run a
         // capture (defensive), the user's tray icon is the recovery
         // path.
@@ -165,7 +165,7 @@ impl CountdownService {
 }
 
 /// The global accelerator that cancels an active countdown: plain
-/// Escape, no modifiers. Built fresh each call — `Shortcut` equality
+/// Escape, no modifiers. Built fresh each call: `Shortcut` equality
 /// is by (modifiers, key) so the `lib.rs` handler can match the fired
 /// shortcut against an identical value.
 fn escape_shortcut() -> Shortcut {
@@ -173,7 +173,7 @@ fn escape_shortcut() -> Shortcut {
 }
 
 /// Register the global Escape accelerator. Best-effort: registration
-/// can fail if another app already holds Escape — the countdown still
+/// can fail if another app already holds Escape; the countdown still
 /// runs and ticks to completion, the user just can't abort via keyboard
 /// in that (rare) case.
 fn register_escape(app: &AppHandle) {
@@ -182,7 +182,7 @@ fn register_escape(app: &AppHandle) {
     }
 }
 
-/// Remove the global Escape accelerator. Best-effort — unregistering a
+/// Remove the global Escape accelerator. Best-effort: unregistering a
 /// shortcut that was never registered (registration failed at start)
 /// returns an error we deliberately ignore so Escape returns to the
 /// foreground app the instant the countdown ends.
@@ -214,7 +214,7 @@ fn reposition_strip(app: &AppHandle, countdown: &tauri::WebviewWindow) -> AppRes
     }
 
     // Fallback: primary monitor in logical units. We treat the whole
-    // monitor as the work area here — without a Win32 work-area query
+    // monitor as the work area here: without a Win32 work-area query
     // there's no portable way to know where the taskbar is, so the
     // user sees the strip at the very bottom of the monitor instead.
     if let Ok(Some(monitor)) = app.primary_monitor() {
@@ -258,7 +258,7 @@ mod tests {
     }
 
     // The Tauri-touching paths (start / cancel / finish + geometry
-    // helpers) are covered by the manual gate — there's no portable
+    // helpers) are covered by the manual gate: there's no portable
     // way to spin up a real `WebviewWindow` inside a unit test.
     // Domain-side coverage lives in `domain::countdown::tests`
     // (validate_request + serde round-trips).

@@ -4,7 +4,7 @@ interface CountdownProgressBarProps {
 }
 
 /**
- * Progress line pinned to the very bottom edge of the strip — it sits
+ * Progress line pinned to the very bottom edge of the strip: it sits
  * flush against the top of the taskbar (the layout column ends in this
  * element with no padding below it). Per the design spec: 2–4 px tall,
  * full-screen width, edge-to-edge with no margins.

@@ -1,9 +1,9 @@
-//! On-device AI model manager — download / install / remove the ONNX
+//! On-device AI model manager: download / install / remove the ONNX
 //! artifacts the vision features run on.
 //!
 //! Layout: every model is a single `.onnx` file in `AppPaths.models`
 //! (`<cache>/Clippity/models/<id>.onnx`). "Installed" therefore means
-//! "file exists with exactly the registry's expected byte size" — no
+//! "file exists with exactly the registry's expected byte size": no
 //! separate manifest to drift out of sync with the filesystem.
 //!
 //! Downloads stream to `<id>.onnx.part` and are renamed into place only
@@ -11,9 +11,9 @@
 //! masquerade as an installed model. Each download runs on its own
 //! thread and reports through two events:
 //!
-//! - `clippity://models/progress` — throttled `{id, downloaded, total}`
+//! - `clippity://models/progress`: throttled `{id, downloaded, total}`
 //!   ticks for the Models settings page progress bar.
-//! - `clippity://models/changed`  — full `Vec<ModelInfo>` after any
+//! - `clippity://models/changed` : full `Vec<ModelInfo>` after any
 //!   status transition (start / done / error / cancel / remove), so
 //!   every window converges on the same view without polling.
 
@@ -41,7 +41,7 @@ use clippity_infra::paths::AppPaths;
 /// overhead low without hogging memory.
 const CHUNK: usize = 64 * 1024;
 
-/// Minimum bytes between two progress emits — caps the event rate so a
+/// Minimum bytes between two progress emits: caps the event rate so a
 /// fast connection doesn't flood the IPC channel.
 const PROGRESS_STRIDE: u64 = 512 * 1024;
 
@@ -50,7 +50,7 @@ const PROGRESS_STRIDE: u64 = 512 * 1024;
 /// few times in a row costs one request (GitHub allows 60/hr unauthed),
 /// short enough to notice a fresh publish within minutes. The disk-derived
 /// "installed?/up-to-date?" flags are recomputed on every call regardless,
-/// so a self-update is reflected immediately — only the network half is
+/// so a self-update is reflected immediately: only the network half is
 /// cached.
 const RELEASE_CACHE_TTL: Duration = Duration::from_secs(300);
 
@@ -65,13 +65,13 @@ struct DownloadHandle {
     cancel: Arc<AtomicBool>,
 }
 
-/// Shared mutable state — split from the service so worker threads can
+/// Shared mutable state: split from the service so worker threads can
 /// hold it without holding the service itself.
 #[derive(Default)]
 struct Registry {
     /// In-flight downloads by model id.
     downloads: HashMap<String, DownloadHandle>,
-    /// Last download error by model id — cleared when a new download
+    /// Last download error by model id: cleared when a new download
     /// starts. Purely informational (drives the `error` phase chip).
     errors: HashMap<String, String>,
 }
@@ -79,7 +79,7 @@ struct Registry {
 /// What we install for a model, recorded beside its artifacts as
 /// `<id>.model.json`. The integrity model is "file exists at its expected
 /// size", and a self-update writes bytes whose size the compile-time
-/// registry doesn't know — so without this record the offline phase logic
+/// registry doesn't know, so without this record the offline phase logic
 /// would read a freshly self-updated model as *not installed*. The
 /// manifest pins the actually-fetched sizes (so they count as installed)
 /// and the release tag (so "which version do I have" is exact, not
@@ -106,7 +106,7 @@ struct CachedRelease {
     /// on-disk file names + the release's download URL and size. Empty
     /// when the release's assets didn't match this model's matchers.
     artifacts: Vec<ModelArtifact>,
-    /// Whether `artifacts` fully covers the model (detector + any typer) —
+    /// Whether `artifacts` fully covers the model (detector + any typer):
     /// gates the live update action.
     updatable: bool,
 }
@@ -134,7 +134,7 @@ impl ModelService {
     }
 
     /// Absolute path a model's typer installs to (whether or not the
-    /// model has one — callers gate on `spec.typer`).
+    /// model has one; callers gate on `spec.typer`).
     pub fn typer_path(&self, id: &str) -> PathBuf {
         self.models_dir.join(models::typer_file_name(id))
     }
@@ -172,7 +172,7 @@ impl ModelService {
         self.spawn_download(app, spec, spec.artifacts(), label)
     }
 
-    /// Self-update `id` to the latest published GitHub release — the live
+    /// Self-update `id` to the latest published GitHub release: the live
     /// counterpart to [`download`](Self::download). Queries the release
     /// fresh (the registry's compile-time `size_bytes`/`url` are pinned to
     /// an older tag and can't fetch new bytes), resolves its detector +
@@ -187,7 +187,7 @@ impl ModelService {
         let src = spec
             .release
             .ok_or_else(|| AppError::Models(format!("{id} has no live release to update from")))?;
-        // Fetch fresh — never self-update from a possibly-stale cache.
+        // Fetch fresh; never self-update from a possibly-stale cache.
         let cached = fetch_release_state(id, &src)?;
         self.cache_release(id, cached.clone());
         if !cached.updatable {
@@ -234,7 +234,7 @@ impl ModelService {
             (downloaded, cancel)
         };
 
-        // Status flipped to `downloading` — broadcast before the worker
+        // Status flipped to `downloading`: broadcast before the worker
         // starts so the UI reacts to the click immediately.
         emit_changed(app, &self.models_dir, &self.state);
 
@@ -277,7 +277,7 @@ impl ModelService {
         Ok(())
     }
 
-    /// Best-effort live release status for every GitHub-hosted model — what
+    /// Best-effort live release status for every GitHub-hosted model: what
     /// the Models page fires on open to answer "is my model the latest
     /// published one". A per-model failure (offline, rate-limited, asset
     /// mismatch) drops that model from the result rather than failing the
@@ -405,7 +405,7 @@ pub fn resolve_object_spec(prefs: &ModelsSettings) -> &'static ModelSpec {
 // ------------------------------------------------------------- internals
 
 /// True when every artifact is on disk at an *accepted* size: the
-/// compile-time registry size, or — for a self-updated model — the size
+/// compile-time registry size, or, for a self-updated model, the size
 /// recorded in its install manifest. Without the manifest fallback a model
 /// fetched from a newer GitHub release (whose sizes the registry doesn't
 /// know) would read as not-installed. Reads the manifest once and applies
@@ -432,7 +432,7 @@ fn file_len(path: &Path) -> Option<u64> {
         .map(|m| m.len())
 }
 
-/// True when `path` is a file of exactly `size_bytes` — the per-artifact
+/// True when `path` is a file of exactly `size_bytes`: the per-artifact
 /// integrity predicate (a partial or substituted file fails it).
 fn artifact_on_disk(path: &Path, size_bytes: u64) -> bool {
     file_len(path) == Some(size_bytes)
@@ -442,7 +442,7 @@ fn artifact_on_disk(path: &Path, size_bytes: u64) -> bool {
 /// present at a size the registry recognizes (the current size or one of
 /// its `prior_sizes`), and at least one is at a prior size. This is what
 /// distinguishes "an update is available" from "never installed" and from
-/// "a corrupt/partial file" — only known older bytes count, so a random
+/// "a corrupt/partial file": only known older bytes count, so a random
 /// wrong-sized file still reads as not-installed and gets re-fetched
 /// cleanly. Mutually exclusive with [`is_installed_at`] (which requires
 /// every artifact at its *current* size).
@@ -452,7 +452,7 @@ fn is_outdated_at(models_dir: &Path, spec: &ModelSpec) -> bool {
         let len = match fs::metadata(models_dir.join(&art.file_name)) {
             Ok(m) if m.is_file() => m.len(),
             // A missing artifact means this isn't a complete install at
-            // all — defer to the not-installed path.
+            // all: defer to the not-installed path.
             _ => return false,
         };
         if len == art.size_bytes {
@@ -524,7 +524,7 @@ fn installed_version_of(models_dir: &Path, spec: &ModelSpec) -> Option<String> {
     installed_tag_of(models_dir, spec).or_else(|| Some(spec.version.to_string()))
 }
 
-/// Broadcast the full model list. Best-effort — a failed emit only
+/// Broadcast the full model list. Best-effort: a failed emit only
 /// delays the UI until its next refetch.
 fn emit_changed(app: &AppHandle, models_dir: &Path, state: &Arc<Mutex<Registry>>) {
     let guard = state.lock().ok();
@@ -539,7 +539,7 @@ fn emit_changed(app: &AppHandle, models_dir: &Path, state: &Arc<Mutex<Registry>>
 /// Stream every `artifact` (detector, then typer when present) into
 /// `models_dir`, each via a `.part` renamed into place only after its
 /// exact-size check. `artifacts` is the pinned registry list for a normal
-/// download or the live-release list for a self-update — the streaming is
+/// download or the live-release list for a self-update: the streaming is
 /// identical either way. Progress is cumulative across artifacts so the
 /// settings bar fills once for the whole model. On success, records the
 /// install manifest (`<id>.model.json`) stamping the fetched sizes +
@@ -564,7 +564,7 @@ fn fetch_to_disk(
     for art in artifacts {
         let final_path = models_dir.join(&art.file_name);
         // Already fully present (e.g. detector survived a typer-leg
-        // failure) — count it and move on.
+        // failure): count it and move on.
         if artifact_on_disk(&final_path, art.size_bytes) {
             cumulative += art.size_bytes;
             downloaded.store(cumulative, Ordering::Relaxed);
@@ -592,8 +592,8 @@ fn fetch_to_disk(
     }
 
     // Record what we installed so a self-update's (registry-unknown) sizes
-    // still count as installed, and "which version" stays exact. Best-effort
-    // — a missing manifest just falls back to registry-size detection.
+    // still count as installed, and "which version" stays exact. Best-effort:
+    // a missing manifest just falls back to registry-size detection.
     write_manifest(models_dir, id, label, artifacts);
 
     // Final 100% tick so the bar lands exactly on full.
@@ -711,7 +711,7 @@ fn manifest_path(models_dir: &Path, id: &str) -> PathBuf {
 }
 
 /// Read the install manifest, or `None` if absent/unreadable/corrupt.
-/// Tolerant by design — a missing or garbled manifest just falls back to
+/// Tolerant by design: a missing or garbled manifest just falls back to
 /// registry-size detection, never an error.
 fn read_manifest(models_dir: &Path, id: &str) -> Option<InstalledManifest> {
     let text = fs::read_to_string(manifest_path(models_dir, id)).ok()?;
@@ -720,7 +720,7 @@ fn read_manifest(models_dir: &Path, id: &str) -> Option<InstalledManifest> {
 
 /// Write the install manifest stamping `label` (release tag / version) and
 /// the exact size of each installed artifact. Best-effort: a write failure
-/// is logged, not propagated — the bytes are already in place, and the
+/// is logged, not propagated; the bytes are already in place, and the
 /// worst case is a self-updated model later reading as not-installed.
 fn write_manifest(models_dir: &Path, id: &str, label: &str, artifacts: &[ModelArtifact]) {
     let manifest = InstalledManifest {
@@ -956,7 +956,7 @@ mod tests {
         }
     }
 
-    /// Create a file of exactly `size` bytes without allocating it — the
+    /// Create a file of exactly `size` bytes without allocating it: the
     /// integrity check only reads the length, so a sparse file is enough
     /// to stand in for a multi-megabyte artifact in tests.
     fn write_sized(path: &Path, size: u64) {
@@ -1040,7 +1040,7 @@ mod tests {
         let phase = phase_of(&svc.models_dir, svc.state.lock().ok().as_deref(), spec);
         assert_eq!(phase, ModelPhase::Installed);
 
-        // An *unrecognized* wrong size is not an update — it reads as a
+        // An *unrecognized* wrong size is not an update: it reads as a
         // fresh download so a corrupt/partial file gets cleanly replaced.
         write_sized(&svc.typer_path(spec.id), typer.artifact.size_bytes + 1);
         let phase = phase_of(&svc.models_dir, svc.state.lock().ok().as_deref(), spec);
@@ -1230,7 +1230,7 @@ mod tests {
         let typer_name = models::typer_file_name(spec.id);
         let typer = spec.typer.unwrap();
 
-        // rel-v3 ships byte-identical assets to the installed rel-v2 — the
+        // rel-v3 ships byte-identical assets to the installed rel-v2: the
         // exact case that broke a size-based check.
         let cached = CachedRelease {
             fetched: Instant::now(),
@@ -1259,7 +1259,7 @@ mod tests {
         assert!(!c.installed && !c.installed_is_latest && c.updatable);
         assert_eq!(c.latest_tag, "rel-v3");
 
-        // Installed at rel-v2 (manifest tag) with the SAME bytes v3 ships —
+        // Installed at rel-v2 (manifest tag) with the SAME bytes v3 ships:
         // still "newer release available", because the tag differs.
         write_sized(&svc.model_path(spec.id), spec.size_bytes);
         write_sized(&svc.typer_path(spec.id), typer.artifact.size_bytes);

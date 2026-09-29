@@ -41,7 +41,7 @@ interface SelectionDragOps {
  *   - `activeResize` is set/cleared on resize-handle drags so the
  *     magnifier can anchor to the manipulated edge.
  *   - `pulseSnap()` is fired when the rect snaps to a viewport edge
- *     within a small threshold — the selection border / crosshair /
+ *     within a small threshold: the selection border / crosshair /
  *     magnifier all react.
  */
 export function useRegionSelection(): PointerHandlers & SelectionDragOps {
@@ -55,7 +55,7 @@ export function useRegionSelection(): PointerHandlers & SelectionDragOps {
   const setVelocity = useOverlayStore((s) => s.setVelocity);
   const pulseSnap = useOverlayStore((s) => s.pulseSnap);
 
-  // Pointer telemetry — module-level refs that survive React renders.
+  // Pointer telemetry: module-level refs that survive React renders.
   const lastMove = useRef<{ at: Pt; t: number } | null>(null);
   const lastSnapAt = useRef<number>(0);
 
@@ -68,7 +68,7 @@ export function useRegionSelection(): PointerHandlers & SelectionDragOps {
         const dx = p.x - prev.at.x;
         const dy = p.y - prev.at.y;
         const instant = Math.hypot(dx, dy) / dt; // logical px / ms
-        // Exponential smoothing — emphasises recent moves but resists
+        // Exponential smoothing: emphasises recent moves but resists
         // single-sample spikes.
         const prevV = useOverlayStore.getState().interaction.velocity;
         const smoothed = prevV * 0.6 + instant * 0.4;
@@ -125,7 +125,7 @@ export function useRegionSelection(): PointerHandlers & SelectionDragOps {
         // `updateDrag` already writes `cursor` (to the shift-snapped point),
         // so the unconditional `setCursor(p)` this used to do *first* was a
         // redundant store write whose value was overwritten in the same
-        // handler — an extra subscriber notification (magnifier + crosshair)
+        // handler: an extra subscriber notification (magnifier + crosshair)
         // every drag-move. Drive the cursor solely through `updateDrag` here.
         const next = e.shiftKey ? snapSquare(s.start, p) : p;
         updateDrag(next);
@@ -145,7 +145,7 @@ export function useRegionSelection(): PointerHandlers & SelectionDragOps {
     (_e: PointerEventReact) => {
       const s = useOverlayStore.getState();
       if (s.phase !== "dragging") return;
-      // The interaction is over — drop any precision divergence so the
+      // The interaction is over: drop any precision divergence so the
       // next one starts with the reticle on the real cursor.
       syncPrecisionPointer();
       if (!s.start || !s.cur) {
@@ -181,7 +181,7 @@ export function useRegionSelection(): PointerHandlers & SelectionDragOps {
       e.preventDefault();
       dragOp.current = {
         kind: "move",
-        // Damped point, like every move that follows — mixing a raw
+        // Damped point, like every move that follows: mixing a raw
         // anchor with damped moves would make the rect jump on grab.
         startMouse: actionPoint(e),
         startRect: { ...rect },
@@ -263,7 +263,7 @@ export function useRegionSelection(): PointerHandlers & SelectionDragOps {
  * Exported for the precision-pointer re-sync: releasing Alt mid-drag
  * must NOT snap the reticle back, because the rect edge would jump with
  * it. `phase === "dragging"` covers drawing a fresh rect, but a move or
- * resize of a committed rect leaves the phase at `selected` — that state
+ * resize of a committed rect leaves the phase at `selected`: that state
  * lives only in `sharedDragOp`, hence this accessor.
  */
 export function isSelectionDragActive(): boolean {

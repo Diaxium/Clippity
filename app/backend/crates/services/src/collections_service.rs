@@ -1,4 +1,4 @@
-//! **Collections** — the catalog of named, ordered capture sets, stored
+//! **Collections**: the catalog of named, ordered capture sets, stored
 //! as one document beside the captures they arrange.
 //!
 //! `<captures>/collections.json`, next to the aux catalog's
@@ -6,17 +6,17 @@
 //! data dir because it *is* user data: a curated arrangement they made,
 //! which should survive a reinstall and travel with a backed-up captures
 //! folder. (The library index, by contrast, is app machinery and lives in
-//! the data dir — it can be rebuilt from disk at any time; this cannot.)
+//! the data dir: it can be rebuilt from disk at any time; this cannot.)
 //!
 //! Membership is by capture id, and for a file-backed capture the id is
-//! its path — which changes when it is trashed or restored. [`Self::rekey`]
+//! its path, which changes when it is trashed or restored. [`Self::rekey`]
 //! is called at those choke points, right beside `sidecar::relocate`, so a
 //! curated order survives a round trip through the trash. [`Self::forget`]
 //! runs on purge, once the capture is gone for good.
 //!
 //! An id whose capture is missing is *not* pruned on sight. A file can be
-//! absent for reasons that reverse — an unplugged drive, a folder moved
-//! and moved back — and a collection that quietly forgot its members
+//! absent for reasons that reverse (an unplugged drive, a folder moved
+//! and moved back) and a collection that quietly forgot its members
 //! every time one blinked would be worse than one that renders a shorter
 //! list today. See ADR 0029.
 
@@ -31,7 +31,7 @@ use clippity_domain::collections::{self, Collection, CollectionCatalog};
 use clippity_infra::error::{AppError, AppResult};
 
 /// File name of the collections document under the captures dir. The
-/// library scan skips it by name — it is a catalog, not a capture.
+/// library scan skips it by name: it is a catalog, not a capture.
 pub const CATALOG_FILE_NAME: &str = "collections.json";
 
 pub struct CollectionsService {
@@ -55,7 +55,7 @@ impl CollectionsService {
     }
 
     /// Every collection, in creation order. A missing or unparseable
-    /// document reads as "no collections" — the same best-effort rule
+    /// document reads as "no collections": the same best-effort rule
     /// the aux catalog follows, because a corrupt file must not take the
     /// library down with it.
     pub fn list(&self) -> Vec<Collection> {
@@ -90,7 +90,7 @@ impl CollectionsService {
         Ok(out)
     }
 
-    /// Create an empty collection. A blank name is rejected — an unnamed
+    /// Create an empty collection. A blank name is rejected: an unnamed
     /// collection is unfindable, and the rail would render a gap.
     pub fn create(&self, name: &str) -> AppResult<Collection> {
         let name = collections::normalize_name(name)
@@ -118,7 +118,7 @@ impl CollectionsService {
         })
     }
 
-    /// Delete a collection. The captures in it are untouched — a
+    /// Delete a collection. The captures in it are untouched: a
     /// collection is an arrangement of files, not a folder holding them.
     pub fn remove(&self, id: &str) -> AppResult<()> {
         self.update(|all| {
@@ -153,7 +153,7 @@ impl CollectionsService {
         })
     }
 
-    /// Rearrange a collection to `ordered` — see
+    /// Rearrange a collection to `ordered`; see
     /// [`Collection::set_order`] for what happens to ids it forgets.
     pub fn set_order(&self, id: &str, ordered: &[String]) -> AppResult<Collection> {
         self.update(|all| {
@@ -170,7 +170,7 @@ impl CollectionsService {
     /// Load → mutate → save, but only when the mutation reports that it
     /// changed something. Every capture in the library passes through
     /// [`Self::rekey`] on its way to the trash, and the overwhelming
-    /// majority of them belong to no collection at all — rewriting the
+    /// majority of them belong to no collection at all: rewriting the
     /// document for each of those would be pure churn.
     fn update_if_changed(&self, edit: impl FnOnce(&mut Vec<Collection>) -> bool) -> AppResult<()> {
         let _guard = self
@@ -184,7 +184,7 @@ impl CollectionsService {
         self.save(collections)
     }
 
-    /// Follow a capture that changed id — a trash move, a restore, a
+    /// Follow a capture that changed id: a trash move, a restore, a
     /// future rename. Best-effort and silent: a failure here costs a
     /// collection a member, and must never fail the file op that
     /// prompted it (the capture itself has already moved).
@@ -210,7 +210,7 @@ fn find_mut<'a>(all: &'a mut [Collection], id: &str) -> AppResult<&'a mut Collec
 }
 
 /// Per-process counter so two collections created in the same
-/// millisecond can't share an id — the same guard the aux catalog's ids
+/// millisecond can't share an id: the same guard the aux catalog's ids
 /// use, and for the same reason (ids are minted before the lock).
 static COLLECTION_SEQ: AtomicU64 = AtomicU64::new(0);
 

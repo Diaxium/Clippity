@@ -47,7 +47,7 @@ function seed(): { frameId: string; rect: RectangleNode } {
 const state = () => useEditorStore.getState();
 
 /** Move the inspector to a tab. Geometry lives under Arrange and the read-only
- *  readout under Inspect, so a spec about either has to say so — the default is
+ *  readout under Inspect, so a spec about either has to say so: the default is
  *  Style. Set through the store rather than by clicking, so it works for the
  *  specs that render `InspectorSections` without its tab strip. */
 const showTab = (tab: "style" | "arrange" | "inspect") =>
@@ -56,7 +56,7 @@ const showTab = (tab: "style" | "arrange" | "inspect") =>
 afterEach(cleanup);
 
 // Inspector chrome (dock side, collapse, drop-zone preview) lives in the store
-// so it survives a remount in the real app — which means it also survives a
+// so it survives a remount in the real app, which means it also survives a
 // test. Reset it per test, or a spec that docks a panel leaks into the next
 // one's assertions about the defaults.
 beforeEach(() => {
@@ -79,7 +79,7 @@ describe("EditorTopBar wiring", () => {
   });
 
   /** Open the toolbar's single trailing tool menu and pick a tool from it.
-   *  Groups no longer carry their own caret — see `ToolOverflow`. */
+   *  Groups no longer carry their own caret; see `ToolOverflow`. */
   const pickFromOverflow = (name: RegExp) => {
     fireEvent.click(screen.getByLabelText("All tools"));
     fireEvent.click(screen.getByRole("menuitemradio", { name }));
@@ -88,7 +88,7 @@ describe("EditorTopBar wiring", () => {
   it("picks a sub-tool from the tool menu and updates the group primary", () => {
     seed();
     render(<EditorTopBar />);
-    // Polygon is a Design-mode tool — switch modes first.
+    // Polygon is a Design-mode tool; switch modes first.
     fireEvent.click(screen.getByRole("radio", { name: "Design mode" }));
     // Shape group's primary defaults to Rectangle.
     expect(screen.getByTitle(/Rectangle/)).toBeInTheDocument();
@@ -508,7 +508,7 @@ describe("FloatingInspector", () => {
 
 describe("EditorTopBar export menu", () => {
   it("opens the export options from the top bar in Annotation mode", () => {
-    seed(); // default mode = annotate — the mode that no longer has a rail
+    seed(); // default mode = annotate, the mode that no longer has a rail
     render(<EditorTopBar />);
     // The Export face exports straight away; the caret beside it has the
     // format/scale options.
@@ -546,7 +546,7 @@ describe("inspector docking", () => {
     render(<FloatingInspector mode="annotate" />);
 
     // jsdom gives the canvas-area lookup a zero rect, so the workspace falls
-    // back to the window — drop just inside its right edge.
+    // back to the window: drop just inside its right edge.
     const header = screen.getByRole("group", {
       name: "Inspector",
     }).firstElementChild!;
@@ -588,7 +588,7 @@ describe("inspector docking", () => {
       clientY: 100,
     });
     expect(state().dockPreview).toBe("right");
-    // Still floating — the preview is not a commitment.
+    // Still floating: the preview is not a commitment.
     expect(state().inspectorDock.annotate).toBeNull();
   });
 

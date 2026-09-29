@@ -1,5 +1,5 @@
 /**
- * "Continue editing" card — a resume list of recent captures (editor
+ * "Continue editing" card: a resume list of recent captures (editor
  * exports first). Each row, and "View all", opens the capture in the
  * Editor.
  */
@@ -27,7 +27,7 @@ const KIND_LABEL: Record<CaptureKind, string> = {
   text: "Text",
 };
 
-/** "Image · 2560×1440" — kind plus dimensions when known. */
+/** "Image · 2560×1440": kind plus dimensions when known. */
 function metaLine(c: CaptureMeta): string {
   return [KIND_LABEL[c.kind], formatDimensions(c.width, c.height)]
     .filter(Boolean)

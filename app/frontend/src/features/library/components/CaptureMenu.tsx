@@ -22,7 +22,7 @@ interface CaptureMenuProps {
 }
 
 /**
- * The card / row overflow menu — one button instead of the four-icon
+ * The card / row overflow menu: one button instead of the four-icon
  * cluster the cards used to carry.
  *
  * The inspector is where a capture's actions properly live now, and it
@@ -31,7 +31,7 @@ interface CaptureMenuProps {
  * the same commands, one click deeper, without giving every card in the
  * grid a permanent toolbar.
  *
- * Rendered in a portal for the same reason `TagEditor` is — the grid
+ * Rendered in a portal for the same reason `TagEditor` is: the grid
  * scrolls and a card near the bottom edge would have its menu clipped to
  * its first item. `placePanel` does the flip-and-clamp arithmetic.
  */
@@ -96,7 +96,7 @@ export function CaptureMenu({
     };
   }, [open]);
 
-  // Same list the right-click menu builds — see `captureActions`. The
+  // Same list the right-click menu builds; see `captureActions`. The
   // star is left out here because the card already shows a
   // `FavoriteButton` an inch away.
   const entries = captureActionEntries(meta, mode, {

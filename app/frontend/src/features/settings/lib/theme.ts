@@ -3,7 +3,7 @@
  *
  * `themePref` lives in user settings ("light" / "dark" / "system").
  * The Tauri windows + Mica backdrop want a *resolved* `Theme`
- * ("light" / "dark"). `resolveTheme` is the seam — given a pref +
+ * ("light" / "dark"). `resolveTheme` is the seam: given a pref +
  * the OS color-scheme preference, return what to apply.
  *
  * Unit-tested without DOM access (the OS-pref query is passed in as
@@ -19,7 +19,7 @@ export function resolveTheme(pref: ThemePref, osPrefersDark: boolean): Theme {
 }
 
 /**
- * Inverse — when the user clicks the dashboard's Light / Dark
+ * Inverse: when the user clicks the dashboard's Light / Dark
  * footer button (which writes to `themeStore` for snappy local
  * feedback), figure out what `ThemePref` to persist. If the user
  * clicked the theme they already had via System, we leave the pref
@@ -44,8 +44,8 @@ export function inferPrefFromExplicit(
  * Foreground ("ink") to place on a *solid accent fill* (primary CTAs,
  * the overlay capture button, selection badges, …).
  *
- * The accent is user-customizable — any hex, plus the light brand
- * presets (Teal / Lavender / Gold / Mint) — so a hardcoded `white`
+ * The accent is user-customizable: any hex, plus the light brand
+ * presets (Teal / Lavender / Gold / Mint), so a hardcoded `white`
  * foreground goes unreadable the moment a light accent is chosen. We
  * pick white or a dark slate from the accent's WCAG relative luminance
  * and mirror the result into `--color-accent-ink` (see `Providers.tsx`).

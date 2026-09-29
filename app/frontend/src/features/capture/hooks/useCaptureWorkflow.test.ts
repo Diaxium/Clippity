@@ -7,7 +7,7 @@ const emitErrorToastMock = vi.fn();
 const startCountdownMock = vi.fn();
 const ingestClipboardMock = vi.fn();
 const ensureObjectModelMock = vi.fn();
-// Countdown subscriber capture — the workflow calls onCountdownFinished /
+// Countdown subscriber capture: the workflow calls onCountdownFinished /
 // onCountdownCancelled and races their handlers. Each test that
 // exercises the delay branch picks which one to fire via these refs.
 let pendingFinishedHandler: (() => void) | null = null;
@@ -96,7 +96,7 @@ import { useCaptureWorkflow } from "./useCaptureWorkflow";
 
 const initialState = useCaptureStore.getState();
 
-describe("useCaptureWorkflow — fullscreen branch", () => {
+describe("useCaptureWorkflow: fullscreen branch", () => {
   beforeEach(() => {
     captureFullscreenMock.mockReset();
     beginRegionCaptureMock.mockReset();
@@ -211,7 +211,7 @@ describe("useCaptureWorkflow — fullscreen branch", () => {
   });
 });
 
-describe("useCaptureWorkflow — delay branch", () => {
+describe("useCaptureWorkflow: delay branch", () => {
   beforeEach(() => {
     captureFullscreenMock.mockReset();
     beginRegionCaptureMock.mockReset();
@@ -291,7 +291,7 @@ describe("useCaptureWorkflow — delay branch", () => {
   });
 });
 
-describe("useCaptureWorkflow — region branch", () => {
+describe("useCaptureWorkflow: region branch", () => {
   beforeEach(() => {
     captureFullscreenMock.mockReset();
     beginRegionCaptureMock.mockReset();
@@ -301,7 +301,7 @@ describe("useCaptureWorkflow — region branch", () => {
     pendingFinishedHandler = null;
     pendingCancelledHandler = null;
     useCaptureStore.setState(initialState, true);
-    // Region is the default — no setCaptureType needed.
+    // Region is the default: no setCaptureType needed.
   });
 
   it("calls beginRegionCapture('region') and returns null", async () => {
@@ -331,7 +331,7 @@ describe("useCaptureWorkflow — region branch", () => {
   });
 });
 
-describe("useCaptureWorkflow — window + custom branches", () => {
+describe("useCaptureWorkflow: window + custom branches", () => {
   beforeEach(() => {
     captureFullscreenMock.mockReset();
     beginRegionCaptureMock.mockReset();
@@ -462,7 +462,7 @@ describe("useCaptureWorkflow — window + custom branches", () => {
   });
 });
 
-describe("useCaptureWorkflow — clipboard branch", () => {
+describe("useCaptureWorkflow: clipboard branch", () => {
   beforeEach(() => {
     captureFullscreenMock.mockReset();
     beginRegionCaptureMock.mockReset();
@@ -510,7 +510,7 @@ describe("useCaptureWorkflow — clipboard branch", () => {
       await result.current.trigger();
     });
     expect(emitErrorToastMock).toHaveBeenCalledWith(
-      "Clipboard is empty — copy something first."
+      "Clipboard is empty. Copy something first."
     );
   });
 

@@ -6,7 +6,7 @@ import type { CaptureMeta } from "../types";
 /**
  * A capture's tags, rendered as clickable chips on its card or row.
  *
- * Clicking a chip filters the library to that tag — the shortest path
+ * Clicking a chip filters the library to that tag: the shortest path
  * from "I see this label" to "show me the rest of these", and the reason
  * the chips are buttons rather than text. The chip for the tag already
  * being filtered on reads as active, so it is obvious which one you are
@@ -21,7 +21,7 @@ export function TagChips({
   className,
 }: {
   meta: CaptureMeta;
-  /** Beyond this, the rest collapse into a `+N` chip — a card is not a
+  /** Beyond this, the rest collapse into a `+N` chip: a card is not a
    *  tag manager, and a capture with a dozen tags must not push its own
    *  title off the card. */
   max?: number;

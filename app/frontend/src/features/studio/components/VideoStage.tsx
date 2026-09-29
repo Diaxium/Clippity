@@ -9,7 +9,7 @@ import { AnnotationLayer } from "./AnnotationLayer";
 /**
  * The picture.
  *
- * A plain `<video>` with its own controls suppressed — the transport and
+ * A plain `<video>` with its own controls suppressed: the transport and
  * timeline below are the controls, and a second set of native ones
  * would disagree with them about the trim.
  *
@@ -21,7 +21,7 @@ import { AnnotationLayer } from "./AnnotationLayer";
  *
  * The element is held in **state**, not a ref, and handed to
  * `useStudioPlayer` directly. That is what makes the player's effects
- * re-run when the `<video>` mounts or is replaced — see the hook's note
+ * re-run when the `<video>` mounts or is replaced; see the hook's note
  * on why a ref silently loses its event listeners.
  */
 export function VideoStage() {
@@ -52,7 +52,7 @@ export function VideoStage() {
           // would offer a second, conflicting answer about where the
           // clip starts and ends.
           controls={false}
-          // Nothing here loops on its own — `nextPlayheadWithinRange`
+          // Nothing here loops on its own: `nextPlayheadWithinRange`
           // owns looping, and it loops the *trim*, not the file.
           loop={false}
           playsInline
@@ -76,7 +76,7 @@ export function VideoStage() {
         />
       ) : null}
 
-      {/* Over the picture, sharing the same element the player drives —
+      {/* Over the picture, sharing the same element the player drives:
           the redaction preview has to read the frames actually being
           decoded, not a second copy of the clip. */}
       {src ? <AnnotationLayer video={element} /> : null}

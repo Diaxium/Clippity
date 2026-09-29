@@ -45,7 +45,7 @@ interface Seed {
 
 function seed(): Seed {
   __resetNodeIdForTests();
-  // A at the origin, B a clear 200px gap to the right — both 100×100.
+  // A at the origin, B a clear 200px gap to the right: both 100×100.
   const a = makeRectangle(
     { x: 0, y: 0, width: 100, height: 100 },
     { name: "A" }
@@ -209,7 +209,7 @@ describe("EditorCanvas pen + pencil", () => {
 
   it("measure drags out a dimension line, not a box", () => {
     // A dimension *is* a line node, so the draft keeps signed width/height (the
-    // a→b vector) instead of being normalized into a box — that is what makes
+    // a→b vector) instead of being normalized into a box: that is what makes
     // its endpoints the two points being measured.
     seed();
     state().setTool("measure");

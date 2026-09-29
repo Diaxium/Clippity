@@ -16,16 +16,16 @@ interface LastRegionRestore {
 }
 
 /**
- * "Capture that same spot again" — the overlay half.
+ * "Capture that same spot again": the overlay half.
  *
  * Fetches the remembered rect once per overlay mount into
  * `overlayStore.lastRegion`, and hands back a `restore` that drops it in
  * as a committed (`selected`) selection: handles on, Capture live. The
- * user can then nudge it — arrow keys, or an Alt-damped handle drag (see
- * `precisionPointer`) — or just press Enter.
+ * user can then nudge it: arrow keys, or an Alt-damped handle drag (see
+ * `precisionPointer`), or just press Enter.
  *
  * The rect crosses the IPC seam in physical px (the space the backend
- * crops in) and is divided by `devicePixelRatio` here — the same seam
+ * crops in) and is divided by `devicePixelRatio` here: the same seam
  * `useOverlayFinalize`'s `scaleRect` multiplies at, in reverse.
  *
  * Restoring only writes `rect`, never `mode`, so a Palette or Grab-Text
@@ -38,7 +38,7 @@ export function useLastRegion(): LastRegionRestore {
 
   // One fetch per mount. The overlay window is reused across sessions,
   // but the React tree survives with it, so `reset()` alone won't re-run
-  // this — and the stored value only changes when a capture completes,
+  // this, and the stored value only changes when a capture completes,
   // which tears the session down anyway.
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +55,7 @@ export function useLastRegion(): LastRegionRestore {
       })
       .catch(() => {
         // Nothing remembered yet, or no Tauri context (browser preview).
-        // The action simply stays disabled — not worth a toast.
+        // The action simply stays disabled, not worth a toast.
       });
     return () => {
       cancelled = true;

@@ -43,7 +43,7 @@ export function startScrollCapture(
 
 /**
  * Panoramic (auto-scroll) recording. Like {@link startScrollCapture},
- * but the backend drives the scroll itself — it parks the cursor over
+ * but the backend drives the scroll itself: it parks the cursor over
  * the region and wheels through the content in `direction`, capturing
  * until the view stops advancing (end reached) or the HUD's Stop is
  * pressed. The user doesn't scroll. Same `stopScrollCapture` +
@@ -103,7 +103,7 @@ export function onRecordingPreview(
 
 /**
  * Fires once when the worker detects the user reversed scroll direction
- * (scrolled back the way they came) — the cue the capture is complete.
+ * (scrolled back the way they came): the cue the capture is complete.
  * The recording HUD commits in response (same as Stop & Stitch). Payload
  * is empty; the callback takes no argument.
  */

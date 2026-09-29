@@ -1,12 +1,12 @@
-//! Native benchmark suite — performance roadmap P2.
+//! Native benchmark suite: performance roadmap P2.
 //!
 //! Each `bench_function` id here has a matching row in
 //! `backend/benches-budgets.json`; `scripts/check-bench-budgets.mjs`
 //! reads Criterion's `estimates.json` for these ids and gates the median
 //! against the budget. Keep the ids and the budget keys in sync.
 //!
-//! Scope: the CPU/IO-bound native work a capture actually spends time in
-//! — scroll stitching, still (PNG) encode, thumbnail generation, the
+//! Scope: the CPU/IO-bound native work a capture actually spends time in:
+//! scroll stitching, still (PNG) encode, thumbnail generation, the
 //! library index at 50k rows, and the recorder's per-frame path. That
 //! last one is the only budget here with a *hard* deadline rather than a
 //! comfort threshold: a still encode that takes twice as long is a
@@ -34,7 +34,7 @@ const SCROLL_W: u32 = 1280;
 const SCROLL_H: u32 = 400;
 const SCROLL_STEP: i32 = 320;
 
-/// A 4K still — the reference size the roadmap's save budget names.
+/// A 4K still: the reference size the roadmap's save budget names.
 const STILL_W: u32 = 3840;
 const STILL_H: u32 = 2160;
 const THUMB_EDGE: u32 = 320;
@@ -120,7 +120,7 @@ fn bench_library(c: &mut Criterion) {
         g.finish();
     }
 
-    // The P5 pushdown: fetching one page — and searching — over 50k rows
+    // The P5 pushdown: fetching one page, and searching, over 50k rows
     // without materializing the whole listing (contrast library_rows).
     {
         let mut g = c.benchmark_group("library_query");
@@ -176,14 +176,14 @@ const DESK_4K_W: u32 = 3840;
 const DESK_4K_H: u32 = 2160;
 
 /// What `overlay_service::show` does between the desktop grab and the
-/// magnifier being usable — measured piece by piece, because the pieces
+/// magnifier being usable: measured piece by piece, because the pieces
 /// are on two different critical paths.
 ///
 /// `clone` and the encode sit *before* the overlay can be used: the
 /// snapshot is the overlay's own backdrop as well as the loupe's sample
 /// source, so until the payload lands the user is looking at a dim sheet
 /// with no magnifier. Splitting `encode` from `base64` is the point of
-/// the exercise — the base64 half exists only because the payload
+/// the exercise: the base64 half exists only because the payload
 /// travels as a data URI through the IPC bridge.
 fn bench_overlay_handoff(c: &mut Criterion) {
     for (label, w, h) in [
@@ -196,7 +196,7 @@ fn bench_overlay_handoff(c: &mut Criterion) {
         g.measurement_time(Duration::from_secs(6));
 
         // `show` keeps one copy in session state and hands another to the
-        // encoder thread — a full-desktop RGBA memcpy on the critical path.
+        // encoder thread: a full-desktop RGBA memcpy on the critical path.
         g.bench_function(format!("clone_{label}"), |b| {
             b.iter(|| black_box(black_box(&canvas).clone()))
         });
@@ -206,7 +206,7 @@ fn bench_overlay_handoff(c: &mut Criterion) {
             b.iter(|| black_box(encode_loupe_png(black_box(&canvas))))
         });
 
-        // The base64 wrapper on top — pure cost of shipping it as a data
+        // The base64 wrapper on top: pure cost of shipping it as a data
         // URI rather than as bytes over a URL.
         let png = encode_loupe_png(&canvas);
         g.bench_function(format!("base64_{label}"), |b| {
@@ -251,8 +251,8 @@ fn to_data_uri(png: &[u8]) -> String {
 /// rate allows.
 ///
 /// The ultrawide row is the one that matters: 5120x1440 is 7.4 million
-/// pixels — nearly twice 4K's per-frame work at a rate people record
-/// games at — and it is the size at which this pipeline first failed to
+/// pixels (nearly twice 4K's per-frame work at a rate people record
+/// games at) and it is the size at which this pipeline first failed to
 /// keep up.
 const RECORD_SIZES: [(&str, u32, u32); 3] = [
     ("1080p", 1_920, 1_080),
@@ -263,8 +263,8 @@ const RECORD_SIZES: [(&str, u32, u32); 3] = [
 /// Everything one recorded frame pays between the screen and the
 /// encoder, measured per stage.
 ///
-/// A recording that misses its rate does not fail — it silently produces
-/// fewer frames — so the only way to know which stage is over budget is
+/// A recording that misses its rate does not fail, it silently produces
+/// fewer frames, so the only way to know which stage is over budget is
 /// to time them apart. The two here are the whole of it:
 ///
 /// - `readback` is the copy out of the mapped staging surface, which is

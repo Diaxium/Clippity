@@ -98,8 +98,8 @@ describe("formatMs", () => {
   });
 
   it("shows an em dash rather than a fabricated zero", () => {
-    expect(formatMs(Number.NaN)).toBe("—");
-    expect(formatMs(-5)).toBe("—");
+    expect(formatMs(Number.NaN)).toBe("-");
+    expect(formatMs(-5)).toBe("-");
   });
 });
 
@@ -170,7 +170,7 @@ describe("formatSystemSummary", () => {
       globalCapture: {
         combo: "Mod+Shift+2",
         registered: false,
-        detail: "the OS refused it — another application may already own it",
+        detail: "the OS refused it; another application may already own it",
       },
       globalHotkeysInstalled: true,
       libraryDb: "C:\\Data\\library.db",

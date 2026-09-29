@@ -15,7 +15,7 @@ import {
   place,
 } from "./SmallSelectionPreview";
 
-/** Minimal snapshot stub — the component only reads `sampleCtx.canvas.{width,
+/** Minimal snapshot stub: the component only reads `sampleCtx.canvas.{width,
  *  height}` and uses `dataUri` as a CSS background, so a real canvas context
  *  (which jsdom doesn't provide) isn't needed. */
 function seedSnapshot() {
@@ -41,7 +41,7 @@ afterEach(() => {
   });
 });
 
-describe("SmallSelectionPreview — gating", () => {
+describe("SmallSelectionPreview: gating", () => {
   it("shows a magnified preview (with px readout) for a small selection", () => {
     seedSnapshot();
     selectRect({ x: 200, y: 200, w: 20, h: 16 });
@@ -58,7 +58,7 @@ describe("SmallSelectionPreview — gating", () => {
   });
 
   it("renders nothing until the snapshot has loaded", () => {
-    // Small rect, but no snapshot yet — the loupe/preview have no pixels.
+    // Small rect, but no snapshot yet: the loupe/preview have no pixels.
     selectRect({ x: 200, y: 200, w: 20, h: 16 });
     const { container } = render(<SmallSelectionPreview />);
     expect(container).toBeEmptyDOMElement();
@@ -90,7 +90,7 @@ describe("isTinySelection", () => {
   });
 });
 
-describe("SmallSelectionPreview — move handle", () => {
+describe("SmallSelectionPreview: move handle", () => {
   it("becomes a drag-to-move handle once the selection is committed", () => {
     seedSnapshot();
     selectRect({ x: 200, y: 200, w: 20, h: 16 });
@@ -128,7 +128,7 @@ describe("SmallSelectionPreview — move handle", () => {
   });
 });
 
-describe("SmallSelectionPreview — placement", () => {
+describe("SmallSelectionPreview: placement", () => {
   it("centres horizontally and parks above the selection when no action bar", () => {
     const { left, top } = place(
       { x: 100, y: 300, w: 20, h: 20 },

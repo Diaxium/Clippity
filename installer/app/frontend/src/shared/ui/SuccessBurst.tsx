@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 /**
  * The celebratory checkmark used on every Complete step: an accent ring
  * that scales in, a check that pops, and a ring of sparkles. Purely
- * decorative (`aria-hidden`) — the surrounding heading carries meaning.
+ * decorative (`aria-hidden`): the surrounding heading carries meaning.
  */
 export function SuccessBurst({ size = 92 }: { size?: number }) {
   // Eight sparkles evenly around the ring.

@@ -27,7 +27,7 @@ import { useRecordWorkflow } from "../hooks/useRecordWorkflow";
  * matching layout. All business logic lives in `useCaptureWorkflow`
  * (trigger) and the store (state); this component is structural.
  *
- * Compact mode is intentionally unreachable in MVP — `compact` is
+ * Compact mode is intentionally unreachable in MVP: `compact` is
  * always false. Authored here because the trigger wires for it
  * (settings port #6) will land in a follow-up port without rewriting
  * this composition.
@@ -41,7 +41,7 @@ export function CaptureLayout() {
 
   // Compact mode lives in settings; the path to flip it isn't ported
   // yet (see REBUILD.md tech-debt). The layout below already handles
-  // the compact branch — wiring it back on later is a one-line
+  // the compact branch: wiring it back on later is a one-line
   // mirror-from-settings change.
   const compact = false;
   const effectiveCollapsed = compact || sidebarCollapsed;
@@ -52,7 +52,7 @@ export function CaptureLayout() {
 
   const workflow = useCaptureWorkflow();
   const recordWorkflow = useRecordWorkflow();
-  // One Space binding, routed by which screen is showing — the two
+  // One Space binding, routed by which screen is showing: the two
   // screens share the shortcut rather than fighting over it.
   useSpaceTrigger(() => {
     void (nav === "record" ? recordWorkflow.trigger() : workflow.trigger());

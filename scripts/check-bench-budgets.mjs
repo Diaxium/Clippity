@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Performance roadmap P2 — budget gate.
+// Performance roadmap P2: budget gate.
 //
 // Reads the Criterion output produced by `cargo bench -p clippity-bench`
 // and compares each automated metric's *median* against the warn/fail
@@ -8,7 +8,7 @@
 //   1  at least one metric over its fail band, or its result is missing
 //
 // Non-automated metrics (startup, overlay, OCR, idle CPU/RAM, installer
-// size) are listed in the manifest for the record but skipped here — they
+// size) are listed in the manifest for the record but skipped here: they
 // need a running app or a model on disk and a native driver that does not
 // exist yet. They print as "tracked (manual)" so the gap stays visible.
 //
@@ -61,7 +61,7 @@ for (const [key, spec] of Object.entries(metrics)) {
   const ms = medianMs(key);
   if (ms === null) {
     missing += 1;
-    rows.push({ key, status: "MISSING", detail: "no criterion result — run the bench first" });
+    rows.push({ key, status: "MISSING", detail: "no criterion result; run the bench first" });
     continue;
   }
   const value = `${ms.toFixed(2)} ms`;

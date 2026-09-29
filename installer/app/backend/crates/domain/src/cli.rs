@@ -1,4 +1,4 @@
-//! The command-line interface — pure parsing and the stable exit-code
+//! The command-line interface: pure parsing and the stable exit-code
 //! table.
 //!
 //! The wizard is normally launched by double-click with no arguments, in
@@ -26,7 +26,7 @@ use serde::{Deserialize, Serialize};
 use crate::install::InstallScope;
 
 /// Which maintenance operation the command line asks for. `Gui` is the
-/// no-mode-flag default — open the interactive wizard.
+/// no-mode-flag default: open the interactive wizard.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum CliMode {
@@ -211,7 +211,7 @@ pub fn parse(args: &[String]) -> ParsedCli {
         i += 1;
     }
 
-    // Silent mode with no mode flag has nothing to do — reject rather than
+    // Silent mode with no mode flag has nothing to do: reject rather than
     // open a window the caller did not expect.
     if cmd.verbosity == Verbosity::Silent && !mode_set {
         return ParsedCli::Error("--silent requires an operation (e.g. --uninstall)".into());
@@ -287,7 +287,7 @@ impl ExitCode {
 
 /// The `--help` text, kept next to the parser so the two never drift.
 pub fn help_text() -> &'static str {
-    "Clippity Wizard — Windows setup & maintenance\n\
+    "Clippity Wizard: Windows setup & maintenance\n\
      \n\
      USAGE:\n    \
      ClippityWizard.exe [MODE] [OPTIONS]\n\

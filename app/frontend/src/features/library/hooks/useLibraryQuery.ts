@@ -14,9 +14,9 @@ import { emitErrorToast } from "@services/tauri/clients/toast";
 export const DEFAULT_PAGE_SIZE = 100;
 
 export interface UseLibraryQueryResult {
-  /** Rows loaded so far — the first page, plus every `loadMore`. */
+  /** Rows loaded so far: the first page, plus every `loadMore`. */
   items: CaptureMeta[];
-  /** Rows the filters match in total (before pagination) — for the
+  /** Rows the filters match in total (before pagination): for the
    *  scrollbar and the "N captures" count. */
   total: number;
   /** A fetch is in flight (first page or a `loadMore`). */
@@ -46,7 +46,7 @@ export interface UseLibraryQueryResult {
  * `loadMore`) or empty (a failed first page), mirroring `useLibraryList`.
  *
  * `enabled: false` holds every fetch and reports an empty, not-loading
- * list — for the scopes a query cannot express (a smart collection's
+ * list: for the scopes a query cannot express (a smart collection's
  * rule, a collection's curated order), where the caller reads the full
  * listing instead.
  */
@@ -59,7 +59,7 @@ export function useLibraryQuery(
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(enabled);
 
-  // The filters, without the pagination this hook owns — its value is the
+  // The filters, without the pagination this hook owns: its value is the
   // identity that, when it changes, restarts the list.
   const { limit: _limit, offset: _offset, ...filters } = query;
   const key = JSON.stringify(filters);
@@ -97,7 +97,7 @@ export function useLibraryQuery(
           limit: pageSize,
           offset,
         });
-        if (gen !== genRef.current) return; // superseded — drop it
+        if (gen !== genRef.current) return; // superseded; drop it
         totalRef.current = page.total;
         setTotal(page.total);
         setItems((prev) => {
@@ -124,7 +124,7 @@ export function useLibraryQuery(
     [pageSize, enabled]
   );
 
-  // Bump the generation and reload from the top — the shared restart used
+  // Bump the generation and reload from the top: the shared restart used
   // by a filter change, a refresh() and a library/updated event.
   const restart = useCallback(() => {
     genRef.current += 1;
@@ -134,7 +134,7 @@ export function useLibraryQuery(
   }, [fetchPage]);
 
   // First page on mount, and again whenever the filter set changes.
-  // `key` is the value-identity of the filters `restart` reads via ref —
+  // `key` is the value-identity of the filters `restart` reads via ref:
   // it isn't referenced in the body, it *is* the trigger.
   useEffect(() => {
     restart();

@@ -8,14 +8,14 @@ const SUB = FIELD_LABEL;
 
 /**
  * Tail controls for a speech-bubble callout: the direction the tail points
- * (angle, 0° = up — scrub the field to swing it around the bubble) and how far
+ * (angle, 0° = up; scrub the field to swing it around the bubble) and how far
  * the tip extends past the body (length). Both can also be set by dragging the
  * tail's tip handle on the canvas (EditorCanvas's `tail` gesture). Shown in both
  * editor modes whenever the selection contains a callout.
  *
  * Multi-select (P3) swings every selected callout's tail together; non-callouts
  * caught in the same marquee sit out. The write goes through `updateEach`
- * because each callout has to keep the *rest* of its own spec — a shared patch
+ * because each callout has to keep the *rest* of its own spec: a shared patch
  * would stamp the primary's angle *and* length onto all of them.
  */
 export function CalloutSection() {

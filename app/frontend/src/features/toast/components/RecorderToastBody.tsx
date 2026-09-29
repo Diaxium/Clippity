@@ -41,7 +41,7 @@ const GAIN_DEFAULT_PCT = 100;
 const SILENT: RecorderLevels = { microphone: 0, system: 0 };
 
 /**
- * The video/GIF recorder HUD (ADR 0031) — a sticky, capture-excluded
+ * The video/GIF recorder HUD (ADR 0031): a sticky, capture-excluded
  * toast that is the only way to end a running session.
  *
  * Distinct from `RecordingToastBody`, which is the scroll stitcher's:
@@ -49,8 +49,8 @@ const SILENT: RecorderLevels = { microphone: 0, system: 0 };
  * This one runs a clock and offers pause/resume.
  *
  * **Every ending arrives through `recorder/finished`.** A session can
- * end without anyone pressing Stop — it can hit its format's duration
- * ceiling, or the encoder can fail — so the HUD treats the event, not
+ * end without anyone pressing Stop (it can hit its format's duration
+ * ceiling, or the encoder can fail) so the HUD treats the event, not
  * the button, as the source of truth and calls `stopRecording` to reap
  * whichever way it got there. Handling only the button would leave a
  * dead HUD on screen after a self-stop.
@@ -104,7 +104,7 @@ export function RecorderToastBody({
   const paused = status?.state === "paused";
 
   // A paused session hears nothing, and the backend zeroes the meters
-  // when it pauses — but the last event can land either side of the
+  // when it pauses, but the last event can land either side of the
   // transition, so the render pins them too rather than leaving a bar
   // frozen mid-height on a session that stopped listening.
   const shown = paused ? SILENT : levels;
@@ -123,7 +123,7 @@ export function RecorderToastBody({
     <div className="flex flex-col gap-2 p-1.5">
       <div className="float-card flex flex-col gap-2.5 rounded-[12px] border border-[color:var(--hairline)] p-3.5 shadow-[var(--shadow-modal)] backdrop-blur-md">
         <span className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-hint)]">
-          {/* The dot stops pulsing while paused — the one glanceable
+          {/* The dot stops pulsing while paused: the one glanceable
               signal that the clock is not running. */}
           <span
             className={`h-2 w-2 shrink-0 rounded-full ${
@@ -211,7 +211,7 @@ export function RecorderToastBody({
  *
  * **Level state is local, and that is deliberate.** The backend owns the
  * session's gain and there is no event reporting it back, so this is the
- * only writer — which is what lets a drag stay smooth instead of
+ * only writer, which is what lets a drag stay smooth instead of
  * fighting a value echoed back a frame later. Every session starts from
  * the persisted default, so the local state is never stale on mount.
  *
@@ -302,7 +302,7 @@ function MixerRow({
       </div>
 
       <span className="w-8 shrink-0 text-right font-mono text-[10px] text-[var(--color-hint)] tabular-nums">
-        {muted ? "—" : `${gain}%`}
+        {muted ? "-" : `${gain}%`}
       </span>
     </div>
   );
@@ -311,7 +311,7 @@ function MixerRow({
 /**
  * `mm:ss`, or `h:mm:ss` once a recording passes an hour.
  *
- * This is *recorded* time, not time since the user pressed record — the
+ * This is *recorded* time, not time since the user pressed record: the
  * backend's clock holds while paused, because the number shown here is
  * a promise about the length of the resulting file.
  */

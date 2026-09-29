@@ -40,7 +40,7 @@ codegen-units = 1
 strip = "symbols"
 ```
 
-These favour a small, fast binary over compile speed — expect a release
+These favour a small, fast binary over compile speed: expect a release
 build to take considerably longer than a `cargo check`. See
 [development/performance.md](../development/performance.md) for measured
 build times.
@@ -78,7 +78,7 @@ It refuses to run if the app and installer versions disagree.
 ### The installer payload
 
 The installer under [`installer/`](../../installer) is a **separate pnpm
-workspace** with its own lockfile — the root's `pnpm -r` and `--filter`
+workspace** with its own lockfile: the root's `pnpm -r` and `--filter`
 never reach it, which is why the chain shells into the directory rather
 than filtering a package. Run `pnpm install` inside `installer/` once
 before the first build.
@@ -89,7 +89,7 @@ SHA-256 in `payload.json`; the installer's `crates/services/build.rs`
 compiles both into the binary with `include_bytes!`, and the wizard's
 "Verifying" step checks the hash before writing anything to disk.
 
-Building the installer without staging a payload still succeeds — the
+Building the installer without staging a payload still succeeds: the
 build script emits `None` and warns. It then fails at install time with a
 message naming the staging step, and `collect-build` warns that the exe is
 too small to contain an application. `pnpm dist` handles the ordering.
@@ -101,7 +101,7 @@ difference is the `Clippity.portable` marker file beside it, which
 [`clippity_infra::paths::portable_root`](../../app/backend/crates/infra/src/paths.rs)
 looks for. With the marker present, settings, the library database,
 captures, caches, and the WebView2 profile all live in a `Data` folder
-next to the executable — so it runs from a USB stick and writes nothing
+next to the executable, so it runs from a USB stick and writes nothing
 elsewhere on the machine. Deleting the marker turns the same binary back
 into a normal installed app.
 

@@ -1,6 +1,6 @@
 /**
  * Dashboard feature types. The "dashboard" is the main window's
- * internal routing concept — Home / Library / Editor / Settings /
+ * internal routing concept: Home / Library / Editor / Settings /
  * Presets as views inside one window, matching the legacy MainWindow.
  *
  * This is a *superset* of the cross-window IPC `DashboardView` in

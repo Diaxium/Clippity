@@ -17,7 +17,7 @@ import { useDashboardStore } from "../state/dashboardStore";
 import { DashboardSidebar } from "./DashboardSidebar";
 
 /**
- * Main window root — the dashboard. Owns the active view + the
+ * Main window root: the dashboard. Owns the active view + the
  * editor's loaded capture id; renders Library / Editor / Settings
  * as internal views, matching the legacy MainWindow pattern.
  *
@@ -36,14 +36,14 @@ export function DashboardLayout() {
   const editorCaptureId = useDashboardStore((s) => s.editorCaptureId);
   const studioCaptureId = useDashboardStore((s) => s.studioCaptureId);
   const paletteId = useDashboardStore((s) => s.paletteId);
-  // Neither the palette nor Studio has a nav row of its own — both are
-  // opened from a specific capture rather than browsed to — so the rail
+  // Neither the palette nor Studio has a nav row of its own (both are
+  // opened from a specific capture rather than browsed to) so the rail
   // keeps showing where the user came from.
   const navActive =
     view === "palette" ? "library" : view === "studio" ? "library" : view;
 
   // Drain any pending request stashed by the opening window. Runs
-  // once on mount — subsequent runtime switches come through the
+  // once on mount: subsequent runtime switches come through the
   // event listener below.
   useEffect(() => {
     void consumePendingDashboardView().then((req) => {
@@ -59,7 +59,7 @@ export function DashboardLayout() {
   }, [setView]);
 
   // Open the editor whenever a capture finishes with its "Preview in
-  // Editor" toggle on — single, always-mounted listener for every mode
+  // Editor" toggle on: single, always-mounted listener for every mode
   // + entry point (the main window is built at startup and never closed).
   useOpenEditorOnPreview();
 

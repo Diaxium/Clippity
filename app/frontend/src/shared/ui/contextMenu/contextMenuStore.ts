@@ -3,7 +3,7 @@ import { create } from "zustand";
 import type { OpenContextMenu } from "./types";
 
 interface ContextMenuStoreState {
-  /** The open menu, or `null`. One per window — opening a second one
+  /** The open menu, or `null`. One per window: opening a second one
    *  replaces the first, which is what a right-click elsewhere means. */
   menu: OpenContextMenu | null;
   open(menu: OpenContextMenu): void;

@@ -1,13 +1,13 @@
-//! Toast orchestration — show / hide / resize the small floating
+//! Toast orchestration: show / hide / resize the small floating
 //! notification window pinned to a corner of the cursor's monitor.
 //!
 //! **Armed variants**: `Error` (MVP), `Color` (ADR 0005), `Palette`
 //! (ADR 0006), `Text` (ADR 0007), `Recording` (Scrolling-Window port,
 //! ADR 0008), and `Clipboard` (Clipboard custom mode, ADR 0009) route
-//! through `show` (`Clipboard` + `Text` + `Recording` are sticky —
+//! through `show` (`Clipboard` + `Text` + `Recording` are sticky,
 //! dismissed via the toast's ×). The remaining reserved variants reject
-//! with `AppError::Unsupported` at the service boundary — same shape as
-//! `OverlayMode::Region` did during the overlay port — and arm as their
+//! with `AppError::Unsupported` at the service boundary (same shape as
+//! `OverlayMode::Region` did during the overlay port) and arm as their
 //! owning ports land.
 //!
 //! **Settings dependency**: the corner + per-kind durations are
@@ -80,7 +80,7 @@ impl ToastService {
     /// Hide the toast window. Also emits `clippity://toast/hide` so
     /// consumers can reset state when the backend hides for non-
     /// frontend reasons. The common path is the frontend's
-    /// post-animation `hideToast()` IPC call — that path is also
+    /// post-animation `hideToast()` IPC call: that path is also
     /// idempotent (frontend already cleared its state).
     pub fn hide(&self, app: &AppHandle) -> AppResult<()> {
         if let Some(toast) = app.get_webview_window("toast") {
@@ -98,7 +98,7 @@ impl ToastService {
     /// (`capture_shield::shield_windows`, applied to every window at
     /// startup) has owned this flag since it landed, so the HUD's calls
     /// are re-assertions of a state that is already set. Passing `false`
-    /// would not restore a previous state — it sets `WDA_NONE`, silently
+    /// would not restore a previous state: it sets `WDA_NONE`, silently
     /// dropping the toast out of the shield for the rest of the session.
     /// The `excluded` parameter is kept because the flag is genuinely
     /// two-valued at the platform layer.
@@ -124,11 +124,11 @@ impl ToastService {
             .set_size(tauri::LogicalSize::new(w, h))
             .map_err(AppError::from)?;
         // Re-anchor using the *target* physical size derived from the
-        // scale factor — NOT a read-back of `outer_size()`. On Windows
+        // scale factor, NOT a read-back of `outer_size()`. On Windows
         // that read races the just-issued `set_size` and returns the
         // pre-resize height, so a growing toast (the recording HUD gaining
-        // its preview) gets anchored as if still short and its bottom —
-        // the Stop/Discard controls — slides under the taskbar. Anchoring
+        // its preview) gets anchored as if still short and its bottom,
+        // the Stop/Discard controls, slides under the taskbar. Anchoring
         // upward from a bottom corner needs the real new height.
         let scale = toast.scale_factor().unwrap_or(1.0);
         let outer = PhysicalSize::new((w * scale).round() as u32, (h * scale).round() as u32);
@@ -148,7 +148,7 @@ impl ToastService {
         let live = self.settings.toast_settings();
         let duration_ms = live.durations.for_payload(&payload);
         // The window is already on screen at this point, so a failed emit
-        // would strand it visible with nothing in it — and the frontend,
+        // would strand it visible with nothing in it, and the frontend,
         // never having received a payload, has no toast to dismiss and so
         // no path that hides it again. Put it back before reporting the
         // failure; the caller's error is then the only symptom.
@@ -168,8 +168,8 @@ impl ToastService {
 
     /// Position the toast at `defaults.corner` of the cursor's
     /// monitor's work area (Windows) or the primary monitor
-    /// (cross-platform fallback). Silent no-op if both lookups fail
-    /// — the toast still shows, just at its last position.
+    /// (cross-platform fallback). Silent no-op if both lookups fail:
+    /// the toast still shows, just at its last position.
     fn reposition(&self, app: &AppHandle, outer: PhysicalSize<u32>) -> AppResult<()> {
         let toast = app
             .get_webview_window("toast")
@@ -194,7 +194,7 @@ impl ToastService {
             }
         }
 
-        // Non-Windows / Win32 lookup failed — anchor against the
+        // Non-Windows / Win32 lookup failed: anchor against the
         // primary monitor with a DPI-aware gap.
         if let Ok(Some(monitor)) = app.primary_monitor() {
             let pos = *monitor.position();

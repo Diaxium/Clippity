@@ -20,7 +20,7 @@ interface WindowPointerHandlers {
  * Window-mode pointer interaction: a hover highlights the top-level
  * window under the cursor; a left click captures it.
  *
- * Far simpler than `useRegionSelection` — there's no drag state
+ * Far simpler than `useRegionSelection`: there's no drag state
  * machine, just a hit-test against the backend's Z-ordered window list
  * and a one-shot finalize. The hit-test reads `windows` straight from
  * the store via `getState()` so the ~120 Hz pointer-move path doesn't
@@ -49,7 +49,7 @@ export function useWindowSelection(): WindowPointerHandlers {
     const s = useOverlayStore.getState();
     const dpr = window.devicePixelRatio || 1;
     // Re-hit-test on the actual down position rather than trusting the
-    // last hover — a click can land a few px off the last move event.
+    // last hover: a click can land a few px off the last move event.
     const hit = windowAtPoint(s.windows, { x: e.clientX, y: e.clientY }, dpr);
     if (!hit) return;
     const done = () => useOverlayStore.getState().reset();
@@ -78,7 +78,7 @@ export function useWindowSelection(): WindowPointerHandlers {
  *
  * The window `rect` is ALREADY physical px (virtual-desktop origin), so
  * unlike a drag-selected Region rect it is handed to the backend with
- * NO `devicePixelRatio` scaling. `cursorPin` is null — a window capture
+ * NO `devicePixelRatio` scaling. `cursorPin` is null: a window capture
  * has no in-selection pointer to pin. Errors surface as a toast (the
  * overlay is already hidden by the backend on the finalize path).
  */
@@ -96,7 +96,7 @@ export function captureWindow(
 }
 
 /**
- * Start recording the chosen window (ADR 0031) — the Record-Window
+ * Start recording the chosen window (ADR 0031): the Record-Window
  * counterpart to [`captureWindow`].
  *
  * `win.rect` is already physical px (virtual-desktop origin), so it

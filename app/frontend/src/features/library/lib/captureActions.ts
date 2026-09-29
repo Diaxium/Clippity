@@ -29,7 +29,7 @@ import type { CaptureMeta, LibraryMode } from "../types";
  *
  * Both the card's overflow button (`CaptureMenu`) and right-clicking the
  * card or row render this list, so the two can't drift into offering
- * different commands for the same capture — which is exactly the bug a
+ * different commands for the same capture, which is exactly the bug a
  * second, hand-written context menu would have introduced.
  *
  * The set is kind-dependent on purpose: a color or a text run has no
@@ -97,7 +97,7 @@ export function captureActionEntries(
     : [
         // Destination, label and icon all come from `openCapture`, so
         // this menu cannot offer a different surface than the card's own
-        // double-click does — which is exactly how a recording ended up
+        // double-click does, which is exactly how a recording ended up
         // being handed to the image editor.
         {
           id: openSurfaceFor(meta) === "studio" ? "open-studio" : "open-editor",

@@ -2,9 +2,9 @@
 //!
 //! A freshly written, unsigned executable is routinely held open for a beat
 //! by antivirus real-time scanning, the Search Indexer, or SmartScreen. An
-//! installer that deletes or rewrites that file *immediately* — an install
+//! installer that deletes or rewrites that file *immediately* (an install
 //! followed straight away by a repair, or an uninstall run seconds after the
-//! copy — can therefore fail spuriously with `ERROR_ACCESS_DENIED` or
+//! copy) can therefore fail spuriously with `ERROR_ACCESS_DENIED` or
 //! `ERROR_SHARING_VIOLATION`, even though nothing is really wrong and the
 //! lock clears within a fraction of a second. Every production Windows
 //! installer retries these operations; so do we.
@@ -17,7 +17,7 @@ use std::time::Duration;
 /// rather than a genuine permission problem.
 ///
 /// Covers `ERROR_ACCESS_DENIED` (5), `ERROR_SHARING_VIOLATION` (32), and
-/// `ERROR_LOCK_VIOLATION` (33) — the codes an AV/indexer hold surfaces as.
+/// `ERROR_LOCK_VIOLATION` (33): the codes an AV/indexer hold surfaces as.
 pub fn is_transient_lock(e: &io::Error) -> bool {
     matches!(e.kind(), io::ErrorKind::PermissionDenied)
         || matches!(e.raw_os_error(), Some(5) | Some(32) | Some(33))
@@ -37,7 +37,7 @@ pub fn with_retry<T>(mut op: impl FnMut() -> io::Result<T>) -> io::Result<T> {
         match op() {
             Ok(v) => return Ok(v),
             Err(e) if is_transient_lock(&e) => {
-                tracing::warn!(error = %e, backoff_ms = delay.as_millis(), "transient file lock — retrying");
+                tracing::warn!(error = %e, backoff_ms = delay.as_millis(), "transient file lock; retrying");
                 sleep(delay);
                 delay *= 2;
             }

@@ -3,7 +3,7 @@
  *
  * **One definition, because this one drifted.** When Studio landed
  * (ADR 0032) the routing was added to the context menu and to the
- * Inspector, and missed on the card's own open — the double-click and
+ * Inspector, and missed on the card's own open: the double-click and
  * Enter path in `LibraryLayout`. Two of three call sites sent a
  * recording to Studio and the third sent it to the annotation editor,
  * which loads a capture as an image and refused the `.mp4` with a
@@ -33,7 +33,7 @@ export type OpenSurface = "studio" | "editor";
  *
  * A recording goes to Studio: the annotation editor loads a capture as
  * an image and a video is not one. An animated GIF deliberately goes the
- * other way — it decodes as an image, so flattening it in the editor is
+ * other way: it decodes as an image, so flattening it in the editor is
  * a choice the user can make, while Studio's decoder will not seek it.
  */
 export function openSurfaceFor(meta: CaptureMeta): OpenSurface {
@@ -56,8 +56,8 @@ export function openIconFor(meta: CaptureMeta): LucideIcon {
  * Open a file-backed capture on its surface, surfacing a failure as a
  * toast.
  *
- * Callers that also handle the non-file kinds — a colour, a text run, a
- * palette — must resolve those before reaching here: this has no view to
+ * Callers that also handle the non-file kinds (a colour, a text run, a
+ * palette) must resolve those before reaching here: this has no view to
  * offer them and would hand the editor an id with no image behind it.
  */
 export function openCapture(meta: CaptureMeta): void {

@@ -28,7 +28,7 @@ import { useOverlayFinalize } from "../hooks/useOverlayFinalize";
 import { RegionMethodMenu } from "./RegionMethodMenu";
 
 /**
- * Bottom toolbar — visually calmer chrome that yields visual priority
+ * Bottom toolbar: visually calmer chrome that yields visual priority
  * to the capture region.
  *
  * Layout (left → right):
@@ -71,7 +71,7 @@ export function BottomToolbar() {
   const isScrollMode = mode === "scrolling" || mode === "panoramic";
 
   // The last-region restore only makes sense where the selection is a
-  // single rect — the same set the `L` keybind accepts.
+  // single rect: the same set the `L` keybind accepts.
   const canRestoreLast =
     mode === "region" ||
     mode === "palette" ||
@@ -116,7 +116,7 @@ export function BottomToolbar() {
     >
       <div
         className={cn(
-          // Toolbar shell — smaller padding, gentler border, lighter blur.
+          // Toolbar shell: smaller padding, gentler border, lighter blur.
           "flex items-center gap-1 rounded-[14px] border bg-[var(--color-surface)]/85 px-1.5 py-1 backdrop-blur-[10px]",
           "border-[color:var(--hairline)] shadow-[var(--shadow-medium)]"
         )}
@@ -149,7 +149,7 @@ export function BottomToolbar() {
                       return;
                     }
                     if (item.id === "region" || item.id === "window") {
-                      // Re-open in that capture type — Window needs a fresh
+                      // Re-open in that capture type: Window needs a fresh
                       // window enumeration, and Region resets to Rectangle.
                       reset();
                       void beginRegionCapture(item.id);
@@ -184,7 +184,7 @@ export function BottomToolbar() {
 
         <span className="mx-1 h-5 w-px bg-[color:var(--color-overlay-2)]" />
 
-        {/* ── Pen action cluster — anchor editing before the path closes ─ */}
+        {/* ── Pen action cluster: anchor editing before the path closes ─ */}
         {mode === "pen" && phase !== "selected" && (
           <>
             <div className="flex items-center gap-0.5">
@@ -205,7 +205,7 @@ export function BottomToolbar() {
           </>
         )}
 
-        {/* ── Brush controls — size / add-subtract / clear ──────────── */}
+        {/* ── Brush controls: size / add-subtract / clear ──────────── */}
         {mode === "brush" && (
           <>
             <div className="flex items-center gap-2 pl-1 pr-0.5">
@@ -295,7 +295,7 @@ export function BottomToolbar() {
           </>
         )}
 
-        {/* ── Capture CTA — the focal action ────────────────────────── */}
+        {/* ── Capture CTA: the focal action ────────────────────────── */}
         <button
           type="button"
           onClick={finalize}
@@ -329,7 +329,7 @@ export function BottomToolbar() {
           {ctaLabel}
         </button>
 
-        {/* ── Utility icons — collapse when no selection ────────────── */}
+        {/* ── Utility icons: collapse when no selection ────────────── */}
         <AnimatePresence initial={false}>
           {ready && (
             <motion.div
@@ -362,7 +362,7 @@ export function BottomToolbar() {
                 />
                 <IconToggle
                   icon={Sparkles}
-                  label="Smart enhance — auto-level + sharpen"
+                  label="Smart enhance: auto-level + sharpen"
                   checked={toggles.enhance}
                   onChange={(v) => setToggles({ enhance: v })}
                 />

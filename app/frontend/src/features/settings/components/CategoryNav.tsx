@@ -10,7 +10,7 @@ interface CategoryNavProps {
 
 /**
  * Left-rail navigation for the settings dashboard. Coming-soon
- * categories render at reduced opacity but are still clickable —
+ * categories render at reduced opacity but are still clickable:
  * picking one lands on the `ComingSoonPanel` placeholder so the user
  * sees what's blocked rather than getting silently denied.
  */

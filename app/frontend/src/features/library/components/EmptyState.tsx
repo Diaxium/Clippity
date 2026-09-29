@@ -20,7 +20,7 @@ export interface EmptyStateContext {
 }
 
 /**
- * The message for an empty list. Pure — exported for tests.
+ * The message for an empty list. Pure: exported for tests.
  *
  * Named narrowest-first: with several refinements active, the one the
  * user most recently reached for is the one they can undo, so the
@@ -36,15 +36,15 @@ export function emptyStateMessage(ctx: EmptyStateContext): string {
   if (ctx.search?.trim()) return `Nothing matches “${ctx.search.trim()}”.`;
   if (ctx.tagFilter) return `Nothing tagged “${ctx.tagFilter}”.`;
   if (ctx.favoritesOnly)
-    return "No favorites yet — star a capture to pin it here.";
+    return "No favorites yet. Star a capture to pin it here.";
   if (ctx.smartLabel) return `Nothing in “${ctx.smartLabel}” right now.`;
   if (ctx.collectionName)
-    return `“${ctx.collectionName}” is empty — select captures and add them to it.`;
+    return `“${ctx.collectionName}” is empty. Select captures and add them to it.`;
   if (ctx.kindFilter !== "all") {
     const label =
       KIND_TABS.find((t) => t.id === ctx.kindFilter)?.label.toLowerCase() ??
       "captures";
-    return `No ${label} yet — they'll appear here once you capture some.`;
+    return `No ${label} yet. They'll appear here once you capture some.`;
   }
   return "Your captures will appear here.";
 }
@@ -52,8 +52,8 @@ export function emptyStateMessage(ctx: EmptyStateContext): string {
 /**
  * Mode- and filter-aware empty state. Renders nothing while the first
  * load is in flight (avoids a flash of "no captures" before the list
- * arrives). When nothing is narrowing the view it offers the next step —
- * jumping to the capture window — so an empty library is a starting
+ * arrives). When nothing is narrowing the view it offers the next step,
+ * jumping to the capture window, so an empty library is a starting
  * point, not a dead end; behind a filter that button would be a
  * non-sequitur, since the captures exist and are simply hidden.
  */

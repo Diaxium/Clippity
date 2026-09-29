@@ -5,16 +5,16 @@
 //! Scoped threads are the obvious way to fan a frame's rows out over
 //! cores, and they are what the NV12 converter used first. They are also
 //! wrong for this shape of work: `scope` *creates* its threads on entry
-//! and *joins* them on exit, so the cost is paid again on every call —
+//! and *joins* them on exit, so the cost is paid again on every call,
 //! and this is called sixty times a second for the length of a
 //! recording. Seven threads spawned and torn down per frame at 60 fps is
 //! twenty-five thousand thread creations a minute, each of which is a
 //! kernel transition and a fresh stack commit.
 //!
 //! Worse than the mean cost is its variance. Thread creation contends
-//! with whatever the user is recording — which is generally the busiest
+//! with whatever the user is recording (which is generally the busiest
 //! thing on the machine, because it is what they thought worth
-//! recording — so the stall lands exactly when the frame budget is
+//! recording) so the stall lands exactly when the frame budget is
 //! already tight, and a recording that is nearly keeping up starts
 //! dropping frames rather than degrading smoothly.
 //!
@@ -27,7 +27,7 @@
 //! [`BandPool::run`] is a scope in the sense that matters: it does not
 //! return until every job has finished, so a job may borrow from the
 //! caller's stack. That is what the lifetime erasure inside is for, and
-//! the wait is what makes it sound — see the safety note on `run`.
+//! the wait is what makes it sound; see the safety note on `run`.
 
 use std::collections::VecDeque;
 use std::panic::AssertUnwindSafe;
@@ -38,7 +38,7 @@ use std::sync::{Arc, Condvar, Mutex, OnceLock};
 ///
 /// Past a point this work is bounded by memory bandwidth rather than by
 /// cores, and the recorder shares the machine with whatever is being
-/// recorded — taking every core would slow down the thing the user is
+/// recorded: taking every core would slow down the thing the user is
 /// trying to capture.
 const MAX_WORKERS: usize = 8;
 
@@ -69,7 +69,7 @@ impl Batch {
         if self.remaining.fetch_sub(1, Ordering::AcqRel) == 1 {
             // The lock is taken (and immediately dropped) rather than
             // signalled bare: without it the waiter can test `remaining`,
-            // find it non-zero, and be pre-empted before it waits — after
+            // find it non-zero, and be pre-empted before it waits, after
             // which this notify goes to nobody and the wait never wakes.
             drop(self.done.lock().unwrap_or_else(|e| e.into_inner()));
             self.finished.notify_all();
@@ -91,7 +91,7 @@ impl BandPool {
     }
 
     /// How many jobs can genuinely run at once, counting the calling
-    /// thread — which [`Self::run`] puts to work rather than parking.
+    /// thread, which [`Self::run`] puts to work rather than parking.
     ///
     /// The number a caller should split its work into.
     pub fn parallelism(&self) -> usize {
@@ -112,7 +112,7 @@ impl BandPool {
                 .spawn(move || worker_loop(&theirs));
             if let Err(e) = spawned {
                 // Fewer workers than asked for is a slower conversion,
-                // not a broken one — `run` always has the calling thread.
+                // not a broken one: `run` always has the calling thread.
                 tracing::warn!("frame worker {index} not started: {e}");
                 return Self {
                     shared,
@@ -133,14 +133,14 @@ impl BandPool {
     /// # Panics
     ///
     /// Re-raises on the calling thread if any job panicked, once all of
-    /// them have finished — matching `std::thread::scope`. A caller
+    /// them have finished, matching `std::thread::scope`. A caller
     /// whose buffer is half-written must not be allowed to treat it as
     /// converted.
     pub fn run<'a>(&self, jobs: Vec<Box<dyn FnOnce() + Send + 'a>>) {
         let mut jobs = jobs;
         // The trivial cases need no queue, no batch and no signalling.
-        // A pool that started no workers — a single-core machine, or one
-        // where every spawn failed — is one of them, and must be: there
+        // A pool that started no workers (a single-core machine, or one
+        // where every spawn failed) is one of them, and must be: there
         // would be nobody to take a queued job, so enqueueing one would
         // block this thread forever.
         if jobs.len() <= 1 || self.workers == 0 {
@@ -167,7 +167,7 @@ impl BandPool {
                 // SAFETY: the lifetime erasure below is sound because
                 // this function does not return until `remaining` has
                 // reached zero, which happens only after every job has
-                // run to completion (or unwound — `settle` is reached on
+                // run to completion (or unwound; `settle` is reached on
                 // both paths). No erased job can therefore outlive the
                 // `'a` data it borrows.
                 //
@@ -200,7 +200,7 @@ impl BandPool {
         }
         drop(guard);
 
-        // The caller's own panic first — it is the one with a useful
+        // The caller's own panic first: it is the one with a useful
         // payload, and re-raising it preserves the message.
         if let Err(payload) = mine {
             std::panic::resume_unwind(payload);
@@ -295,7 +295,7 @@ mod tests {
     #[test]
     fn repeated_batches_reuse_the_same_threads() {
         // The point of the pool. Ten batches must not produce ten sets
-        // of thread ids — if they do, the threads are being respawned
+        // of thread ids: if they do, the threads are being respawned
         // and this is `thread::scope` with extra steps.
         let ids: Mutex<std::collections::HashSet<std::thread::ThreadId>> =
             Mutex::new(Default::default());

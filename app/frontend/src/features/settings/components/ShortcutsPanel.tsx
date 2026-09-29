@@ -5,8 +5,8 @@
  * The list is generated from the keybind registries via
  * `shortcuts/catalog`, so it can't drift from the real bindings. Recording
  * a combo writes an entry into `shortcuts.overrides` (keyed by the binding's
- * fully-qualified id); Reset removes it. Conflicts — two bindings sharing a
- * key in the same scope + context — are detected live and flagged inline
+ * fully-qualified id); Reset removes it. Conflicts (two bindings sharing a
+ * key in the same scope + context) are detected live and flagged inline
  * plus summarized at the top. All writes go through `onChange`, which the
  * panel host persists optimistically.
  */
@@ -34,7 +34,7 @@ import {
 } from "../shortcuts/catalog";
 import { KeyRecorderField } from "../shortcuts/KeyRecorderField";
 
-/** Registry default for the global capture hotkey — mirrors the Rust
+/** Registry default for the global capture hotkey; mirrors the Rust
  *  `default_global_capture`. Reset restores it. */
 const DEFAULT_GLOBAL_CAPTURE = "Mod+Shift+2";
 
@@ -44,7 +44,7 @@ interface ShortcutsPanelProps {
 }
 
 /** A global accelerator without a Ctrl/Cmd/Alt modifier would grab a bare
- *  key system-wide — almost never what the user wants. */
+ *  key system-wide: almost never what the user wants. */
 function lacksGlobalModifier(combo: string): boolean {
   if (!combo) return false;
   const sig = parseCombo(combo);
@@ -56,7 +56,7 @@ export function ShortcutsPanel({ value, onChange }: ShortcutsPanelProps) {
   const capabilities = useCapabilities();
 
   /**
-   * Hide a row for an action this installation can't perform — a key the
+   * Hide a row for an action this installation can't perform: a key the
    * user rebinds but that can never fire is worse than no row at all.
    *
    * Only the quick-capture group can be affected (the editor and library
@@ -109,7 +109,7 @@ export function ShortcutsPanel({ value, onChange }: ShortcutsPanelProps) {
           />
           <p className="text-[12.5px] text-[var(--color-ink)]">
             Some shortcuts share the same keys within one area. Only the
-            higher-priority binding will fire — the clashing ones are marked
+            higher-priority binding will fire; the clashing ones are marked
             below.
           </p>
         </div>
@@ -135,7 +135,7 @@ export function ShortcutsPanel({ value, onChange }: ShortcutsPanelProps) {
               label="Capture shortcut"
               description={
                 globalNeedsModifier
-                  ? "Add a Ctrl/Alt modifier — a bare key would be captured system-wide."
+                  ? "Add a Ctrl/Alt modifier; a bare key would be captured system-wide."
                   : "System-wide shortcut that opens the region overlay."
               }
               control={
@@ -144,7 +144,7 @@ export function ShortcutsPanel({ value, onChange }: ShortcutsPanelProps) {
                   combos={value.globalCapture ? [value.globalCapture] : []}
                   overridden={globalOverridden}
                   conflict={globalNeedsModifier}
-                  // Recording implies the user wants it live — enable on capture.
+                  // Recording implies the user wants it live; enable on capture.
                   onRecord={(combo) =>
                     onChange({
                       ...value,

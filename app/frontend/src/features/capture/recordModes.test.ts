@@ -66,7 +66,7 @@ describe("visibleRecordOptionKeys", () => {
   });
 
   it("keeps sources on both formats", () => {
-    // A GIF is still a picture of the screen — a webcam in the corner
+    // A GIF is still a picture of the screen: a webcam in the corner
     // is as meaningful there as in a video.
     expect(visibleRecordOptionKeys("mp4").has("sources")).toBe(true);
     expect(visibleRecordOptionKeys("gif").has("sources")).toBe(true);
@@ -86,7 +86,7 @@ describe("visibleRecordOptionKeys", () => {
   });
 
   it("hides audio entirely for GIF", () => {
-    // GIF has no audio track — a toggle here would promise something
+    // GIF has no audio track: a toggle here would promise something
     // nothing keeps.
     const keys = visibleRecordOptionKeys("gif");
     expect(keys.has("microphone")).toBe(false);
@@ -95,7 +95,7 @@ describe("visibleRecordOptionKeys", () => {
 
   it("keeps cursor, outline and frame rate for both formats", () => {
     // The outline frames whatever is being recorded, so it is as
-    // meaningful for a GIF as for a video — unlike audio.
+    // meaningful for a GIF as for a video, unlike audio.
     for (const format of ["mp4", "gif"] as const) {
       const keys = visibleRecordOptionKeys(format);
       expect(keys.has("cursor"), format).toBe(true);
@@ -117,7 +117,7 @@ describe("recordReadiness", () => {
   });
 
   it("blocks a target that isn't in the armable set", () => {
-    // Exercises the refusal branch with a target the set doesn't hold —
+    // Exercises the refusal branch with a target the set doesn't hold:
     // the state a not-yet-shipped tile would put the footer in. Every
     // shipped target is armable today, so this is the only way to reach
     // it, and it must not be reachable by accident.

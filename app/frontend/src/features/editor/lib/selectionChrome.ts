@@ -1,5 +1,5 @@
 /**
- * Shared geometry for the floating selection chrome — the action toolbar
+ * Shared geometry for the floating selection chrome: the action toolbar
  * (`FloatingToolbar`) and the object size label (`ObjectLabel`). Both layers
  * anchor to the same selection; keeping the side-of-selection decision in one
  * pure module guarantees they agree on who goes where, so they take *opposite*
@@ -13,7 +13,7 @@
 export const CHROME_GAP = 12;
 /** Minimum breathing room from the canvas edges. */
 export const CHROME_MARGIN = 8;
-/** Height of the canvas's bottom rail plus a gap — chrome clamps above this
+/** Height of the canvas's bottom rail plus a gap: chrome clamps above this
  *  strip so it never covers the rail. The hint bar and the zoom cluster now
  *  *stack* (both centred) rather than sitting side by side, so the strip is
  *  roughly twice as tall as it was. */
@@ -66,7 +66,7 @@ export function chromeVerticalPos(
   if (side === "below") {
     return { top: bottomY + CHROME_GAP, translateY: "0" };
   }
-  // Pinned: selection spans the viewport — sit just above the bottom rail,
+  // Pinned: selection spans the viewport; sit just above the bottom rail,
   // overlaying the selection edge.
   return { top: Math.max(CHROME_MARGIN, railTop - h), translateY: "0" };
 }
@@ -78,7 +78,7 @@ export function chromeVerticalPos(
 /**
  * The vertical axis is already spoken for: the toolbar takes one side of the
  * selection and the size label takes the other (see above). A *third* floating
- * layer — the Annotation inspector — therefore anchors on the **horizontal**
+ * layer, the Annotation inspector, therefore anchors on the **horizontal**
  * axis instead, which keeps it out of that arbitration entirely rather than
  * making it a three-way negotiation.
  */
@@ -116,6 +116,6 @@ export function chromeXPos(
 ): number {
   if (side === "right") return rightX + CHROME_GAP;
   if (side === "left") return leftX - CHROME_GAP - w;
-  // No room either side — pin to the right edge, but never off the left.
+  // No room either side: pin to the right edge, but never off the left.
   return Math.max(CHROME_MARGIN, canvasW - w - CHROME_MARGIN);
 }

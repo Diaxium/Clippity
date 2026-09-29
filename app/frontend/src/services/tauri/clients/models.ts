@@ -38,7 +38,7 @@ export function modelsList(): Promise<ModelInfo[]> {
 }
 
 /** Start downloading `id` (no-op when installed or already in flight).
- *  Resolves as soon as the worker is spawned — progress streams via
+ *  Resolves as soon as the worker is spawned: progress streams via
  *  `onModelsProgress`, the final status via `onModelsChanged`. */
 export function modelsDownload(id: string): Promise<void> {
   return invoke<void, { id: string }>("models_download", { id });
@@ -59,7 +59,7 @@ export function modelsCheckUpdates(): Promise<ReleaseCheck[]> {
 
 /** Self-update `id` to the latest published GitHub release, fetching that
  *  release's live assets. Like {@link modelsDownload}, resolves once the
- *  worker spawns — progress streams via `onModelsProgress`, final status
+ *  worker spawns: progress streams via `onModelsProgress`, final status
  *  via `onModelsChanged`. */
 export function modelsUpdate(id: string): Promise<void> {
   return invoke<void, { id: string }>("models_update", { id });
@@ -81,7 +81,7 @@ export function ensureObjectModel(): Promise<ObjectModelReadiness> {
 
 // ---------- Event wrappers ----------
 
-/** Subscribe to `clippity://models/changed` — the full model list after
+/** Subscribe to `clippity://models/changed`: the full model list after
  *  any status transition (download start/done/error/cancel, removal). */
 export function onModelsChanged(
   handler: (models: ModelInfo[]) => void
@@ -89,7 +89,7 @@ export function onModelsChanged(
   return on<ModelInfo[]>(EVENT_NAMES.modelsChanged, handler);
 }
 
-/** Subscribe to `clippity://models/progress` — throttled byte ticks
+/** Subscribe to `clippity://models/progress`: throttled byte ticks
  *  from an active download. */
 export function onModelsProgress(
   handler: (progress: ModelProgress) => void

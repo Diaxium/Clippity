@@ -32,7 +32,7 @@ interface OutputControlsProps {
 
 /**
  * Effects + Share Destination dropdowns. UI-final but their values
- * are NOT yet passed to the backend pipeline — see the tech-debt
+ * are NOT yet passed to the backend pipeline; see the tech-debt
  * entry in REBUILD.md. Wired into the store so the user's choice
  * survives the round-trip when implementation lands.
  */

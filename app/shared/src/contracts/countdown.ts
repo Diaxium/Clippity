@@ -1,5 +1,5 @@
 /**
- * Countdown wire-format contracts — mirror Rust `domain::countdown`.
+ * Countdown wire-format contracts: mirror Rust `domain::countdown`.
  */
 
 export interface CountdownRequest {

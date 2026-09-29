@@ -83,7 +83,7 @@ function StepView({ step }: { step: StepId }) {
 }
 
 /**
- * The wizard shell: a custom title bar over a two-pane body — the step
+ * The wizard shell: a custom title bar over a two-pane body: the step
  * rail on the left, the active step on the right. Steps crossfade/slide
  * as the user advances.
  */

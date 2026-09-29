@@ -4,7 +4,7 @@
 
 - Open WebView2 devtools from the running app (right-click → Inspect, or the
   devtools shortcut) for the console, network, and element inspector.
-- `pnpm dev` runs the UI in a plain browser at `http://localhost:1421` — handy
+- `pnpm dev` runs the UI in a plain browser at `http://localhost:1421`, handy
   for pure-UI work. There is no Tauri bridge there, so IPC calls reject
   (`isTauriContext()` is false). The
   [design-review harnesses](../getting-started/development.md#design-review-harnesses)

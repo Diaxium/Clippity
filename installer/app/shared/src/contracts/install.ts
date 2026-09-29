@@ -1,5 +1,5 @@
 /**
- * Install-configuration contracts — mirror Rust `installer_domain::install`.
+ * Install-configuration contracts: mirror Rust `installer_domain::install`.
  *
  * Covers the Options and Components steps of the setup flow (and the
  * Modify step of maintenance, which reuses the same shapes).
@@ -37,7 +37,7 @@ export interface Component {
 }
 
 /**
- * What an existing installation was made with — the Modify step's starting
+ * What an existing installation was made with: the Modify step's starting
  * point, reconstructed from the on-disk installation manifest.
  *
  * Modify has to open on these rather than on the wizard's defaults: it
@@ -51,7 +51,7 @@ export interface InstalledConfiguration {
 }
 
 /**
- * A fully-resolved plan the backend can execute — the Review step renders
+ * A fully-resolved plan the backend can execute: the Review step renders
  * this and `installer_services::install` consumes it.
  */
 export interface InstallPlan {

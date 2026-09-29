@@ -20,7 +20,7 @@ interface MagneticLassoHandlers {
  *
  * Reuses the Freehand path state (`freehandPath` is just an ordered
  * point list, and the two modes are mutually exclusive) and the Freehand
- * mask sink at finalize — the only difference from `useFreehandSelection`
+ * mask sink at finalize: the only difference from `useFreehandSelection`
  * is the per-point edge snap. The crosshair tracks the RAW cursor for
  * responsiveness; the path captures the snapped points.
  */
@@ -55,7 +55,7 @@ export function useMagneticLasso(): MagneticLassoHandlers {
         const p = snap(s, raw);
         extendFreehand(p);
         setCursorPin(p);
-        // Keep the crosshair on the raw cursor — only the captured point
+        // Keep the crosshair on the raw cursor: only the captured point
         // snaps, so the pointer stays responsive.
         setCursor(raw);
       } else {

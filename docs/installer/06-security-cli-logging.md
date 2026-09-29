@@ -6,13 +6,13 @@ implemented**; security model specified. Covers task Phases 12, 15, 16, 17.
 > **Second pass (2026-07-24).** The command-line parser, headless/silent
 > execution, and the stable exit-code table below moved from *specified* to
 > *implemented*. See
-> [08-changelog.md](08-changelog.md#second-pass--2026-07-24).
+> [08-changelog.md](08-changelog.md#second-pass-2026-07-24).
 
 ## Least-privilege elevation (Phase 12)
 
 **Implemented:** the wizard starts **unelevated**. Elevation is requested only
-when the plan needs it — an all-users scope, or a destination under a protected
-root (`Program Files`, `ProgramData`, `Windows`) — decided by the unit-tested
+when the plan needs it: an all-users scope, or a destination under a protected
+root (`Program Files`, `ProgramData`, `Windows`), decided by the unit-tested
 [`needs_elevation`](../../installer/app/backend/crates/domain/src/install.rs).
 When needed, the plan is written to a temp handoff file and the installer
 relaunches itself under the `runas` verb with `--resume <file>`
@@ -31,10 +31,10 @@ known Clippity resources with an auditable log. The registry helpers already
 scope every write to the fixed `Uninstall\Clippity` / `Run\Clippity` subkeys
 (no caller-supplied subkey), which is the first step of that restriction.
 
-**Finding — installer-detection auto-elevation (verify on a real machine).**
+**Finding: installer-detection auto-elevation (verify on a real machine).**
 In this session the built wizard binary was **refused execution unelevated**
 (Windows' UAC *installer-detection* heuristic, triggered by the embedded payload
-and the "install/setup" strings in the exe — the same heuristic documented for
+and the "install/setup" strings in the exe: the same heuristic documented for
 the [[installer-uac-exe-naming]] test binaries, but here content-driven and not
 fixable by renaming). If the shipping `Clippity Setup.exe` is likewise
 auto-elevated, it **defeats the per-user, no-UAC install path** the elevation
@@ -56,18 +56,18 @@ mismatch aborts with `SignatureInvalid` before touching the user's disk.
 **Specified / not yet in repo:**
 
 - **Authenticode signing** of the Setup exe, the maintenance/uninstaller copy,
-  the (future) cleanup worker, and the app — via SignTool, with a timestamp on
+  the (future) cleanup worker, and the app, via SignTool, with a timestamp on
   production signatures. Signing credentials must never live in the repo.
 - **Signed update metadata** verified before any package executes. The app's
   Tauri updater already carries a minisign pubkey; the wizard must share that
   trust root rather than invent a second one. **Never execute a downloaded
-  package merely because its version is newer** — verify identity, signature,
+  package merely because its version is newer**: verify identity, signature,
   integrity, architecture, and downgrade policy first.
 - **Safe extraction:** path-traversal prevention, reparse-point/junction
   protection, and secure staging-directory permissions for any future
   multi-file/download package.
 
-## Command-line & silent operation (Phase 16) — implemented
+## Command-line & silent operation (Phase 16): implemented
 
 The command line is parsed by the pure, unit-tested
 [`installer_domain::cli::parse`](../../installer/app/backend/crates/domain/src/cli.rs)
@@ -102,7 +102,7 @@ rather than raising a UAC prompt.
 > deployment consumes. Attaching to the parent console for text output is a
 > small follow-up.
 
-### Stable exit codes — implemented
+### Stable exit codes: implemented
 
 [`installer_domain::cli::ExitCode`](../../installer/app/backend/crates/domain/src/cli.rs)
 (unit-tested for value + success-classification). Well-known outcomes reuse the
@@ -141,7 +141,7 @@ outcomes use a private 200-block so they never collide with a system code.
 
 **Implemented:** `tracing` is initialised
 ([`infra/logging.rs`](../../installer/app/backend/crates/infra/src/logging.rs))
-and every operation logs structured events — scope, versions, resolved paths,
+and every operation logs structured events: scope, versions, resolved paths,
 detection result, registry/shortcut actions, reboot-pending, final status. Log
 target: `%LOCALAPPDATA%\Clippity\logs\setup.log`.
 

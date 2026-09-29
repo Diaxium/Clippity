@@ -1,4 +1,4 @@
-//! PCM normalisation for the recorder's audio path — pure, no COM.
+//! PCM normalisation for the recorder's audio path: pure, no COM.
 //!
 //! WASAPI hands back whatever the endpoint's mix format happens to be:
 //! 32-bit float or 16/24/32-bit integer, mono to 7.1, at 44.1 or 48 kHz
@@ -7,15 +7,15 @@
 //! lives here.
 //!
 //! Split out of `audio.rs` for the same reason `nv12` is split out of
-//! `media_foundation`: the conversion is where the subtle bugs are —
-//! a channel swap, an off-by-one in the resampler that accumulates into
-//! audible drift over a ten-minute recording, a mix that clips — and
+//! `media_foundation`: the conversion is where the subtle bugs are
+//! (a channel swap, an off-by-one in the resampler that accumulates into
+//! audible drift over a ten-minute recording, a mix that clips) and
 //! none of it needs a sound card to test.
 //!
 //! Internally everything is `f32` in the range -1.0..=1.0. Converting
 //! to float once at the input and back to `i16` once at the output
 //! means the mixer never has to reason about differing integer depths,
-//! and intermediate sums can exceed full scale without wrapping — an
+//! and intermediate sums can exceed full scale without wrapping: an
 //! `i16` mix of a loud mic over loud system audio wraps to a click.
 
 /// Sample layouts WASAPI mix formats actually use.
@@ -29,7 +29,7 @@ pub enum SampleFormat {
     F32,
     I16,
     I32,
-    /// 24-bit packed in 3 bytes — rare, but some USB interfaces use it.
+    /// 24-bit packed in 3 bytes: rare, but some USB interfaces use it.
     I24,
 }
 
@@ -55,7 +55,7 @@ impl SampleFormat {
 ///   all channels instead would fold a 5.1 game's centre and LFE into
 ///   both sides and blow out the level.
 ///
-/// Returns an empty vec on a ragged buffer rather than panicking — a
+/// Returns an empty vec on a ragged buffer rather than panicking: a
 /// short read from the endpoint is a runtime condition, not a bug.
 pub fn decode_to_stereo(raw: &[u8], format: SampleFormat, channels: u16) -> Vec<f32> {
     let channels = channels.max(1) as usize;
@@ -119,7 +119,7 @@ fn sample_at(raw: &[u8], offset: usize, format: SampleFormat) -> f32 {
 /// **Stateful on purpose.** A resampler that restarts at phase zero for
 /// every WASAPI packet re-samples the same instant twice at each packet
 /// boundary, which over a long recording accumulates into audible drift
-/// against the video — precisely the A/V sync failure the roadmap sets a
+/// against the video: precisely the A/V sync failure the roadmap sets a
 /// 100 ms budget for. Carrying the fractional read position and the last
 /// frame across calls makes the stream continuous.
 ///
@@ -191,7 +191,7 @@ impl StereoResampler {
             };
             let next = index + 1;
             let (l1, r1) = if next >= frames as isize {
-                // Ran off the end of this packet — hold the last sample
+                // Ran off the end of this packet: hold the last sample
                 // rather than reaching into the next one, which hasn't
                 // arrived. The carried position picks it up next call.
                 (l0, r0)
@@ -232,7 +232,7 @@ pub fn mix_into(base: &mut Vec<f32>, addition: &[f32]) {
 
 /// Scale a source's samples in place before it reaches the mix.
 ///
-/// Applied **per source, pre-mix** — which is the only place it can do
+/// Applied **per source, pre-mix**, which is the only place it can do
 /// what a mixer is for. Scaling the summed result would move both inputs
 /// together and could not fix the imbalance that motivates the control
 /// (see `domain::recorder`'s gain constants).
@@ -247,12 +247,12 @@ pub fn apply_gain(samples: &mut [f32], gain: f32) {
     for s in samples.iter_mut() {
         // Clamped here as well as in `to_i16_bytes`, so a boosted source
         // cannot dominate the sum with values the mix then has to
-        // squeeze back down — that reads as the *other* source ducking.
+        // squeeze back down: that reads as the *other* source ducking.
         *s = (*s * gain).clamp(-1.0, 1.0);
     }
 }
 
-/// Loudest absolute sample in a packet, `0.0..=1.0` — one meter reading.
+/// Loudest absolute sample in a packet, `0.0..=1.0`: one meter reading.
 ///
 /// Peak rather than RMS because the questions a recording meter answers
 /// are "is this input live" and "is it clipping", and both are peak
@@ -285,7 +285,7 @@ pub fn to_i16_bytes(samples: &[f32]) -> Vec<u8> {
 }
 
 /// Interleaved stereo f32 samples representing `duration_ms` of silence
-/// at `sample_rate` — used to hold the audio timeline open across a
+/// at `sample_rate`: used to hold the audio timeline open across a
 /// stretch no endpoint produced data for (nothing playing, or a paused
 /// session). Without it, the muxer's audio clock falls behind the
 /// video's and the tracks drift apart.
@@ -318,7 +318,7 @@ mod tests {
 
     #[test]
     fn mono_is_duplicated_to_both_sides() {
-        // A mono mic must be centred, not hard-left — the single most
+        // A mono mic must be centred, not hard-left: the single most
         // noticeable audio bug a viewer would hit.
         let mut raw = Vec::new();
         for v in [0.5f32, -0.5] {
@@ -471,7 +471,7 @@ mod tests {
         let mut s = vec![0.9, -0.9];
         apply_gain(&mut s, 0.0);
         assert_eq!(s, vec![0.0, 0.0]);
-        // Still two samples of timeline — a muted source keeps the
+        // Still two samples of timeline: a muted source keeps the
         // audio clock running rather than leaving a gap.
         assert_eq!(s.len(), 2);
     }
@@ -501,7 +501,7 @@ mod tests {
 
     #[test]
     fn output_clamps_instead_of_wrapping() {
-        // 1.5 cast straight to i16 wraps to a large negative — an
+        // 1.5 cast straight to i16 wraps to a large negative: an
         // audible click exactly at the loudest moment.
         let bytes = to_i16_bytes(&[1.5, -1.5]);
         let a = i16::from_le_bytes([bytes[0], bytes[1]]);

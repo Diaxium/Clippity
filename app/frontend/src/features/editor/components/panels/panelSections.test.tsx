@@ -46,7 +46,7 @@ afterEach(cleanup);
 
 // Section collapse now lives in the store (so it survives a section unmounting
 // in the real app) instead of each section's local state, which means it also
-// outlives a test. Reset it per test — otherwise a spec that opens Effects
+// outlives a test. Reset it per test, otherwise a spec that opens Effects
 // leaves it open and the next `openEffects()` click closes it instead.
 beforeEach(() => {
   useEditorStore.setState({ sectionsOpen: { stroke: false, effects: false } });
@@ -444,7 +444,7 @@ describe("MeasureSection", () => {
     expect(node(l.id).measure?.scale).toBeCloseTo(0.5);
   });
 
-  it("offers no length field — the line's endpoints are the measurement", () => {
+  it("offers no length field: the line's endpoints are the measurement", () => {
     // A typable length would be a second source of truth that disagreed with
     // the line the moment either endpoint moved.
     const l = dimension();

@@ -3,7 +3,7 @@ import { CaptureGrid } from "./CaptureGrid";
 import { CaptureList } from "./CaptureList";
 
 interface DaySectionProps {
-  /** Section heading — a relative date in the library, a collection's
+  /** Section heading: a relative date in the library, a collection's
    *  name when one is open. Absent when the grid is one flat run
    *  (a non-date sort has no honest day grouping to head). */
   heading: string | null;

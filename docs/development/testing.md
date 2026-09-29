@@ -4,7 +4,7 @@
 
 ```bash
 pnpm test        # Vitest (JS) + cargo test (Rust workspace)
-pnpm test:js     # Vitest only — fast
+pnpm test:js     # Vitest only, fast
 ```
 
 ## Frontend (Vitest + Testing Library)
@@ -25,7 +25,7 @@ one place tests stub, so a component test never needs a live Tauri window
 pnpm cargo:test        # or: cargo test --workspace --manifest-path app/backend/Cargo.toml
 ```
 
-`domain` is designed to be unit-testable without a desktop session — its rules
+`domain` is designed to be unit-testable without a desktop session: its rules
 (naming templates, geometry, palette/enhance math, vision post-processing) have
 `#[cfg(test)]` tests that need no Tauri, filesystem, or window. Scope to one
 crate with `cargo test -p clippity-domain`.

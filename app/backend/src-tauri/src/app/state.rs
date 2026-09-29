@@ -38,7 +38,7 @@ pub struct AppState {
     pub overlay_service: OverlayService,
     pub toast_service: ToastService,
     pub library_service: LibraryService,
-    /// The same instance `library_service` holds — collection commands
+    /// The same instance `library_service` holds: collection commands
     /// read it directly, while the library's file ops carry membership
     /// across an id change through its own handle (ADR 0029).
     pub collections_service: Arc<CollectionsService>,
@@ -49,7 +49,7 @@ pub struct AppState {
     pub media_service: MediaService,
     pub countdown_service: CountdownService,
     /// What Settings → Advanced reads, and the redacted bundle it
-    /// exports. Holds no state of its own beyond the app's paths —
+    /// exports. Holds no state of its own beyond the app's paths:
     /// every answer is read fresh, because a diagnostics page that
     /// showed a cached truth would be worse than none.
     pub diagnostics_service: DiagnosticsService,
@@ -83,14 +83,14 @@ impl AppState {
         // because a first launch seeds settings from it.
         let provisioning = Arc::new(ProvisioningService::resolve());
 
-        // Load settings first — every subsequent service borrows a
+        // Load settings first: every subsequent service borrows a
         // trait-object view of it to resolve "the live captures dir"
         // and "the live toast settings" without restarting.
         let settings = Arc::new(SettingsService::load(paths.clone())?);
         // On the very first launch after an install, carry the wizard's
         // answers ("start at login", "automatic updates", "help improve")
         // into settings so the user finds what they chose. A no-op
-        // afterwards — later launches must never overwrite what the user
+        // afterwards: later launches must never overwrite what the user
         // has since changed.
         settings.seed_from_installer(&provisioning);
         let captures_dir: Arc<dyn CapturesDirSource> = settings.clone();
@@ -106,8 +106,8 @@ impl AppState {
         // files and each file's description, while this is app
         // machinery that a reconcile can rebuild from those at any time.
         let library_db = paths.data.join(library_index::DB_FILE_NAME);
-        // Collections *are* user data — a curated arrangement of their
-        // own files — so the document lives with the captures rather
+        // Collections *are* user data (a curated arrangement of their
+        // own files) so the document lives with the captures rather
         // than in the data dir beside the disposable index.
         let collections = Arc::new(CollectionsService::new(captures_dir.clone()));
 

@@ -13,7 +13,7 @@ interface PaletteViewProps {
 }
 
 /**
- * Large, read-and-copy view of a single saved palette — the main-window
+ * Large, read-and-copy view of a single saved palette: the main-window
  * counterpart to the cramped library card. Renders every swatch big in a
  * responsive grid (so a 16-color palette is still legible), each showing
  * its hex, RGB, and share of the region, and copying its own hex on

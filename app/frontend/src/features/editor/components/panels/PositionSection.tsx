@@ -69,7 +69,7 @@ const ICON_BTN =
  * selection disagrees and typing one **aligns** every node to that coordinate,
  * which is the useful reading of "set X to 40" for a batch. The write goes
  * through `placeNodes`, not a raw `x` patch, because nodes hold absolute
- * coordinates — patching a frame's `x` would slide it out from under its own
+ * coordinates: patching a frame's `x` would slide it out from under its own
  * children.
  */
 export function PositionSection() {
@@ -86,7 +86,7 @@ export function PositionSection() {
 
   // Bounds, not raw x/y: a rotated or line-like node's coordinate is its
   // bounding box's, which is what `placeNodes` moves to and what the canvas
-  // shows — reading `node.x` here would disagree with both.
+  // shows: reading `node.x` here would disagree with both.
   const x = shared(sel, (n) => nodeBounds(n).x)!;
   const y = shared(sel, (n) => nodeBounds(n).y)!;
   const rotation = shared(sel, (n) => n.rotation)!;

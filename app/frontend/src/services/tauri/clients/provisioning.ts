@@ -3,7 +3,7 @@
  *
  * Reports what the installer was told to install, so the UI can hide the
  * features this installation does not include instead of offering controls
- * that are guaranteed to fail. Read once per window on mount — the
+ * that are guaranteed to fail. Read once per window on mount: the
  * configuration behind it only changes when the installer's Modify or Repair
  * runs, and both require Clippity to be closed first.
  *

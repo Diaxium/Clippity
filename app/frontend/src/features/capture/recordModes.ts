@@ -1,8 +1,8 @@
 /**
  * Recording-mode taxonomy + pure helpers (ADR 0031).
  *
- * The recorder's counterpart to `modes.ts`. Same shape — `ModeDef`
- * tiles, an `AVAILABLE_*` set, a per-mode option filter — so the Record
+ * The recorder's counterpart to `modes.ts`. Same shape (`ModeDef`
+ * tiles, an `AVAILABLE_*` set, a per-mode option filter) so the Record
  * screen reads like the Capture screen and the two can share
  * `ModeTile`.
  *
@@ -26,7 +26,7 @@ import type {
 import type { ModeDef } from "./types";
 
 /**
- * What surface to record — the top row of tiles.
+ * What surface to record: the top row of tiles.
  *
  * Fullscreen starts immediately on the monitor under the cursor. Region
  * and Window go through the overlay first, which picks the rectangle
@@ -63,7 +63,7 @@ export const RECORD_TARGETS: readonly ModeDef<RecorderTarget>[] = [
  * Which overlay mode a target opens, or `null` when it needs no
  * overlay.
  *
- * Fullscreen is the `null` case — there is nothing to select, so
+ * Fullscreen is the `null` case: there is nothing to select, so
  * bouncing through a selection surface would only add a step. The other
  * two need a rectangle before a session can start, which is exactly
  * what the overlay is for.
@@ -97,7 +97,7 @@ export const RECORD_FORMATS: readonly ModeDef<RecorderFormat>[] = [
   {
     id: "gif",
     label: "GIF",
-    desc: "A silent, looping clip. Capped at a minute — ideal for a short demo.",
+    desc: "A silent, looping clip. Capped at a minute, ideal for a short demo.",
     icon: Repeat,
     tint: "cool",
     available: true,
@@ -117,7 +117,7 @@ export const AVAILABLE_RECORD_FORMATS: ReadonlySet<RecorderFormat> = new Set(
 /**
  * Which option rows the Record options panel should render.
  *
- * GIF drops both audio rows — the format has no audio track, and the
+ * GIF drops both audio rows: the format has no audio track, and the
  * backend empties the selection anyway, so showing the toggles would
  * offer a promise nothing keeps. Mirrors `visibleOptionKeys`, which
  * hides the same kind of dead control per capture mode.
@@ -129,7 +129,7 @@ export function visibleRecordOptionKeys(
     // Resolution is dropped too, and for the same reason as the audio
     // rows: GIF's own pixel budget is well under every height the menu
     // offers, so the control would be a promise nothing keeps. Quality
-    // goes with it — it scales an H.264 bitrate, and GIF has none.
+    // goes with it: it scales an H.264 bitrate, and GIF has none.
     //
     // **Sources stay.** A GIF is still a picture of the screen, and a
     // webcam in the corner is as meaningful there as in a video.
@@ -149,7 +149,7 @@ export function visibleRecordOptionKeys(
 }
 
 /**
- * Whether the current selection can start a recording — the Record
+ * Whether the current selection can start a recording: the Record
  * button's enablement, and the reason when it can't.
  */
 export function recordReadiness(

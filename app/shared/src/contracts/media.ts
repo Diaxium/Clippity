@@ -1,5 +1,5 @@
 /**
- * Studio media contracts — mirror Rust `domain::media`.
+ * Studio media contracts: mirror Rust `domain::media`.
  *
  * Studio is to a recording what the editor is to a screenshot. The
  * contracts differ in one structural way, and it explains the shape of
@@ -7,7 +7,7 @@
  * base64 data URI. This carries no bytes at all.
  *
  * A recording is orders of magnitude larger than a screenshot, and a
- * `<video>` element does not want to be handed one — it wants to seek
+ * `<video>` element does not want to be handed one: it wants to seek
  * into it, asking for the byte ranges around the playhead as the user
  * scrubs. So the media travels over the `clippity-media` URI scheme
  * instead, and IPC carries only the description needed to draw a
@@ -15,7 +15,7 @@
  *
  * Distinct from `recorder.ts` on purpose: that describes a session that
  * *produces* a file, this describes a file that already exists. They
- * meet at `RecorderFormat`, which is imported rather than restated —
+ * meet at `RecorderFormat`, which is imported rather than restated:
  * a trim is encoded by the very same sinks a recording is.
  */
 
@@ -27,7 +27,7 @@ import type { RecorderFormat } from "./recorder";
  *
  * Not a path and not a URL. `media_probe` mints one only after
  * validating the capture id against the captures directory, so the
- * token *is* the proof that the check passed — which is what lets the
+ * token *is* the proof that the check passed, which is what lets the
  * scheme handler serve bytes without re-deriving whether it may. The
  * frontend turns it into a URL through Tauri's `convertFileSrc`, the
  * same split the overlay's snapshot id uses.
@@ -40,7 +40,7 @@ export type MediaToken = number;
 /**
  * What Studio learns about a clip when it opens it.
  *
- * Read once, from the container's headers — never by decoding — which
+ * Read once, from the container's headers, never by decoding, which
  * is why a two-hour recording opens as fast as a two-second one.
  */
 export interface MediaInfo {
@@ -69,7 +69,7 @@ export interface TrimRequest {
   /** In-point, milliseconds from the start of the source. */
   startMs: number;
   /**
-   * Out-point, milliseconds from the start of the source. Exclusive —
+   * Out-point, milliseconds from the start of the source. Exclusive:
    * the exported clip is `[start, end)`, so `end - start` is exactly
    * its duration and two adjacent trims tile without overlapping.
    */
@@ -84,7 +84,7 @@ export interface TrimRequest {
   /**
    * Pixel-filter annotations to burn in, timed against the **source**
    * clip rather than the output. The user set them on the source's
-   * timeline, so a trim starting at 0:30 must still find them there —
+   * timeline, so a trim starting at 0:30 must still find them there:
    * rebasing would shift every annotation by the in-point.
    *
    * Optional on the wire: Rust defaults both of these, so a caller with
@@ -99,7 +99,7 @@ export interface TrimRequest {
  * Progress of a running trim, carried on `clippity://media/trim-progress`.
  *
  * Encoded-milliseconds rather than a percentage, so the UI can show a
- * real position against the same timeline the user set the handles on —
+ * real position against the same timeline the user set the handles on,
  * and a percentage can still be derived from the pair.
  */
 export interface TrimProgress {
@@ -110,8 +110,8 @@ export interface TrimProgress {
 /** What a finished trim produced. */
 export interface TrimResult {
   /**
-   * Absolute path of the new clip. A trim never writes over its source
-   * — the same non-destructive rule the editor's scene sidecar follows,
+   * Absolute path of the new clip. A trim never writes over its source,
+   * the same non-destructive rule the editor's scene sidecar follows,
    * and for the same reason: the original frames are of a moment that
    * cannot be re-recorded.
    */

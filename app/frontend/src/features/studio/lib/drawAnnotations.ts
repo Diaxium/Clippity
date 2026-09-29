@@ -1,7 +1,7 @@
 /**
  * The one renderer.
  *
- * Every drawn annotation — boxes, spotlights, text, arrows — is painted
+ * Every drawn annotation (boxes, spotlights, text, arrows) is painted
  * by this file and only this file. The live preview calls it against a
  * canvas sized to the stage; the export calls it against a canvas sized
  * to the source's native resolution and encodes the result as an overlay
@@ -12,7 +12,7 @@
  * callout on screen and a callout in the exported file the same thing
  * rather than two things that agree until they don't. A second
  * implementation in Rust would have meant matching font metrics,
- * arrowhead geometry and antialiasing across two rasterisers — and
+ * arrowhead geometry and antialiasing across two rasterisers, and
  * failing invisibly, in a file the user only opens later.
  *
  * The blur and pixelate kinds are absent here on purpose: they transform
@@ -42,7 +42,7 @@ import { coversMs, isPixelFilter } from "@clippity/shared";
  * Font stack for text callouts.
  *
  * Preview and export run in the same webview, so whatever this resolves
- * to resolves the same way for both — which is the property that matters
+ * to resolves the same way for both, which is the property that matters
  * here, more than which face wins.
  */
 const FONT_STACK =
@@ -87,7 +87,7 @@ export function toDrawRect(
  * inside the rect. Four bands are order-independent: a spotlight cannot
  * damage an annotation beneath it.
  *
- * Exported for its test — the arithmetic is trivial and the failure is
+ * Exported for its test: the arithmetic is trivial and the failure is
  * not, since a band that is one pixel short leaves a bright seam down
  * the edge of every spotlight.
  */
@@ -144,7 +144,7 @@ export function arrowPoints(
  * Break `text` into lines that fit `maxWidth`.
  *
  * Takes a measuring function rather than a context so the wrap can be
- * tested without a real canvas — jsdom does not implement text metrics,
+ * tested without a real canvas: jsdom does not implement text metrics,
  * and the wrap is the part worth testing.
  *
  * A single word longer than the line is left to overflow rather than
@@ -186,7 +186,7 @@ export function wrapText(
  * here rather than at each call site is what guarantees the preview and
  * the export start from the same blank slate.
  *
- * Painted in array order, so a later annotation covers an earlier one —
+ * Painted in array order, so a later annotation covers an earlier one:
  * the same last-writer rule the redactions follow.
  */
 export function drawAnnotations(
@@ -199,7 +199,7 @@ export function drawAnnotations(
   ctx.clearRect(0, 0, width, height);
 
   for (const annotation of annotations) {
-    // Blur and pixelate are not drawn — see the module note.
+    // Blur and pixelate are not drawn; see the module note.
     if (isPixelFilter(annotation) || !coversMs(annotation, ms)) continue;
 
     const rect = toDrawRect(annotation.rect, width, height);
@@ -239,7 +239,7 @@ function drawBox(
   ctx.strokeStyle = annotation.color;
   ctx.lineWidth = stroke;
   // Inset by half the stroke so the outline sits inside the rectangle
-  // the user drew, rather than straddling it — otherwise a box on the
+  // the user drew, rather than straddling it, otherwise a box on the
   // edge of the frame loses half its border off-screen.
   ctx.strokeRect(
     rect.x + stroke / 2,

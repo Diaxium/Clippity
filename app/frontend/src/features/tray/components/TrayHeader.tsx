@@ -12,7 +12,7 @@ const ICON_BTN =
 
 /**
  * Panel header: the Clippity wordmark on the left, Settings + Close icon
- * buttons on the right. Close hides the flyout — it does NOT quit (Quit
+ * buttons on the right. Close hides the flyout; it does NOT quit (Quit
  * lives in the footer).
  */
 export function TrayHeader({ onSettings, onClose }: TrayHeaderProps) {

@@ -1,5 +1,5 @@
 /**
- * Pure formatting helpers for the Home view. No React, no IPC — unit-
+ * Pure formatting helpers for the Home view. No React, no IPC: unit-
  * testable in isolation. Kept home-local (rather than reaching into the
  * library feature's `lib/format`) so the Home view owns its own display
  * rules and the two can diverge without a shared-file tug of war.

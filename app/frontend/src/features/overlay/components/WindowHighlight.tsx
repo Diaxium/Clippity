@@ -5,7 +5,7 @@ import { useOverlayStore } from "../state/overlayStore";
  * under the cursor, with a title chip in its top-left corner. Renders
  * nothing in other modes or over bare desktop.
  *
- * `pointer-events: none` — the overlay root owns the hit-testing
+ * `pointer-events: none`: the overlay root owns the hit-testing
  * (`useWindowSelection`); this layer is pure visual feedback. Window
  * rects are physical px (virtual-desktop origin) while the overlay lays
  * out in logical px, so each side is divided by `devicePixelRatio`. The
@@ -27,7 +27,7 @@ export function WindowHighlight() {
   const width = hovered.rect.width / dpr;
   const height = hovered.rect.height / dpr;
   const label = hovered.app
-    ? `${hovered.app} — ${hovered.title}`
+    ? `${hovered.app}: ${hovered.title}`
     : hovered.title;
 
   return (

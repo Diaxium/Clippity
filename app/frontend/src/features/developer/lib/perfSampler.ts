@@ -1,5 +1,5 @@
 /**
- * Live frontend performance sampling — frame rate, frame time, main-
+ * Live frontend performance sampling: frame rate, frame time, main-
  * thread delay, heap, and IPC throughput.
  *
  * A module-level sampler rather than a hook so the overlay and the
@@ -19,12 +19,12 @@ export interface PerfSample {
   fps: number;
   /** Mean frame interval, ms. */
   frameMs: number;
-  /** Worst frame interval in the window, ms — where a stutter shows. */
+  /** Worst frame interval in the window, ms: where a stutter shows. */
   worstFrameMs: number;
   /**
    * Main-thread delay: how late a zero-delay timer actually fired, ms.
    * The number that says "something is blocking", which a frame rate
-   * alone does not — a window with nothing animating has a low frame
+   * alone does not: a window with nothing animating has a low frame
    * rate and a perfectly responsive main thread.
    */
   mainThreadDelayMs: number;
@@ -34,7 +34,7 @@ export interface PerfSample {
   heapLimitMb: number | null;
   /** IPC calls completed per second over the window. */
   ipcPerSecond: number;
-  /** IPC calls in flight — started and not yet recorded. */
+  /** IPC calls in flight: started and not yet recorded. */
   ipcPending: number;
 }
 
@@ -53,7 +53,7 @@ export const EMPTY_SAMPLE: PerfSample = {
 /**
  * Pure: frame rate and frame timing from a window of frame timestamps.
  *
- * Fewer than two timestamps is not "0 fps" — it is "not measured yet",
+ * Fewer than two timestamps is not "0 fps": it is "not measured yet",
  * which the zero sample already says; returning a computed zero would
  * make a just-opened overlay claim the app is frozen.
  */
@@ -119,8 +119,8 @@ let lastWindowAt = 0;
 let latest: PerfSample = EMPTY_SAMPLE;
 
 /**
- * Subscribe to samples. The loop runs only while somebody is listening
- * — a performance overlay that kept a `requestAnimationFrame` loop
+ * Subscribe to samples. The loop runs only while somebody is listening:
+ * a performance overlay that kept a `requestAnimationFrame` loop
  * alive after being closed would be a measurement that causes the thing
  * it measures.
  */
@@ -157,7 +157,7 @@ function start(intervalMs: number) {
     latest = {
       ...summarizeFrames(frames),
       // An interval that fired later than it was scheduled for was
-      // waiting on a busy main thread — which is the thing a frame rate
+      // waiting on a busy main thread, which is the thing a frame rate
       // alone doesn't say, since a window with nothing animating has a
       // low frame rate and a perfectly responsive thread.
       mainThreadDelayMs: Math.max(0, now - lastWindowAt - intervalMs),

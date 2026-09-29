@@ -17,7 +17,7 @@ workspace at [`app/backend`](../../app/backend).
 | Command | What it does |
 | --- | --- |
 | `pnpm dev` | Start the Vite dev server for the frontend at `http://localhost:1420` (browser only, no native shell). |
-| `pnpm tauri:dev` | Launch the full desktop app — Vite + the Tauri shell. Rebuilds Rust on change. |
+| `pnpm tauri:dev` | Launch the full desktop app: Vite + the Tauri shell. Rebuilds Rust on change. |
 
 ## Build
 
@@ -45,11 +45,11 @@ for what each step produces and how the installer payload works.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm check` | Recursive `check` — TypeScript type-check (`@clippity/shared`, frontend) **and** `cargo check` of the whole Rust workspace. |
+| `pnpm check` | Recursive `check`: TypeScript type-check (`@clippity/shared`, frontend) **and** `cargo check` of the whole Rust workspace. |
 | `pnpm check:js` | Type-check only the JS packages (fast; no Rust compile). |
-| `pnpm test` | Recursive `test` — Vitest (JS) **and** `cargo test` (Rust workspace). |
+| `pnpm test` | Recursive `test`: Vitest (JS) **and** `cargo test` (Rust workspace). |
 | `pnpm test:js` | Vitest only (fast). |
-| `pnpm lint` | Recursive `lint` — ESLint (JS) and `cargo clippy` (Rust). |
+| `pnpm lint` | Recursive `lint`: ESLint (JS) and `cargo clippy` (Rust). |
 | `pnpm lint:fix` | ESLint with `--fix`. |
 | `pnpm format` | Prettier (JS) and `cargo fmt` (Rust). |
 

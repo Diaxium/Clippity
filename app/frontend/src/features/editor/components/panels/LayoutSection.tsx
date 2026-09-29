@@ -14,8 +14,8 @@ import { FIELD_LABEL, PanelSection } from "./section";
  * Editing one dimension while locked scales the other proportionally.
  *
  * Multi-select (P3) resizes every selected node to the typed dimension. The
- * aspect lock is **per node**, not the primary's — three locked shapes with
- * different ratios each keep their own — which is why this writes through
+ * aspect lock is **per node**, not the primary's (three locked shapes with
+ * different ratios each keep their own) which is why this writes through
  * `updateEach` (a patch derived from the node it lands on) rather than
  * `updateNodes`' single shared patch.
  */

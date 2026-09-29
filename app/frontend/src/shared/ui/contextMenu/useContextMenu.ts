@@ -14,7 +14,7 @@ import type { ContextMenuEntry } from "./types";
  *
  * The builder runs at click time, not render time, so entries can read
  * live state (clipboard contents, selection size) without the region
- * re-rendering to keep them honest. Returning `null` — or an empty list —
+ * re-rendering to keep them honest. Returning `null`, or an empty list,
  * means "this region has no menu", and the event is left alone so an
  * ancestor region, or the global text-field fallback, can answer instead.
  *

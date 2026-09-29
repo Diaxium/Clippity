@@ -64,7 +64,7 @@ export function NotificationsPanel({
         {DURATION_ROWS.map((row) => (
           <Row
             key={row.key}
-            label={row.armed ? row.label : `${row.label} — coming soon`}
+            label={row.armed ? row.label : `${row.label}: coming soon`}
             description={row.description}
             control={
               <DurationSlider

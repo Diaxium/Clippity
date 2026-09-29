@@ -1,15 +1,15 @@
-//! AI-model domain — the on-device model registry + status wire types.
+//! AI-model domain: the on-device model registry + status wire types.
 //! **No I/O.** Download/install/delete live in `services::model_service`;
 //! inference lives in `services::vision_service`.
 //!
 //! The registry is static data: every model Clippity knows how to fetch,
 //! where from, and how to run it. Installing a model = downloading its
-//! artifact(s) into `AppPaths.models` — a detector `<id>.onnx` and, for
+//! artifact(s) into `AppPaths.models`: a detector `<id>.onnx` and, for
 //! typed models, a second `<id>.typer.onnx` crop classifier; the install
 //! check is "every artifact exists with its expected size", so the domain
 //! stays pure and the service layer owns the filesystem.
 //!
-//! Wire format: kebab-case enums, camelCase struct fields — matches the
+//! Wire format: kebab-case enums, camelCase struct fields; matches the
 //! rest of the IPC surface.
 
 use serde::{Deserialize, Serialize};
@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ModelTask {
-    /// Detect objects / UI elements in a screenshot — powers the
+    /// Detect objects / UI elements in a screenshot: powers the
     /// Object capture mode.
     ObjectDetection,
 }
@@ -33,7 +33,7 @@ pub struct ArtifactSpec {
     pub size_bytes: u64,
     /// Byte sizes of older *published* releases of this exact artifact.
     /// A file on disk at one of these sizes (but not `size_bytes`) is a
-    /// recognized previous version — it surfaces as an available update
+    /// recognized previous version: it surfaces as an available update
     /// rather than a fresh download or a corrupt file. Empty for an
     /// artifact that has never been revised. Bump alongside `size_bytes`
     /// whenever you publish new bytes.
@@ -50,14 +50,14 @@ pub struct TyperSpec {
     pub artifact: ArtifactSpec,
     /// Square input edge the classifier expects (e.g. 224).
     pub input_size: u32,
-    /// Box-padding fraction applied before cropping — MUST match the
+    /// Box-padding fraction applied before cropping: MUST match the
     /// typer's training pad (e.g. 0.15).
     pub crop_pad: f32,
     /// Type labels in model output order (argmax index → label).
     pub labels: &'static [&'static str],
 }
 
-/// One artifact resolved against a model id — its on-disk file name plus
+/// One artifact resolved against a model id: its on-disk file name plus
 /// where to fetch it and how big it must be. Built by [`ModelSpec::artifacts`]
 /// for a pinned registry install, or by the model service from a live
 /// GitHub release for a self-update (hence `url` is owned, not `'static`).
@@ -66,7 +66,7 @@ pub struct ModelArtifact {
     pub file_name: String,
     pub url: String,
     pub size_bytes: u64,
-    /// Recognized older sizes for this artifact — see
+    /// Recognized older sizes for this artifact; see
     /// [`ArtifactSpec::prior_sizes`].
     pub prior_sizes: &'static [u64],
 }
@@ -88,7 +88,7 @@ pub struct ReleaseSource {
     pub repo: &'static str,
     /// Substring identifying the detector asset within a release's assets.
     pub detector_match: &'static str,
-    /// Substring identifying the typer asset — `Some` for typed models,
+    /// Substring identifying the typer asset: `Some` for typed models,
     /// `None` for detection-only ones.
     pub typer_match: Option<&'static str>,
 }
@@ -96,7 +96,7 @@ pub struct ReleaseSource {
 /// A registry entry: everything needed to download + run one model.
 #[derive(Clone, Debug)]
 pub struct ModelSpec {
-    /// Stable id — also the on-disk file stem (`<id>.onnx`).
+    /// Stable id, also the on-disk file stem (`<id>.onnx`).
     pub id: &'static str,
     pub label: &'static str,
     pub description: &'static str,
@@ -107,10 +107,10 @@ pub struct ModelSpec {
     pub version: &'static str,
     /// Direct download URL for the detector `.onnx` artifact.
     pub url: &'static str,
-    /// Expected detector size in bytes — drives download progress and
+    /// Expected detector size in bytes: drives download progress and
     /// the post-download integrity check (exact match required).
     pub size_bytes: u64,
-    /// Byte sizes of older detector releases — see
+    /// Byte sizes of older detector releases; see
     /// [`ArtifactSpec::prior_sizes`]. Empty when the detector has never
     /// been revised.
     pub detector_prior_sizes: &'static [u64],
@@ -122,7 +122,7 @@ pub struct ModelSpec {
     /// Optional crop classifier run after detection to type each box.
     pub typer: Option<TyperSpec>,
     /// Where to check for a newer published release at runtime. `Some` for
-    /// GitHub-hosted models — the model service queries the live
+    /// GitHub-hosted models: the model service queries the live
     /// release, compares against what's on disk, and can self-update to it
     /// without an app rebuild. `None` leaves a model pinned to its
     /// compile-time `url`/`size_bytes` only.
@@ -138,7 +138,7 @@ impl ModelSpec {
         self.size_bytes + self.typer.map_or(0, |t| t.artifact.size_bytes)
     }
 
-    /// Every file this model installs, in download order — the detector
+    /// Every file this model installs, in download order: the detector
     /// `<id>.onnx` and, for typed models, the `<id>.typer.onnx`.
     pub fn artifacts(&self) -> Vec<ModelArtifact> {
         let mut out = vec![ModelArtifact {
@@ -244,10 +244,10 @@ pub const COCO_LABELS: [&str; 80] = [
 ];
 
 /// Single-class label set for class-agnostic UI detectors (e.g.
-/// OmniParser — emits one "is interactive" class).
+/// OmniParser, emits one "is interactive" class).
 pub const UI_ELEMENT_LABELS: [&str; 1] = ["UI element"];
 
-/// Default model id for the Object capture mode — referenced by
+/// Default model id for the Object capture mode; referenced by
 /// `domain::settings::ModelsSettings::default()`.
 pub const DEFAULT_OBJECT_MODEL: &str = "ui-elements";
 
@@ -258,7 +258,7 @@ pub static REGISTRY: &[ModelSpec] = &[
         id: "ui-elements",
         label: "UI Elements (OmniParser)",
         description:
-            "Microsoft's OmniParser icon detector — finds buttons, icons, and interactive \
+            "Microsoft's OmniParser icon detector: finds buttons, icons, and interactive \
              elements on screen for capturing pieces of an app's UI.",
         task: ModelTask::ObjectDetection,
         version: "1",
@@ -274,7 +274,7 @@ pub static REGISTRY: &[ModelSpec] = &[
     },
     ModelSpec {
         id: "yolov10n",
-        label: "General Objects — Fast (YOLOv10-N)",
+        label: "General Objects: Fast (YOLOv10-N)",
         description:
             "Lightweight general-purpose detector (80 everyday object classes: people, \
              screens, devices, …). Fastest option; good default on modest hardware.",
@@ -291,7 +291,7 @@ pub static REGISTRY: &[ModelSpec] = &[
     },
     ModelSpec {
         id: "yolov10s",
-        label: "General Objects — Accurate (YOLOv10-S)",
+        label: "General Objects: Accurate (YOLOv10-S)",
         description:
             "Larger general-purpose detector with noticeably better accuracy on small \
              objects, at ~2-3× the inference cost of the fast variant.",
@@ -336,7 +336,7 @@ pub enum ModelPhase {
         total: u64,
     },
     Installed,
-    /// A complete but *older* release is on disk — every artifact is a
+    /// A complete but *older* release is on disk: every artifact is a
     /// recognized size, but at least one is a previous version's bytes.
     /// The Models page offers "Update" (a re-download that swaps only the
     /// changed artifacts into place). Carries the registry's current
@@ -349,7 +349,7 @@ pub enum ModelPhase {
     },
 }
 
-/// One row of the Models settings page — a registry spec flattened to
+/// One row of the Models settings page: a registry spec flattened to
 /// wire shape + its live status.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -358,7 +358,7 @@ pub struct ModelInfo {
     pub label: String,
     pub description: String,
     pub task: ModelTask,
-    /// Registry version of this model — the latest Clippity can fetch.
+    /// Registry version of this model: the latest Clippity can fetch.
     /// Always the *current* tag; `phase` says whether it's on disk yet.
     pub version: String,
     /// What's *actually on disk*, when known: a GitHub release tag (e.g.
@@ -388,7 +388,7 @@ impl ModelInfo {
             version: spec.version.to_string(),
             installed_version: None,
             checkable: spec.release.is_some(),
-            // Detector + typer — what the user actually downloads.
+            // Detector + typer: what the user actually downloads.
             size_bytes: spec.total_bytes(),
             hint: spec.hint.to_string(),
             phase,
@@ -403,7 +403,7 @@ impl ModelInfo {
     }
 }
 
-/// Payload of `clippity://models/progress` — throttled download ticks.
+/// Payload of `clippity://models/progress`: throttled download ticks.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelProgress {
@@ -412,7 +412,7 @@ pub struct ModelProgress {
     pub total: u64,
 }
 
-/// Verdict of a live GitHub-release check for one model — returned by the
+/// Verdict of a live GitHub-release check for one model: returned by the
 /// `models_check_updates` command, which the Models page fires on open.
 /// Decoupled from [`ModelInfo`] (the offline registry status) because it
 /// requires the network and is best-effort: a model whose check fails
@@ -431,25 +431,25 @@ pub struct ReleaseCheck {
     pub html_url: String,
     /// True when something is on disk for this model at all.
     pub installed: bool,
-    /// True when the on-disk bytes match the latest release's assets — i.e.
+    /// True when the on-disk bytes match the latest release's assets, i.e.
     /// the installed model *is* the newest published one. Meaningless when
     /// `installed` is false.
     pub installed_is_latest: bool,
     /// True when the service resolved the release's detector (+ typer)
-    /// assets and can fetch them — gates the live "Update" action. False if
+    /// assets and can fetch them: gates the live "Update" action. False if
     /// the release's assets didn't match this model's matchers.
     pub updatable: bool,
 }
 
-/// Readiness verdict for the Object capture mode — returned by the
+/// Readiness verdict for the Object capture mode: returned by the
 /// `ensure_object_model` command so the capture window can branch
 /// without re-implementing the policy.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ObjectModelReadiness {
-    /// `ready` — model installed, overlay may open.
-    /// `downloading` — fetch in flight (just started or already was).
-    /// `missing` — not installed and auto-download is off.
+    /// `ready`: model installed, overlay may open.
+    /// `downloading`: fetch in flight (just started or already was).
+    /// `missing`: not installed and auto-download is off.
     pub status: ReadinessStatus,
     /// The model the verdict is about (the configured object model,
     /// fallen back to the registry default when the setting is stale).
@@ -608,7 +608,7 @@ mod tests {
     fn typed_spec_records_prior_typer_size_for_update_detection() {
         let typed = typed_release_spec();
         let typer = typed.typer.unwrap();
-        // The current bytes and the recognized previous release differ —
+        // The current bytes and the recognized previous release differ:
         // an on-disk copy at the prior size is an update, not a fresh
         // install or a corrupt file.
         assert!(!typer

@@ -2,7 +2,7 @@
  * The Brush selection's painted alpha mask.
  *
  * The actual painted pixels live in a lazily-created offscreen canvas
- * sized to the overlay viewport in DEVICE pixels — which, because the
+ * sized to the overlay viewport in DEVICE pixels, which, because the
  * overlay window spans the virtual desktop 1:1, are exactly the
  * canvas-local physical pixels the backend crops in. The Zustand store
  * holds only lightweight metadata (size / mode / a version counter);

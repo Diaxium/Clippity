@@ -52,7 +52,7 @@ const GLASS_PROFILES: Record<string, GlassProfile> = {
     float: 0.96,
   },
   // Clear paints no native material, so the app's own panels are the
-  // only thing between the user and the desktop — start from the most
+  // only thing between the user and the desktop: start from the most
   // transparent profile we ship.
   clear: ACRYLIC_GLASS_PROFILE,
 };
@@ -63,7 +63,7 @@ const GLASS_PROFILES: Record<string, GlassProfile> = {
  * `ratio` is the material's shipped profile above; `strength` is the
  * user's per-material "Panel fill" knob (100 = the shipped look, 0 =
  * the panels stop painting entirely so the material / desktop shows
- * through unobstructed). The floor is 0 rather than a fixed 10 % —
+ * through unobstructed). The floor is 0 rather than a fixed 10 %:
  * without that, dialling panel fill down bottomed out at a visible
  * haze and the Clear backdrop could never actually be clear.
  */
@@ -83,7 +83,7 @@ function opacityPercent(
  * apply only to chrome windows: the overlay is coordinate-sensitive
  * (crosshair geometry) and the countdown / toast / tray are sized
  * precisely by the backend, so re-spacing or zooming them would break
- * their layouts. Resolved once from the window's hash route — each Tauri
+ * their layouts. Resolved once from the window's hash route: each Tauri
  * window's route is fixed for its lifetime.
  */
 function isChromeWindow(): boolean {
@@ -108,7 +108,7 @@ function isChromeWindow(): boolean {
  *      `(prefers-color-scheme)` query when pref is "system" so the
  *      window flips when the OS does.
  *   3. Mirror the active accent into `--color-accent` (the derived
- *      shades — `--color-accent-soft` etc. — follow via `color-mix` in
+ *      shades, `--color-accent-soft` etc., follow via `color-mix` in
  *      `theme.css`) and its contrast-aware foreground into
  *      `--color-accent-ink` so text/icons on a solid accent fill stay
  *      readable when the user picks a light accent.
@@ -121,7 +121,7 @@ function isChromeWindow(): boolean {
  *   6. Own the right-click contract for the window: suppress the
  *      WebView2 menu everywhere and mount the shared menu host. This
  *      lives here rather than in each window because all six Tauri
- *      windows boot the same bundle through `App` — one mount point
+ *      windows boot the same bundle through `App`: one mount point
  *      means no window can ship without it.
  */
 export function Providers({ children }: ProvidersProps) {
@@ -132,7 +132,7 @@ export function Providers({ children }: ProvidersProps) {
   // Developer preferences that are module registries rather than
   // rendered state: the frontend log level + its mirror into the
   // backend log file, the IPC metrics recorder, and the feature-flag
-  // overrides. Deliberately not gated on developer mode — logging is
+  // overrides. Deliberately not gated on developer mode: logging is
   // machinery, and a user who never opens that page still benefits from
   // a session being recorded when something goes wrong.
   useDeveloperRuntime(settings?.developer);
@@ -182,7 +182,7 @@ export function Providers({ children }: ProvidersProps) {
   // Push the active accent into the root CSS var. `theme.css` derives
   // the soft / hover shades via `color-mix(in srgb, var(--color-accent) …)`
   // so they follow automatically. `--color-accent-ink` is the
-  // luminance-aware foreground for solid accent fills — computed here
+  // luminance-aware foreground for solid accent fills: computed here
   // because CSS can't branch on a custom property's lightness.
   useEffect(() => {
     if (!settings) return;
@@ -214,7 +214,7 @@ export function Providers({ children }: ProvidersProps) {
       settings.appearance.backdropTuning,
       backdrop
     );
-    // Flat mode is the "no effects at all" contract — honouring the
+    // Flat mode is the "no effects at all" contract: honouring the
     // tuning there would reintroduce the transparency the switch exists
     // to remove, so pin the knobs neutral alongside the pinned opacity.
     const glassStrength = flat ? 100 : tuning.glassStrength;
@@ -254,7 +254,7 @@ export function Providers({ children }: ProvidersProps) {
 
   // Density (`data-density` → Tailwind's `--spacing` base) and UI scale
   // (a CSS `zoom` on the root) reflow / magnify the whole layout, so they
-  // apply to the full-window chrome only — never the overlay or the
+  // apply to the full-window chrome only, never the overlay or the
   // backend-sized utility windows (see `isChromeWindow`).
   useEffect(() => {
     if (!settings || !isChromeWindow()) return;
@@ -263,7 +263,7 @@ export function Providers({ children }: ProvidersProps) {
     root.style.setProperty("zoom", String(settings.appearance.uiScale / 100));
   }, [settings]);
 
-  // App icon — mirror the style into the theme store (every window, so
+  // App icon: mirror the style into the theme store (every window, so
   // the in-app `Brand` mark follows it) and push it down to the OS tray +
   // taskbar icons. The IPC push fires only from a chrome window so the
   // transient utility windows don't re-race the swap on every open; it's
@@ -297,7 +297,7 @@ export function Providers({ children }: ProvidersProps) {
   }, [windowEffects, windowBackdrop]);
 
   useEffect(() => {
-    // Fire-and-forget — `apply_window_theme` is a Win11-only no-op on
+    // Fire-and-forget: `apply_window_theme` is a Win11-only no-op on
     // other targets, and a backdrop re-tint failure isn't a recoverable
     // error for the UI. `effects` carries the persisted transparency
     // preference so the same call clears native effects when they're off; gate on a
@@ -313,7 +313,7 @@ export function Providers({ children }: ProvidersProps) {
       // struct keeps the wire shape one-to-one with `BackdropTuning`.
       tuning: resolveBackdropTuning(backdropTuning, backdrop),
     }).catch(() => {
-      /* swallowed — see comment above */
+      /* swallowed: see comment above */
     });
   }, [theme, windowEffects, windowBackdrop, backdropTuning]);
 

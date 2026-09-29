@@ -8,7 +8,7 @@ interface CanvasGuidesProps {
 /**
  * Alignment guides drawn during a move/resize gesture. Self-subscribes to the
  * transient `guides` list (empty when idle) and maps each scene-space line to
- * screen space. Thin, accent-colored, slightly translucent — `--ed-selection`,
+ * screen space. Thin, accent-colored, slightly translucent: `--ed-selection`,
  * no new palette. Artboard-center guides read a touch stronger.
  */
 export function CanvasGuides({ viewport }: CanvasGuidesProps) {

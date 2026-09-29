@@ -35,7 +35,7 @@ export default [
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       // TypeScript's own compiler resolves identifiers, and `no-undef` is a JS
-      // rule that can't see the type namespace — it flags `React.PointerEvent`
+      // rule that can't see the type namespace: it flags `React.PointerEvent`
       // in type positions under the JSX transform, where no runtime `React`
       // binding exists. typescript-eslint disables it on TS for this reason.
       "no-undef": "off",
@@ -59,14 +59,14 @@ export default [
       //
       // They are warnings because there are 68 of them, 29 of those in
       // `EditorCanvas` alone, and fixing a ref-during-render or a
-      // setState-in-effect properly means changing when work happens —
+      // setState-in-effect properly means changing when work happens,
       // not something to do blind across a canvas whose interactive
       // paths the unit tests do not reach. Warning keeps every site
       // visible and countable instead of hidden behind a disable.
       //
       // The classic rules (`rules-of-hooks`, `exhaustive-deps`) stay
-      // errors and still pass, as do the compiler rules not listed here
-      // — so a new violation of those fails the build normally.
+      // errors and still pass, as do the compiler rules not listed here,
+      // so a new violation of those fails the build normally.
       //
       // Burn these down per-file, then delete the entry.
       "react-hooks/set-state-in-effect": "warn", // 32

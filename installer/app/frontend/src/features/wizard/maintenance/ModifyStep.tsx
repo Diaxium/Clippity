@@ -8,7 +8,7 @@ import { useWizardStore } from "@state/wizardStore";
 
 import { StepShell } from "../components/StepShell";
 
-/** Maintenance step 4 — change installed features + settings. */
+/** Maintenance step 4: change installed features + settings. */
 export function ModifyStep() {
   const options = useWizardStore((s) => s.options);
   const setOptions = useWizardStore((s) => s.setOptions);

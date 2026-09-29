@@ -55,13 +55,13 @@ describe("buildRecorderRequest", () => {
   });
 
   it("uses the GIF rate for a GIF, not the video one", () => {
-    // The ranges genuinely differ — GIF's delay is stored in
+    // The ranges genuinely differ: GIF's delay is stored in
     // centiseconds, so a 60 there plays back at the wrong speed.
     expect(buildRecorderRequest("fullscreen", "gif", settings()).fps).toBe(12);
   });
 
   it("carries the resolution cap on both formats", () => {
-    // Unlike audio, the cap is meaningful for a GIF too — the backend
+    // Unlike audio, the cap is meaningful for a GIF too: the backend
     // applies GIF's own pixel budget on top, tighter one winning.
     expect(
       buildRecorderRequest("fullscreen", "mp4", settings()).maxHeight
@@ -77,7 +77,7 @@ describe("buildRecorderRequest", () => {
 
   it("carries the encoder settings through on both formats", () => {
     // Sent for GIF too, and ignored there. Unlike audio, there is no
-    // indicator to mislead — and clearing it would lose the choice the
+    // indicator to mislead, and clearing it would lose the choice the
     // moment the user switches format back.
     for (const format of ["mp4", "gif"] as const) {
       const req = buildRecorderRequest("fullscreen", format, settings());

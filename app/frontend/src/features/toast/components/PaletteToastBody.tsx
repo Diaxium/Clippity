@@ -11,7 +11,7 @@ import {
 import type { PaletteSwatch } from "../types";
 
 /**
- * Palette-Capture toast body — the source-region preview, a strip of
+ * Palette-Capture toast body: the source-region preview, a strip of
  * extracted swatches (sized by each color's share of the region and
  * labelled with its hex + percentage), and a "Copy as" bar that exports
  * the whole palette in a chosen format. Clicking a single swatch copies

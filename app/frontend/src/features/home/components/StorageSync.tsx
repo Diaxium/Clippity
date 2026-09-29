@@ -1,10 +1,10 @@
 /**
- * "Storage" card — live captures-dir usage.
+ * "Storage" card: live captures-dir usage.
  *
  * `library_storage` gives a real used/total byte reading (a fixed
  * display cap), rendered as a meter; the rows below show the live
  * capture count and the save location. (The reference's "cloud backup /
- * auto-delete / synced" rows are omitted — there is no sync backend, and
+ * auto-delete / synced" rows are omitted: there is no sync backend, and
  * a hardcoded "Synced" badge would be fiction.)
  */
 

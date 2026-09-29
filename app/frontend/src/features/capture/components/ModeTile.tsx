@@ -17,7 +17,7 @@ interface ModeTileProps<Id extends string> {
   /**
    * True when the mode is implemented but its component was declined at
    * install time (see `domain::provisioning`). Disables the tile like
-   * `!def.available` does, but says "Not installed" — a different fact with
+   * `!def.available` does, but says "Not installed": a different fact with
    * a different remedy, and the user's own past choice rather than a
    * shipping gap.
    */
@@ -28,7 +28,7 @@ interface ModeTileProps<Id extends string> {
 /**
  * Shared tile used by the top-level Capture Type grid and the
  * Custom-Modes panel. Disabled tiles render with `aria-disabled`,
- * dimmed opacity, and a badge saying why — "Soon" for a port that hasn't
+ * dimmed opacity, and a badge saying why: "Soon" for a port that hasn't
  * landed (`def.unavailableHint` is the tooltip), "Not installed" for a
  * component the user declined.
  */

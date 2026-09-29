@@ -37,7 +37,7 @@ function FooterLink({ icon: Icon, label, onClick, danger }: FooterLinkProps) {
 /**
  * Footer row: Library + Editor shortcuts on the left, Quit on the right.
  * Library / Editor focus the main window on the matching dashboard view;
- * Quit ends the process — the only deliberate exit now that closing a
+ * Quit ends the process: the only deliberate exit now that closing a
  * window minimizes to tray. (The primary capture entry point lives in the
  * `CaptureButton` above; the old footer Capture link was redundant.)
  */

@@ -68,7 +68,7 @@ export function DashboardSidebar({
   };
 
   // Perf: the rail's width spring repaints every frame, and on the
-  // transparent Mica window WebView2 software-rasterizes that paint — a
+  // transparent Mica window WebView2 software-rasterizes that paint: a
   // blurred drop-shadow here would re-rasterize its blur per frame (the
   // bulk of the collapse/expand CPU cost). A crisp hairline separates
   // the rail instead, and `will-change-transform` gives it its own

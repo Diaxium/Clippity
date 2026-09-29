@@ -1,12 +1,12 @@
 import type { PickedColor } from "../types";
 
 /**
- * Color-Pick toast body — a swatch of the sampled color plus its HEX +
+ * Color-Pick toast body: a swatch of the sampled color plus its HEX +
  * RGB readout. Surfaced after the Color-Picker overlay mode copies the
  * hex to the clipboard.
  *
  * The swatch fill is runtime data (the sampled pixel), so it's an inline
- * style rather than a design token — the design-token rule governs
+ * style rather than a design token: the design-token rule governs
  * design-system values, not sampled content.
  */
 export function ColorToastBody({ color }: { color: PickedColor }) {

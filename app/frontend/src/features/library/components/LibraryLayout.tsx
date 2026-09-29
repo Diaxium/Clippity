@@ -45,17 +45,17 @@ import { LibraryTopBar } from "./LibraryTopBar";
 import { SelectionBar } from "./SelectionBar";
 
 /**
- * Library page root — the dashboard window's `library` view.
+ * Library page root: the dashboard window's `library` view.
  *
  * Three columns, each answering a different question. The **rail** on
- * the left answers *where am I* — every destination the grid can point
+ * the left answers *where am I*: every destination the grid can point
  * at, with a live count beside it. The **grid** in the middle answers
  * *what is here*. The **inspector** on the right answers *what is this
  * one*, which is the question the old single-column layout could only
  * answer with a hover tooltip.
  *
  * The panes are dropped by width rather than reflowed. Below ~64rem of
- * *container* (not viewport — the dashboard's own nav rail collapses
+ * *container* (not viewport; the dashboard's own nav rail collapses
  * independently, and a viewport breakpoint would guess wrong every time
  * it did) the inspector goes; below ~46rem the destination rail follows
  * it, leaving the grid whole. Nothing is ever squeezed to a width where
@@ -66,7 +66,7 @@ import { SelectionBar } from "./SelectionBar";
  *
  * - the **grid** pages through `useLibraryQuery`, so the filters, search,
  *   sort and pagination run as SQL and only a page's rows cross IPC;
- * - the **rail** reads `useLibraryFacets` — aggregate counts over the
+ * - the **rail** reads `useLibraryFacets`: aggregate counts over the
  *   whole library, which no page could answer and which would otherwise
  *   force the very listing load paging removes;
  * - the **DOM** is bounded again on top of that (`useProgressiveRender` +
@@ -76,17 +76,17 @@ import { SelectionBar } from "./SelectionBar";
  * Two scopes opt out and read the full listing, because neither is a
  * `WHERE` clause: a **smart collection** is a rule over every row, and a
  * **collection** is a curated id list whose order is the content. See
- * `needsFullList` — it is the one place the two paths are chosen between,
+ * `needsFullList`; it is the one place the two paths are chosen between,
  * and everything below it is written against `rows` so the rest of the
  * component doesn't know which it got.
  *
  * One consequence worth knowing: on the paged path "Select all" selects
- * the rows *loaded so far*, not every row the scope matches — the ids of
+ * the rows *loaded so far*, not every row the scope matches: the ids of
  * unloaded rows aren't known to the client. `count` still reports the
  * scope's true size, so the toolbar never reads as how far you scrolled.
  *
  * Delete / restore / purge fire their IPC and rely on the backend's
- * `clippity://library/updated` emit to refresh — every hook here
+ * `clippity://library/updated` emit to refresh: every hook here
  * subscribes to it. Errors surface as toasts.
  */
 export function LibraryLayout() {
@@ -132,7 +132,7 @@ export function LibraryLayout() {
    * Almost every destination is a `WHERE` clause, so the grid pages
    * through SQL and never holds the library. The two that aren't: a
    * **smart collection** is a rule evaluated against every row, and a
-   * **collection** is a curated id list whose order *is* the content —
+   * **collection** is a curated id list whose order *is* the content:
    * neither survives being cut into pages. Those two fall back to the
    * full listing, which is what the whole page used to do.
    */
@@ -145,7 +145,7 @@ export function LibraryLayout() {
 
   // The page's narrowing, pushed into SQL. `trash` is a tri-state rather
   // than a superset flag because the trash view is the deleted half
-  // *only* — a page has no other rows to filter down from.
+  // *only*: a page has no other rows to filter down from.
   const query = useMemo<LibraryQuery>(
     () => ({
       trash: mode === "trash" ? "only" : "exclude",
@@ -203,8 +203,8 @@ export function LibraryLayout() {
    * A collection keeps its own order and renders as one unheaded run:
    * the curated arrangement *is* the content, and re-sorting or
    * date-grouping it would destroy the thing the user built. Everything
-   * else groups by day under a chronological sort — recency is how you
-   * find a capture you just took — and collapses to a single flat run
+   * else groups by day under a chronological sort (recency is how you
+   * find a capture you just took) and collapses to a single flat run
    * under any other, because "Today / Yesterday" headings over a
    * largest-first list would be a lie about the order.
    */
@@ -245,7 +245,7 @@ export function LibraryLayout() {
    * How many captures this scope holds in total.
    *
    * On the paged path that is the backend's match count, *not*
-   * `visible.length` — the grid deliberately holds only a prefix, and a
+   * `visible.length`: the grid deliberately holds only a prefix, and a
    * toolbar reading "100 captures" over a library of 12,000 would be
    * reporting how far the user has scrolled.
    */
@@ -253,7 +253,7 @@ export function LibraryLayout() {
 
   // What is *mounted*. Keyed by the identity of the list on screen, so
   // changing scope, sort, search or any filter starts the budget over at
-  // the top — the rows scrolled past belong to a list the user has left.
+  // the top: the rows scrolled past belong to a list the user has left.
   const renderKey = `${mode}|${kindFilter}|${favoritesOnly}|${tagFilter ?? ""}|${
     smart ?? ""
   }|${collectionId ?? ""}|${search}|${sort}`;
@@ -317,7 +317,7 @@ export function LibraryLayout() {
   }, [scope, activeCollection]);
 
   /**
-   * Open a capture for real — the destination half of "open".
+   * Open a capture for real: the destination half of "open".
    *
    * Palette entries open the main window's large palette view; every
    * other file-backed capture goes to whichever surface `openCapture`
@@ -325,7 +325,7 @@ export function LibraryLayout() {
    * remaining two kinds never reach here: a color and a text run have no
    * view worth opening, so *their* open is a clipboard write, which the
    * card and row perform themselves because only they can show that it
-   * happened (see `CaptureCard`). The guard stays anyway — a future
+   * happened (see `CaptureCard`). The guard stays anyway: a future
    * caller that doesn't know that must not fall through with an id that
    * has no file behind it.
    *
@@ -351,8 +351,8 @@ export function LibraryLayout() {
   /**
    * Run a per-file op over a set of ids.
    *
-   * Unlike labels and collection membership — one call over a whole
-   * selection — trash / restore / purge are per-file moves with per-file
+   * Unlike labels and collection membership, one call over a whole
+   * selection, trash / restore / purge are per-file moves with per-file
    * failure modes, so they fan out. `allSettled`, not `all`: one capture
    * that another window already moved must not abort the rest, and the
    * user gets one toast rather than a cascade.
@@ -414,7 +414,7 @@ export function LibraryLayout() {
    * from the subscribed values. Mixing the two is the bug that hides
    * here: a closed-over `mode` only updates on re-render, so between the
    * scope change and React's next commit the guard would still say
-   * "library" while the ids it acts on are already fresh — and the one
+   * "library" while the ids it acts on are already fresh, and the one
    * thing this guard protects is the mode where deletion is
    * irreversible. Reading both from the same snapshot makes that window
    * impossible.
@@ -422,7 +422,7 @@ export function LibraryLayout() {
    * Keeping the api free of subscribed values also keeps the object
    * stable, so the keybind listener isn't re-attached on every click.
    *
-   * Inert in Trash mode on purpose — the only delete left there is
+   * Inert in Trash mode on purpose: the only delete left there is
    * `purge`, which has no undo. See the binding's note.
    */
   const trashSelection = useCallback(() => {
@@ -438,7 +438,7 @@ export function LibraryLayout() {
   useLibraryKeybinds(true, keybindApi);
 
   // "Select all" means every capture the current scope + filters are
-  // showing, not everything on disk — the grid is what the user can see
+  // showing, not everything on disk: the grid is what the user can see
   // and what a bulk action would visibly act on.
   const onBackgroundContextMenu = useContextMenu(
     useCallback(
@@ -523,7 +523,7 @@ export function LibraryLayout() {
           />
 
           {/* Right-clicking the gutter between cards is a click on the
-              *list*, not on any capture — so it offers what applies to the
+              *list*, not on any capture, so it offers what applies to the
               list. A card's own menu stops propagation before this sees
               the event, so the two never compete. */}
           <div
@@ -562,7 +562,7 @@ export function LibraryLayout() {
                     onPurge={onPurgeOne}
                   />
                 ))}
-                {/* Crossing this mounts the next batch — and, once every
+                {/* Crossing this mounts the next batch, and, once every
                     loaded row is mounted, fetches the next page. It sits
                     after the last rendered card and is removed when there
                     is nothing left below, so there is nothing to trip. */}

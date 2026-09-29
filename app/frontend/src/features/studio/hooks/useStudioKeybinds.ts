@@ -10,7 +10,7 @@ const COARSE_STEP_MS = 1_000;
 /**
  * Studio's keyboard layer.
  *
- * Deliberately the conventional set rather than an invented one — Space,
+ * Deliberately the conventional set rather than an invented one: Space,
  * `,`/`.` for frames, `I`/`O` for in and out, `J`/`K`/`L` for the
  * shuttle. Anyone who has used a video tool has these in their fingers,
  * and a capture app is not where someone wants to learn new ones.
@@ -55,7 +55,7 @@ export function useStudioKeybinds(enabled: boolean): void {
           store.setPlaying(!playing);
           break;
 
-        // Frame stepping. Arrows and the `,`/`.` pair both do it —
+        // Frame stepping. Arrows and the `,`/`.` pair both do it:
         // arrows are discoverable, the comma/period pair is what a
         // video editor's muscle memory reaches for.
         case "ArrowLeft":
@@ -129,7 +129,7 @@ export function useStudioKeybinds(enabled: boolean): void {
         default:
           return;
       }
-      // Only reached when a branch above handled the key — Space must
+      // Only reached when a branch above handled the key: Space must
       // not also scroll the panel behind the player.
       event.preventDefault();
     };

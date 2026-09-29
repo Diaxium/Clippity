@@ -1,9 +1,9 @@
-//! What the installer was told to install — and the feature availability
+//! What the installer was told to install, and the feature availability
 //! that follows from it. **Pure. No I/O.**
 //!
 //! The Clippity installer's Options and Components steps let a user decline
 //! things: no global capture hotkey, no OCR engine, no GIF encoder, no
-//! automatic updates. Those answers used to die with the wizard process —
+//! automatic updates. Those answers used to die with the wizard process:
 //! the app shipped every feature regardless, so a user who unchecked "OCR
 //! engine" still found Grab Text on the Custom panel, and unchecking
 //! "Enable automatic updates" bound to nothing at all.
@@ -11,7 +11,7 @@
 //! The installer now writes its answers into a small versioned document
 //! beside the installed executable ([`PROVISIONING_FILE`]), and this module
 //! is the app's reader for it plus the rules that turn it into
-//! [`Capabilities`] — the set of features this installation is allowed to
+//! [`Capabilities`]: the set of features this installation is allowed to
 //! offer. `services::provisioning_service` performs the read; everything
 //! interesting about *interpreting* it is here, so it can be tested without
 //! a filesystem.
@@ -31,13 +31,13 @@ use serde::{Deserialize, Serialize};
 /// File name the installer writes beside `Clippity.exe`.
 ///
 /// Resolved as `current_exe().parent().join(…)`, so the name is load-bearing
-/// on both sides — it must match `installer_domain::provisioning::PROVISIONING_FILE`.
+/// on both sides: it must match `installer_domain::provisioning::PROVISIONING_FILE`.
 pub const PROVISIONING_FILE: &str = "install-config.json";
 
 /// Highest document schema this build understands.
 ///
 /// A document above this is ignored wholesale (with a warning) rather than
-/// partially applied — see the module note on the absent case.
+/// partially applied; see the module note on the absent case.
 pub const SUPPORTED_SCHEMA_VERSION: u32 = 1;
 
 /// Product id a document must carry to be ours. Guards against acting on a
@@ -52,7 +52,7 @@ pub const PRODUCT_ID: &str = "com.clippity.app";
 /// actually act on are named here; an id the app doesn't know about is
 /// simply carried in [`InstallProvisioning::components`] and ignored.
 pub mod components {
-    /// The application itself — always installed, never declinable.
+    /// The application itself: always installed, never declinable.
     pub const CORE: &str = "core";
     /// OS-global capture hotkeys.
     pub const CAPTURE: &str = "capture";
@@ -68,7 +68,7 @@ pub mod components {
     pub const CLOUD: &str = "cloud";
 }
 
-/// Which Windows account the install targeted. Carried for diagnostics —
+/// Which Windows account the install targeted. Carried for diagnostics:
 /// nothing in the app branches on it.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
@@ -81,7 +81,7 @@ pub enum InstallScope {
 ///
 /// Every field is `#[serde(default = …)]` with the value the installer
 /// itself defaults to, so a document written by a build that knew fewer
-/// fields reads as "the user accepted the defaults for the rest" — which is
+/// fields reads as "the user accepted the defaults for the rest", which is
 /// what actually happened.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -100,7 +100,7 @@ pub struct ProvisionedPreferences {
     pub file_associations: bool,
 }
 
-/// `#[serde(default)]` for a flag the installer ships **on** — bare
+/// `#[serde(default)]` for a flag the installer ships **on**: bare
 /// `default` would give `false`, inverting the user's choice.
 fn yes() -> bool {
     true
@@ -132,7 +132,7 @@ pub struct InstallProvisioning {
     #[serde(default = "current_user")]
     pub scope: InstallScope,
     /// Component ids the user kept. An empty list is treated as "no
-    /// component information", not "nothing installed" — see
+    /// component information", not "nothing installed"; see
     /// [`Capabilities::from_provisioning`].
     #[serde(default)]
     pub components: Vec<String>,
@@ -235,7 +235,7 @@ impl Capabilities {
     /// A document with an **empty** component list resolves every
     /// component-backed flag to `true`: an installer that recorded no
     /// components told us nothing about them, and the only way to record
-    /// zero components is a broken manifest — `core` is not declinable. The
+    /// zero components is a broken manifest: `core` is not declinable. The
     /// preference-backed flags are still honored, because those are recorded
     /// independently of the list.
     pub fn from_provisioning(doc: &InstallProvisioning) -> Self {
@@ -258,7 +258,7 @@ impl Capabilities {
         }
     }
 
-    /// Capabilities for an optional document — the shape the service layer
+    /// Capabilities for an optional document: the shape the service layer
     /// actually has. `None` (absent / unreadable / too new) and an unusable
     /// document both resolve to [`Capabilities::unmanaged`].
     pub fn resolve(doc: Option<&InstallProvisioning>) -> Self {
@@ -275,7 +275,7 @@ impl Capabilities {
 
 /// Apply an installer's answers to a **brand-new** `GeneralSettings`.
 ///
-/// Called only when there is no `settings.json` yet — the installer's
+/// Called only when there is no `settings.json` yet: the installer's
 /// answers are a starting point, not a policy. Overwriting an existing file
 /// would mean a Repair silently reverting settings the user had since
 /// changed, which is the opposite of respecting their choices.
@@ -310,7 +310,7 @@ mod tests {
         }
     }
 
-    /// The full recommended selection — nothing declined.
+    /// The full recommended selection: nothing declined.
     fn everything() -> InstallProvisioning {
         doc_with(&["core", "capture", "assoc", "startup", "gif", "ocr", "cloud"])
     }
@@ -331,7 +331,7 @@ mod tests {
     #[test]
     fn a_newer_schema_is_ignored_rather_than_partially_applied() {
         // Fields we cannot interpret must not disable the features they
-        // describe — the user would see features vanish after an update.
+        // describe: the user would see features vanish after an update.
         let mut doc = doc_with(&["core"]);
         doc.schema_version = SUPPORTED_SCHEMA_VERSION + 1;
         assert!(!doc.is_usable());
@@ -351,7 +351,7 @@ mod tests {
     #[test]
     fn a_document_without_a_product_id_is_still_ours() {
         // The field is optional, and the file's location beside our own exe
-        // is already strong evidence — rejecting it would break forward
+        // is already strong evidence: rejecting it would break forward
         // compatibility for no gain.
         let mut doc = everything();
         doc.product_id = String::new();
@@ -395,7 +395,7 @@ mod tests {
         assert!(caps.start_at_login);
         assert!(caps.file_associations);
         assert!(!caps.cloud_sync);
-        // Still a managed install — the app knows these were real answers.
+        // Still a managed install: the app knows these were real answers.
         assert!(!caps.unmanaged);
     }
 
@@ -468,7 +468,7 @@ mod tests {
     #[test]
     fn a_document_missing_optional_fields_reads_as_installer_defaults() {
         // A future installer that drops fields must not read as "the user
-        // declined them" — every omitted flag ships on except start-at-login.
+        // declined them": every omitted flag ships on except start-at-login.
         let json = r#"{ "schemaVersion": 1, "components": ["core", "ocr"] }"#;
         let doc: InstallProvisioning = serde_json::from_str(json).expect("parses");
         assert!(doc.preferences.automatic_updates);

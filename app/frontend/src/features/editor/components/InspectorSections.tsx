@@ -103,7 +103,7 @@ export function SelectionSummary() {
   );
 }
 
-/** The tab strip under the header. Accent underline on the active tab — one of
+/** The tab strip under the header. Accent underline on the active tab: one of
  *  the three places the editor spends its accent (see theme.css). */
 export function InspectorTabs() {
   const tab = useEditorStore((s) => s.inspectorTab);
@@ -190,7 +190,7 @@ export function InspectorSections({ mode }: { mode: EditorMode }) {
 }
 
 /**
- * Shown in place of the sections when nothing is selected — but not *only* the
+ * Shown in place of the sections when nothing is selected, but not *only* the
  * hint: an empty selection is how you address the page itself, so the Backdrop
  * and Window controls live here too (see `BackdropSection`). They render
  * nothing on a document with no page frame, leaving the bare hint.

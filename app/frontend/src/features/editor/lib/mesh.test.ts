@@ -69,7 +69,7 @@ describe("meshColorAtWarped", () => {
     }
   });
 
-  it("follows a dragged node — its color tracks to the new position", () => {
+  it("follows a dragged node: its color tracks to the new position", () => {
     // Before the drag, the center is the four-corner average (mid-grey).
     const before = meshColorAtWarped(meshNodes(mesh), 2, 2, 0.5, 0.5);
     expect(before.r).toBeCloseTo(127.5, 0);

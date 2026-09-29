@@ -1,5 +1,5 @@
 /**
- * Window chrome — the macOS / Windows title bar drawn around the capture.
+ * Window chrome: the macOS / Windows title bar drawn around the capture.
  * Pure geometry + presets, no React, no store.
  *
  * The last slice of Fork F4, and the one part of it that could **not** be built
@@ -19,13 +19,13 @@
  *
  * - the capture's pixels are never covered or shifted, so chrome is as
  *   non-destructive as crop and padding are;
- * - the node's *outline* — what both renderers use for the drop shadow, the
- *   clip, and strokes — becomes the whole window ({@link chromeWindowRect}), so
+ * - the node's *outline* (what both renderers use for the drop shadow, the
+ *   clip, and strokes) becomes the whole window ({@link chromeWindowRect}), so
  *   a lift shadow lifts the bar with the image instead of casting a seam
  *   between them;
  * - the page has to make room for it, which is why {@link chromeWindowRect} is
  *   what `lib/page.ts` pads around. Without that the page frame's clip would
- *   cut the bar off — the export-region trap of ADR 0019/0020, reached a third
+ *   cut the bar off: the export-region trap of ADR 0019/0020, reached a third
  *   time.
  */
 
@@ -43,7 +43,7 @@ import type {
 import { cornerRadiiOf, hasCornerRadius } from "../types";
 import { readableInk } from "./paint";
 
-/** Title-bar height for a fresh chrome, in scene px — close to the real thing
+/** Title-bar height for a fresh chrome, in scene px: close to the real thing
  *  at 1× on both desktops. */
 export const DEFAULT_CHROME_HEIGHT = 36;
 
@@ -68,7 +68,7 @@ export function clampChromeHeight(height: number): number {
 
 /**
  * A stock title bar. Style and color travel together because they are one
- * choice to the user ("macOS dark"), not two — and because a macOS bar in a
+ * choice to the user ("macOS dark"), not two, and because a macOS bar in a
  * Windows gray is a thing nobody wants to be able to pick by accident.
  */
 export interface ChromePreset {
@@ -102,7 +102,7 @@ export function chromePreset(id: string): ChromePreset | null {
  *
  * Matched on the rendered result (style + color) rather than a stored id, for
  * `matchBackdropPreset`'s reason: the height is editable, so the panel
- * must be able to say "this is still macOS dark, just taller" — and if a future
+ * must be able to say "this is still macOS dark, just taller", and if a future
  * control recolors the bar, the chips honestly stop claiming a preset.
  */
 export function matchChromePreset(spec: ChromeSpec | null | undefined): string {
@@ -116,7 +116,7 @@ export function matchChromePreset(spec: ChromeSpec | null | undefined): string {
 }
 
 /** A fresh spec for a preset. `title` is carried over by the caller rather than
- *  defaulted here — it's content, not style, so switching macOS→Windows must
+ *  defaulted here: it's content, not style, so switching macOS→Windows must
  *  not wipe what the user typed. */
 export function makeChrome(
   preset: ChromePreset,
@@ -137,7 +137,7 @@ export function makeChrome(
  * Whether this node can carry chrome.
  *
  * Keyed on corner radii because that is exactly the set of types whose outline
- * both renderers build from {@link cornerRadiiOf} — frame, rectangle, image.
+ * both renderers build from {@link cornerRadiiOf}: frame, rectangle, image.
  * "The capture" is whatever holds the largest image fill (`findBaseImage`), and
  * an ellipse could in principle qualify; a title bar on an ellipse has no
  * meaning and no code path, so the panel hides instead of drawing nonsense.
@@ -149,7 +149,7 @@ export function canCarryChrome(
   return hasCornerRadius(node);
 }
 
-/** The node's chrome, or null — including for nodes that can't carry it, so a
+/** The node's chrome, or null, including for nodes that can't carry it, so a
  *  stale spec on an ellipse is inert rather than half-rendered. */
 export function chromeOf(node: SceneNode): ChromeSpec | null {
   const spec = node.chrome;
@@ -158,7 +158,7 @@ export function chromeOf(node: SceneNode): ChromeSpec | null {
 }
 
 /** Bar height in scene px, or 0 when the node has no chrome. The "does this
- *  node have chrome" question in numeric form — callers that only need the
+ *  node have chrome" question in numeric form: callers that only need the
  *  offset don't have to null-check. */
 export function chromeHeight(node: SceneNode): number {
   const spec = chromeOf(node);
@@ -173,7 +173,7 @@ export function chromeBarRect(node: SceneNode): Rect | null {
 }
 
 /**
- * The whole window — bar plus capture — which is the node's effective outline
+ * The whole window, bar plus capture, which is the node's effective outline
  * once it has chrome, and the rect `lib/page.ts` pads around.
  *
  * Falls back to the node's own rect with no chrome, so callers can use it
@@ -206,7 +206,7 @@ export function chromeWindowRadii(node: SceneNode): Corners {
 
 // ---------- bar contents ----------
 
-/** Readable ink for a bar background — near-black on light bars, near-white on
+/** Readable ink for a bar background: near-black on light bars, near-white on
  *  dark ones. The luminance rule lives in `lib/paint.ts` because the
  *  measurement label pill needs exactly the same answer for exactly the same
  *  reason (legible text over a user-chosen color). */
@@ -231,7 +231,7 @@ const MAC_DOTS = ["#ff5f57", "#febc2e", "#28c840"] as const;
  * Every measurement scales with the bar height (`k`), so a 72px bar on a 2×
  * capture is the same design at twice the size rather than a normal bar with
  * lost dots in the corner. Dots are dropped entirely when the capture is too
- * narrow to hold them without colliding with the title — better absent than
+ * narrow to hold them without colliding with the title: better absent than
  * overlapping.
  */
 export function chromeDots(node: SceneNode): ChromeDot[] {
@@ -260,7 +260,7 @@ export interface ChromeControl {
  * The Windows minimize / maximize / close glyphs, or `[]` for any other style.
  *
  * Drawn as strokes rather than a font so both renderers can emit them from the
- * same points — a glyph font would have made the SVG and the Canvas2D export
+ * same points: a glyph font would have made the SVG and the Canvas2D export
  * depend on identical text metrics, which is exactly the parity risk this
  * module exists to avoid.
  */
@@ -336,7 +336,7 @@ export interface ChromeTitle {
 
 /**
  * Where the title sits: centered on macOS, left-aligned after the app-icon
- * gutter on Windows — the two conventions each desktop actually uses.
+ * gutter on Windows, the two conventions each desktop actually uses.
  */
 export function chromeTitle(node: SceneNode): ChromeTitle | null {
   const spec = chromeOf(node);
@@ -370,7 +370,7 @@ export function chromeTitle(node: SceneNode): ChromeTitle | null {
 }
 
 /** The hairline between the bar and the capture, or null with no chrome. Its
- *  ink is the bar's, heavily faded — a separator that reads on a light bar and
+ *  ink is the bar's, heavily faded: a separator that reads on a light bar and
  *  a dark one without a second color to keep in sync. */
 export function chromeSeparator(node: SceneNode): {
   x1: number;

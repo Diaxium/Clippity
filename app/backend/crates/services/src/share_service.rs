@@ -1,6 +1,6 @@
 //! OS-level share hand-off for a capture that is already on disk.
 //!
-//! Everything here operates on a path the caller just saved — this
+//! Everything here operates on a path the caller just saved: this
 //! service never captures, encodes, or uploads. It is the file-system
 //! half of [Sharing Phase 1/2](../../../../docs/roadmaps/sharing-export.md);
 //! network destinations land later behind the same `ShareTarget` enum.
@@ -50,7 +50,7 @@ pub fn share(id: &str, captures_root: &Path, target: ShareTarget) -> AppResult<(
         }
         ShareTarget::CopyPath => {
             // `display()` is lossy for non-UTF-8 paths, but the clipboard
-            // is text — there is nothing better to put there, and the
+            // is text: there is nothing better to put there, and the
             // captures dir is app-controlled in practice.
             copy_text_to_clipboard(&path.display().to_string())
                 .map_err(|e| AppError::Share(format!("copy path: {e}")))?;
@@ -70,7 +70,7 @@ mod tests {
     ///
     /// Deliberately not `next_id()`: that is a millisecond timestamp, and
     /// these tests run in parallel, so two of them landing in the same
-    /// millisecond get the same path — and then one deletes it out from
+    /// millisecond get the same path, and then one deletes it out from
     /// under the other on its way out. That surfaces as a spurious
     /// `AlreadyExists` or a vanished directory, neither of which has
     /// anything to do with what the test is checking. Same pid + nonce
@@ -97,7 +97,7 @@ mod tests {
     fn share_rejects_a_path_that_is_not_a_file() {
         let root = root();
         let missing = root.join("not-here.png").to_string_lossy().into_owned();
-        // Every target refuses equally — the guard is before the match.
+        // Every target refuses equally: the guard is before the match.
         for t in [
             ShareTarget::Reveal,
             ShareTarget::Open,
@@ -122,7 +122,7 @@ mod tests {
     fn share_refuses_an_id_outside_the_captures_root() {
         // `Open` hands the file to the shell, so an id that escaped the
         // root would be arbitrary local execution. It has to be refused
-        // before the `is_file` check, not after — an attacker would point
+        // before the `is_file` check, not after: an attacker would point
         // at a file that certainly exists.
         let root = root();
         let outside = unique("clippity-outside").with_extension("png");

@@ -1,5 +1,5 @@
 /**
- * The library's keyboard map — declarative, conflict-checked, and small.
+ * The library's keyboard map: declarative, conflict-checked, and small.
  *
  * This is the editor's keybind pattern ([docs/editor-keybinds.md](../../../../../docs/editor-keybinds.md))
  * at the scale the library actually needs. The editor splits types /
@@ -10,9 +10,9 @@
  * a move, not a rewrite.
  *
  * The matching primitives are imported from the editor rather than
- * re-derived. They are pure and carry no editor state — layout-stable
+ * re-derived. They are pure and carry no editor state (layout-stable
  * `KeyboardEvent.code` tokens, Ctrl⇄Cmd collapsed into one `Mod` flag,
- * and typing-surface detection — and a second copy would be a second set
+ * and typing-surface detection) and a second copy would be a second set
  * of rules for what `Mod+A` means in the same app. Their natural home is
  * `shared/`; this import is what says so.
  *
@@ -51,10 +51,10 @@ import type { LibraryStoreState } from "../state/libraryStore";
  */
 export type LibraryKeybindContext = "library" | "selection";
 
-/** Effects a store action can't perform — they need the list the layout
+/** Effects a store action can't perform: they need the list the layout
  *  holds, or the IPC fan-out it owns. */
 export interface LibraryKeybindApi {
-  /** Move the current selection to the trash. A no-op in Trash mode —
+  /** Move the current selection to the trash. A no-op in Trash mode;
    *  see the binding's note. */
   trashSelection(): void;
 }
@@ -101,7 +101,7 @@ export const LIBRARY_KEYBINDS: readonly LibraryKeybind[] = [
     // Not preventDefault: Escape is a shared "back out of it" key, and
     // swallowing it here would strand any surface that also wants it.
     // Clearing the selection is the outermost meaning, so it runs last in
-    // spirit — the popovers that care listen on `document` and close on
+    // spirit: the popovers that care listen on `document` and close on
     // the same event.
     preventDefault: false,
     onKeyDown: ({ store }) => store.clearSelection(),
@@ -112,7 +112,7 @@ export const LIBRARY_KEYBINDS: readonly LibraryKeybind[] = [
     keys: ["Delete", "Backspace"],
     context: "selection",
     // In Trash mode this is deliberately inert. The only delete left
-    // there is `purge`, which is irreversible and has no undo — and a
+    // there is `purge`, which is irreversible and has no undo, and a
     // key that destroys forty files on a keystroke, sitting under the
     // finger that was just clearing a selection, is not a shortcut worth
     // having. Purge stays a button you have to aim at.
@@ -157,7 +157,7 @@ function buildIndex(
 }
 
 // Memoized on the override version so the index only rebuilds when the
-// user actually remaps a library key — not on every keystroke.
+// user actually remaps a library key, not on every keystroke.
 let cachedVersion = -1;
 let effectiveList: readonly LibraryKeybind[] = LIBRARY_KEYBINDS;
 let keydownIndex = buildIndex(LIBRARY_KEYBINDS);
@@ -174,7 +174,7 @@ function ensureEffective(): void {
   cachedVersion = version;
 }
 
-/** The default library map with user overrides applied — what the help
+/** The default library map with user overrides applied: what the help
  *  surface / settings panel read. */
 export function effectiveLibraryKeybinds(): readonly LibraryKeybind[] {
   ensureEffective();
@@ -203,7 +203,7 @@ export function resolveLibraryKeyDown(
   return best;
 }
 
-/** Two bindings sharing a signature *in the same context* — a real
+/** Two bindings sharing a signature *in the same context*: a real
  *  ambiguity. Asserted empty in tests. */
 export function findLibraryKeybindConflicts(): string[] {
   const seen = new Map<string, string[]>();

@@ -177,7 +177,7 @@ pub fn uninstall_entry_is_managed(hive: RegistryHive) -> bool {
 }
 
 /// Schedule a Clippity-owned file or empty directory for deletion at the
-/// next reboot — the last-resort fallback when it is still locked after a
+/// next reboot: the last-resort fallback when it is still locked after a
 /// graceful shutdown. Returns `Ok(())` on Windows; a logged no-op (so no
 /// false reboot claim) elsewhere.
 pub fn schedule_delete_on_reboot(path: &Path) -> InstallerResult<()> {
@@ -209,7 +209,7 @@ pub fn enumerate_lockers(paths: &[&Path]) -> InstallerResult<Vec<LockingProcess>
 
 /// Force-terminate a process by pid. Callers must only pass a pid the domain
 /// [`ShutdownPlan`](installer_domain::shutdown::ShutdownPlan) marked
-/// Clippity-owned and terminable — never an unrelated or system process.
+/// Clippity-owned and terminable: never an unrelated or system process.
 pub fn terminate_process(pid: u32) -> InstallerResult<()> {
     #[cfg(target_os = "windows")]
     {
@@ -225,7 +225,7 @@ pub fn terminate_process(pid: u32) -> InstallerResult<()> {
 /// Start a second copy of `exe` with an elevated token, passing `args`.
 ///
 /// The caller is expected to close the current (unelevated) window once
-/// this returns `Ok` — the two processes must not both drive an install.
+/// this returns `Ok`: the two processes must not both drive an install.
 pub fn relaunch_elevated(exe: &Path, args: &str) -> InstallerResult<()> {
     #[cfg(target_os = "windows")]
     {

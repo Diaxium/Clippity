@@ -53,7 +53,7 @@ const KIND_ICON: Record<CaptureKind, Icon> = {
   text: Baseline,
 };
 
-/** Sidebar row label per capture kind — plural, because every row is a
+/** Sidebar row label per capture kind: plural, because every row is a
  *  set rather than a single capture. */
 const KIND_LABEL: Record<CaptureKind, string> = {
   image: "Screenshots",
@@ -68,9 +68,9 @@ const KIND_LABEL: Record<CaptureKind, string> = {
  * Kind rows, in display order.
  *
  * All six are offered at all times, including at zero. The library holds
- * two families — files (screenshots, recordings, GIFs) and aux entries
+ * two families: files (screenshots, recordings, GIFs) and aux entries
  * (a sampled color, an extracted palette, a run of grabbed or pasted
- * text) — and the aux half is the half a user is least likely to know
+ * text), and the aux half is the half a user is least likely to know
  * exists. Hiding those rows until something lands in them means the only
  * way to discover that Clippity keeps your colors is to have already
  * sampled one, so an empty "Palettes" earns its line: it reads as "you
@@ -93,7 +93,7 @@ const SMART_ICON: Record<SmartId, Icon> = {
 };
 
 /** Which aggregated count sizes each smart collection. The rule itself
- *  still lives in `matchesSmart` — this only says which pre-counted
+ *  still lives in `matchesSmart`: this only says which pre-counted
  *  number corresponds to it. */
 const SMART_FACET: Record<SmartId, keyof LibraryFacets["smart"]> = {
   "this-week": "thisWeek",
@@ -110,7 +110,7 @@ interface LibrarySidebarProps {
   collections: Collection[];
   scope: LibraryScope;
   onScope: (scope: LibraryScope) => void;
-  /** Active tag refinement, which is *not* a scope — it narrows whatever
+  /** Active tag refinement, which is *not* a scope: it narrows whatever
    *  destination is open rather than replacing it. */
   tagFilter: string | null;
   onTagFilter: (tag: string | null) => void;
@@ -125,7 +125,7 @@ interface LibrarySidebarProps {
  * the fixed views the app itself defines (every capture, each kind, the
  * starred ones, the trash). **Collections** holds the arrangements the
  * user built by hand, and is the only group they can add to. **Smart**
- * holds rules re-evaluated on every render — nothing is stored, so these
+ * holds rules re-evaluated on every render: nothing is stored, so these
  * can never drift out of date. **Tags** is the vocabulary the library
  * grew on its own.
  *
@@ -137,7 +137,7 @@ interface LibrarySidebarProps {
  * They arrive pre-aggregated (`useLibraryFacets`) rather than being
  * counted here. The rail spans the whole library while the grid beside it
  * holds one page, so counting these in the client would mean loading
- * every row purely to label the navigation — which is the cost paging the
+ * every row purely to label the navigation, which is the cost paging the
  * grid was meant to remove (performance roadmap P5).
  */
 export function LibrarySidebar({
@@ -245,7 +245,7 @@ export function LibrarySidebar({
 }
 
 /**
- * The Collections group — the only rail section the user writes to, so
+ * The Collections group: the only rail section the user writes to, so
  * it carries the create / rename / delete controls the old collections
  * rail used to hold.
  *
@@ -273,7 +273,7 @@ function CollectionsSection({
     if (draft) inputRef.current?.focus();
   }, [draft]);
 
-  // A pending "Delete?" the user walked away from must not stay armed —
+  // A pending "Delete?" the user walked away from must not stay armed:
   // the next stray click would take the collection with it.
   useEffect(() => {
     if (!confirmingDelete) return;
@@ -337,7 +337,7 @@ function CollectionsSection({
 
       {collections.length === 0 && !draft && (
         <p className="px-2.5 py-1 text-[11.5px] leading-snug text-[var(--color-hint)]">
-          Group captures by hand — select a few and add them here.
+          Group captures by hand: select a few and add them here.
         </p>
       )}
 
@@ -480,7 +480,7 @@ function SectionLabel({
  * One destination row: icon, label, count.
  *
  * The count sits at the right edge and steps aside for `hoverActions`
- * when the pointer is over the row — a collection's rename / delete
+ * when the pointer is over the row: a collection's rename / delete
  * controls have nowhere else to live in a 232px rail, and pinning them
  * open would turn a list of places into a list of toolbars.
  */
@@ -498,7 +498,7 @@ function Row({
   count: number;
   active: boolean;
   onClick: () => void;
-  /** Rendered in the icon slot instead of `icon` — the tag dot. */
+  /** Rendered in the icon slot instead of `icon`: the tag dot. */
   leading?: ReactNode;
   hoverActions?: ReactNode;
 }) {
@@ -572,7 +572,7 @@ function IconBtn({
  * so there is no moment at which the user would pick a color, and a
  * persisted palette would need a migration the first time someone
  * renames one. The same tag always gets the same dot, which is all the
- * dot is for — telling two rows apart at a glance.
+ * dot is for: telling two rows apart at a glance.
  */
 function tagHue(tag: string): number {
   let h = 0;

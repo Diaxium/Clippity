@@ -49,7 +49,7 @@ describe("library keybinds", () => {
   });
 
   it("Escape clears a selection and is otherwise left alone", () => {
-    // It must fall through when nothing is selected — Escape is also how
+    // It must fall through when nothing is selected: Escape is also how
     // the search box and the popovers back out.
     const e = keydown("Escape", "Escape");
     expect(resolveLibraryKeyDown(e, IDLE)).toBeNull();

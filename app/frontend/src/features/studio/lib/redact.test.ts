@@ -18,7 +18,7 @@ import type { Annotation } from "@clippity/shared";
  * The cross-language pin.
  *
  * `redact.ts` and Rust's `domain::annotation` are the only place in
- * Studio's annotations where the same operation is implemented twice —
+ * Studio's annotations where the same operation is implemented twice:
  * everything else is drawn once, by canvas, for both the preview and the
  * export. Two implementations drift, and a drifted blur is invisible:
  * the preview shows one thing, the exported file contains another, and
@@ -28,12 +28,12 @@ import type { Annotation } from "@clippity/shared";
  * the exported file, so it is the reference) and asserts against it; the
  * tests below assert the preview produces the same bytes. A failure here
  * means the two halves disagree, and the fix is to make the preview
- * match — not to regenerate the fixture, which would only record the
+ * match, not to regenerate the fixture, which would only record the
  * disagreement.
  */
 const FIXTURE_PATH = resolve(
   // Vitest runs with the package root as its working directory, which is
-  // steadier here than `import.meta.url` — that is not a `file:` URL
+  // steadier here than `import.meta.url`: that is not a `file:` URL
   // under the jsdom environment these tests use.
   process.cwd(),
   "../shared/fixtures/redaction-fixture.json"
@@ -132,7 +132,7 @@ describe("normToPixels", () => {
 
 describe("pixelate", () => {
   it("raises a block too small to redact up to the floor", () => {
-    // A block of 1 is the identity — a redaction that redacts nothing.
+    // A block of 1 is the identity: a redaction that redacts nothing.
     const data = new Uint8ClampedArray(3 * 3 * 4);
     data.fill(0);
     data[0] = 255;

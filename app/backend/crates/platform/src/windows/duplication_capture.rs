@@ -8,7 +8,7 @@
 //! # What this saves
 //!
 //! `xcap`'s per-call grab measured **34 ms** on a 5120x1440 output in a
-//! release build — and a 30 fps frame budget is 33 ms, so the capture
+//! release build, and a 30 fps frame budget is 33 ms, so the capture
 //! alone overran it before the encoder had seen anything. Almost all of
 //! that is setup: a device, a duplication interface and a staging
 //! texture, created and destroyed per frame.
@@ -23,7 +23,7 @@
 //! rather than handing over an identical copy, and [`Grab::Unchanged`]
 //! passes that straight to the caller so a recorder can re-emit the
 //! frame it already holds. A screen recording is mostly still, so this
-//! is not a micro-optimisation — it is most frames.
+//! is not a micro-optimisation; it is most frames.
 //!
 //! # Two traps this inherits from `hdr_capture`
 //!
@@ -50,7 +50,7 @@
 //! per-row `copy_from_slice`, and at 5120x1440 the difference is
 //! 7.4 million bounds-checked appends against 1440 memcpys. The order
 //! now travels with the frame instead (`domain::pixels::PixelOrder`) and
-//! the NV12 converter absorbs the swap, which costs it nothing — it
+//! the NV12 converter absorbs the swap, which costs it nothing: it
 //! reads red and blue through indices either way.
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -100,7 +100,7 @@ pub struct MonitorDuplicator {
     _device: ID3D11Device,
     context: ID3D11DeviceContext,
     duplication: IDXGIOutputDuplication,
-    /// Reused across frames — allocating one per grab is most of what
+    /// Reused across frames: allocating one per grab is most of what
     /// made the one-shot path expensive.
     staging: ID3D11Texture2D,
     width: u32,
@@ -116,7 +116,7 @@ pub struct MonitorDuplicator {
 ///
 /// Backs the `recorder.duplication` developer feature flag. Turning it
 /// off makes [`MonitorDuplicator::open`] refuse, which drops the
-/// recorder onto its per-call grab path — the fallback it already takes
+/// recorder onto its per-call grab path: the fallback it already takes
 /// when duplication is unavailable, and the comparison a user needs
 /// when a recording tears, stalls, or comes back black.
 ///
@@ -250,11 +250,11 @@ impl MonitorDuplicator {
     /// the answer is [`Grab::Unchanged`], so the caller keeps whatever
     /// it held.
     ///
-    /// The channel order is the surface's own — see the module note.
+    /// The channel order is the surface's own; see the module note.
     /// Callers that need it stated travel with
     /// [`clippity_domain::pixels::PixelOrder::Bgra`].
     ///
-    /// An error means this duplication is finished — most often
+    /// An error means this duplication is finished: most often
     /// `DXGI_ERROR_ACCESS_LOST`, which a resolution change, a full-screen
     /// application taking over, or a session lock all produce. The
     /// caller's recovery is to open a new one, not to fail.
@@ -318,7 +318,7 @@ impl MonitorDuplicator {
 
             // A frame with nothing presented behind it carries pointer
             // metadata over a surface no desktop image has been composed
-            // into — see the module note. Treated as "no change", which
+            // into; see the module note. Treated as "no change", which
             // is what it is.
             if info.LastPresentTime == 0 {
                 let _ = self.duplication.ReleaseFrame();
@@ -334,7 +334,7 @@ impl MonitorDuplicator {
                 })
                 .and_then(|texture| self.read_back(&texture, x, y, width, height, out));
 
-            // Released whichever way the read went — holding a frame
+            // Released whichever way the read went: holding a frame
             // blocks every later acquire on this output, including ours.
             let _ = self.duplication.ReleaseFrame();
             copied.map(|()| Grab::Fresh)
@@ -370,8 +370,8 @@ impl MonitorDuplicator {
 ///
 /// The whole `unsafe` surface of the read-back is the one
 /// `from_raw_parts` below: turning the mapped pointer into a slice of
-/// the extent the region actually reaches. Everything past that — the
-/// stride arithmetic that is the part historically got wrong — is
+/// the extent the region actually reaches. Everything past that (the
+/// stride arithmetic that is the part historically got wrong) is
 /// [`pack_rows`], which is safe, and therefore testable and measurable
 /// without a GPU in the room.
 unsafe fn copy_region(
@@ -394,14 +394,14 @@ unsafe fn copy_region(
         return Ok(());
     }
 
-    // The region's first row, and exactly what its last row reaches —
+    // The region's first row, and exactly what its last row reaches,
     // not the whole surface. A region that stops short of the bottom
     // must not describe bytes past it.
     let first = y as usize * pitch;
     let extent = (height as usize - 1) * pitch + x_bytes + row_bytes;
 
     // SAFETY: the surface is mapped for the duration of this call, and
-    // the region was checked against the output's size by the caller —
+    // the region was checked against the output's size by the caller,
     // so `extent` bytes from row `y` lie inside the mapped allocation.
     let surface =
         unsafe { std::slice::from_raw_parts((mapped.pData as *const u8).add(first), extent) };
@@ -419,7 +419,7 @@ unsafe fn copy_region(
 /// **Against `pitch`, never against `row_bytes`.** The driver pads rows
 /// to its own alignment, and reading a padded surface as though it were
 /// tightly packed shears the image progressively further right down the
-/// frame — see the module note.
+/// frame; see the module note.
 ///
 /// **One `copy_from_slice` per row.** That is a `memcpy`. The previous
 /// shape appended four bytes at a time to a `Vec`, which re-proves the
@@ -431,7 +431,7 @@ unsafe fn copy_region(
 /// recycled across frames, so in the steady state the resize is a no-op
 /// that leaves the capacity alone.
 ///
-/// Returns `false` — writing nothing — when `src` is too small for the
+/// Returns `false`, writing nothing, when `src` is too small for the
 /// geometry described, rather than reading past its end.
 pub fn pack_rows(
     src: &[u8],
@@ -462,7 +462,7 @@ pub fn pack_rows(
 /// The output driving a monitor, and what is needed to duplicate it.
 struct FoundOutput {
     /// The adapter that owns the output. The device must be created on
-    /// *this* one — duplication across adapters is not a thing, and on a
+    /// *this* one: duplication across adapters is not a thing, and on a
     /// laptop with switchable graphics the first adapter is routinely
     /// not the one driving the panel.
     adapter: IDXGIAdapter1,
@@ -525,7 +525,7 @@ unsafe fn create_device(
 ) -> Result<(ID3D11Device, ID3D11DeviceContext), String> {
     let mut device: Option<ID3D11Device> = None;
     let mut context: Option<ID3D11DeviceContext> = None;
-    // `UNKNOWN` driver type is required — not preferred — when an
+    // `UNKNOWN` driver type is required, not preferred, when an
     // adapter is supplied.
     unsafe {
         D3D11CreateDevice(
@@ -629,11 +629,11 @@ mod tests {
             );
             assert!(
                 buffer.iter().any(|&b| b != 0),
-                "every byte came back zero — a metadata-only frame was taken as a picture"
+                "every byte came back zero: a metadata-only frame was taken as a picture"
             );
             // Alpha is *not* asserted here any more: the read-back is a
             // straight copy of the surface, so whatever DWM left in that
-            // byte comes through. Nothing downstream reads it — the NV12
+            // byte comes through. Nothing downstream reads it: the NV12
             // converter discards it, and the one consumer that would
             // (GIF) forces it opaque when it materialises an RgbaImage.
         }
@@ -643,8 +643,8 @@ mod tests {
     fn a_padded_surface_is_copied_row_by_row_rather_than_sheared() {
         // The trap from the module note, exercised without a GPU: a
         // driver's `RowPitch` is wider than `width * 4`, and a copy that
-        // ignores it walks progressively further into each row's padding
-        // — an image that leans further right the further down you look.
+        // ignores it walks progressively further into each row's padding:
+        // an image that leans further right the further down you look.
         let (width, height) = (3u32, 4u32);
         let row_bytes = width as usize * 4;
         let pitch = row_bytes + 16; // padding the copy must skip

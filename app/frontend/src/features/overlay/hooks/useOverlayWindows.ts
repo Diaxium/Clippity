@@ -22,14 +22,14 @@ function isWindowPickMode(mode: OverlayMode): boolean {
  * Owns the Window-mode target list.
  *
  * The backend enumerates capturable top-level windows when the overlay
- * opens in `window` mode — frozen at the same instant as the desktop
- * snapshot, while our own windows are still hidden — and caches them.
+ * opens in `window` mode (frozen at the same instant as the desktop
+ * snapshot, while our own windows are still hidden) and caches them.
  * This hook pulls that cache into the store so `useWindowSelection` can
  * hit-test the cursor against it and `WindowHighlight` can draw it.
  *
  * Keyed off the event payload's `mode` (not the store's `mode`) so it
  * doesn't depend on `useOverlaySnapshot`'s `setMode` having run first,
- * and so a non-Window session always clears the list — a Region
+ * and so a non-Window session always clears the list: a Region
  * selection can never inherit a stale highlight set. Best-effort: a
  * failed fetch just leaves the list empty (no highlight until the next
  * open).

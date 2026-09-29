@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // `useSettingsPatch` mutates the store optimistically and *then* fires
-// the IPC, so stubbing only the IPC leaves the real patch path — which
+// the IPC, so stubbing only the IPC leaves the real patch path, which
 // is what makes "toggle the mic, the level slider appears" a test of the
 // panel rather than of a mock.
 vi.mock("@services/tauri/clients/settings", () => ({

@@ -108,7 +108,7 @@ interface IconTileProps {
 }
 
 /**
- * Rounded, tinted square holding an icon or a short text badge — the
+ * Rounded, tinted square holding an icon or a short text badge: the
  * launcher glyphs, preset markers, and activity dots all use it.
  */
 export function IconTile({

@@ -1,4 +1,4 @@
-# 0033 — Diagnostics are a shipped surface; developer mode is a gate over it
+# 0033: Diagnostics are a shipped surface; developer mode is a gate over it
 
 - **Status:** Accepted (implemented)
 - **Date:** 2026-08-04
@@ -16,20 +16,20 @@
   (structured diagnostics console / support bundle with redaction),
   [security-privacy roadmap](../roadmaps/security-privacy.md) (what a bundle
   may carry),
-  [0031 — recording is Media Foundation](0031-recording-is-media-foundation-one-session-two-outputs.md)
+  [0031: recording is Media Foundation](0031-recording-is-media-foundation-one-session-two-outputs.md)
   (whose session counters the recording card reports)
 
 ## Context
 
 Settings → Advanced was a `ComingSoonPanel`. Everything a support conversation
-needs — which Windows, which WebView, where the captures went, whether the
+needs (which Windows, which WebView, where the captures went, whether the
 global hotkey actually registered, why a recording dropped a third of its
-frames — was either in a `tracing` line nobody could reach or nowhere at all.
+frames) was either in a `tracing` line nobody could reach or nowhere at all.
 `logging::init` wrote to stdout, which a windowed release build does not have.
 
 Three questions had to be answered before writing any of it.
 
-**Who is this for?** The obvious answer — "developers" — is wrong for most of
+**Who is this for?** The obvious answer, "developers", is wrong for most of
 it. A user reporting a bug is the person who needs the log file to exist, and
 they will never turn on a developer switch to get one.
 
@@ -50,7 +50,7 @@ presentation.** `developer.logToDisk` defaults on, writing size-capped rotating
 files under `<data>/logs` (8 MiB × 5 by default). The log viewer, the system
 information card, and the bundle export are available without arming anything.
 Developer mode gates the WebView inspector, live instrumentation, feature
-flags, cache clearing, and safe mode — the parts that are destructive or that
+flags, cache clearing, and safe mode: the parts that are destructive or that
 record command metadata.
 
 **Developer mode disarms itself.** `DeveloperExpiry` defaults to `restart`,
@@ -60,9 +60,9 @@ stamped by the service, not by the webview.
 
 **The bundle is a redacted folder, not an archive.** Redaction (account name,
 home directory, capture file names) is on by default and implemented as pure
-rules in `domain::developer::Redaction` so the edge cases — a two-letter
+rules in `domain::developer::Redaction` so the edge cases (a two-letter
 account name that appears inside ordinary words, a capture name containing
-spaces, mixed-case Windows paths — are unit-tested without touching a disk. A
+spaces, mixed-case Windows paths) are unit-tested without touching a disk. A
 folder rather than a zip because it needs no compression dependency, the user
 can look inside before sending it, and Explorer turns it into a zip in one
 click.
@@ -71,7 +71,7 @@ click.
 timing is recorded in `services/tauri/client`'s `invoke`, so it observes every
 command rather than the ones a feature remembered to instrument, and it is a
 no-op until `commandTiming` arms it. The frontend logger forwards into the same
-`tracing` file, so both halves of a bug share one timeline — with the `ipc`
+`tracing` file, so both halves of a bug share one timeline, with the `ipc`
 module excluded, because a record about an unreachable backend must not be
 routed through the unreachable backend.
 
@@ -83,14 +83,14 @@ registry and `services::settings_service`'s constants must agree by name.
 **Safe mode is a marker file, consumed by the launch that honours it.**
 `AppHandle::restart` re-executes with this process's arguments, so there is
 nothing to attach a flag to; `infra::runtime` writes `<data>/safe-mode`, and
-boot deletes it as it reads it — which is what stops safe mode from becoming
+boot deletes it as it reads it, which is what stops safe mode from becoming
 sticky after a crash that happened to occur while it was armed.
 
 ## Consequences
 
 - A bug report from a user who has never opened Settings → Advanced still has a
   session behind it, and the bundle that carries it is redacted by default.
-- The backend log level is a setting rather than an environment variable —
+- The backend log level is a setting rather than an environment variable,
   except when `CLIPPITY_LOG` / `RUST_LOG` is set, which wins outright and which
   the page says is winning, rather than showing a control that silently does
   nothing.

@@ -1,11 +1,11 @@
-//! Diagnostics orchestration — what Settings → Advanced reads, and the
+//! Diagnostics orchestration: what Settings → Advanced reads, and the
 //! bundle it exports.
 //!
 //! Everything here answers one of two questions: *what is this
 //! installation?* (versions, paths, monitors, what is registered) and
 //! *what happened?* (the log, the caches, the last recording). Both are
-//! read-mostly and cheap; the one destructive corner —
-//! [`DiagnosticsService::clear_cache`] — is confined to a fixed enum of
+//! read-mostly and cheap; the one destructive corner,
+//! [`DiagnosticsService::clear_cache`], is confined to a fixed enum of
 //! targets so the command surface can never be handed a path to delete.
 //!
 //! Nothing here transmits anything. A bundle is written to a folder the
@@ -36,7 +36,7 @@ pub const BUNDLE_DIR: &str = "diagnostics";
 
 /// Cap on how much of the log goes into one bundle, in bytes. A 64 MiB
 /// retained set is legitimate for a long session, but nobody is going
-/// to be sent it — the tail is what carries the failure.
+/// to be sent it: the tail is what carries the failure.
 const BUNDLE_LOG_BYTES: u64 = 4 * 1024 * 1024;
 
 pub struct DiagnosticsService {
@@ -48,7 +48,7 @@ impl DiagnosticsService {
         Self { paths }
     }
 
-    /// The log directory — `<data>/logs`. Created lazily by the logging
+    /// The log directory: `<data>/logs`. Created lazily by the logging
     /// sink; this is the path either way, so "open the log folder" works
     /// before the first line is written.
     pub fn logs_dir(&self) -> PathBuf {
@@ -120,7 +120,7 @@ impl DiagnosticsService {
         }
     }
 
-    /// Live runtime state — windows, shielding, the global hotkey, the
+    /// Live runtime state: windows, shielding, the global hotkey, the
     /// index, the caches.
     pub fn runtime_status(
         &self,
@@ -151,7 +151,7 @@ impl DiagnosticsService {
     /// click when someone asks for a single file.
     ///
     /// `system_json` and `settings_json` are passed in rather than read
-    /// here so this stays independent of the settings service — the
+    /// here so this stays independent of the settings service: the
     /// command layer already holds both.
     pub fn export_bundle(
         &self,
@@ -224,7 +224,7 @@ impl DiagnosticsService {
             }
             CacheTarget::Models => clear_dir(&self.paths.models)?,
             CacheTarget::Webview => {
-                // Sits beside `data\`, not inside it — see
+                // Sits beside `data\`, not inside it; see
                 // `paths::webview_data_dir`. Deleting it under the
                 // running process is safe because WebView2 recreates it
                 // on the next launch, which is why this one needs a
@@ -285,7 +285,7 @@ impl DiagnosticsService {
     }
 }
 
-/// `clippity-diagnostics-2026-08-04-143012` — sortable, and unique
+/// `clippity-diagnostics-2026-08-04-143012`: sortable, and unique
 /// enough that two exports a minute apart don't collide.
 fn bundle_folder_name(t: LocalTime) -> String {
     format!(
@@ -326,7 +326,7 @@ fn read_capped(path: &Path, max: u64) -> std::io::Result<String> {
 }
 
 /// Delete the contents of `dir`, returning the bytes freed. A missing
-/// directory frees nothing and is not an error — that is what "already
+/// directory frees nothing and is not an error: that is what "already
 /// clear" looks like.
 fn clear_dir(dir: &Path) -> AppResult<u64> {
     if !dir.is_dir() {
@@ -577,7 +577,7 @@ mod tests {
         let freed = h.service.clear_cache(CacheTarget::Thumbnails).unwrap();
         assert_eq!(freed, 768);
         assert_eq!(dir_size(&thumbs), 0);
-        // The directory itself survives — the next thumbnail write
+        // The directory itself survives: the next thumbnail write
         // shouldn't have to recreate it.
         assert!(thumbs.is_dir());
     }

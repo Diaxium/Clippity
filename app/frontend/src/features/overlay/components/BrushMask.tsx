@@ -24,7 +24,7 @@ export function BrushMask() {
   ];
 
   // Resolve the accent token to a concrete color (canvas fillStyle can't
-  // read `var(...)`). Recomputed only on mount — the theme is stable for
+  // read `var(...)`). Recomputed only on mount: the theme is stable for
   // an overlay session.
   const accent = useMemo(() => {
     const v = getComputedStyle(document.documentElement)

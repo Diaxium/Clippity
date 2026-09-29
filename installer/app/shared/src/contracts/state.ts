@@ -1,5 +1,5 @@
 /**
- * Installation-model + detection contracts — mirror Rust
+ * Installation-model + detection contracts: mirror Rust
  * `installer_domain::state`.
  *
  * Backs the maintenance hub's real status line and the recovery routing.

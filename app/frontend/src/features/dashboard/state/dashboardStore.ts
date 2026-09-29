@@ -27,7 +27,7 @@ interface DashboardStoreState {
 }
 
 export const useDashboardStore = create<DashboardStoreState>((set) => ({
-  // Default landing view — the Home overview.
+  // Default landing view: the Home overview.
   view: "home",
   editorCaptureId: null,
   studioCaptureId: null,

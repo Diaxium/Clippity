@@ -137,7 +137,7 @@ describe("FillPicker gradient", () => {
     render(
       <FillPicker paint={paint} onChange={() => {}} onPickImage={() => {}} />
     );
-    // No inline SV picker until requested — opening one adds its hex textbox.
+    // No inline SV picker until requested: opening one adds its hex textbox.
     const before = screen.queryAllByRole("textbox").length;
     fireEvent.click(screen.getAllByLabelText("Stop color")[0]!);
     expect(screen.getAllByRole("textbox").length).toBeGreaterThan(before);

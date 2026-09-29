@@ -1,11 +1,11 @@
 /**
- * AI-model manager wire-format contracts — mirror Rust `domain::models`.
+ * AI-model manager wire-format contracts: mirror Rust `domain::models`.
  */
 
 /** What a model is for. Only object detection ships today. */
 export type ModelTask = "object-detection";
 
-/** Install/download phase — the discriminant of the flattened status
+/** Install/download phase: the discriminant of the flattened status
  *  fields on `ModelInfo`. `update-available` means a complete but older
  *  release is on disk and the registry has newer bytes. */
 export type ModelPhase =
@@ -53,14 +53,14 @@ export interface ReleaseCheck {
   updatable: boolean;
 }
 
-/** Payload of `clippity://models/progress` — throttled download ticks. */
+/** Payload of `clippity://models/progress`: throttled download ticks. */
 export interface ModelProgress {
   id: string;
   downloaded: number;
   total: number;
 }
 
-/** Verdict of `ensure_object_model` — the capture window branches on
+/** Verdict of `ensure_object_model`: the capture window branches on
  *  `status` before opening the overlay in Object mode. */
 export interface ObjectModelReadiness {
   status: "ready" | "downloading" | "missing";

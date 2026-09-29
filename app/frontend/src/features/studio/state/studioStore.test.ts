@@ -30,7 +30,7 @@ describe("loading a clip", () => {
 
   it("keeps the trim when the same clip is re-opened", () => {
     // The dashboard re-emits its view request on every cross-window
-    // jump, including ones that land back here — that must not silently
+    // jump, including ones that land back here: that must not silently
     // discard in/out points the user placed.
     store().open(CLIP.id);
     store().loaded(CLIP);

@@ -5,12 +5,12 @@ import { useEditorStore } from "../../state/editorStore";
 import type { SceneNode, StampKind } from "../../types";
 import { PanelSection } from "./section";
 
-/** Swatch size for the picker grid, in the icons' own 24-unit authoring space —
+/** Swatch size for the picker grid, in the icons' own 24-unit authoring space,
  *  so the preview path data *is* the mark's path data, at 1:1. */
 const SWATCH = 24;
 
 /**
- * The stamp picker (Fork A-F4) — the whole of a stamp's own UI, because
+ * The stamp picker (Fork A-F4): the whole of a stamp's own UI, because
  * everything else about it is an existing control: the icon's color is the
  * node's Fill, its halo the Stroke, its size the frame.
  *
@@ -22,7 +22,7 @@ const SWATCH = 24;
  *
  * Multi-select (P3) re-icons every selected stamp together; non-stamps caught in
  * the same marquee sit out. The write goes through `updateEach` so each node's
- * layer name is decided from *its own* previous icon — a shared patch would
+ * layer name is decided from *its own* previous icon: a shared patch would
  * rename a hand-titled layer along with the untouched ones.
  */
 export function StampSection() {
@@ -49,7 +49,7 @@ export function StampSection() {
       const spec = stampOf(n);
       if (!spec) return null;
       const patch: Partial<SceneNode> = { stamp: { kind: next } };
-      // Rename only a layer still carrying its icon's name — a title the user
+      // Rename only a layer still carrying its icon's name: a title the user
       // typed is theirs, and re-icons shouldn't overwrite it.
       if (n.name === stampLabel(spec.kind)) patch.name = stampLabel(next);
       return patch;
@@ -109,7 +109,7 @@ export function StampSection() {
 
       {kind?.mixed && (
         <p className="mt-2.5 text-[11px] text-[var(--ed-text-dim)]">
-          {MIXED_LABEL} — pick one to unify the selection.
+          {MIXED_LABEL}: pick one to unify the selection.
         </p>
       )}
       {!kind && (

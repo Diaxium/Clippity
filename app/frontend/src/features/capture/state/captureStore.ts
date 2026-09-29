@@ -2,7 +2,7 @@
  * Capture-window state.
  *
  * Feature-local Zustand slice. Mode selection, option toggles, output
- * dropdowns, sidebar layout — anything specific to the capture window
+ * dropdowns, sidebar layout: anything specific to the capture window
  * itself. Cross-window settings (compact layout, theme) come through
  * the global stores or are deferred until settings is ported.
  */
@@ -40,7 +40,7 @@ interface CaptureStoreState {
   /** Preserve HDR signal in the saved PNG. */
   hdr: boolean;
   delayEnabled: boolean;
-  /** 1..60 — clamped by setDelaySeconds. */
+  /** 1..60: clamped by setDelaySeconds. */
   delaySeconds: number;
   /** Scroll/stitch direction for Scrolling-Window + Panoramic modes. */
   scrollDirection: ScrollDirection;
@@ -48,7 +48,7 @@ interface CaptureStoreState {
   // ---- Recording (ADR 0031) -------------------------------------------
   //
   // Only the two *per-session* choices live here. Everything else the
-  // Record screen offers — audio inputs, frame rate, cursor — is a
+  // Record screen offers (audio inputs, frame rate, cursor) is a
   // persisted preference the panel reads and patches directly in
   // Settings → Recording, the same way the palette swatch count does.
   // Duplicating them into session state would mean a value the user
@@ -67,7 +67,7 @@ interface CaptureStoreState {
 
   // ---- Defaults hydration --------------------------------------------
   /** True once the persisted capture defaults have seeded this store.
-   *  Guards `hydrateDefaults` so it runs at most once per window realm —
+   *  Guards `hydrateDefaults` so it runs at most once per window realm:
    *  a later settings edit (or re-hydration on window re-show) never
    *  clobbers the user's in-session option tweaks. */
   defaultsHydrated: boolean;
@@ -98,7 +98,7 @@ const MAX_DELAY = 60;
 
 export const useCaptureStore = create<CaptureStoreState>((set) => ({
   nav: "capture",
-  // Region is the legacy default — restored now that the overlay port
+  // Region is the legacy default: restored now that the overlay port
   // has landed and the Region tile is armable again.
   captureType: "region",
   customMode: null,
@@ -176,7 +176,7 @@ export const useCaptureStore = create<CaptureStoreState>((set) => ({
 
 /**
  * Derive the backend's `CaptureRequest` from the current store state.
- * Pure — kept here (rather than as a Zustand selector) so the unit
+ * Pure: kept here (rather than as a Zustand selector) so the unit
  * tests can call it with a hand-rolled state value.
  */
 export function buildRequest(s: CaptureStoreState): CaptureRequest {

@@ -28,8 +28,8 @@ export interface TrimExportState {
 /**
  * Drive a trim export and report where it has got to.
  *
- * Deliberately not in the store. The store is the *document* — what clip
- * is open, where the playhead is, where the handles are — and it is read
+ * Deliberately not in the store. The store is the *document* (what clip
+ * is open, where the playhead is, where the handles are) and it is read
  * by every control on the surface. An export is a transient job with one
  * consumer, and putting its progress in the store would re-render the
  * timeline and the transport several times a second for the length of an
@@ -62,7 +62,7 @@ export function useTrimExport(): TrimExportState {
       setError(null);
       setDone(null);
       // Seed the progress so the UI switches to its running state on the
-      // click rather than when the first event lands — an encode can
+      // click rather than when the first event lands: an encode can
       // take a moment to produce its first frame.
       setProgress({ encodedMs: 0, totalMs: range.endMs - range.startMs });
 
@@ -77,7 +77,7 @@ export function useTrimExport(): TrimExportState {
         const { annotations, info } = useStudioStore.getState();
 
         // Overlays are rendered at the source's **native** size, not the
-        // stage's — the backend composites them onto decoded frames, and
+        // stage's: the backend composites them onto decoded frames, and
         // a stage-sized overlay would cover a corner of the picture.
         const overlays = info
           ? await renderOverlays(annotations, {
@@ -96,7 +96,7 @@ export function useTrimExport(): TrimExportState {
           format,
           mute,
           // Both are timed against the source, which is where the user
-          // placed them — the backend looks them up by each frame's own
+          // placed them: the backend looks them up by each frame's own
           // timestamp rather than by its position in the export.
           redactions: toRedactions(annotations),
           overlays,

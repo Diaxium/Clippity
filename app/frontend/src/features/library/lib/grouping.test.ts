@@ -100,7 +100,7 @@ describe("matchesSearch", () => {
       title: "clippity-123",
       tags: ["Bug Report"],
       sourceApp: "Chrome",
-      sourceWindow: "Pricing — Figma",
+      sourceWindow: "Pricing - Figma",
     });
     expect(matchesSearch(m, "clippity")).toBe(true);
     expect(matchesSearch(m, "bug report")).toBe(true);
@@ -190,7 +190,7 @@ describe("collectionItems", () => {
   });
 
   it("skips members whose capture isn't in the list", () => {
-    // Trashed while the collection was open, or on an unmounted drive —
+    // Trashed while the collection was open, or on an unmounted drive:
     // the collection keeps the id, the view just doesn't render it.
     const items = [meta({ id: "a" }), meta({ id: "c" })];
     expect(collectionItems(items, collection).map((m) => m.id)).toEqual([

@@ -45,7 +45,7 @@ interface InspectorProps {
   meta: CaptureMeta;
   mode: LibraryMode;
   collections: Collection[];
-  /** Every tag in use — the tag editor's vocabulary. */
+  /** Every tag in use: the tag editor's vocabulary. */
   suggestions: string[];
   onDelete: (m: CaptureMeta) => void;
   onRestore: (m: CaptureMeta) => void;
@@ -59,7 +59,7 @@ interface InspectorProps {
  * that can be done to it.
  *
  * It exists because a grid card can only carry what fits under a
- * thumbnail — a title, a time, two tags — while a capture actually knows
+ * thumbnail (a title, a time, two tags) while a capture actually knows
  * where it came from, which window, which display, and which preset. All
  * of that used to be crammed into one hover tooltip
  * (`formatProvenance`), which is fine for a glance and useless for
@@ -68,7 +68,7 @@ interface InspectorProps {
  * Four blocks, in the order a person asks for them: what it *is*
  * (preview, name, tags), what is *true* of it (information), where it
  * has been *filed* (collections), and what to *do* with it (actions).
- * Nothing in here is a placeholder — every row calls a command that
+ * Nothing in here is a placeholder: every row calls a command that
  * exists, which is why there is no "Export" or "Duplicate" among them.
  */
 export function Inspector({
@@ -159,7 +159,7 @@ export function Inspector({
           {mode === "library" && <FavoriteButton meta={meta} alwaysVisible />}
         </div>
 
-        {/* Tags — the editor is the same popover the cards use, so a tag
+        {/* Tags: the editor is the same popover the cards use, so a tag
             added here and one added there cannot diverge. */}
         {mode === "library" && (
           <div className="mt-2.5 flex flex-wrap items-center gap-1 rounded-[10px] border border-dashed border-[color:var(--hairline-strong)] p-1.5">
@@ -216,7 +216,7 @@ export function Inspector({
           {meta.preset && <Fact label="Preset" value={meta.preset} />}
         </dl>
 
-        {/* Collections — membership, and the shortest path into another. */}
+        {/* Collections: membership, and the shortest path into another. */}
         {mode === "library" && (
           <>
             <SectionLabel>Collections</SectionLabel>
@@ -306,8 +306,8 @@ export function Inspector({
             ) : (
               <>
                 {/* Destination, label and icon all come from
-                    `openCapture` — a recording's Studio or a still's
-                    editor — so this pane cannot disagree with the
+                    `openCapture`: a recording's Studio or a still's
+                    editor: so this pane cannot disagree with the
                     context menu or with the card's own double-click.
                     "Play" below still hands the clip to the OS, for
                     anyone who wants it full-screen. */}
@@ -343,7 +343,7 @@ export function Inspector({
         )}
       </div>
 
-      {/* The one action worth a button rather than a row — getting the
+      {/* The one action worth a button rather than a row: getting the
           capture out of Clippity and into whatever the user meant to put
           it in. Aux entries have no file to reveal, so they get their
           copy instead. */}
@@ -389,9 +389,9 @@ function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-/** One row of the information table. The value is allowed to wrap — a
+/** One row of the information table. The value is allowed to wrap: a
  *  window title is often long, and truncating the single most
- *  identifying fact to `Untitled — Goog…` defeats the point of the
+ *  identifying fact to `Untitled - Goog…` defeats the point of the
  *  pane. */
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -437,7 +437,7 @@ function Action({
   );
 }
 
-/** "Add to collection" — a row that becomes a picker. Collapsed when
+/** "Add to collection": a row that becomes a picker. Collapsed when
  *  there is nowhere left to add it, since an empty menu is a dead end. */
 function AddToCollection({
   options,

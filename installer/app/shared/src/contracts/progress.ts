@@ -1,5 +1,5 @@
 /**
- * Progress contracts — mirror Rust `installer_domain::progress`.
+ * Progress contracts: mirror Rust `installer_domain::progress`.
  *
  * The Installing / Applying-changes / Uninstalling steps all render the
  * same shape: a percentage bar plus an ordered checklist of tasks that

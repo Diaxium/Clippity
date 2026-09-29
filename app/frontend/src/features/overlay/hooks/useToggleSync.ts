@@ -10,7 +10,7 @@ import { onOverlayScrollDirection } from "@services/tauri/clients/scroll";
 import { useOverlayStore } from "../state/overlayStore";
 
 /**
- * Mirror the capture-window's options into the overlay store — the
+ * Mirror the capture-window's options into the overlay store: the
  * toggles (preview / clipboard / cursor), the scroll direction, the
  * recording format, and a recording preset's request when one opened the
  * overlay. Capture window broadcasts these before opening the overlay

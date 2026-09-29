@@ -1,4 +1,4 @@
-//! GIF sink — the recorder's second output.
+//! GIF sink: the recorder's second output.
 //!
 //! **Streaming, per-frame palettes.** The textbook way to make a good
 //! GIF is to collect every frame, derive one global 256-colour palette
@@ -7,7 +7,7 @@
 //! is roughly a gigabyte of RGBA, and holding it would make a long
 //! recording a memory-exhaustion bug rather than a big file. Each frame
 //! is instead quantized and written as it arrives, with its own local
-//! palette — which GIF supports natively, costs a few hundred bytes per
+//! palette, which GIF supports natively, costs a few hundred bytes per
 //! frame, and for screen content (flat UI colour, few gradients) is
 //! close to indistinguishable from a global one.
 //!
@@ -32,7 +32,7 @@ use super::sink::{file_size, RecordingSink, SinkConfig, SinkFrame};
 ///
 /// 10 rather than the default 1: this runs inside the frame budget of a
 /// live recording, and a quantizer tuned for archival quality simply
-/// cannot keep up — the session would drop most of its frames and the
+/// cannot keep up: the session would drop most of its frames and the
 /// GIF would stutter. A stuttering GIF is a worse artefact than a
 /// slightly larger one.
 const ENCODER_SPEED: i32 = 10;
@@ -40,7 +40,7 @@ const ENCODER_SPEED: i32 = 10;
 pub fn open(path: &Path, config: SinkConfig) -> AppResult<Box<dyn RecordingSink>> {
     let file = File::create(path)?;
     let mut encoder = GifEncoder::new_with_speed(BufWriter::new(file), ENCODER_SPEED);
-    // A screen-recorded GIF is a loop by convention — a one-shot GIF
+    // A screen-recorded GIF is a loop by convention: a one-shot GIF
     // that freezes on its last frame reads as a broken image.
     encoder
         .set_repeat(Repeat::Infinite)
@@ -59,7 +59,7 @@ pub fn open(path: &Path, config: SinkConfig) -> AppResult<Box<dyn RecordingSink>
 }
 
 struct GifSink {
-    /// `None` only after [`RecordingSink::finish`] has taken it — the
+    /// `None` only after [`RecordingSink::finish`] has taken it: the
     /// trailer is written when the encoder drops.
     encoder: Option<GifEncoder<BufWriter<File>>>,
     path: PathBuf,
@@ -81,7 +81,7 @@ impl RecordingSink for GifSink {
 
         // The one sink that materialises. `image`'s quantizer is built
         // on its RGBA types, so a capture in the surface's own order has
-        // to be swapped here — see `SinkFrame`. GIF is where that costs
+        // to be swapped here; see `SinkFrame`. GIF is where that costs
         // least: its pixel budget has already pulled the frame far below
         // the captured size, and the quantizer that follows dwarfs it.
         let source = frame
@@ -247,7 +247,7 @@ mod tests {
         let path = dir.join("a.gif");
         let mut sink = open(&path, config(32, 32, 10)).unwrap();
         assert!(!sink.wants_audio());
-        // Must not error — the session loop is format-agnostic.
+        // Must not error: the session loop is format-agnostic.
         sink.write_audio(&[0u8; 64], 0, 0).unwrap();
         sink.write_frame(SinkFrame::rgba(&frame(32, 32, 1)), 0, 0)
             .unwrap();

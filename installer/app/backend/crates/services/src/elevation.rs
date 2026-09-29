@@ -1,7 +1,7 @@
 //! Handing an install off to an elevated copy of the installer.
 //!
 //! When the chosen destination needs administrator rights, the wizard
-//! cannot simply gain them — Windows only grants an elevated token at
+//! cannot simply gain them: Windows only grants an elevated token at
 //! process start. So the running (unelevated) instance writes the plan
 //! the user assembled to a handoff file, relaunches itself under the
 //! `runas` verb with `--resume <file>`, and exits. The elevated copy
@@ -63,7 +63,7 @@ fn read_handoff_json<T: DeserializeOwned>(path: &Path, what: &str) -> InstallerR
 
 /// Extract the path following `flag` in a process argument list, if present.
 ///
-/// Returns `None` for an ordinary launch, which is the common case — the
+/// Returns `None` for an ordinary launch, which is the common case: the
 /// installer is normally started by double-click with no arguments.
 fn handoff_path_after<I, S>(args: I, flag: &str) -> Option<PathBuf>
 where
@@ -93,7 +93,7 @@ pub fn read_handoff(path: &Path) -> InstallerResult<InstallPlan> {
 
 /// Write the handoff and relaunch this installer elevated to execute it.
 ///
-/// On success the caller must close the current window — the elevated
+/// On success the caller must close the current window: the elevated
 /// copy now owns the install.
 pub fn relaunch_with(plan: &InstallPlan) -> InstallerResult<()> {
     let handoff = write_handoff(plan)?;
@@ -134,7 +134,7 @@ pub fn read_uninstall_handoff(path: &Path) -> InstallerResult<RemovalSelection> 
 /// an unelevated process, so the uninstall hands itself to an elevated copy
 /// exactly as the install does.
 ///
-/// On success the caller must close the current window — the elevated copy
+/// On success the caller must close the current window: the elevated copy
 /// now owns the uninstall.
 pub fn relaunch_uninstall_with(selection: &RemovalSelection) -> InstallerResult<()> {
     let handoff = write_uninstall_handoff(selection)?;

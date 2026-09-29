@@ -50,7 +50,7 @@ const ROUTE_TABLE: ReadonlyArray<[string, ComponentType]> = [
   [ROUTES.tray, TrayWindow],
   [ROUTES.recorderFrame, RecorderFrameWindow],
   [ROUTES.main, MainWindow],
-  [ROUTES.capture, CaptureWindow], // default — must come last
+  [ROUTES.capture, CaptureWindow], // default; must come last
 ];
 
 export function resolveWindow(route: string): ComponentType {

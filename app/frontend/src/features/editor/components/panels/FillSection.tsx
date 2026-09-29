@@ -19,7 +19,7 @@ import { PanelSection } from "./section";
  * Fills of the primary selection. Each row's swatch opens the floating color
  * editor (FE1); the row carries opacity, visibility, and remove.
  *
- * Multi-select is **edit-by-index** (Fork P-F1) — see `StrokeSection` for the
+ * Multi-select is **edit-by-index** (Fork P-F1); see `StrokeSection` for the
  * rationale. The swatch hands the popover the peer rows so a color or gradient
  * edit paints the whole selection, not just the primary.
  */

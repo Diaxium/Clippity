@@ -1,5 +1,5 @@
 /**
- * Overlay wire-format contracts — mirror Rust `domain::overlay`.
+ * Overlay wire-format contracts: mirror Rust `domain::overlay`.
  */
 
 /** What the user is doing inside the overlay. Wire enum kept in
@@ -45,7 +45,7 @@ export interface OverlayWindow {
   rect: Region;
 }
 
-/** One AI-detected object — Object mode's click targets. `rect` is
+/** One AI-detected object: Object mode's click targets. `rect` is
  *  physical-pixel, virtual-desktop-origin. `confidence` is the
  *  detector's 0–1 score. */
 export interface DetectedObject {
@@ -79,7 +79,7 @@ export interface BeginOverlayRequest {
 }
 
 /** Sent on `finish_region_capture`. `cursorPin` is the user's
- *  `lastInSelection` — the canvas-local pixel where the cursor should
+ *  `lastInSelection`: the canvas-local pixel where the cursor should
  *  land in the crop instead of the live system-cursor position. */
 export interface FinishRegionRequest {
   rect: Region;
@@ -130,12 +130,12 @@ export interface OverlayResult {
   width: number;
   height: number;
   path: string;
-  /** Mirrors `CaptureResult.preview` — whether to open the result in
+  /** Mirrors `CaptureResult.preview`: whether to open the result in
    *  the editor (sourced from the finalize toggles / scroll session). */
   preview: boolean;
 }
 
-/** Payload of `clippity://overlay/shown` — fired when the backend
+/** Payload of `clippity://overlay/shown`: fired when the backend
  *  finishes positioning + showing the overlay window. */
 export interface OverlayOpeningPayload {
   mode: OverlayMode;

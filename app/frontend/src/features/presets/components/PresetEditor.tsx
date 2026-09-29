@@ -24,7 +24,7 @@ import {
 const TYPES: readonly PresetCaptureType[] = ["fullscreen", "region", "window"];
 
 /** What a preset does. A recording preset is Clippity's equivalent of an
- *  OBS scene — a named, switchable recording configuration — living on
+ *  OBS scene (a named, switchable recording configuration) living on
  *  the surface that already managed saved capture workflows rather than
  *  on a parallel one. */
 const MODES: readonly { id: PresetMode; label: string; icon: typeof Camera }[] =
@@ -70,7 +70,7 @@ interface PresetEditorProps {
  * being handed a different form.
  *
  * A recording preset stores only the settings that are worth pinning per
- * preset — target, format, frame rate, resolution, audio. Gains and the
+ * preset: target, format, frame rate, resolution, audio. Gains and the
  * encoder settings stay global in Settings → Recording: they are tuning
  * for a machine, not for a workflow, and duplicating them here would
  * mean a user who fixes their mic level once has to fix it again in
@@ -81,7 +81,7 @@ export function PresetEditor({ preset, onClose }: PresetEditorProps) {
   const [saving, setSaving] = useState(false);
   const recording = draft.mode === "record";
 
-  // Standard dialog dismissal — Escape closes, even while the name
+  // Standard dialog dismissal: Escape closes, even while the name
   // input has focus (it autoFocuses, so this is the common case).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -280,7 +280,7 @@ export function PresetEditor({ preset, onClose }: PresetEditorProps) {
             checked={draft.cursor}
             onChange={(v) => set("cursor", v)}
           />
-          {/* Audio only for a format that can carry it — GIF is silent,
+          {/* Audio only for a format that can carry it: GIF is silent,
               so offering the toggles would promise a track nothing
               writes. Same rule the Record screen's options panel uses. */}
           {recording && draft.format !== "gif" && (

@@ -4,7 +4,7 @@
  * Per [ADR 0001](../../../../docs/decisions/0001-capture-overlay-dispatch.md),
  * typed IPC wrappers live under `services/tauri/clients/` so cross-feature
  * consumers (the capture-window's LibraryLayout, a future editor "open from
- * library", a future toast "Open Library" handoff) import from one place —
+ * library", a future toast "Open Library" handoff) import from one place,
  * never from `features/library/`. The wire-format types live in
  * `@clippity/shared` and are re-exported here for backwards compat.
  *
@@ -49,7 +49,7 @@ export type {
  * newest-first list. Missing dir resolves to an empty array.
  *
  * Served from a SQLite cache that is reconciled against the filesystem
- * before every call, so the answer is always what is on disk — the
+ * before every call, so the answer is always what is on disk: the
  * cache only saves re-reading each capture's provenance record.
  *
  * Rust route: `app::commands::library_list` →
@@ -141,7 +141,7 @@ export function libraryStorage(): Promise<StorageInfo> {
  *
  * Nothing in normal use needs this: `libraryList` reconciles the cache
  * against the filesystem on every call, so it cannot go stale. It is
- * the manual repair for the one blind spot that reconciliation has — a
+ * the manual repair for the one blind spot that reconciliation has: a
  * capture rewritten within the same millisecond, and to the same byte
  * count, as the one it replaced.
  */
@@ -152,7 +152,7 @@ export function libraryReindex(): Promise<number> {
 // ---------- Labels (tags + favorite) ----------
 //
 // Every one of these takes an **id list**, so tagging one capture and
-// tagging a selection of forty are the same call — bulk operations need
+// tagging a selection of forty are the same call: bulk operations need
 // no fan-out here and no second code path in the backend (ADR 0029).
 // Each resolves to how many entries actually changed; an edit that asks
 // for what is already true writes nothing and emits nothing.
@@ -187,7 +187,7 @@ export function libraryRemoveTags(
   );
 }
 
-/** Replace each id's tag list wholesale — the tag editor's "done". */
+/** Replace each id's tag list wholesale: the tag editor's "done". */
 export function librarySetTags(ids: string[], tags: string[]): Promise<number> {
   return invoke<number, { ids: string[]; tags: string[] }>("library_set_tags", {
     ids,
@@ -200,10 +200,10 @@ export function librarySetTags(ids: string[], tags: string[]): Promise<number> {
 /**
  * Subscribe to `clippity://library/updated`. Backend emits this
  * after any filesystem change in the captures dir (a new capture
- * lands, or a delete / restore / purge runs). Empty payload — the
+ * lands, or a delete / restore / purge runs). Empty payload: the
  * handler should re-fetch.
  *
- * Returns a sync unsubscribe — return it directly from a `useEffect`.
+ * Returns a sync unsubscribe; return it directly from a `useEffect`.
  */
 export function onLibraryUpdated(handler: () => void): () => void {
   return on<unknown>(EVENT_NAMES.libraryUpdated, () => handler());

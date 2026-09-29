@@ -7,8 +7,8 @@ import { useStudioStore } from "../state/studioStore";
 /**
  * Probe the capture `id` and put the result in the store.
  *
- * Probing is cheap regardless of the clip's length — the backend reads
- * the container's headers and stops — so this runs on every id change
+ * Probing is cheap regardless of the clip's length (the backend reads
+ * the container's headers and stops) so this runs on every id change
  * without any caching layer between it and the command.
  *
  * Guards against the out-of-order resolve: switching clips quickly (or

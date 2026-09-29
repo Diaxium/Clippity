@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { CaptureMeta } from "../types";
 import { takeSections, type Section } from "./paging";
 
-/** `n` throwaway captures — only identity and count matter here. */
+/** `n` throwaway captures: only identity and count matter here. */
 function caps(prefix: string, n: number): CaptureMeta[] {
   return Array.from({ length: n }, (_, i) => ({
     id: `${prefix}-${i}`,
@@ -43,7 +43,7 @@ describe("takeSections", () => {
   });
 
   it("never leaves a heading over an empty section", () => {
-    // 3 is exactly section a — b must not appear as an empty group.
+    // 3 is exactly section a; b must not appear as an empty group.
     const taken = takeSections(sections(), 3);
     expect(taken.map((s) => s.key)).toEqual(["a"]);
     expect(taken.every((s) => s.items.length > 0)).toBe(true);

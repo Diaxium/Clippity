@@ -15,13 +15,13 @@ import type { ToastPayload } from "./types";
  *
  * `error`, `clipboard`, `color`, `palette`, `text`, and `recording`
  * render real bodies. Every other (reserved-but-unported) kind routes
- * through `<UnknownKindBody>` — a deliberately-visible fallback so a
+ * through `<UnknownKindBody>`: a deliberately-visible fallback so a
  * runaway emit during development is loud, not silent. A future port
  * flips its `case` from the `default` fallback when it lands.
  */
 /**
  * Kinds whose body renders its **own** floating cards and owns its own
- * controls — the two long-running session HUDs.
+ * controls: the two long-running session HUDs.
  *
  * `ToastLayout` drops the standard toast card, its padding and its
  * chrome for these: wrapping them would nest a card inside a card, clip
@@ -29,7 +29,7 @@ import type { ToastPayload } from "./types";
  * its own Stop/Discard (a UI-only dismiss would orphan the worker).
  *
  * Lives beside the dispatch table rather than inline in the layout so
- * adding a body and forgetting the exemption is one change, not two —
+ * adding a body and forgetting the exemption is one change, not two,
  * which is exactly how the recorder HUD first shipped squeezed into the
  * ordinary toast shell.
  */
@@ -70,7 +70,7 @@ export function renderBody(payload: ToastPayload): JSX.Element {
       );
     default:
       // Every current `kind` has a real body above, so `payload` narrows
-      // to `never` here — the cast keeps a defensive fallback for a
+      // to `never` here: the cast keeps a defensive fallback for a
       // malformed / future-reserved emit (e.g. via devtools or a test
       // harness) rather than rendering nothing.
       return <UnknownKindBody kind={(payload as ToastPayload).kind} />;

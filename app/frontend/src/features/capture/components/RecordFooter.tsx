@@ -11,7 +11,7 @@ interface RecordFooterProps {
 }
 
 /**
- * Bottom action bar for the Record screen — the counterpart to
+ * Bottom action bar for the Record screen: the counterpart to
  * `CaptureFooter`, down to the Space hint, so the two screens have the
  * same muscle memory.
  *

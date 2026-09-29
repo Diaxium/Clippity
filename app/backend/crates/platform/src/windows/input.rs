@@ -5,11 +5,11 @@
 //! wheel input, so whatever scrollable surface is under that point
 //! advances one step per capture tick. SendInput with a positioned
 //! cursor is the path the OS treats exactly like a real wheel scroll, so
-//! it works across browsers, document viewers, chat apps, etc. — far
+//! it works across browsers, document viewers, chat apps, etc., far
 //! more reliable than synthesizing `WM_MOUSEWHEEL` to a guessed child
 //! window.
 //!
-//! `cfg(target_os = "windows")` only — gated at `platform::mod`. The
+//! `cfg(target_os = "windows")` only, gated at `platform::mod`. The
 //! pure geometry (where to aim) lives in `domain::scroll`.
 
 use windows::Win32::Foundation::POINT;
@@ -28,7 +28,7 @@ pub fn cursor_pos() -> Option<(i32, i32)> {
     }
 }
 
-/// Move the cursor to virtual-screen `(x, y)`. Best-effort — a failure
+/// Move the cursor to virtual-screen `(x, y)`. Best-effort: a failure
 /// just means the next wheel step may land on the wrong surface, which
 /// the end-of-content detector tolerates.
 pub fn move_cursor(x: i32, y: i32) {

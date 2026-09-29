@@ -53,7 +53,7 @@ function scalePin(p: Pt | null, dpr: number): [number, number] | null {
 }
 
 /**
- * Mode-aware finalize for the drag/draw overlay modes — Region,
+ * Mode-aware finalize for the drag/draw overlay modes: Region,
  * Freehand, Multi-Area, Palette (a library palette entry), Grab-Text
  * (OCR'd text), and Scrolling (starts a recording session rather than
  * producing an immediate result). Consolidates the DPR-scale +
@@ -62,7 +62,7 @@ function scalePin(p: Pt | null, dpr: number): [number, number] | null {
  * so the Capture button and the Enter key share one implementation.
  *
  * Window and Color-Pick are click-driven (finalize on pointer-down in
- * their own hooks), so they are not handled here — `ready` is false and
+ * their own hooks), so they are not handled here: `ready` is false and
  * `finalize` is a no-op in those modes.
  */
 export function useOverlayFinalize(): OverlayFinalize {
@@ -138,7 +138,7 @@ export function useOverlayFinalize(): OverlayFinalize {
       return;
     }
 
-    // Pen / Bézier — flatten the closed anchor path to a polygon, then
+    // Pen / Bézier: flatten the closed anchor path to a polygon, then
     // reuse the Freehand mask sink.
     if (s.mode === "pen") {
       if (s.phase !== "selected" || s.penPath.length < MIN_PEN_POINTS) return;
@@ -158,7 +158,7 @@ export function useOverlayFinalize(): OverlayFinalize {
       return;
     }
 
-    // Brush — the mask is already in device (= physical) pixels, so it
+    // Brush: the mask is already in device (= physical) pixels, so it
     // needs no DPR scaling; only the logical cursor pin does.
     if (s.mode === "brush") {
       const mask = readMaskRLE();
@@ -202,7 +202,7 @@ export function useOverlayFinalize(): OverlayFinalize {
 
     if (s.mode === "scrolling") {
       if (s.phase !== "selected" || !s.rect) return;
-      // Starts a recording session (overlay hides, HUD takes over) —
+      // Starts a recording session (overlay hides, HUD takes over),
       // not a one-shot capture. The HUD's Stop button finalizes.
       startScrollCapture(
         scaleRect(s.rect, dpr),
@@ -232,7 +232,7 @@ export function useOverlayFinalize(): OverlayFinalize {
       if (s.phase !== "selected" || !s.rect) return;
       // Starts a recorder session (ADR 0031): the backend hides the
       // overlay and raises the HUD, which owns stopping it. No capture
-      // flash — nothing was captured yet, and flashing would suggest a
+      // flash: nothing was captured yet, and flashing would suggest a
       // still had been taken.
       startRecording(
         overlayRecorderRequest(

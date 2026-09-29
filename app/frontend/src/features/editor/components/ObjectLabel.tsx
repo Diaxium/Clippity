@@ -14,12 +14,12 @@ import { TYPE_ICON } from "./LayersTree";
  *  measures so the label reliably takes the *opposite* side. */
 const TOOLBAR_H = 52;
 /** Gap from the selection edge, and the label pill's own height (12px text +
- *  `py-1.5`) — used to keep the label clear of the canvas edge / bottom rail. */
+ *  `py-1.5`): used to keep the label clear of the canvas edge / bottom rail. */
 const LABEL_GAP = 10;
 const LABEL_H = 26;
 
 /** A compact descriptor for the selection: the layer's name plus its size,
- *  e.g. `Screenshot · 1920×1080`, `Heading · 24px`. Pure — exported for tests. */
+ *  e.g. `Screenshot · 1920×1080`, `Heading · 24px`. Pure: exported for tests. */
 export function objectLabelText(node: SceneNode): string {
   const w = Math.round(node.width);
   const h = Math.round(node.height);
@@ -49,7 +49,7 @@ interface ObjectLabelProps {
  * Rendered on the neutral floating surface rather than filled with the accent,
  * which is what it used to be: the selection outline it sits against is already
  * accent-colored, so an accent chip touching an accent outline read as part of
- * the selection geometry — a handle, or a resize affordance — instead of a
+ * the selection geometry (a handle, or a resize affordance) instead of a
  * readout. The type icon replaces the accent as the thing that identifies it.
  */
 export function ObjectLabel({ node, viewport, hidden }: ObjectLabelProps) {
@@ -63,7 +63,7 @@ export function ObjectLabel({ node, viewport, hidden }: ObjectLabelProps) {
 
   // The toolbar prefers above the selection; the label takes the opposite
   // side so the two never stack. When the toolbar is forced below (or pinned
-  // for a viewport-spanning selection), the label flips above — keeping the
+  // for a viewport-spanning selection), the label flips above, keeping the
   // size readout visible for large screenshots instead of vanishing into the
   // rail the way it used to.
   const toolbarSide = chromeSide(topY, bottomY, canvasSize.height, TOOLBAR_H);

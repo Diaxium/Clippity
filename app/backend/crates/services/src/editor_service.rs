@@ -1,9 +1,9 @@
-//! Editor orchestration — open a capture from disk, save an edited
+//! Editor orchestration: open a capture from disk, save an edited
 //! capture back to the captures dir.
 //!
 //! Validation: every `id` is run through `library::validate_id` so
 //! the editor cannot read or write outside the captures directory
-//! (defense against malicious IPC payloads — same guard `library`
+//! (defense against malicious IPC payloads; same guard `library`
 //! uses).
 //!
 //! Concurrency: no service-side state. Each call is independent.
@@ -36,7 +36,7 @@ impl EditorService {
     /// Load the capture at `id` as a base64 image data URI plus the
     /// decoded dimensions so the frontend canvas can size itself
     /// without a second roundtrip. The MIME is read from the file's
-    /// extension — a `.jpg`/`.webp` capture must not be announced as
+    /// extension: a `.jpg`/`.webp` capture must not be announced as
     /// PNG or the webview may refuse to decode it. If an editable scene
     /// sidecar exists for this capture it rides along in `scene` so the
     /// editor can restore the editable document instead of the flat image.
@@ -47,7 +47,7 @@ impl EditorService {
         let mime = editor::mime_for_path(id);
         let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
         // Best-effort: a missing/unreadable sidecar just means "no saved
-        // scene" — never fail the load over it.
+        // scene"; never fail the load over it.
         let scene = self
             .scene_path(id)
             .ok()
@@ -61,7 +61,7 @@ impl EditorService {
         })
     }
 
-    /// Persist the editor's editable scene (an opaque JSON document — the
+    /// Persist the editor's editable scene (an opaque JSON document; the
     /// frontend owns the format) as a sidecar next to the capture `id`,
     /// under the hidden `.scenes` dir. Non-destructive: the original
     /// capture file is untouched, so the source pixels are never lost.
@@ -82,8 +82,8 @@ impl EditorService {
     ///
     /// Resolved through `services::sidecar`, which hangs a sidecar off the
     /// capture's **own** directory rather than the captures root. For a
-    /// capture sitting directly in the root — every capture the library
-    /// lists — the two are the same path. They diverge for a capture that
+    /// capture sitting directly in the root, every capture the library
+    /// lists, the two are the same path. They diverge for a capture that
     /// has moved (to `.trash`, say), and there the parent-relative answer
     /// is the correct one: it's where `sidecar::relocate` carried the
     /// document, and it's the same rule the `.meta` record follows, which
@@ -97,7 +97,7 @@ impl EditorService {
     /// Persist a flattened image (the frontend has already baked
     /// annotations + effects into pixels) as a new capture in the
     /// captures dir. The data URI's declared format picks the on-disk
-    /// extension — PNG, JPEG or WebP; the bytes are written exactly as
+    /// extension: PNG, JPEG or WebP; the bytes are written exactly as
     /// the canvas encoded them, never transcoded. Returns the new
     /// absolute path. Caller is responsible for emitting `LIBRARY_UPDATED`.
     pub fn save(&self, data_uri: &str) -> AppResult<String> {
@@ -107,7 +107,7 @@ impl EditorService {
         let bytes = base64::engine::general_purpose::STANDARD
             .decode(payload.base64)
             .map_err(|e| AppError::Editor(format!("base64 decode: {e}")))?;
-        // An edited export has no source window — the name falls back to
+        // An edited export has no source window: the name falls back to
         // the "Edited" type label + timestamp, and the provenance record
         // carries the mode alone. Dimensions stay unrecorded rather than
         // paying a full decode of bytes we deliberately never inspect.
@@ -144,7 +144,7 @@ mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    /// Reused hermetic test harness — same shape as `library_service`'s.
+    /// Reused hermetic test harness: same shape as `library_service`'s.
     struct TestHarness {
         root: PathBuf,
         captures: PathBuf,
@@ -236,8 +236,8 @@ mod tests {
     fn save_writes_jpeg_and_webp_under_their_own_extensions() {
         let h = harness();
         for (mime, ext) in [("jpeg", "jpg"), ("webp", "webp")] {
-            // The backend never decodes an export — it persists exactly
-            // what the canvas encoded — so opaque bytes are enough here.
+            // The backend never decodes an export (it persists exactly
+            // what the canvas encoded) so opaque bytes are enough here.
             let bytes = format!("fake-{mime}-bytes").into_bytes();
             let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
             let path = h
@@ -260,7 +260,7 @@ mod tests {
     fn save_rejects_a_format_the_editor_cannot_write() {
         let h = harness();
         // GIF is a real image format the library can *hold*, but the
-        // editor never encodes it — saving one would mislabel the file.
+        // editor never encodes it: saving one would mislabel the file.
         let err = h.service.save("data:image/gif;base64,abc").unwrap_err();
         assert_eq!(err.code(), "editor");
         let err = h.service.save("data:text/plain;base64,abc").unwrap_err();
@@ -274,7 +274,7 @@ mod tests {
         let img: ImageBuffer<Rgba<u8>, Vec<u8>> =
             ImageBuffer::from_pixel(4, 3, Rgba([10, 20, 30, 255]));
         let mut buf = Vec::new();
-        // JPEG has no alpha channel — drop it before encoding.
+        // JPEG has no alpha channel; drop it before encoding.
         let rgb = image::DynamicImage::ImageRgba8(img).to_rgb8();
         image::DynamicImage::ImageRgb8(rgb)
             .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)

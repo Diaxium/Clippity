@@ -16,7 +16,7 @@ const SORT_OPTIONS = [
 ] as const;
 
 interface LibraryToolbarProps {
-  /** Name of the open destination — what the sidebar row said. */
+  /** Name of the open destination: what the sidebar row said. */
   scopeLabel: string;
   count: number;
   loading: boolean;
@@ -37,8 +37,8 @@ interface LibraryToolbarProps {
  * The strip above the grid: what you are looking at on the left, how it
  * is arranged on the right.
  *
- * It answers the question the rail can't — *how many, and in what
- * order* — and it is where the refinements that aren't destinations
+ * It answers the question the rail can't (*how many, and in what
+ * order*) and it is where the refinements that aren't destinations
  * (the search box, a tag) show up as removable chips. Putting them here
  * rather than leaving them implicit in the rail matters: a grid narrowed
  * by a tag chosen three clicks ago and a grid that is genuinely empty

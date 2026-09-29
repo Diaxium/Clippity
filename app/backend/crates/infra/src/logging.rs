@@ -1,4 +1,4 @@
-//! Tracing setup — console + a rotating on-disk log, with the severity
+//! Tracing setup: console + a rotating on-disk log, with the severity
 //! floor changeable at runtime.
 //!
 //! Three things distinguish this from the one-liner it grew out of:
@@ -6,7 +6,7 @@
 //! 1. **The level is a setting, not an environment variable.** Settings
 //!    → Advanced writes `developer.backendLog`, and [`set_level`] moves
 //!    the floor for the running process. An explicit `CLIPPITY_LOG` /
-//!    `RUST_LOG` still wins outright — a developer who set one meant it,
+//!    `RUST_LOG` still wins outright: a developer who set one meant it,
 //!    and silently overriding it from a settings file would be worse
 //!    than ignoring the setting.
 //! 2. **The log is written to disk**, to size-capped rotating files
@@ -40,7 +40,7 @@ const LOG_STEM: &str = "clippity";
 const LOG_EXT: &str = "log";
 
 /// Bytes read back when tailing the log. The viewer shows a window of
-/// recent lines, not the file — reading a 64 MiB file to render 500
+/// recent lines, not the file: reading a 64 MiB file to render 500
 /// lines would be the wrong trade in the one place a user goes when the
 /// app is already misbehaving.
 const TAIL_WINDOW_BYTES: u64 = 512 * 1024;
@@ -61,7 +61,7 @@ const RANK_INFO: u8 = 3;
 const RANK_DEBUG: u8 = 4;
 const RANK_TRACE: u8 = 5;
 
-/// Pure: map a level name onto its rank. Unknown input becomes `info` —
+/// Pure: map a level name onto its rank. Unknown input becomes `info`:
 /// a log level is never worth failing a settings save over.
 fn rank_of(level: &str) -> u8 {
     match level.trim().to_ascii_lowercase().as_str() {
@@ -92,7 +92,7 @@ fn sink() -> &'static Arc<Mutex<FileSink>> {
     SINK.get_or_init(|| Arc::new(Mutex::new(FileSink::idle())))
 }
 
-/// Install the subscriber. Call once, as early in `main` as possible —
+/// Install the subscriber. Call once, as early in `main` as possible:
 /// before this runs, `tracing` records go nowhere.
 ///
 /// The on-disk half stays dormant until [`configure_files`] supplies a
@@ -238,7 +238,7 @@ pub fn tail(limit: usize) -> Vec<String> {
     let mut lines: Vec<String> = Vec::new();
     for path in log_files().into_iter().take(2) {
         // Flush what is buffered in the open handle first, or the most
-        // recent lines — the ones a user is watching for — aren't there.
+        // recent lines (the ones a user is watching for) aren't there.
         flush();
         let Ok(text) = read_tail(&path, TAIL_WINDOW_BYTES) else {
             continue;
@@ -269,7 +269,7 @@ pub fn flush() {
 /// Delete every rotated file and truncate the live one.
 ///
 /// The live file is truncated rather than removed so the running
-/// process keeps writing to a valid handle — deleting a file out from
+/// process keeps writing to a valid handle: deleting a file out from
 /// under an open handle on Windows either fails or leaves the writer
 /// appending to a ghost.
 pub fn clear() -> io::Result<()> {
@@ -280,7 +280,7 @@ pub fn clear() -> io::Result<()> {
 /// Record one line forwarded from the frontend.
 ///
 /// Emitted under [`FRONTEND_TARGET`] so a reader can tell the halves
-/// apart, and at a `tracing` level matching what the frontend called —
+/// apart, and at a `tracing` level matching what the frontend called:
 /// `tracing`'s macros need a const level, hence the match.
 pub fn log_frontend(level: &str, module: &str, message: &str, context: Option<&str>) {
     let context = context.unwrap_or("");
@@ -335,7 +335,7 @@ struct FileSink {
     dir: Option<PathBuf>,
     file: Option<File>,
     /// Bytes in the live file. Tracked rather than `metadata()`-ed per
-    /// write — this runs on every log line.
+    /// write: this runs on every log line.
     written: u64,
     max_bytes: u64,
     retain: u32,
@@ -386,8 +386,8 @@ impl FileSink {
     }
 
     /// The open live file, opening (and creating the directory) on first
-    /// use. `None` when disk logging is off or the file can't be opened
-    /// — a log that cannot be written must never fail the operation
+    /// use. `None` when disk logging is off or the file can't be opened:
+    /// a log that cannot be written must never fail the operation
     /// being logged.
     fn file(&mut self) -> Option<&mut File> {
         if !self.enabled {
@@ -452,7 +452,7 @@ impl FileSink {
         }
         let live = self.live_path();
         if live.is_file() && fs::rename(&live, self.rotated_path(1)).is_err() {
-            // Couldn't rotate — keep appending rather than losing the
+            // Couldn't rotate: keep appending rather than losing the
             // session, and re-check on the next write.
             self.written = 0;
             return;
@@ -474,8 +474,8 @@ impl FileSink {
         }
         let live = dir.join(format!("{LOG_STEM}.{LOG_EXT}"));
         if live.is_file() {
-            // Truncate, don't unlink: the running process holds — or is
-            // about to re-open — this path.
+            // Truncate, don't unlink: the running process holds, or is
+            // about to re-open, this path.
             File::create(&live)?;
         }
         Ok(())
@@ -524,7 +524,7 @@ mod tests {
         dir
     }
 
-    /// A sink pointed at its own scratch directory — the process-global
+    /// A sink pointed at its own scratch directory: the process-global
     /// one is shared by the whole test binary, so these use their own.
     fn sink_in(dir: &Path, max_bytes: u64, retain: u32) -> FileSink {
         let mut s = FileSink::idle();

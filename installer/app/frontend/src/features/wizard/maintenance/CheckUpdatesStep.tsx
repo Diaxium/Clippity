@@ -10,7 +10,7 @@ import { useWizardStore } from "@state/wizardStore";
 
 import { StepShell } from "../components/StepShell";
 
-/** Maintenance step 2 — the online update check. */
+/** Maintenance step 2: the online update check. */
 export function CheckUpdatesStep() {
   const channel = useWizardStore((s) => s.channel);
   const setChannel = useWizardStore((s) => s.setChannel);
