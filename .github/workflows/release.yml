@@ -108,9 +108,11 @@ jobs:
       - name: Stage release files
         run: pnpm release:artifacts
 
+      # SHA256SUMS.txt is written with CRLF line endings for Windows users;
+      # GNU sha256sum would read the CR as part of each file name.
       - name: Verify checksums
         working-directory: build/release
-        run: sha256sum --check --strict SHA256SUMS.txt
+        run: tr -d '\r' < SHA256SUMS.txt | sha256sum --check --strict -
 
       - name: Publish the release
         run: |
