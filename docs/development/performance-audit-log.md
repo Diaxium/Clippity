@@ -495,3 +495,92 @@ capture window can no longer ghost into the snapshot, by construction.
   fixed `sleep_compositor_unpaint(Capture)` + flush. With the shield those
   are dead latency too; they're rare (error/one-shot) paths, so left for a
   focused follow-up.
+
+---
+
+# Execution pass: UI-thread work, PNG encoding, scroll preview
+
+## Date
+
+2026-10-01
+
+## Scope
+
+A systems-level review of where native work ran serially, blocked the UI
+thread, or grew with session length. Measurements below come from scratch
+Criterion-style runs in a Linux container (4-core Xeon, 2.1 GHz), so read
+them as ratios between configurations rather than as Windows timings.
+Claims about the Windows UI thread come from Tauri's documented command
+execution model and the code, not from a profiler.
+
+## Baseline (before)
+
+| Path | Finding |
+| --- | --- |
+| Commands | 99 of 100 commands were plain sync handlers, which Tauri runs on the thread that dispatched the IPC call: the Windows main thread. Thumbnails, library queries, editor load/save, ONNX detection, OCR, the scroll stitch, PNG encodes and a GitHub release check (no timeout) all froze every window while they ran. |
+| URI schemes | `clippity-snapshot` (a 33 MiB copy at 4K) and `clippity-media` (8 MiB file reads) were synchronous handlers on the same thread. |
+| PNG "Fast" | `Fast + NoFilter` fell back to stored blocks: a 4K screenshot encoded to **33.2 MB**, slower than compressing it (109 ms vs 59 ms). |
+| PNG backend | flate2's default miniz_oxide backend: level 6 took 384 ms (4K UI) and 168 ms (1920×1200). |
+| Overlay saves | Hardcoded level 6 regardless of the Capture compression setting; the scroll capture did the same. |
+| Overlay finish | Encode → save → clipboard → restore window, in sequence. |
+| Scroll preview | Every 300 ms the worker re-stitched *all* frames at full resolution while holding the session lock: 60 ms at 10 frames, 0.6 s at 30, 1.3 s at 60 (1600×900 frames), allocating a canvas of up to 175 MB each time. |
+
+## Changes
+
+1. **Heavy commands run on the blocking pool** (`off_ui_thread` in
+   `app/commands.rs`): the overlay `finish_*` commands, palette, Grab
+   Text, `stop_scroll_capture`, library list/query/facets/thumbnail/
+   storage/reindex, editor load/save/save-scene, `media_probe`,
+   `models_check_updates`, `detect_objects` and the diagnostics export.
+   `spawn_blocking` rather than `#[tauri::command(async)]`, which would
+   run the body on an async worker where OCR's `block_on` panics.
+   Window, capture-start and recorder commands stay synchronous.
+2. **Both URI schemes answer on the blocking pool**
+   (`register_asynchronous_uri_scheme_protocol` + `on_blocking_pool`).
+3. **Library concurrency guards.** `reconcile` is serialized (a query and
+   its facets request can now arrive together), and thumbnail decodes are
+   capped at min(cores, 4) so a grid's burst can't hold dozens of
+   full-size frames at once.
+4. **zlib-rs deflate backend** for every flate2 user: identical output,
+   level 6 at 4K UI content 384 → 156 ms, 1920×1200 168 → 74 ms.
+5. **One capture encoder** (`capture_io::encode_capture_png`) for the
+   fullscreen, overlay and scroll pipelines, all honoring the setting.
+   `Fast` is now zlib level 1 + adaptive filtering (4K: 59 ms, 3.5 MB);
+   HDR `Fast` matches. The loupe snapshot is stored uncompressed
+   (1920×1200: 2 ms instead of 15 ms, same size).
+6. **Overlay finish reorder.** The window is restored as soon as the last
+   screen read (the HDR grab) is done, and the clipboard copy runs beside
+   the encode and write. Scroll capture copies its RGBA beside the encode
+   instead of decoding the PNG it just wrote.
+7. **Incremental scroll preview** (`domain::scroll::PreviewStitch`): each
+   frame is shrunk once on arrival; copies are kept between 1× and 2× the
+   preview scale and halved as the stitch grows. A preview now renders and
+   encodes in under 1.5 ms at any session length (~4 ms per frame on
+   arrival), outside the session lock.
+8. **Release-check timeout** of 15 s on the GitHub API call.
+
+## Validation
+
+- Services: 283 tests pass, including a new lossless/compressed test at
+  every compression level and a decode-gate concurrency test. Domain:
+  four new `PreviewStitch` tests (exact equality with `stitch` while the
+  stitch fits, size and similarity once shrunk, negative offsets, empty).
+- rustfmt clean; clippy reports nothing on the changed lines. The app
+  crate type-checks with its tests.
+- Not run here: the Windows-only paths (DXGI/HDR, WinRT OCR, Media
+  Foundation) and an end-to-end capture in the running app. CI covers the
+  Windows build and tests.
+
+## Follow-ups (not done)
+
+- `capture_fullscreen`, `recapture_last_region` and `stop_recording` still
+  run on the UI thread; they interleave window hides with screen grabs
+  and want a focused pass with the capture shield in mind.
+- Thumbnails are still re-decoded on every miss and returned as base64
+  data URIs (roadmap P3); editor load/save still round-trip base64.
+- Library reconcile still stats both sidecars per capture on every query
+  and facets call; enumerating `.meta`/`.labels` once would remove ~2N
+  file opens per refresh.
+- GIF recording: a 4K frame costs ~68 ms to downscale and quantize on the
+  capture thread, over the 66.7 ms budget at 15 fps; quantizing on a small
+  ordered worker pool would fix it.

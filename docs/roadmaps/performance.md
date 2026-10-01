@@ -21,7 +21,8 @@ broadcast recording events.
 
 - No automated cold/warm startup, hotkey-to-overlay, selection-to-save, library
   scroll/search, export or idle-resource budgets.
-- The backend still decodes full images for thumbnail misses.
+- The backend still decodes full images for thumbnail misses (now off the UI
+  thread and capped at four at a time).
 - High-frequency scrolling/recording events are broadcast to all windows.
 - Editor source imagery stays decoded when the app hides; very large scene and
   multi-monitor/HiDPI behavior lacks a native stress harness.

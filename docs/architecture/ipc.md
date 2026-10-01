@@ -35,6 +35,12 @@ the Rust `domain` type and the matching `app/shared` contract.
   validate via `domain`, call a service for the I/O, and return a serializable
   result. The `AppError` type serializes to `{ code, message }`, which the
   frontend's `TauriCommandError` consumes.
+- **Where a command runs.** A plain `#[tauri::command] fn` runs on the thread
+  that dispatched the IPC call, which on Windows is the main thread pumping
+  every window. Anything that decodes, encodes, walks the disk, runs a model
+  or touches the network goes through `off_ui_thread` (Tauri's blocking
+  pool) instead, and the custom URI schemes answer there too. Commands that
+  only touch windows or state stay synchronous.
 
 ## Keeping the two in sync
 
