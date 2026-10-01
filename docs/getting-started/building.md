@@ -75,6 +75,15 @@ For a GitHub release, `pnpm release:artifacts` copies the first two into
 `Clippity-<version>-portable.zip`, and writes `SHA256SUMS.txt` beside them.
 It refuses to run if the app and installer versions disagree.
 
+The **Release** workflow (`.github/workflows/release.yml`, run by hand from
+the Actions tab) does all of this on a Windows runner and publishes the
+result: it checks that the requested version matches both
+`tauri.conf.json` files, that `docs/releases/v<version>.md` exists and that
+the tag doesn't, then runs `pnpm dist` and `pnpm release:artifacts`,
+verifies `SHA256SUMS.txt`, and creates the tag and the GitHub release
+(a prerelease by default) at the commit it built, using the notes file as
+the body and "Clippity <version>: <title>" as the title.
+
 ### The installer payload
 
 The installer under [`installer/`](../../installer) is a **separate pnpm
