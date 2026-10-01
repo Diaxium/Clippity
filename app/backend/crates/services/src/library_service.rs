@@ -34,7 +34,7 @@ use std::fs;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::Engine;
@@ -70,6 +70,15 @@ pub struct LibraryService {
     /// Serializes read-modify-write of the aux catalog so concurrent
     /// color / palette saves don't clobber each other.
     aux_lock: Mutex<()>,
+    /// Serializes [`Self::reconcile`]. The listing commands run on the
+    /// blocking pool, so a query and the facets request beside it can
+    /// reconcile at the same time; one walk at a time keeps a slower walk
+    /// from writing its older view of the disk over a newer one.
+    reconcile_lock: Mutex<()>,
+    /// Bounds concurrent [`Self::thumbnail`] decodes. A library grid asks
+    /// for every visible thumbnail at once, and each decode holds a full
+    /// RGBA frame (33 MiB at 4K) until it is shrunk.
+    thumbnail_gate: DecodeGate,
     /// The listing cache. `None` when the database could not be opened:
     /// the library then scans, exactly as it did before the index
     /// existed. A cache is never allowed to be the reason a user can't
@@ -106,6 +115,10 @@ impl LibraryService {
         Self {
             captures,
             aux_lock: Mutex::new(()),
+            reconcile_lock: Mutex::new(()),
+            thumbnail_gate: DecodeGate::new(
+                std::thread::available_parallelism().map_or(2, |n| n.get().clamp(1, 4)),
+            ),
             index,
             collections,
         }
@@ -208,6 +221,10 @@ impl LibraryService {
     /// it would leave the other half unreconciled, and the next caller
     /// asking for trash would get stale rows.
     fn reconcile(&self, index: &LibraryIndex) -> AppResult<()> {
+        let _walk = self
+            .reconcile_lock
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let captures = self.captures_dir();
         let cached = index.stamps()?;
         let mut seen: HashSet<String> = HashSet::new();
@@ -321,6 +338,7 @@ impl LibraryService {
             .filter(|_| !Self::can_decode_directly(id))
             .map(|p| p.to_string_lossy().into_owned())
             .unwrap_or_else(|| id.to_string());
+        let _permit = self.thumbnail_gate.enter();
         let img = ImageReader::open(&source)
             .map_err(|e| AppError::Library(format!("open: {e}")))?
             .decode()
@@ -882,6 +900,42 @@ fn text_title(text: &str) -> String {
             let head: String = line.chars().take(MAX).collect();
             format!("{head}…")
         }
+    }
+}
+
+/// A counting semaphore: at most `permits` holders at once, the rest
+/// wait. Poisoning is ignored because the count stays valid whatever
+/// panicked while holding the lock.
+struct DecodeGate {
+    free: Mutex<usize>,
+    released: Condvar,
+}
+
+impl DecodeGate {
+    fn new(permits: usize) -> Self {
+        Self {
+            free: Mutex::new(permits.max(1)),
+            released: Condvar::new(),
+        }
+    }
+
+    /// Wait for a permit; it is returned when the guard drops.
+    fn enter(&self) -> DecodePermit<'_> {
+        let mut free = self.free.lock().unwrap_or_else(|p| p.into_inner());
+        while *free == 0 {
+            free = self.released.wait(free).unwrap_or_else(|p| p.into_inner());
+        }
+        *free -= 1;
+        DecodePermit(self)
+    }
+}
+
+struct DecodePermit<'a>(&'a DecodeGate);
+
+impl Drop for DecodePermit<'_> {
+    fn drop(&mut self) {
+        *self.0.free.lock().unwrap_or_else(|p| p.into_inner()) += 1;
+        self.0.released.notify_one();
     }
 }
 
@@ -1781,6 +1835,28 @@ mod tests {
         assert_eq!(h.service.list(false).unwrap().len(), 1);
         fs::remove_file(&p).unwrap();
         assert!(h.service.list(false).unwrap().is_empty());
+    }
+
+    #[test]
+    fn decode_gate_admits_at_most_its_permits() {
+        use std::sync::atomic::AtomicUsize;
+
+        let gate = DecodeGate::new(2);
+        let inside = AtomicUsize::new(0);
+        let peak = AtomicUsize::new(0);
+        std::thread::scope(|scope| {
+            for _ in 0..8 {
+                scope.spawn(|| {
+                    let _permit = gate.enter();
+                    let now = inside.fetch_add(1, AtomicOrdering::SeqCst) + 1;
+                    peak.fetch_max(now, AtomicOrdering::SeqCst);
+                    std::thread::sleep(std::time::Duration::from_millis(5));
+                    inside.fetch_sub(1, AtomicOrdering::SeqCst);
+                });
+            }
+        });
+        assert_eq!(peak.load(AtomicOrdering::SeqCst), 2);
+        assert_eq!(*gate.free.lock().unwrap(), 2, "every permit came back");
     }
 
     #[test]

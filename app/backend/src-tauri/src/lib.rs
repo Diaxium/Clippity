@@ -56,16 +56,38 @@ const MEDIA_SCHEME: &str = "clippity-media";
 /// than to this session's pixels; the id check lives in
 /// `OverlayService::snapshot_png`.
 fn serve_desktop_snapshot<R: tauri::Runtime>(
-    ctx: tauri::UriSchemeContext<'_, R>,
-    request: tauri::http::Request<Vec<u8>>,
+    app: &tauri::AppHandle<R>,
+    request: &tauri::http::Request<Vec<u8>>,
 ) -> tauri::http::Response<Vec<u8>> {
-    let app = ctx.app_handle().clone();
     snapshot_response(request.uri().path(), |id| {
         app.state::<app::state::AppState>()
             .overlay_service
             .snapshot_png(id)
             .map(|png| png.as_ref().clone())
     })
+}
+
+/// A synchronous custom-scheme handler: the request in, the response out.
+type SchemeHandler<R> =
+    fn(&tauri::AppHandle<R>, &tauri::http::Request<Vec<u8>>) -> tauri::http::Response<Vec<u8>>;
+
+/// Adapt a synchronous scheme handler to answer on the blocking pool.
+///
+/// A handler registered with `register_uri_scheme_protocol` runs on the
+/// thread WebView2 raises the request on, which is the main thread: a
+/// 33 MiB snapshot copy or an 8 MiB file read there stalls every window
+/// for its duration. This hands the request to a pool thread and replies
+/// from there; the handlers themselves stay plain functions.
+fn on_blocking_pool<R: tauri::Runtime>(
+    serve: SchemeHandler<R>,
+) -> impl Fn(tauri::UriSchemeContext<'_, R>, tauri::http::Request<Vec<u8>>, tauri::UriSchemeResponder)
+       + Send
+       + Sync
+       + 'static {
+    move |ctx, request, responder| {
+        let app = ctx.app_handle().clone();
+        tauri::async_runtime::spawn_blocking(move || responder.respond(serve(&app, &request)));
+    }
 }
 
 /// The scheme handler's whole decision, separated from the runtime so it
@@ -234,8 +256,14 @@ pub fn run() {
     apply_gpu_preference();
 
     tauri::Builder::default()
-        .register_uri_scheme_protocol(SNAPSHOT_SCHEME, serve_desktop_snapshot)
-        .register_uri_scheme_protocol(MEDIA_SCHEME, media_scheme::serve_media)
+        .register_asynchronous_uri_scheme_protocol(
+            SNAPSHOT_SCHEME,
+            on_blocking_pool(serve_desktop_snapshot),
+        )
+        .register_asynchronous_uri_scheme_protocol(
+            MEDIA_SCHEME,
+            on_blocking_pool(media_scheme::serve_media),
+        )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(

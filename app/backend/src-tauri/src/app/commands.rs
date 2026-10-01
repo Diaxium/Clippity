@@ -52,6 +52,34 @@ const OCR_DECLINED: AppError =
 const GIF_DECLINED: AppError =
     AppError::NotInstalled("the GIF encoder was not selected when Clippity was installed");
 
+/// Run a command's body on Tauri's blocking pool instead of the thread
+/// that dispatched the IPC call.
+///
+/// A plain (non-`async`) command runs inline on that thread, which on
+/// Windows is the main thread: the one pumping every window's messages.
+/// A decode, an encode, a directory walk, model inference or a network
+/// round-trip there freezes every Clippity window until it returns, and
+/// queues every other command behind it. The heavy commands below go
+/// through here instead.
+///
+/// `#[tauri::command(async)]` on a sync function is not a substitute: it
+/// runs the body on an async-runtime worker, where long work starves
+/// the runtime and where `async_runtime::block_on` (the OCR path)
+/// panics.
+///
+/// Blocking-pool threads start with no COM apartment. The services that
+/// need one join it themselves (`ocr_service::recognize`, the Media
+/// Foundation `ComThread`), and both prefer the MTA they get here.
+async fn off_ui_thread<T, F>(app: tauri::AppHandle, work: F) -> AppResult<T>
+where
+    T: Send + 'static,
+    F: FnOnce(&tauri::AppHandle, &AppState) -> AppResult<T> + Send + 'static,
+{
+    use tauri::Manager;
+
+    tauri::async_runtime::spawn_blocking(move || work(&app, &app.state::<AppState>())).await?
+}
+
 /// Liveness probe used by the frontend boot sequence to confirm the
 /// Tauri bridge is up before mounting the rest of the app.
 #[tauri::command]
@@ -218,12 +246,14 @@ pub fn cancel_region_capture(
 /// optionally composite the cursor at `cursorPin`, save the PNG,
 /// optionally copy to clipboard, emit `clippity://capture/finished`.
 #[tauri::command]
-pub fn finish_region_capture(
+pub async fn finish_region_capture(
     app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
     request: FinishRegionRequest,
 ) -> AppResult<OverlayResult> {
-    state.overlay_service.finish_region(&app, request)
+    off_ui_thread(app, move |app, state| {
+        state.overlay_service.finish_region(app, request)
+    })
+    .await
 }
 
 /// Fullscreen capture taken from inside the overlay (`F` / the
@@ -232,12 +262,14 @@ pub fn finish_region_capture(
 /// closing the overlay and re-grabbing the screen. Saves, optionally
 /// copies to clipboard, emits `clippity://capture/finished`.
 #[tauri::command]
-pub fn finish_fullscreen_capture(
+pub async fn finish_fullscreen_capture(
     app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
     toggles: OverlayToggles,
 ) -> AppResult<OverlayResult> {
-    state.overlay_service.finish_fullscreen(&app, toggles)
+    off_ui_thread(app, move |app, state| {
+        state.overlay_service.finish_fullscreen(app, toggles)
+    })
+    .await
 }
 
 /// Hand an already-saved capture to the OS: reveal it in the file
@@ -260,36 +292,42 @@ pub fn share_capture(
 /// drawn polygon to transparent, crop to the path's bounding box, save,
 /// optionally copy to clipboard, emit `clippity://capture/finished`.
 #[tauri::command]
-pub fn finish_freehand_capture(
+pub async fn finish_freehand_capture(
     app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
     request: FinishFreehandRequest,
 ) -> AppResult<OverlayResult> {
-    state.overlay_service.finish_freehand(&app, request)
+    off_ui_thread(app, move |app, state| {
+        state.overlay_service.finish_freehand(app, request)
+    })
+    .await
 }
 
 /// Finalize a Brush selection: composite the cached snapshot through the
 /// painted alpha mask, crop to the mask's bounding box, save, optionally
 /// copy to clipboard, emit `clippity://capture/finished`.
 #[tauri::command]
-pub fn finish_brush_capture(
+pub async fn finish_brush_capture(
     app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
     request: FinishBrushRequest,
 ) -> AppResult<OverlayResult> {
-    state.overlay_service.finish_brush(&app, request)
+    off_ui_thread(app, move |app, state| {
+        state.overlay_service.finish_brush(app, request)
+    })
+    .await
 }
 
 /// Finalize a Multi-Area selection: crop every rect and stitch them
 /// horizontally on a white background, save, optionally copy to
 /// clipboard, emit `clippity://capture/finished`.
 #[tauri::command]
-pub fn finish_multi_area_capture(
+pub async fn finish_multi_area_capture(
     app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
     request: FinishMultiAreaRequest,
 ) -> AppResult<OverlayResult> {
-    state.overlay_service.finish_multi_area(&app, request)
+    off_ui_thread(app, move |app, state| {
+        state.overlay_service.finish_multi_area(app, request)
+    })
+    .await
 }
 
 /// Color-Picker mode: sample the pixel at `(x, y)` (canvas-local
@@ -339,43 +377,45 @@ pub fn pick_color(
 /// setting (default 6). Returns the persisted entry. Not a file capture:
 /// no `capture/finished`.
 #[tauri::command]
-pub fn finish_palette_capture(
+pub async fn finish_palette_capture(
     app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
     rect: Region,
     count: Option<usize>,
 ) -> AppResult<CaptureMeta> {
-    // Explicit override → clamp it; otherwise fall back to the configured
-    // (already-clamped) default. Never trust a raw client-supplied count.
-    let count = match count {
-        Some(n) => clippity_domain::palette::clamp_count(n),
-        None => state.settings_service.palette_count(),
-    };
-    let (preview, colors) = state.overlay_service.finish_palette(&app, rect, count)?;
-    let entry = state.library_service.add_palette(colors.clone())?;
-    let _ = events::emit(&app, events::names::LIBRARY_UPDATED, ());
-    // Best-effort palette toast (preview thumbnail + swatch strip). Carry
-    // each swatch's proportion through so the toast can size + label them.
-    let swatches: Vec<PaletteSwatch> = colors
-        .iter()
-        .map(|c| PaletteSwatch {
-            r: c.r,
-            g: c.g,
-            b: c.b,
-            hex: c.hex.clone(),
-            proportion: c.proportion,
-        })
-        .collect();
-    if let Err(e) = state.toast_service.show(
-        &app,
-        ToastPayload::Palette {
-            preview,
-            colors: swatches,
-        },
-    ) {
-        tracing::warn!("palette toast failed: {e}");
-    }
-    Ok(entry)
+    off_ui_thread(app, move |app, state| {
+        // Explicit override → clamp it; otherwise fall back to the configured
+        // (already-clamped) default. Never trust a raw client-supplied count.
+        let count = match count {
+            Some(n) => clippity_domain::palette::clamp_count(n),
+            None => state.settings_service.palette_count(),
+        };
+        let (preview, colors) = state.overlay_service.finish_palette(app, rect, count)?;
+        let entry = state.library_service.add_palette(colors.clone())?;
+        let _ = events::emit(app, events::names::LIBRARY_UPDATED, ());
+        // Best-effort palette toast (preview thumbnail + swatch strip). Carry
+        // each swatch's proportion through so the toast can size + label them.
+        let swatches: Vec<PaletteSwatch> = colors
+            .iter()
+            .map(|c| PaletteSwatch {
+                r: c.r,
+                g: c.g,
+                b: c.b,
+                hex: c.hex.clone(),
+                proportion: c.proportion,
+            })
+            .collect();
+        if let Err(e) = state.toast_service.show(
+            app,
+            ToastPayload::Palette {
+                preview,
+                colors: swatches,
+            },
+        ) {
+            tracing::warn!("palette toast failed: {e}");
+        }
+        Ok(entry)
+    })
+    .await
 }
 
 /// Grab-Text mode: crop the selected `rect`, OCR it (Windows.Media.Ocr),
@@ -384,27 +424,26 @@ pub fn finish_palette_capture(
 /// text. `Err(ocr)` when the region has no readable text. Not a file
 /// capture: no `capture/finished`.
 #[tauri::command]
-pub fn finish_grab_text_capture(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
-    rect: Region,
-) -> AppResult<String> {
-    if !state.provisioning_service.capabilities().text_recognition {
-        return Err(OCR_DECLINED);
-    }
-    let text = state.overlay_service.finish_grab_text(&app, rect)?;
-    if let Err(e) = state.library_service.add_text(text.clone()) {
-        tracing::warn!("grab-text library persist failed: {e}");
-    } else {
-        let _ = events::emit(&app, events::names::LIBRARY_UPDATED, ());
-    }
-    if let Err(e) = state
-        .toast_service
-        .show(&app, ToastPayload::Text { text: text.clone() })
-    {
-        tracing::warn!("grab-text toast failed: {e}");
-    }
-    Ok(text)
+pub async fn finish_grab_text_capture(app: tauri::AppHandle, rect: Region) -> AppResult<String> {
+    off_ui_thread(app, move |app, state| {
+        if !state.provisioning_service.capabilities().text_recognition {
+            return Err(OCR_DECLINED);
+        }
+        let text = state.overlay_service.finish_grab_text(app, rect)?;
+        if let Err(e) = state.library_service.add_text(text.clone()) {
+            tracing::warn!("grab-text library persist failed: {e}");
+        } else {
+            let _ = events::emit(app, events::names::LIBRARY_UPDATED, ());
+        }
+        if let Err(e) = state
+            .toast_service
+            .show(app, ToastPayload::Text { text: text.clone() })
+        {
+            tracing::warn!("grab-text toast failed: {e}");
+        }
+        Ok(text)
+    })
+    .await
 }
 
 /// Longest-edge cap (physical px) for the Clipboard-image toast preview
@@ -530,23 +569,27 @@ pub fn start_panoramic_capture(
 /// `capture/finished` fire. Always tears down the HUD (un-excludes +
 /// hides the toast). Returns the saved capture, or `None`.
 #[tauri::command]
-pub fn stop_scroll_capture(
+pub async fn stop_scroll_capture(
     app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
     discard: bool,
 ) -> AppResult<Option<OverlayResult>> {
-    let result = state.scroll_capture_service.stop(&app, discard)?;
-    // The HUD's exclusion is *not* cleared here: every Clippity window is
-    // capture-shielded for the whole session at startup
-    // (`capture_shield::shield_windows`), so clearing it would leave the
-    // toast the one un-shielded window from the first recording onward,
-    // free to appear in every later grab.
-    let _ = state.toast_service.hide(&app);
-    if let Some(ref res) = result {
-        let _ = events::emit(&app, events::names::LIBRARY_UPDATED, ());
-        events::emit(&app, events::names::CAPTURE_FINISHED, res.clone())?;
-    }
-    Ok(result)
+    // Joining the worker, stitching every frame and encoding the result
+    // takes seconds on a long session.
+    off_ui_thread(app, move |app, state| {
+        let result = state.scroll_capture_service.stop(app, discard)?;
+        // The HUD's exclusion is *not* cleared here: every Clippity window is
+        // capture-shielded for the whole session at startup
+        // (`capture_shield::shield_windows`), so clearing it would leave the
+        // toast the one un-shielded window from the first recording onward,
+        // free to appear in every later grab.
+        let _ = state.toast_service.hide(app);
+        if let Some(ref res) = result {
+            let _ = events::emit(app, events::names::LIBRARY_UPDATED, ());
+            events::emit(app, events::names::CAPTURE_FINISHED, res.clone())?;
+        }
+        Ok(result)
+    })
+    .await
 }
 
 /// Start a video / GIF recording (ADR 0031) and raise the recorder HUD:
@@ -862,11 +905,14 @@ pub fn show_capture_window(app: tauri::AppHandle) -> AppResult<()> {
 /// into a newest-first list of `CaptureMeta`. Missing dir is silent
 /// (returns empty vec).
 #[tauri::command]
-pub fn library_list(
-    state: tauri::State<'_, AppState>,
+pub async fn library_list(
+    app: tauri::AppHandle,
     include_trashed: bool,
 ) -> AppResult<Vec<CaptureMeta>> {
-    state.library_service.list(include_trashed)
+    off_ui_thread(app, move |_, state| {
+        state.library_service.list(include_trashed)
+    })
+    .await
 }
 
 /// How a [`LibraryQueryArgs`] orders its page: the wire twin of the
@@ -948,8 +994,8 @@ pub struct CapturePage {
 /// collection membership are not expressible as a single query and stay
 /// with the caller.
 #[tauri::command]
-pub fn library_query(
-    state: tauri::State<'_, AppState>,
+pub async fn library_query(
+    app: tauri::AppHandle,
     query: LibraryQueryArgs,
 ) -> AppResult<CapturePage> {
     let q = clippity_services::library_index::LibraryQuery {
@@ -962,7 +1008,7 @@ pub fn library_query(
         limit: query.limit,
         offset: query.offset,
     };
-    let page = state.library_service.query(&q)?;
+    let page = off_ui_thread(app, move |_, state| state.library_service.query(&q)).await?;
     Ok(CapturePage {
         items: page.items,
         total: page.total,
@@ -1020,8 +1066,8 @@ pub struct LibraryFacets {
 /// a listing is the full-library load that pushing the grid into SQL was
 /// meant to remove.
 #[tauri::command]
-pub fn library_facets(
-    state: tauri::State<'_, AppState>,
+pub async fn library_facets(
+    app: tauri::AppHandle,
     query: LibraryFacetsArgs,
 ) -> AppResult<LibraryFacets> {
     let q = clippity_services::library_index::FacetsQuery {
@@ -1029,7 +1075,7 @@ pub fn library_facets(
         last_30_days_since_ms: query.last_30_days_since_ms,
         large_min_bytes: query.large_min_bytes,
     };
-    let f = state.library_service.facets(&q)?;
+    let f = off_ui_thread(app, move |_, state| state.library_service.facets(&q)).await?;
     Ok(LibraryFacets {
         total: f.total,
         kinds: f.kinds,
@@ -1056,12 +1102,15 @@ pub fn library_facets(
 /// base64 PNG data URI. Frontend `useThumbnail` caches the result;
 /// the backend re-decodes on every call.
 #[tauri::command]
-pub fn library_thumbnail(
-    state: tauri::State<'_, AppState>,
+pub async fn library_thumbnail(
+    app: tauri::AppHandle,
     id: String,
     max_width: u32,
 ) -> AppResult<String> {
-    state.library_service.thumbnail(&id, max_width)
+    off_ui_thread(app, move |_, state| {
+        state.library_service.thumbnail(&id, max_width)
+    })
+    .await
 }
 
 /// Library: soft-delete the file at `id` (move to `<captures>/.trash/`).
@@ -1106,8 +1155,8 @@ pub fn library_purge(
 /// Library: recursive byte-count of the captures dir + a fixed
 /// 10 GiB display cap. Used by a future storage-progress footer.
 #[tauri::command]
-pub fn library_storage(state: tauri::State<'_, AppState>) -> AppResult<StorageInfo> {
-    state.library_service.storage()
+pub async fn library_storage(app: tauri::AppHandle) -> AppResult<StorageInfo> {
+    off_ui_thread(app, |_, state| state.library_service.storage()).await
 }
 
 /// Library: throw the listing cache away and rebuild it from disk,
@@ -1120,10 +1169,13 @@ pub fn library_storage(state: tauri::State<'_, AppState>) -> AppResult<StorageIn
 /// case reconciliation can't see, a capture rewritten within the same
 /// millisecond and to the same byte count as the row it replaced.
 #[tauri::command]
-pub fn library_reindex(app: tauri::AppHandle, state: tauri::State<'_, AppState>) -> AppResult<u64> {
-    let rows = state.library_service.reindex()?;
-    events::emit(&app, events::names::LIBRARY_UPDATED, ())?;
-    Ok(rows)
+pub async fn library_reindex(app: tauri::AppHandle) -> AppResult<u64> {
+    off_ui_thread(app, |app, state| {
+        let rows = state.library_service.reindex()?;
+        events::emit(app, events::names::LIBRARY_UPDATED, ())?;
+        Ok(rows)
+    })
+    .await
 }
 
 /// Library: star or unstar every id. Emits `library/updated`.
@@ -1295,8 +1347,8 @@ pub fn collections_set_order(
 /// ids that escape the captures dir (defense-in-depth via
 /// `library::validate_id`).
 #[tauri::command]
-pub fn editor_load(state: tauri::State<'_, AppState>, id: String) -> AppResult<EditorImage> {
-    state.editor_service.load(&id)
+pub async fn editor_load(app: tauri::AppHandle, id: String) -> AppResult<EditorImage> {
+    off_ui_thread(app, move |_, state| state.editor_service.load(&id)).await
 }
 
 /// Editor: persist a flattened image (annotations + effects already
@@ -1306,14 +1358,13 @@ pub fn editor_load(state: tauri::State<'_, AppState>, id: String) -> AppResult<E
 /// library refreshes if it's currently mounted. Returns the new
 /// absolute path.
 #[tauri::command]
-pub fn editor_save(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
-    data_uri: String,
-) -> AppResult<String> {
-    let path = state.editor_service.save(&data_uri)?;
-    events::emit(&app, events::names::LIBRARY_UPDATED, ())?;
-    Ok(path)
+pub async fn editor_save(app: tauri::AppHandle, data_uri: String) -> AppResult<String> {
+    off_ui_thread(app, move |app, state| {
+        let path = state.editor_service.save(&data_uri)?;
+        events::emit(app, events::names::LIBRARY_UPDATED, ())?;
+        Ok(path)
+    })
+    .await
 }
 
 /// Editor: persist the editable scene (a JSON document, frontend-owned
@@ -1322,12 +1373,15 @@ pub fn editor_save(
 /// `library/updated` because the library listing is unchanged. Returns
 /// the sidecar's absolute path.
 #[tauri::command]
-pub fn editor_save_scene(
-    state: tauri::State<'_, AppState>,
+pub async fn editor_save_scene(
+    app: tauri::AppHandle,
     id: String,
     scene: String,
 ) -> AppResult<String> {
-    state.editor_service.save_scene(&id, &scene)
+    off_ui_thread(app, move |_, state| {
+        state.editor_service.save_scene(&id, &scene)
+    })
+    .await
 }
 
 /// Studio: describe the recording at `id` and mint the token its bytes
@@ -1342,8 +1396,8 @@ pub fn editor_save_scene(
 /// Rejects ids outside the captures dir (`library::validate_id`) and
 /// anything that isn't a video.
 #[tauri::command]
-pub fn media_probe(state: tauri::State<'_, AppState>, id: String) -> AppResult<MediaInfo> {
-    state.media_service.probe(&id)
+pub async fn media_probe(app: tauri::AppHandle, id: String) -> AppResult<MediaInfo> {
+    off_ui_thread(app, move |_, state| state.media_service.probe(&id)).await
 }
 
 /// Studio: encode the requested range of a recording as a new capture.
@@ -1686,8 +1740,8 @@ pub fn models_remove(
 /// absent from the list. Cached briefly server-side to respect GitHub's
 /// unauthenticated rate limit.
 #[tauri::command]
-pub fn models_check_updates(state: tauri::State<'_, AppState>) -> AppResult<Vec<ReleaseCheck>> {
-    Ok(state.model_service.check_updates())
+pub async fn models_check_updates(app: tauri::AppHandle) -> AppResult<Vec<ReleaseCheck>> {
+    off_ui_thread(app, |_, state| Ok(state.model_service.check_updates())).await
 }
 
 /// Models: self-update `id` to the latest published GitHub release,
@@ -1725,30 +1779,34 @@ pub fn ensure_object_model(
 /// installed model; errors carry the `vision` code so the overlay can
 /// surface them inline.
 #[tauri::command]
-pub fn detect_objects(state: tauri::State<'_, AppState>) -> AppResult<Vec<DetectedObject>> {
-    let canvas = state
-        .overlay_service
-        .detection_canvas()
-        .ok_or_else(|| AppError::Vision("no desktop snapshot to analyze".into()))?;
-    let prefs = state.settings_service.snapshot().models;
-    let spec = clippity_vision::model_service::resolve_object_spec(&prefs);
-    if !state.model_service.is_installed(spec) {
-        return Err(AppError::Vision(format!(
-            "model not installed: {}",
-            spec.label
-        )));
-    }
-    let confidence = clippity_domain::settings::clamp_confidence(prefs.confidence) as f32 / 100.0;
-    // Typed models also load their crop classifier; detection-only
-    // models pass no typer path.
-    let typer_path = spec.typer.map(|_| state.model_service.typer_path(spec.id));
-    state.vision_service.detect(
-        &canvas,
-        spec,
-        &state.model_service.model_path(spec.id),
-        typer_path.as_deref(),
-        confidence,
-    )
+pub async fn detect_objects(app: tauri::AppHandle) -> AppResult<Vec<DetectedObject>> {
+    off_ui_thread(app, |_, state| {
+        let canvas = state
+            .overlay_service
+            .detection_canvas()
+            .ok_or_else(|| AppError::Vision("no desktop snapshot to analyze".into()))?;
+        let prefs = state.settings_service.snapshot().models;
+        let spec = clippity_vision::model_service::resolve_object_spec(&prefs);
+        if !state.model_service.is_installed(spec) {
+            return Err(AppError::Vision(format!(
+                "model not installed: {}",
+                spec.label
+            )));
+        }
+        let confidence =
+            clippity_domain::settings::clamp_confidence(prefs.confidence) as f32 / 100.0;
+        // Typed models also load their crop classifier; detection-only
+        // models pass no typer path.
+        let typer_path = spec.typer.map(|_| state.model_service.typer_path(spec.id));
+        state.vision_service.detect(
+            &canvas,
+            spec,
+            &state.model_service.model_path(spec.id),
+            typer_path.as_deref(),
+            confidence,
+        )
+    })
+    .await
 }
 
 // ---------------------------------------------------------------------
@@ -1779,7 +1837,7 @@ pub fn developer_system_info(state: tauri::State<'_, AppState>) -> AppResult<Sys
 /// `UpdateAvailable` counts as installed: a complete older release is
 /// on disk, and "which model files does this machine have?" is the
 /// question a diagnostics bundle is answering.
-fn installed_model_ids(state: &tauri::State<'_, AppState>) -> Vec<String> {
+fn installed_model_ids(state: &AppState) -> Vec<String> {
     state
         .model_service
         .list()
@@ -1930,18 +1988,21 @@ pub fn developer_open_folder(
 /// running with, which, on a launch where developer mode expired, is
 /// not what the file says.
 #[tauri::command]
-pub fn developer_export_bundle(
-    state: tauri::State<'_, AppState>,
+pub async fn developer_export_bundle(
+    app: tauri::AppHandle,
     options: BundleOptions,
 ) -> AppResult<BundleResult> {
-    let system = state
-        .diagnostics_service
-        .system_info(tauri::webview_version().ok(), installed_model_ids(&state));
-    let system_json = serde_json::to_string_pretty(&system)?;
-    let settings_json = serde_json::to_string_pretty(&state.settings_service.snapshot())?;
-    state
-        .diagnostics_service
-        .export_bundle(&options, &system_json, &settings_json)
+    off_ui_thread(app, move |_, state| {
+        let system = state
+            .diagnostics_service
+            .system_info(tauri::webview_version().ok(), installed_model_ids(state));
+        let system_json = serde_json::to_string_pretty(&system)?;
+        let settings_json = serde_json::to_string_pretty(&state.settings_service.snapshot())?;
+        state
+            .diagnostics_service
+            .export_bundle(&options, &system_json, &settings_json)
+    })
+    .await
 }
 
 /// Developer: clear one cache, returning the bytes freed.

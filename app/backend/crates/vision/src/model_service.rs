@@ -58,6 +58,11 @@ const RELEASE_CACHE_TTL: Duration = Duration::from_secs(300);
 /// without one (HTTP 403), so this is mandatory, not cosmetic.
 const GH_USER_AGENT: &str = "Clippity-ModelManager";
 
+/// Whole-request budget for a release check. ureq applies no timeout of
+/// its own, so a stalled connection would otherwise hold the check (and
+/// the Models panel waiting on it) indefinitely.
+const RELEASE_CHECK_TIMEOUT: Duration = Duration::from_secs(15);
+
 /// Live download bookkeeping, shared with the worker thread.
 struct DownloadHandle {
     downloaded: Arc<AtomicU64>,
@@ -758,6 +763,9 @@ fn github_tag_from_url(url: &str) -> Option<String> {
 fn fetch_release_state(id: &str, src: &ReleaseSource) -> AppResult<CachedRelease> {
     let url = format!("https://api.github.com/repos/{}/releases/latest", src.repo);
     let body = ureq::get(&url)
+        .config()
+        .timeout_global(Some(RELEASE_CHECK_TIMEOUT))
+        .build()
         .header("User-Agent", GH_USER_AGENT)
         .header("Accept", "application/vnd.github+json")
         .call()

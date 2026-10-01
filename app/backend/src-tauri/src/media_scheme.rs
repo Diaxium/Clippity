@@ -55,10 +55,9 @@ const MAX_FULL_BYTES: u64 = 64 * 1024 * 1024;
 
 /// Serve a ranged read of the clip a token stands for.
 pub fn serve_media<R: tauri::Runtime>(
-    ctx: tauri::UriSchemeContext<'_, R>,
-    request: Request<Vec<u8>>,
+    app: &tauri::AppHandle<R>,
+    request: &Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
-    let app = ctx.app_handle().clone();
     let range = request
         .headers()
         .get(header::RANGE)
