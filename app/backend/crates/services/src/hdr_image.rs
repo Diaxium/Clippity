@@ -21,11 +21,16 @@ pub fn encode_hdr_png(
     let mut encoder = png::Encoder::new(&mut bytes, width, height);
     encoder.set_color(png::ColorType::Rgb);
     encoder.set_depth(png::BitDepth::Sixteen);
+    // Same levels as `capture_io::encode_capture_png`. `Fast` is zlib
+    // level 1 rather than `png::Compression::Fast` (fdeflate), which
+    // falls back to stored blocks on noisy content.
     encoder.set_compression(match compression {
-        CaptureCompression::Fast => png::Compression::Fast,
-        CaptureCompression::Balanced => png::Compression::Balanced,
+        CaptureCompression::Fast | CaptureCompression::Balanced => png::Compression::Balanced,
         CaptureCompression::Small => png::Compression::High,
     });
+    if compression == CaptureCompression::Fast {
+        encoder.set_deflate_compression(png::DeflateCompression::Level(1));
+    }
 
     let mut writer = encoder
         .write_header()

@@ -4,6 +4,7 @@
 //! starts; a worker thread captures the region every [`RECORDING_TICK_MS`],
 //! drops near-duplicate frames, and accumulates each new frame's
 //! cumulative scroll offset incrementally. A throttled downscaled stitch
+//! (`scroll::PreviewStitch`, maintained by the worker as frames arrive)
 //! is emitted to the recording HUD as a live preview. On stop the frames
 //! are stitched into one tall PNG and saved like any region capture.
 //!
@@ -26,13 +27,13 @@ use base64::Engine;
 use image::{ImageFormat, RgbaImage};
 use tauri::{AppHandle, Manager};
 
-use crate::capture_io::{copy_png_to_clipboard, next_id, save_capture_png};
+use crate::capture_io::{copy_rgba_to_clipboard, encode_capture_png, next_id, save_capture_png};
 use crate::overlay_service::{build_virtual_canvas, monitor_for_regions};
-use crate::settings_service::{CapturesDirSource, NameTemplateSource};
+use crate::settings_service::{CaptureEncodingSource, CapturesDirSource, NameTemplateSource};
 use crate::window_service;
 use clippity_domain::metadata::CaptureSource;
 use clippity_domain::overlay::{validate_region, OverlayResult, Region};
-use clippity_domain::scroll::{self, ScrollAxis, ScrollDirection};
+use clippity_domain::scroll::{self, PreviewStitch, ScrollAxis, ScrollDirection};
 use clippity_infra::error::{AppError, AppResult};
 use clippity_infra::events;
 
@@ -95,7 +96,26 @@ struct SessionData {
     frames: Vec<RgbaImage>,
     /// Cumulative offset of each frame (same length as `frames`).
     offsets: Vec<(i32, i32)>,
-    last_preview: Instant,
+}
+
+/// The HUD's live preview, owned by the worker. Only the worker appends
+/// frames, so it keeps its own small stitch outside [`SessionData`]:
+/// building and encoding a preview never holds the session lock that
+/// `stop` needs.
+struct LivePreview {
+    stitch: PreviewStitch,
+    last_emit: Instant,
+}
+
+impl LivePreview {
+    fn new(first: &RgbaImage) -> Self {
+        let mut stitch = PreviewStitch::new(PREVIEW_MAX_EDGE);
+        stitch.push(first, (0, 0));
+        Self {
+            stitch,
+            last_emit: Instant::now(),
+        }
+    }
 }
 
 struct ScrollSession {
@@ -136,14 +156,21 @@ struct ActiveRecording {
 pub struct ScrollCaptureService {
     active: Mutex<Option<ActiveRecording>>,
     captures: Arc<dyn CapturesDirSource>,
+    /// The Performance panel's PNG effort for the stitched result.
+    encoding: Arc<dyn CaptureEncodingSource>,
     naming: Arc<dyn NameTemplateSource>,
 }
 
 impl ScrollCaptureService {
-    pub fn new(captures: Arc<dyn CapturesDirSource>, naming: Arc<dyn NameTemplateSource>) -> Self {
+    pub fn new(
+        captures: Arc<dyn CapturesDirSource>,
+        encoding: Arc<dyn CaptureEncodingSource>,
+        naming: Arc<dyn NameTemplateSource>,
+    ) -> Self {
         Self {
             active: Mutex::new(None),
             captures,
+            encoding,
             naming,
         }
     }
@@ -201,7 +228,6 @@ impl ScrollCaptureService {
             data: Mutex::new(SessionData {
                 frames: vec![first],
                 offsets: vec![(0, 0)],
-                last_preview: Instant::now(),
             }),
             stop: AtomicBool::new(false),
             region,
@@ -277,11 +303,8 @@ impl ScrollCaptureService {
         }
 
         let stitched = scroll::stitch(&frames, &offsets);
+        drop(frames);
         let (width, height) = (stitched.width(), stitched.height());
-        let mut png = Vec::new();
-        image::DynamicImage::ImageRgba8(stitched)
-            .write_to(&mut Cursor::new(&mut png), ImageFormat::Png)
-            .map_err(|e| AppError::Capture(format!("png encode: {e}")))?;
 
         // Panoramic = app-driven auto-scroll; Scrolling = the manual model.
         let type_label = if recording.session.auto_scroll {
@@ -296,17 +319,28 @@ impl ScrollCaptureService {
             .with_window(recording.session.source_title.as_deref(), None)
             .with_size(width, height)
             .with_monitor(recording.session.source_monitor.as_deref());
-        let path = save_capture_png(
-            &self.captures.captures_dir(),
-            &png,
-            &self.naming.name_template(),
-            &source,
-        )?;
-        if recording.session.clipboard {
-            if let Err(e) = copy_png_to_clipboard(&png) {
-                tracing::warn!("scroll clipboard copy failed: {e}");
+        let compression = self.encoding.capture_compression();
+        let dir = self.captures.captures_dir();
+        let template = self.naming.name_template();
+        let path = std::thread::scope(|scope| {
+            // The clipboard takes the stitched RGBA directly, beside the
+            // encode, instead of decoding the PNG back after the write.
+            let clipboard = recording
+                .session
+                .clipboard
+                .then(|| scope.spawn(|| copy_rgba_to_clipboard(&stitched)));
+            let saved = encode_capture_png(&stitched, compression)
+                .map_err(|e| AppError::Capture(format!("png encode: {e}")))
+                .and_then(|png| save_capture_png(&dir, &png, &template, &source));
+            if let Some(handle) = clipboard {
+                match handle.join() {
+                    Ok(Ok(())) => {}
+                    Ok(Err(e)) => tracing::warn!("scroll clipboard copy failed: {e}"),
+                    Err(_) => tracing::warn!("scroll clipboard copy panicked"),
+                }
             }
-        }
+            saved
+        })?;
 
         Ok(Some(OverlayResult {
             id: next_id(),
@@ -349,6 +383,7 @@ fn run_worker(app: AppHandle, session: Arc<ScrollSession>) {
     let Some(mut last) = last.take() else {
         return;
     };
+    let mut preview = LivePreview::new(&last);
 
     // Locked scroll direction; the first deliberate step sets it and an
     // opposite step on the same axis auto-stops (the user scrolled back).
@@ -392,38 +427,10 @@ fn run_worker(app: AppHandle, session: Arc<ScrollSession>) {
         }
         locked = new_locked;
 
-        let (count, preview) = {
-            let mut data = match session.data.lock() {
-                Ok(d) => d,
-                Err(_) => break,
-            };
-            let (px, py) = data.offsets.last().copied().unwrap_or((0, 0));
-            data.offsets.push((px + dx, py + dy));
-            data.frames.push(frame.clone());
-            let count = data.frames.len() as u32;
-            let preview =
-                if data.last_preview.elapsed() >= Duration::from_millis(PREVIEW_THROTTLE_MS) {
-                    data.last_preview = Instant::now();
-                    preview_data_uri(&scroll::stitch(&data.frames, &data.offsets))
-                } else {
-                    None
-                };
-            (count, preview)
-        };
-        last = frame;
-
-        let _ = events::emit(
-            &app,
-            events::names::RECORDING_TICK,
-            TickPayload { frames: count },
-        );
-        if let Some(data_uri) = preview {
-            let _ = events::emit(
-                &app,
-                events::names::RECORDING_PREVIEW,
-                PreviewPayload { data_uri },
-            );
+        if append_frame(&app, &session, &mut preview, &frame, (dx, dy)).is_none() {
+            break;
         }
+        last = frame;
     }
 }
 
@@ -465,6 +472,7 @@ fn run_auto_worker(app: AppHandle, session: Arc<ScrollSession>) {
     let Some(mut last) = last.take() else {
         return;
     };
+    let mut preview = LivePreview::new(&last);
 
     // Adaptive wheel step (in WHEEL_DELTA units). Start at the responsive
     // floor so the first, un-calibrated step can't outrun a short region,
@@ -563,38 +571,10 @@ fn run_auto_worker(app: AppHandle, session: Arc<ScrollSession>) {
                 .max(scroll::AUTO_WHEEL_DELTA_MIN);
         }
 
-        let (count, preview) = {
-            let mut data = match session.data.lock() {
-                Ok(d) => d,
-                Err(_) => break,
-            };
-            let (px, py) = data.offsets.last().copied().unwrap_or((0, 0));
-            data.offsets.push((px + dx, py + dy));
-            data.frames.push(frame.clone());
-            let count = data.frames.len() as u32;
-            let preview =
-                if data.last_preview.elapsed() >= Duration::from_millis(PREVIEW_THROTTLE_MS) {
-                    data.last_preview = Instant::now();
-                    preview_data_uri(&scroll::stitch(&data.frames, &data.offsets))
-                } else {
-                    None
-                };
-            (count, preview)
+        let Some(count) = append_frame(&app, &session, &mut preview, &frame, (dx, dy)) else {
+            break;
         };
         last = frame;
-
-        let _ = events::emit(
-            &app,
-            events::names::RECORDING_TICK,
-            TickPayload { frames: count },
-        );
-        if let Some(data_uri) = preview {
-            let _ = events::emit(
-                &app,
-                events::names::RECORDING_PREVIEW,
-                PreviewPayload { data_uri },
-            );
-        }
 
         // Safety cap: an endlessly-animating surface never goes stagnant,
         // so bound the stitch height and commit what we have.
@@ -655,20 +635,50 @@ fn restore_cursor_pos(x: i32, y: i32) {
     }
 }
 
-/// Downscale a stitched image to `PREVIEW_MAX_EDGE` and base64-encode it
-/// as a PNG data URI for the HUD. `None` if encoding fails.
-fn preview_data_uri(stitched: &RgbaImage) -> Option<String> {
-    let longest = stitched.width().max(stitched.height());
-    let small = if longest > PREVIEW_MAX_EDGE {
-        let scale = PREVIEW_MAX_EDGE as f64 / longest as f64;
-        let w = ((stitched.width() as f64 * scale).round() as u32).max(1);
-        let h = ((stitched.height() as f64 * scale).round() as u32).max(1);
-        image::imageops::thumbnail(stitched, w, h)
-    } else {
-        stitched.clone()
+/// Append `frame` at `delta` past the previous frame, then emit the
+/// frame-count tick and, at most every [`PREVIEW_THROTTLE_MS`], a live
+/// preview. Returns the new frame count, or `None` when the session lock
+/// is poisoned (the worker should stop).
+fn append_frame(
+    app: &AppHandle,
+    session: &ScrollSession,
+    preview: &mut LivePreview,
+    frame: &RgbaImage,
+    (dx, dy): (i32, i32),
+) -> Option<u32> {
+    let (count, offset) = {
+        let mut data = session.data.lock().ok()?;
+        let (px, py) = data.offsets.last().copied().unwrap_or((0, 0));
+        let offset = (px + dx, py + dy);
+        data.offsets.push(offset);
+        data.frames.push(frame.clone());
+        (data.frames.len() as u32, offset)
     };
+    preview.stitch.push(frame, offset);
+
+    let _ = events::emit(
+        app,
+        events::names::RECORDING_TICK,
+        TickPayload { frames: count },
+    );
+    if preview.last_emit.elapsed() >= Duration::from_millis(PREVIEW_THROTTLE_MS) {
+        preview.last_emit = Instant::now();
+        if let Some(data_uri) = preview_data_uri(&preview.stitch.render()) {
+            let _ = events::emit(
+                app,
+                events::names::RECORDING_PREVIEW,
+                PreviewPayload { data_uri },
+            );
+        }
+    }
+    Some(count)
+}
+
+/// PNG-encode the (already preview-sized) stitch as a data URI for the
+/// HUD. `None` if encoding fails.
+fn preview_data_uri(small: &RgbaImage) -> Option<String> {
     let mut png = Vec::new();
-    image::DynamicImage::ImageRgba8(small)
+    small
         .write_to(&mut Cursor::new(&mut png), ImageFormat::Png)
         .ok()?;
     Some(format!(

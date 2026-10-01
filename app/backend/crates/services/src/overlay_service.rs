@@ -35,12 +35,12 @@ use tauri::{AppHandle, Manager};
 use xcap::Monitor;
 
 use crate::capture_io::{
-    copy_rgba_to_clipboard, copy_text_to_clipboard, next_id, resolve_save_dir, save_capture_png,
-    thumbnail_data_uri,
+    copy_rgba_to_clipboard, copy_text_to_clipboard, encode_capture_png, next_id, resolve_save_dir,
+    save_capture_png, thumbnail_data_uri,
 };
 use crate::hdr_image::encode_hdr_png;
 use crate::last_region_store::LastRegionStore;
-use crate::settings_service::{CapturesDirSource, NameTemplateSource};
+use crate::settings_service::{CaptureEncodingSource, CapturesDirSource, NameTemplateSource};
 use crate::window_service::{self, CompositorWait};
 use clippity_domain::enhance;
 use clippity_domain::library::AuxColor;
@@ -51,7 +51,6 @@ use clippity_domain::overlay::{
     OverlayMode, OverlayResult, OverlayToggles, OverlayWindow, Region, MULTI_AREA_GAP_PX,
 };
 use clippity_domain::palette;
-use clippity_domain::settings::CaptureCompression;
 use clippity_domain::toast::PickedColor;
 use clippity_domain::window_attribution::{self, MonitorRect, Rect as AttributionRect, WindowRect};
 use clippity_infra::error::{AppError, AppResult};
@@ -173,6 +172,9 @@ pub struct OverlayState {
 
 pub struct OverlayService {
     captures: Arc<dyn CapturesDirSource>,
+    /// The Performance panel's PNG effort, read per capture so a change
+    /// applies to the next one.
+    encoding: Arc<dyn CaptureEncodingSource>,
     naming: Arc<dyn NameTemplateSource>,
     /// Remembered last rectangular selection: written by every
     /// rect-shaped finalize, read by `last_region` (overlay restore) and
@@ -194,11 +196,13 @@ pub struct OverlayService {
 impl OverlayService {
     pub fn new(
         captures: Arc<dyn CapturesDirSource>,
+        encoding: Arc<dyn CaptureEncodingSource>,
         naming: Arc<dyn NameTemplateSource>,
         last_region: Arc<LastRegionStore>,
     ) -> Self {
         Self {
             captures,
+            encoding,
             naming,
             last_region,
             state: Arc::new(Mutex::new(OverlayState::default())),
@@ -650,9 +654,9 @@ impl OverlayService {
     /// saved PNG (Region / Window / Freehand / Multi-Area). Hides the
     /// overlay, takes the cached session state, runs `produce` against
     /// the cached canvas (or a live re-grab if the snapshot failed at
-    /// show time), saves the PNG (honoring a preset's save-dir override),
-    /// optionally copies to the clipboard, restores the previous primary
-    /// window, and emits `library/updated` + `capture/finished`.
+    /// show time), restores the previous primary window, saves the PNG
+    /// (honoring a preset's save-dir override) while optionally copying
+    /// to the clipboard, and emits `library/updated` + `capture/finished`.
     ///
     /// `produce` returns the cropped image and its attribution regions,
     /// and owns the mode-specific crop/mask/validation against the canvas
@@ -799,29 +803,52 @@ impl OverlayService {
         } else {
             None
         };
-        let png_bytes = match hdr_pixels {
-            Some((pixels, hdr_width, hdr_height)) if hdr_width == width && hdr_height == height => {
-                encode_hdr_png(&pixels, hdr_width, hdr_height, CaptureCompression::Balanced)?
-            }
-            _ => encode_png(&image)?,
-        };
+
+        // Everything below works from pixels already in memory (the HDR
+        // grab above is the last read of the screen), so the user's
+        // window comes back now instead of waiting out the encode and
+        // the write. Still before the emits, so listeners see a painted
+        // window (matches the capture-port ordering).
+        if let Some(label) = restore {
+            window_service::restore_window(app, label);
+        }
 
         // Persist (a preset may pin the dir via the session override) +
         // optional clipboard. `save_capture_png` also writes the
         // provenance sidecar from this same source, so every overlay
         // mode records where it came from without opting in.
+        let compression = self.encoding.capture_compression();
         let dir = resolve_save_dir(output_dir, self.captures.captures_dir());
         let source = source.with_size(width, height);
-        let path = save_capture_png(&dir, &png_bytes, &self.naming.name_template(), &source)?;
-        if toggles.clipboard {
-            // From the RGBA we still hold: no PNG round-trip through the
-            // bytes we just encoded.
-            if let Err(e) = copy_rgba_to_clipboard(&image) {
+        let template = self.naming.name_template();
+        let path = std::thread::scope(|scope| {
+            // The clipboard copy needs only the RGBA we still hold (no
+            // PNG round-trip), so it runs beside the encode rather than
+            // after the write.
+            let clipboard = toggles
+                .clipboard
+                .then(|| scope.spawn(|| copy_rgba_to_clipboard(&image)));
+            let saved = match hdr_pixels {
+                Some((pixels, hdr_width, hdr_height))
+                    if hdr_width == width && hdr_height == height =>
+                {
+                    encode_hdr_png(&pixels, hdr_width, hdr_height, compression)
+                }
+                _ => encode_capture_png(&image, compression)
+                    .map_err(|e| AppError::Overlay(format!("png encode: {e}"))),
+            }
+            .and_then(|png_bytes| save_capture_png(&dir, &png_bytes, &template, &source));
+            if let Some(handle) = clipboard {
                 // Clipboard failure shouldn't fail the capture itself:
                 // the file is on disk; surface to logs and continue.
-                tracing::warn!("overlay clipboard copy failed: {e}");
+                match handle.join() {
+                    Ok(Ok(())) => {}
+                    Ok(Err(e)) => tracing::warn!("overlay clipboard copy failed: {e}"),
+                    Err(_) => tracing::warn!("overlay clipboard copy panicked"),
+                }
             }
-        }
+            saved
+        })?;
 
         let result = OverlayResult {
             id: next_id(),
@@ -830,13 +857,6 @@ impl OverlayService {
             path: path.to_string_lossy().into_owned(),
             preview: toggles.preview,
         };
-
-        // Restore whichever primary window was visible before the capture.
-        // Done before emit so listeners see a painted window (matches the
-        // capture-port ordering).
-        if let Some(label) = restore {
-            window_service::restore_window(app, label);
-        }
 
         // Tell the library to refresh. Best-effort; the capture
         // succeeded regardless of whether the event fires.
@@ -1942,26 +1962,6 @@ fn capture_hdr_region(
     Ok(None)
 }
 
-/// PNG-encode a finished capture. Matches `DynamicImage::write_to(Png)`'s
-/// defaults (deflate `Default` + adaptive filtering), which is what every
-/// overlay mode encoded with before the encode was hoisted here.
-fn encode_png(image: &RgbaImage) -> AppResult<Vec<u8>> {
-    let mut bytes = Vec::new();
-    PngEncoder::new_with_quality(
-        Cursor::new(&mut bytes),
-        CompressionType::Default,
-        FilterType::Adaptive,
-    )
-    .write_image(
-        image.as_raw(),
-        image.width(),
-        image.height(),
-        ExtendedColorType::Rgba8,
-    )
-    .map_err(|e| AppError::Overlay(format!("png encode: {e}")))?;
-    Ok(bytes)
-}
-
 /// Mask everything outside the freehand `points` polygon to transparent
 /// and crop to the path's bounding box. Optionally composites the cursor
 /// (clipped to the bbox, like `crop_with_optional_cursor`) at
@@ -2201,12 +2201,12 @@ fn composite_multi_area(
 /// With the toggle on, the cursor therefore isn't previewed at all. The
 /// crosshair already marks the pointer, which is the honest cue.
 ///
-/// Uses `CompressionType::Fast` (zlib level 1) + `FilterType::NoFilter`
-/// rather than the default zlib level 6. These bytes live for one overlay
-/// session and travel over a local socket, so encode time matters and
-/// size barely does: measured on a real desktop, this level compresses a
-/// 1920×1200 canvas from 8.79 MiB to ~8.25 MiB, so the higher levels
-/// would be paying tens of milliseconds for a rounding error.
+/// Stored without compression. These bytes live for one overlay session
+/// and travel over a local custom scheme, so encode time matters and size
+/// barely does. The previous `CompressionType::Fast` + `NoFilter` pairing
+/// shrank a real 1920×1200 desktop only from 8.79 MiB to ~8.25 MiB, and
+/// on busier content fdeflate falls back to stored blocks anyway after
+/// paying for the attempt (~15 ms, against ~2 ms to store it outright).
 ///
 /// Lossless is not negotiable, though: the loupe reads its RGB readout
 /// out of these pixels, and `pick_color` samples the canvas they came
@@ -2217,7 +2217,7 @@ fn render_loupe_png(canvas: &RgbaImage) -> Option<Vec<u8>> {
     let mut bytes = Vec::new();
     let encoder = PngEncoder::new_with_quality(
         Cursor::new(&mut bytes),
-        CompressionType::Fast,
+        CompressionType::Uncompressed,
         FilterType::NoFilter,
     );
     encoder
@@ -2233,7 +2233,8 @@ fn render_loupe_png(canvas: &RgbaImage) -> Option<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings_service::{StaticCapturesDir, StaticNameTemplate};
+    use crate::settings_service::{StaticCaptureEncoding, StaticCapturesDir, StaticNameTemplate};
+    use clippity_domain::settings::CaptureCompression;
     use std::path::PathBuf;
 
     // Sanity: the OverlayService's pure-helper boundary; anything that
@@ -2290,7 +2291,9 @@ mod tests {
         let last_region = Arc::new(LastRegionStore::at(
             std::env::temp_dir().join("clippity-overlay-service-test-last-region.json"),
         ));
-        let svc = OverlayService::new(captures, naming, last_region);
+        let encoding: Arc<dyn CaptureEncodingSource> =
+            Arc::new(StaticCaptureEncoding(CaptureCompression::Balanced));
+        let svc = OverlayService::new(captures, encoding, naming, last_region);
         assert!(svc.snapshot_id().is_none());
         assert!(svc.snapshot_png(0).is_none());
         assert!(svc.windows().is_empty());
@@ -2603,7 +2606,7 @@ mod tests {
         // regression here would silently change every saved capture.
         let mut img = solid(3, 2, [10, 20, 30, 255]);
         img.put_pixel(1, 1, image::Rgba([200, 100, 50, 0]));
-        let bytes = encode_png(&img).expect("encode ok");
+        let bytes = encode_capture_png(&img, CaptureCompression::Balanced).expect("encode ok");
         let decoded = image::load_from_memory(&bytes)
             .expect("valid png")
             .to_rgba8();

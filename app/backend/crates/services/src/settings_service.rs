@@ -511,6 +511,18 @@ impl ToastSettingsSource for StaticToastSettings {
     }
 }
 
+/// Static `CaptureEncodingSource` for test harnesses.
+#[cfg(test)]
+#[derive(Clone, Copy, Debug)]
+pub struct StaticCaptureEncoding(pub CaptureCompression);
+
+#[cfg(test)]
+impl CaptureEncodingSource for StaticCaptureEncoding {
+    fn capture_compression(&self) -> CaptureCompression {
+        self.0
+    }
+}
+
 /// Static `NameTemplateSource` for test harnesses: returns the same
 /// template on every call (a blank one selects the built-in default).
 #[cfg(test)]

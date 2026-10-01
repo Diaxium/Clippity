@@ -114,11 +114,12 @@ impl AppState {
         Ok(Self {
             capture_service: CaptureService::new(
                 captures_dir.clone(),
-                capture_encoding,
+                capture_encoding.clone(),
                 name_template.clone(),
             ),
             overlay_service: OverlayService::new(
                 captures_dir.clone(),
+                capture_encoding.clone(),
                 name_template.clone(),
                 last_region.clone(),
             ),
@@ -141,7 +142,11 @@ impl AppState {
                 name_template.clone(),
                 recording_prefs,
             ),
-            scroll_capture_service: ScrollCaptureService::new(captures_dir, name_template),
+            scroll_capture_service: ScrollCaptureService::new(
+                captures_dir,
+                capture_encoding,
+                name_template,
+            ),
             model_service: ModelService::new(paths.clone()),
             vision_service: VisionService::new(),
             settings_service: settings,

@@ -20,7 +20,44 @@ use image::{DynamicImage, ImageFormat, RgbaImage};
 use crate::sidecar;
 use clippity_domain::metadata::{self, CaptureSource};
 use clippity_domain::naming::{self, LocalTime};
+use clippity_domain::settings::CaptureCompression;
 use clippity_infra::error::{AppError, AppResult};
+
+/// PNG-encode a finished capture at the user's `compression` effort.
+/// The one encoder every capture pipeline (fullscreen, overlay, scroll)
+/// uses, so the Performance setting means the same thing in each.
+///
+/// - `Fast` is zlib level 1 with adaptive filtering. The `png` crate's
+///   own "fast" mode (fdeflate with no filtering) expands a typical
+///   screenshot past its stored size, so the encoder falls back to
+///   uncompressed blocks: a 4K capture came out at 33 MB. Level 1 is as
+///   quick and keeps files within ~1.5x of `Balanced`.
+/// - `Balanced` is zlib level 6 with adaptive filtering: the historic
+///   `DynamicImage::write_to(Png)` default, so unchanged settings encode
+///   identically.
+/// - `Small` is zlib level 9 with adaptive filtering.
+pub fn encode_capture_png(
+    image: &RgbaImage,
+    compression: CaptureCompression,
+) -> image::ImageResult<Vec<u8>> {
+    use image::codecs::png::{CompressionType, FilterType, PngEncoder};
+    use image::{ExtendedColorType, ImageEncoder};
+
+    let level = match compression {
+        CaptureCompression::Fast => CompressionType::Level(1),
+        CaptureCompression::Balanced => CompressionType::Default,
+        CaptureCompression::Small => CompressionType::Best,
+    };
+    let mut bytes = Vec::new();
+    PngEncoder::new_with_quality(Cursor::new(&mut bytes), level, FilterType::Adaptive)
+        .write_image(
+            image.as_raw(),
+            image.width(),
+            image.height(),
+            ExtendedColorType::Rgba8,
+        )?;
+    Ok(bytes)
+}
 
 /// Render a recognisable file name from the user's template + the
 /// capture's `source`, then persist `bytes` under it as a PNG. The entry
@@ -577,5 +614,35 @@ mod tests {
             .unwrap();
         let decoded = image::load_from_memory(&bytes).unwrap();
         assert_eq!((decoded.width(), decoded.height()), (48, 24));
+    }
+
+    #[test]
+    fn encode_capture_png_is_lossless_and_compressed_at_every_level() {
+        // Flat panels with a little texture: compressible, like a screen.
+        let img = RgbaImage::from_fn(256, 128, |x, y| {
+            let v = if (x / 16 + y / 16) % 2 == 0 {
+                240
+            } else {
+                (x ^ y) as u8
+            };
+            image::Rgba([v, v / 2, 255 - v, 255])
+        });
+        let raw = img.as_raw().len();
+        for level in [
+            CaptureCompression::Fast,
+            CaptureCompression::Balanced,
+            CaptureCompression::Small,
+        ] {
+            let bytes = encode_capture_png(&img, level).unwrap();
+            let decoded = image::load_from_memory(&bytes).unwrap().to_rgba8();
+            assert_eq!(decoded.as_raw(), img.as_raw(), "{level:?} must be lossless");
+            // `Fast` used to fall back to stored blocks, larger than the
+            // raw pixels; every level must actually compress.
+            assert!(
+                bytes.len() < raw / 2,
+                "{level:?} wrote {} of {raw} bytes",
+                bytes.len()
+            );
+        }
     }
 }

@@ -440,33 +440,15 @@ fn grab_active_monitor_image() -> AppResult<MonitorGrab> {
     })
 }
 
-/// Encode `image` to PNG at the requested effort. The compression knob
-/// trades capture-save CPU against file size; `Balanced` reproduces the
-/// historic `DynamicImage::write_to(Png)` default (deflate `Default` +
-/// adaptive filtering) so unchanged settings encode identically.
+/// Encode `image` to PNG at the requested effort; see
+/// [`crate::capture_io::encode_capture_png`] for what each level means.
 fn encode_png(image: &RgbaImage, compression: CaptureCompression) -> AppResult<EncodedPng> {
-    use image::codecs::png::{CompressionType, FilterType, PngEncoder};
-    use image::{ExtendedColorType, ImageEncoder};
-
-    let (width, height) = (image.width(), image.height());
-    let (compression_type, filter) = match compression {
-        // Fastest deflate, no per-row filtering, least CPU, biggest file.
-        CaptureCompression::Fast => (CompressionType::Fast, FilterType::NoFilter),
-        // The historic default.
-        CaptureCompression::Balanced => (CompressionType::Default, FilterType::Adaptive),
-        // Maximum deflate effort + adaptive filtering, smallest file.
-        CaptureCompression::Small => (CompressionType::Best, FilterType::Adaptive),
-    };
-
-    let mut bytes = Vec::new();
-    PngEncoder::new_with_quality(std::io::Cursor::new(&mut bytes), compression_type, filter)
-        .write_image(image.as_raw(), width, height, ExtendedColorType::Rgba8)
+    let bytes = crate::capture_io::encode_capture_png(image, compression)
         .map_err(|e| AppError::Capture(format!("png encode: {e}")))?;
-
     Ok(EncodedPng {
         bytes,
-        width,
-        height,
+        width: image.width(),
+        height: image.height(),
     })
 }
 

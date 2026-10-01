@@ -12,6 +12,9 @@
 //! - [`stitch`]: composite frames onto one auto-sized canvas at their
 //!   pre-computed **cumulative** offsets (the service accumulates them
 //!   incrementally, so this stays a pure placement function; ADR 0008).
+//! - [`PreviewStitch`]: the same placement for the recording HUD's live
+//!   preview, kept small as frames arrive so a preview costs the same
+//!   at frame 300 as at frame 3.
 
 use image::RgbaImage;
 use serde::{Deserialize, Serialize};
@@ -555,6 +558,138 @@ pub fn stitch(frames: &[RgbaImage], cumulative_offsets: &[(i32, i32)]) -> RgbaIm
     canvas
 }
 
+/// A downscaled [`stitch`] maintained frame by frame, for the live
+/// preview a recording emits several times a second.
+///
+/// Re-stitching every frame at full resolution and shrinking the result
+/// costs time and memory proportional to everything recorded so far (a
+/// 60-frame 1600×900 session allocated a 175 MB canvas per preview and
+/// took over a second). Here each frame is shrunk once, on arrival, and
+/// a preview only composites those small copies.
+///
+/// The copies are kept at a cache scale between one and two times the
+/// scale the preview needs. When the stitch grows enough that the needed
+/// scale falls below half the cache scale, every copy is halved, so the
+/// composited canvas never exceeds about twice `max_edge` on its longest
+/// side and the total halving work stays proportional to the frame
+/// count.
+#[derive(Debug)]
+pub struct PreviewStitch {
+    max_edge: u32,
+    /// Scale of the cached copies relative to full resolution (≤ 1).
+    scale: f64,
+    /// `(full_res_width, full_res_height, offset, small_copy)` per frame.
+    frames: Vec<(u32, u32, (i32, i32), RgbaImage)>,
+    /// Union of the frame rects at full resolution: `(min_x, min_y,
+    /// max_x, max_y)`.
+    bounds: (i32, i32, i32, i32),
+}
+
+impl PreviewStitch {
+    /// An empty preview whose rendered longest edge is at most `max_edge`.
+    pub fn new(max_edge: u32) -> Self {
+        Self {
+            max_edge: max_edge.max(1),
+            scale: 1.0,
+            frames: Vec::new(),
+            bounds: (0, 0, 0, 0),
+        }
+    }
+
+    /// Frames added so far.
+    pub fn len(&self) -> usize {
+        self.frames.len()
+    }
+
+    /// Whether no frame has been added yet.
+    pub fn is_empty(&self) -> bool {
+        self.frames.is_empty()
+    }
+
+    /// Add `frame` at its **cumulative** `offset`, the same pair a
+    /// [`stitch`] call would receive.
+    pub fn push(&mut self, frame: &RgbaImage, offset: (i32, i32)) {
+        let (w, h) = (frame.width(), frame.height());
+        let rect = (offset.0, offset.1, offset.0 + w as i32, offset.1 + h as i32);
+        self.bounds = if self.frames.is_empty() {
+            rect
+        } else {
+            (
+                self.bounds.0.min(rect.0),
+                self.bounds.1.min(rect.1),
+                self.bounds.2.max(rect.2),
+                self.bounds.3.max(rect.3),
+            )
+        };
+
+        let needed = self.needed_scale();
+        if self.frames.is_empty() {
+            self.scale = needed;
+        } else {
+            let mut halved = false;
+            while needed < self.scale / 2.0 {
+                self.scale /= 2.0;
+                halved = true;
+            }
+            if halved {
+                let scale = self.scale;
+                for (fw, fh, _, small) in &mut self.frames {
+                    let (tw, th) = scaled_size(*fw, *fh, scale);
+                    *small = image::imageops::thumbnail(small, tw, th);
+                }
+            }
+        }
+
+        let (tw, th) = scaled_size(w, h, self.scale);
+        let small = if (tw, th) == (w, h) {
+            frame.clone()
+        } else {
+            image::imageops::thumbnail(frame, tw, th)
+        };
+        self.frames.push((w, h, offset, small));
+    }
+
+    /// The preview image: the stitch of every frame so far, shrunk so its
+    /// longest edge is at most `max_edge`. While the stitch still fits
+    /// within `max_edge` this is exactly what [`stitch`] would return.
+    pub fn render(&self) -> RgbaImage {
+        if self.frames.is_empty() {
+            return RgbaImage::new(1, 1);
+        }
+        let (min_x, min_y, max_x, max_y) = self.bounds;
+        let (full_w, full_h) = ((max_x - min_x) as u32, (max_y - min_y) as u32);
+        let (cw, ch) = scaled_size(full_w, full_h, self.scale);
+        let mut canvas = RgbaImage::from_pixel(cw, ch, image::Rgba([255, 255, 255, 255]));
+        for (_, _, (ox, oy), small) in &self.frames {
+            let x = ((ox - min_x) as f64 * self.scale).round() as i64;
+            let y = ((oy - min_y) as f64 * self.scale).round() as i64;
+            image::imageops::replace(&mut canvas, small, x, y);
+        }
+        let (pw, ph) = scaled_size(full_w, full_h, self.needed_scale());
+        if (pw, ph) == (cw, ch) {
+            canvas
+        } else {
+            image::imageops::thumbnail(&canvas, pw, ph)
+        }
+    }
+
+    /// Scale that brings the full-resolution stitch's longest edge down
+    /// to `max_edge` (1.0 when it already fits).
+    fn needed_scale(&self) -> f64 {
+        let (min_x, min_y, max_x, max_y) = self.bounds;
+        let longest = (max_x - min_x).max(max_y - min_y).max(1) as f64;
+        (self.max_edge as f64 / longest).min(1.0)
+    }
+}
+
+/// `(w, h)` scaled by `scale`, rounded, never zero.
+fn scaled_size(w: u32, h: u32, scale: f64) -> (u32, u32) {
+    (
+        ((w as f64 * scale).round() as u32).max(1),
+        ((h as f64 * scale).round() as u32).max(1),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -815,6 +950,84 @@ mod tests {
         );
         // Primary-monitor origin (0,0): plain region center.
         assert_eq!(region_scroll_anchor(&r, (0, 0)), (500, 500));
+    }
+
+    #[test]
+    fn preview_stitch_matches_stitch_while_it_fits() {
+        let frames = [
+            unique_rows(40, 30, 0),
+            unique_rows(40, 30, 12),
+            unique_rows(40, 30, 25),
+        ];
+        let offsets = [(0, 0), (0, 12), (0, 25)];
+        let mut preview = PreviewStitch::new(320);
+        for (f, &o) in frames.iter().zip(&offsets) {
+            preview.push(f, o);
+        }
+        assert_eq!(preview.len(), 3);
+        assert_eq!(preview.render(), stitch(&frames, &offsets));
+    }
+
+    #[test]
+    fn preview_stitch_has_the_full_stitch_preview_size() {
+        // A long vertical session: 1000 px tall at full res, so the
+        // preview is shrunk (and the cache halved more than once).
+        let mut frames = Vec::new();
+        let mut offsets = Vec::new();
+        let mut preview = PreviewStitch::new(64);
+        for i in 0..40 {
+            let f = unique_rows(90, 50, i * 25);
+            preview.push(&f, (0, i * 25));
+            frames.push(f);
+            offsets.push((0, i * 25));
+        }
+        let full = stitch(&frames, &offsets);
+        assert_eq!(full.dimensions(), (90, 1025));
+        let scale = 64.0 / 1025.0;
+        let expected = scaled_size(90, 1025, scale);
+        let rendered = preview.render();
+        assert_eq!(rendered.dimensions(), expected);
+        // The cache never grows past about twice the preview size.
+        assert!(
+            preview.scale < 2.0 * scale + 1e-9,
+            "cache scale {}",
+            preview.scale
+        );
+        for (_, _, _, small) in &preview.frames {
+            assert!(small.height() <= 2 * 50 * 64 / 1025 + 2);
+        }
+
+        // Same picture as shrinking the full stitch, give or take
+        // resampling: mean channel difference stays small.
+        let reference = image::imageops::thumbnail(&full, expected.0, expected.1);
+        let diff: u64 = rendered
+            .as_raw()
+            .iter()
+            .zip(reference.as_raw())
+            .map(|(a, b)| (*a as i32 - *b as i32).unsigned_abs() as u64)
+            .sum();
+        let mean = diff as f64 / rendered.as_raw().len() as f64;
+        assert!(mean < 12.0, "mean channel difference {mean}");
+    }
+
+    #[test]
+    fn preview_stitch_follows_negative_offsets() {
+        // Scrolling back up (or left) produces negative cumulative
+        // offsets; the canvas grows toward them, as `stitch` does.
+        let frames = [unique_rows(20, 20, 30), unique_rows(20, 20, 20)];
+        let offsets = [(0, 0), (0, -10)];
+        let mut preview = PreviewStitch::new(320);
+        for (f, &o) in frames.iter().zip(&offsets) {
+            preview.push(f, o);
+        }
+        assert_eq!(preview.render(), stitch(&frames, &offsets));
+    }
+
+    #[test]
+    fn preview_stitch_empty_renders_a_placeholder() {
+        let preview = PreviewStitch::new(320);
+        assert!(preview.is_empty());
+        assert_eq!(preview.render().dimensions(), (1, 1));
     }
 
     #[test]
